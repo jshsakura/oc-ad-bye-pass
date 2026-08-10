@@ -1,0 +1,92 @@
+{
+  "name": "oc-ad-bye-pass / youtube",
+  "version": 1,
+  "updatedAt": "2026-08-10",
+  "_readme": [
+    "확장이 6시간마다 이 파일을 받아간다. 규칙만 고치면 재설치 없이 반영된다.",
+    "번들 기본 규칙(src/shared/selectors.ts)과 합집합으로 병합되므로,",
+    "여기서 뭔가 지워도 번들에 있으면 계속 동작한다. 끄고 싶으면 allow 에 넣어라.",
+    "규칙을 바꿀 때마다 version 을 반드시 올려라 (낮으면 확장이 거부한다).",
+    "여긴 데이터 전용이다 — 스크립트나 URL 은 들어갈 수 없고 확장이 거부한다."
+  ],
+  "rules": {
+    "hide": {
+      "generalAds": [
+        "#masthead-ad",
+        "ytd-ad-slot-renderer",
+        "ad-slot-renderer",
+        "ytd-display-ad-renderer",
+        "ytd-in-feed-ad-layout-renderer",
+        "ytd-promoted-video-renderer",
+        "ytd-promoted-sparkles-web-renderer",
+        "ytd-promoted-sparkles-text-search-renderer",
+        "ytd-carousel-ad-renderer",
+        "ytd-banner-promo-renderer",
+        "ytd-statement-banner-renderer",
+        "ytd-primetime-promo-renderer",
+        "ytd-brand-video-shelf-renderer",
+        "ytd-brand-video-singleton-renderer",
+        "ytd-player-legacy-desktop-watch-ads-renderer",
+        "ytd-search-pyv-renderer",
+        "ytd-video-masthead-ad-v3-renderer",
+        "ytd-video-masthead-ad-advertiser-info-renderer",
+        "ytd-rich-item-renderer:has(> #content > ytd-ad-slot-renderer)",
+        "ytd-rich-section-renderer:has(ytd-statement-banner-renderer)",
+        "ytd-rich-section-renderer:has(ytd-brand-video-shelf-renderer)",
+        "ytm-promoted-video-renderer",
+        "ytm-companion-ad-renderer",
+        "ytm-compact-promoted-video-renderer",
+        "ytmusic-statement-banner-renderer"
+      ],
+      "shortsAds": [
+        "ytd-reel-video-renderer:has(ytd-ad-slot-renderer)",
+        "ytm-reel-item-renderer:has(ytd-ad-slot-renderer)",
+        "#shorts-inner-container ytd-ad-slot-renderer",
+        "ytd-reel-shelf-renderer:has(ytd-ad-slot-renderer)"
+      ],
+      "merchandise": [
+        "ytd-merch-shelf-renderer",
+        "ytd-product-details-renderer",
+        "ytd-engagement-panel-section-list-renderer[target-id=\"shopping_panel\"]",
+        "ytmusic-merch-shelf-renderer",
+        ".ytp-suggested-action"
+      ],
+      "getPremium": [
+        "ytd-mealbar-promo-renderer",
+        "yt-mealbar-promo-renderer",
+        "ytmusic-mealbar-promo-renderer",
+        "ytd-popup-container:has(yt-mealbar-promo-renderer)",
+        "tp-yt-paper-dialog:has(yt-mealbar-promo-renderer)",
+        "ytd-rich-section-renderer:has(ytd-primetime-promo-renderer)"
+      ],
+      "fullscreenAds": [
+        ".ytp-ad-overlay-slot",
+        ".ytp-ad-overlay-container",
+        ".ytp-ad-image-overlay",
+        ".ytp-ad-player-overlay-layout",
+        "ytd-in-player-ad-renderer",
+        "ytd-action-companion-ad-renderer",
+        "ytd-companion-slot-renderer"
+      ],
+      "antiAdblockNag": [
+        "ytd-enforcement-message-view-model",
+        "ytd-popup-container:has(ytd-enforcement-message-view-model)",
+        "tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)"
+      ]
+    },
+    "prune": [
+      "adPlacements",
+      "playerAds",
+      "adSlots",
+      "adBreakHeartbeatParams",
+      "playerConfig.adConfig",
+      "auxiliaryUi.messageRenderers.upsellDialogRenderer"
+    ],
+    "click": [
+      ".ytp-ad-overlay-close-button",
+      ".ytp-ad-overlay-close-container",
+      ".ytp-ad-feedback-dialog-close-button"
+    ],
+    "allow": []
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.zip
+.DS_Store
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+e2e/__screenshots__/
