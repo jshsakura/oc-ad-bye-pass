@@ -1,0 +1,58 @@
+# WebKit with Safari's media stack, which Linux does not have.
+#
+# The picture-in-picture path this extension takes on an iPhone is the
+# webkit-prefixed one — webkitSupportsPresentationMode, webkitSetPresentationMode.
+# Playwright's Linux WebKit has none of it, so that branch has only ever been
+# reasoned about. macOS builds of WebKit carry the real media stack, which is the
+# nearest thing to an iPhone that a runner can be.
+#
+# Manual, because it exists to answer a question rather than to guard a rule. Run
+# it when the answer might have changed:
+#
+#   gh workflow run webkit-macos.yml
+name: webkit-macos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install webkit
+
+      # What this engine actually has. Printed rather than asserted: the point is
+      # to find out, and a red run would say less than the list does.
+      - name: PiP API 표면 찍기
+        run: |
+          cat > /tmp/probe.mjs <<'EOF'
+          import { webkit } from 'playwright'
+          const browser = await webkit.launch()
+          const page = await browser.newPage()
+          await page.goto('about:blank')
+          console.log(JSON.stringify(await page.evaluate(() => {
+            const video = document.createElement('video')
+            const el = video
+            return {
+              userAgent: navigator.userAgent,
+              standard: typeof video.requestPictureInPicture,
+              pipEnabled: document.pictureInPictureEnabled,
+              webkitSupports: typeof el.webkitSupportsPresentationMode,
+              webkitSet: typeof el.webkitSetPresentationMode,
+              webkitMode: typeof el.webkitPresentationMode,
+              webkitEnterFullscreen: typeof el.webkitEnterFullscreen,
+              optOut: 'disablePictureInPicture' in video,
+            }
+          }), null, 2))
+          await browser.close()
+          EOF
+          node /tmp/probe.mjs
+
+      - name: WebKit 시험
+        run: npx playwright test e2e/12-webkit.spec.ts
