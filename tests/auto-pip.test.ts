@@ -60,3 +60,53 @@ test('아직 안 돌아왔으면 되돌리지 않는다', () => {
 test('이미 인라인이면 할 일이 없다', () => {
   assert.equal(shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'inline' }), false)
 })
+
+// 어떤 호출을 할지는 탭 안에서 정해져야 한다.
+//
+// iOS 에서 작은 창도 전체화면도 사용자 제스처를 요구하는데, 첫 호출이 먹었는지
+// 알아보려면 기다려야 하고, 기다리고 나면 제스처가 없다. 900ms 뒤에 부른
+// 전체화면은 거절당하면서 화면에는 "전체화면으로 넘겼습니다" 만 남았다.
+// 그래서 폴백은 다음 탭이 하고, 그 판단이 이 함수다.
+import { chooseEntry } from '../src/isolated/pip.ts'
+
+const ios = { webkit: true, standard: false, fullscreen: true }
+
+test('아이폰에서는 webkit 경로가 먼저다', () => {
+  assert.equal(chooseEntry({ preferFullscreen: false, supported: true, ...ios }), 'webkit')
+})
+
+test('이 영상은 안 된다고 하면 호출을 낭비하지 않는다', () => {
+  // webkitSupportsPresentationMode 가 false 면 아무리 불러도 창은 안 열린다.
+  // 남은 제스처 한 번을 전체화면에 쓴다 — 아이폰이 스스로 띄워주는 상태다.
+  assert.equal(chooseEntry({ preferFullscreen: false, supported: false, ...ios }), 'fullscreen')
+})
+
+test('한 번 무응답이었으면 다음 탭은 전체화면이다', () => {
+  assert.equal(chooseEntry({ preferFullscreen: true, supported: true, ...ios }), 'fullscreen')
+})
+
+test('크로미움에는 표준 API 만 있다', () => {
+  assert.equal(
+    chooseEntry({
+      preferFullscreen: false,
+      supported: undefined,
+      webkit: false,
+      standard: true,
+      fullscreen: false,
+    }),
+    'standard',
+  )
+})
+
+test('아무 진입점도 없으면 없다고 한다', () => {
+  assert.equal(
+    chooseEntry({
+      preferFullscreen: false,
+      supported: undefined,
+      webkit: false,
+      standard: false,
+      fullscreen: false,
+    }),
+    'none',
+  )
+})

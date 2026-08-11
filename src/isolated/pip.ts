@@ -103,70 +103,146 @@ function toast(text: string): void {
   setTimeout(() => el.remove(), 4200)
 }
 
-async function enterPip(video: WebkitVideo, quiet = false): Promise<void> {
-  const say = (text: string) => {
-    if (!quiet) toast(text)
-  }
+/**
+ * After a refusal, the next tap goes straight to fullscreen.
+ *
+ * Because there is no way to fall back within one tap. Everything that opens a
+ * window or a fullscreen player on iOS needs user activation, and activation
+ * does not survive the wait needed to find out whether the first call worked —
+ * WebKit reports the new presentation mode asynchronously. A fallback issued
+ * 900ms later is issued without a gesture and is refused, which is how the
+ * button could report "전체화면으로 넘겼습니다" and leave the screen unchanged.
+ *
+ * So the second tap does what the first one learned.
+ */
+let preferFullscreen = false
 
-  // Which routes exist, said out loud. On the device this is the only way to
-  // tell "no entry point" from "the entry point refused", and those need
-  // opposite fixes.
+/**
+ * Which call this tap makes. Decided before anything is called, and only from
+ * what is knowable at that instant — because after the first `await` the tap is
+ * over and nothing privileged can be issued at all.
+ *
+ * `supported === false` is WebKit saying this video cannot be floated; asking
+ * anyway wastes the one gesture the user gave us, so it goes straight to the
+ * route that ends in a floating window on iOS by another road.
+ */
+export function chooseEntry(state: {
+  preferFullscreen: boolean
+  supported: boolean | undefined
+  webkit: boolean
+  standard: boolean
+  fullscreen: boolean
+}): 'webkit' | 'standard' | 'fullscreen' | 'none' {
+  const wantPip = !state.preferFullscreen && state.supported !== false
+  if (wantPip && state.webkit) return 'webkit'
+  if (wantPip && state.standard) return 'standard'
+  if (state.fullscreen) return 'fullscreen'
+  return 'none'
+}
+
+/**
+ * Everything here runs inside the tap. No awaits before a privileged call.
+ */
+function enterPip(video: WebkitVideo): void {
+  // Right now, not at the last sweep. YouTube puts `disablePictureInPicture`
+  // back on the element whenever it rebuilds the player, and WebKit reads it
+  // when deciding whether the mode is supported at all — a stale clear is the
+  // same as no clear.
+  allowPip(video)
+
+  // Ours from here, which is what makes guardPresentation do its job: YouTube
+  // reacts to the mode change and puts the video back inline, and the guard only
+  // holds the line for a window we opened. Set on the button path too — it was
+  // set only on the automatic one, so a tap could open a window that YouTube
+  // closed again a moment later.
+  engagedByUs = true
+
+  // WebKit refuses to float a video that is not playing, and on YouTube the tap
+  // that reaches this button often happens while paused.
+  if (video.paused) void video.play().catch(() => {})
+
+  // The API that exists to answer this exact question. `false` is a real answer
+  // — no amount of calling will work — while `undefined` only means this browser
+  // has no opinion to give.
+  const supported =
+    typeof video.webkitSupportsPresentationMode === 'function'
+      ? video.webkitSupportsPresentationMode('picture-in-picture')
+      : undefined
+
   const routes = [
     typeof video.webkitSetPresentationMode === 'function' ? 'webkit' : null,
     typeof video.requestPictureInPicture === 'function' ? 'standard' : null,
     typeof video.webkitEnterFullscreen === 'function' ? 'fullscreen' : null,
   ].filter(Boolean)
-  say(`PiP 진입점: ${routes.length ? routes.join(' · ') : '없음'}`)
+  toast(`PiP 진입점: ${routes.length ? routes.join(' · ') : '없음'} · 지원: ${supported ?? '알 수 없음'}`)
 
-  // WebKit first: on iOS the standard call exists on no version we target.
-  //
-  // Note what "success" means on an iPhone. The call below rarely opens a window
-  // from an inline video; what it reliably does is put the video in fullscreen,
-  // and iOS then moves it to a small window by itself when the app goes away.
-  // The button therefore does the thing that leads to PiP rather than PiP
-  // itself — which is why the message afterwards says so.
-  //
-  // It can also fail without failing. WebKit's own reports have
-  // webkitSetPresentationMode throwing nothing, firing
-  // webkitpresentationmodechanged, and leaving no window on screen. Returning on
-  // the strength of "it did not throw" would leave the button dead in exactly
-  // that case, so this waits and reads back what mode the video ended up in.
-  if (typeof video.webkitSetPresentationMode === 'function') {
+  const route = chooseEntry({
+    preferFullscreen,
+    supported,
+    webkit: typeof video.webkitSetPresentationMode === 'function',
+    standard: typeof video.requestPictureInPicture === 'function',
+    fullscreen: typeof video.webkitEnterFullscreen === 'function',
+  })
+
+  if (route === 'webkit' && typeof video.webkitSetPresentationMode === 'function') {
     try {
       video.webkitSetPresentationMode('picture-in-picture')
-      await new Promise((resolve) => setTimeout(resolve, PRESENTATION_SETTLE_MS))
-      if (video.webkitPresentationMode === 'picture-in-picture') return
-      say(`webkit 이 무응답 (모드: ${video.webkitPresentationMode ?? '알 수 없음'})`)
-    } catch (e) {
-      say(`webkit 거절: ${e instanceof Error ? e.message : String(e)}`)
-    }
-  }
-
-  if (typeof video.requestPictureInPicture === 'function') {
-    try {
-      await video.requestPictureInPicture()
+      void confirmOrOfferFullscreen(video)
       return
     } catch (e) {
-      say(`표준 API 거절: ${e instanceof Error ? e.message : String(e)}`)
+      toast(`webkit 거절: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  // Neither worked. On iOS the system's own fullscreen player carries a PiP
-  // control, so handing the video to it is one tap from where the user was
-  // trying to get. Doing nothing at all is the only worse option.
+  if (route === 'standard' && typeof video.requestPictureInPicture === 'function') {
+    // The call is what needs the gesture; its promise settling later is fine.
+    video.requestPictureInPicture().catch((e: unknown) => {
+      toast(`표준 API 거절: ${e instanceof Error ? e.message : String(e)}`)
+      preferFullscreen = true
+    })
+    return
+  }
+
+  // On iOS the system's own fullscreen player carries a PiP control, and leaving
+  // the app from fullscreen is the one hand-over iOS does by itself. So this is
+  // not a consolation prize — it is the route that actually ends in a floating
+  // window on that device.
   if (typeof video.webkitEnterFullscreen === 'function') {
     try {
       video.webkitEnterFullscreen()
-      say(
+      preferFullscreen = false
+      toast(
         '전체화면으로 넘겼습니다 — 이 상태로 홈으로 나가면 작은 창이 됩니다 ' +
           '(설정 → 일반 → 그림 속 그림이 켜져 있어야 합니다)',
       )
       return
     } catch (e) {
-      say(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)
+      toast(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
-  say('이 브라우저에서 PiP 진입점을 찾지 못했습니다')
+  toast('이 브라우저에서 PiP 진입점을 찾지 못했습니다')
+}
+
+/**
+ * Did the window actually open? Answered late, acted on next tap.
+ *
+ * WebKit can take the call, fire webkitpresentationmodechanged and leave nothing
+ * on screen. Reading the mode straight away always says `inline`, so the answer
+ * has to be waited for — and by then nothing privileged can be called, which is
+ * why this only tells the user what the next tap will do.
+ */
+async function confirmOrOfferFullscreen(video: WebkitVideo): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, PRESENTATION_SETTLE_MS))
+  if (video.webkitPresentationMode === 'picture-in-picture') {
+    preferFullscreen = false
+    return
+  }
+  preferFullscreen = true
+  engagedByUs = false
+  toast(
+    `작은 창이 열리지 않았습니다 (모드: ${video.webkitPresentationMode ?? '알 수 없음'}) — ` +
+      '한 번 더 누르면 전체화면으로 넘깁니다',
+  )
 }
 
 /** Clear the page's opt-out. It is an attribute and a property; both count. */
@@ -185,7 +261,7 @@ function ensureButton(video: WebkitVideo): void {
     button.onclick = (event) => {
       event.preventDefault()
       event.stopPropagation()
-      void enterPip(video)
+      enterPip(video)
     }
     return
   }
@@ -232,7 +308,7 @@ function ensureButton(video: WebkitVideo): void {
   button.onclick = (event) => {
     event.preventDefault()
     event.stopPropagation()
-    void enterPip(video)
+    enterPip(video)
   }
 
   // Parented to <html> rather than <body>: YouTube rewrites body's children on

@@ -27,6 +27,13 @@ export interface PageDiagnostics {
   layer1: boolean
   videos: number
   pip: 'webkit' | 'standard' | 'none'
+  /**
+   * What WebKit says about this very video, which is a different question from
+   * whether the API exists. `false` means no call will ever open a window here —
+   * the opt-out is still on, or the video has no picture to float — and that is
+   * the answer no amount of tapping can find.
+   */
+  pipSupported: boolean | null
   fullscreenFallback: boolean
   visibilityState: string
   /** What the video is doing now: inline, fullscreen or picture-in-picture. */
@@ -42,6 +49,7 @@ interface WebkitVideo extends HTMLVideoElement {
   webkitSetPresentationMode?: unknown
   webkitEnterFullscreen?: unknown
   webkitPresentationMode?: string
+  webkitSupportsPresentationMode?: (mode: string) => boolean
 }
 
 export function reportDiagnostics(): void {
@@ -57,6 +65,10 @@ export function reportDiagnostics(): void {
         : typeof video?.requestPictureInPicture === 'function'
           ? 'standard'
           : 'none',
+    pipSupported:
+      typeof video?.webkitSupportsPresentationMode === 'function'
+        ? video.webkitSupportsPresentationMode('picture-in-picture')
+        : null,
     fullscreenFallback: typeof video?.webkitEnterFullscreen === 'function',
     visibilityState: document.visibilityState,
     presentationMode: video?.webkitPresentationMode ?? 'inline',

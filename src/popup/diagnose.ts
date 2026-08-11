@@ -33,6 +33,7 @@ export interface PageFacts {
   layer1: boolean
   videos: number
   pip: 'webkit' | 'standard' | 'none'
+  pipSupported: boolean | null
   fullscreenFallback: boolean
   visibilityState: string
   presentationMode: string
@@ -152,6 +153,9 @@ export function format(report: Report): string {
       `1계층 주입: ${page.inject ? (INJECT_STATES[page.inject] ?? page.inject) : '기록 없음'}`,
       `비디오: ${page.videos}개`,
       `PiP: ${page.pip === 'none' ? '없음' : page.pip}`,
+      // The API existing and this video being allowed to use it are different
+      // things, and only the second one decides whether a tap can work.
+      `PiP 지원(이 영상): ${page.pipSupported === null ? '알 수 없음' : page.pipSupported ? '예' : '아니오'}`,
       `전체화면 폴백: ${page.fullscreenFallback ? '있음' : '없음'}`,
       `표시 모드: ${page.presentationMode}`,
       `자동 PiP: ${describeAutoPip(page.autoPip)}`,
