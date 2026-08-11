@@ -743,7 +743,7 @@
       <li>Pick the zip you downloaded and allow the <code>youtube.com</code> permission</li>
     </ol>
 
-    <a class="btn" href="dl/oc-ad-bye-pass-orion.zip" id="dl-orion" data-size="87KB">
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip" id="dl-orion" data-size="87KB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · ORION
       <span class="what">oc-ad-bye-pass-orion.zip · 87KB</span>
@@ -819,7 +819,7 @@
       <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
-    <a class="btn btn-line" href="dl/oc-ad-bye-pass.zip" id="dl-chrome" data-size="1.5MB">
+    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip" id="dl-chrome" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · CHROME
       <span class="what">oc-ad-bye-pass.zip · 1.5MB</span>
@@ -1237,13 +1237,24 @@
 // API 를 못 부르면 build.json 의 값으로 물러난다.
 (() => {
   const el = document.getElementById('build');
+  const RELEASE = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases/latest';
+
+  // The release is what the buttons hand out, so the release is what the page
+  // reports. Building the packages here as well only created a second answer to
+  // "which version is this", and the two drifted apart the moment a commit
+  // touched src/ and not site/.
+  const latest = fetch(RELEASE)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => j?.tag_name?.replace(/^v/, '') || null)
+    .catch(() => null);
   // No releases API here any more. The buttons serve what this deploy built, so
   // the footer has to name that same thing — quoting the newest tag instead
   // would be a number nobody on the page can download.
   fetch('build.json', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
-    .then((b) => {
+    .then(async (b) => {
       if (!b) return;
+      b = { ...b, version: (await latest) ?? b.version };
       // One line, versions only. The dates that used to be here — when the rules
       // last moved, when the page last deployed — answered a question nobody was
       // asking on a download page.
@@ -1255,19 +1266,20 @@
       // rides along as a query. A phone that cached the previous zip and hands
       // the installer a stale or half-written file fails with the same one-line
       // error a bad package does — indistinguishable, and it cost an evening.
-      // The version is in the file name, so what lands in Files says which
-      // build it is. Every install failure looks the same on the device — wrong
-      // package, truncated download, stale copy picked by mistake — and this is
-      // the one thing that tells them apart.
+      // Straight at the release. The version is shown on the button so what
+      // lands in Files can be checked against it — every install failure looks
+      // identical on the device, and knowing which build you picked is the one
+      // thing that separates them.
+      const base = 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download';
       for (const [id, name] of [
-        ['dl-orion', `oc-ad-bye-pass-orion-${b.version}.zip`],
-        ['dl-chrome', `oc-ad-bye-pass-${b.version}.zip`],
+        ['dl-orion', 'oc-ad-bye-pass-orion.zip'],
+        ['dl-chrome', 'oc-ad-bye-pass.zip'],
       ]) {
         const a = document.getElementById(id);
         if (!a) continue;
-        a.href = `dl/${name}`;
+        a.href = `${base}/${name}`;
         const what = a.querySelector('.what');
-        if (what) what.textContent = `${name} · ${a.dataset.size ?? ''}`.trim();
+        if (what) what.textContent = `${name} · v${b.version} · ${a.dataset.size ?? ''}`.trim();
       }
 
       const paint = () => { el.innerHTML = line[document.documentElement.dataset.lang] ?? line.ko; };

@@ -13,14 +13,13 @@
 # What gets published:
 #   site/**              the page and its fonts
 #   filters/youtube.json the rule list, for reading
-#   dl/*.zip             the packages themselves, built here
-#   build.json           footer data, generated below
+#   build.json           filter version for the footer
 #
-# The zips are served from this origin on purpose. Linking
-# releases/latest/download/... sends a phone through a cross-host redirect to a
-# URL whose name never changes while its contents do, which is exactly the shape
-# a cache mangles — and a half-downloaded zip installs as "Something went
-# wrong", with no way to tell it from a bad package.
+# It does not build or serve the packages. It did for a while, on the theory
+# that the cross-host redirect to a release asset was mangling downloads on
+# iOS — it was not. Orion's installer is simply intermittent, and building here
+# only meant the page could hand out a different version from the release
+# without anything saying so.
 
 name: pages
 
@@ -54,42 +53,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-      - run: npm run build:all
-      - run: npm run verify
-
-      # The version goes in the file name. On a phone the downloaded file is the
-      # only thing you can actually see, and "which build did I just install"
-      # was otherwise unanswerable — every failure looks identical, whether the
-      # package is wrong, the download was truncated, or the file picked was a
-      # stale copy from an earlier attempt.
-      - name: Package
-        run: |
-          version=$(node -p "require('./package.json').version")
-          mkdir -p _site/dl
-          (cd dist && zip -qr "../_site/dl/oc-ad-bye-pass-$version.zip" .)
-          (cd dist-orion && zip -qr "../_site/dl/oc-ad-bye-pass-orion-$version.zip" .)
-          ls -l _site/dl
-
       - name: Assemble the site
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p _site/filters
           cp -R site/. _site/
           cp filters/youtube.json _site/filters/youtube.json
 
-          # Also the cache-buster for the download links: the file names are
-          # stable and their contents are not.
-          # The zips above are built from this commit, so the page's own version
-          # is the one it hands out — not whatever the newest tag happens to be.
+          # Fallback only. The page asks the releases API for the version it
+          # actually links to; this is what shows when that call cannot be made.
           version=$(node -p "require('./package.json').version")
-          echo "version = $version"
 
           node -e '
             const fs = require("fs");
