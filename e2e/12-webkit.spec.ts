@@ -320,6 +320,11 @@ test('아이폰 모양의 비디오에서 우리 판정 함수가 webkit 경로�
   expect(decide.afterNoOp).toBe('fullscreen')
   // 이 영상은 안 된다고 하면 제스처를 낭비하지 않는다.
   expect(decide.videoRefuses).toBe('fullscreen')
-  // 그리고 아무것도 없는 이 WebKit 에서는 부를 것이 없다고 답해야 한다.
-  expect(decide.bare).toBe('none')
+  // 그리고 이 엔진이 실제로 가진 것에 맞게 답해야 한다. 리눅스 WebKit 에는
+  // 아무것도 없어 'none' 이고, macOS 러너의 WebKit(사파리 엔진)에는 표준 API 가
+  // 있어 'standard' 다 — 어느 쪽이든 없는 것을 부르려 해서는 안 된다.
+  const hasStandard = await wk.evaluate(
+    () => typeof document.createElement('video').requestPictureInPicture === 'function',
+  )
+  expect(decide.bare).toBe(hasStandard ? 'standard' : 'none')
 })

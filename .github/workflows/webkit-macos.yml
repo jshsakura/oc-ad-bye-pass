@@ -58,4 +58,4 @@ jobs:
           node probe.tmp.mjs
 
       - name: WebKit 시험
-        run: npx playwright test e2e/12-webkit.spec.ts
+        run: npx playwright test e2e/12-webkit.spec.ts e2e/14-webkit-pip.spec.ts
