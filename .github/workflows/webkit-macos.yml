@@ -29,9 +29,12 @@ jobs:
 
       # What this engine actually has. Printed rather than asserted: the point is
       # to find out, and a red run would say less than the list does.
+      #
+      # Written into the checkout, not /tmp — node resolves `playwright` from the
+      # nearest node_modules, and there is none above /tmp.
       - name: PiP API 표면 찍기
         run: |
-          cat > /tmp/probe.mjs <<'EOF'
+          cat > probe.tmp.mjs <<'EOF'
           import { webkit } from 'playwright'
           const browser = await webkit.launch()
           const page = await browser.newPage()
@@ -52,7 +55,7 @@ jobs:
           }), null, 2))
           await browser.close()
           EOF
-          node /tmp/probe.mjs
+          node probe.tmp.mjs
 
       - name: WebKit 시험
         run: npx playwright test e2e/12-webkit.spec.ts
