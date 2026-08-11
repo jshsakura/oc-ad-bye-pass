@@ -1,0 +1,91 @@
+name: rules
+
+# Rebuilds the network blocklist from the upstream public lists.
+#
+# The lists move constantly — new ad networks appear, old domains get reused for
+# something innocent. A blocklist frozen at build time decays quietly: nobody
+# notices missing blocks, and a stale entry that starts blocking a real site
+# reads as "the extension broke my page".
+#
+# This does not push to main. Rules are shipped inside the extension package, so
+# a change here is a change to what every user runs — it opens a pull request and
+# waits for a human. The diff is the review: a sudden collapse in domain count,
+# or a well-known site appearing, is visible before it ships.
+
+on:
+  schedule:
+    # Weekly, Monday 04:00 UTC. The lists do not move fast enough to warrant more,
+    # and every run costs a pull request somebody has to read.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Rebuild the blocklist
+        run: node scripts/build-rules.mjs
+
+      # A collapse in coverage means an upstream list moved or started serving an
+      # error page. Shipping that would silently switch blocking off.
+      - name: Sanity-check the result
+        run: |
+          node -e "
+            const fs = require('fs');
+            const meta = JSON.parse(fs.readFileSync('public/rules/ads.meta.json', 'utf8'));
+            const rules = JSON.parse(fs.readFileSync('public/rules/ads.json', 'utf8'));
+            const domains = new Set(rules.flatMap(r => r.condition.requestDomains ?? []));
+            console.log(\`\${domains.size} domains across \${rules.length} rules\`);
+
+            if (domains.size < 50000) {
+              console.error('coverage collapsed — an upstream list is probably broken');
+              process.exit(1);
+            }
+            for (const required of ['doubleclick.net', 'googlesyndication.com', 'adnxs.com']) {
+              if (!domains.has(required)) {
+                console.error(\`missing a network the list is pointless without: \${required}\`);
+                process.exit(1);
+              }
+            }
+            for (const forbidden of ['youtube.com', 'google.com', 'github.com']) {
+              if (domains.has(forbidden)) {
+                console.error(\`would block a site people need: \${forbidden}\`);
+                process.exit(1);
+              }
+            }
+          "
+
+      - run: npm run check && npm test
+
+      - name: Open a pull request if anything changed
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automated/refresh-rules
+          title: 'Refresh the network blocklist'
+          commit-message: 'Refresh the network blocklist from upstream lists'
+          body: |
+            Rebuilt by `.github/workflows/rules.yml` from the upstream public lists.
+
+            Worth a look before merging:
+            - a large drop in domain count usually means an upstream list broke
+            - anything recognisable appearing in the list is a false positive
+              waiting to become a bug report
+
+            The generated file is data only — no code changes.
+          add-paths: |
+            public/rules/ads.json
+            public/rules/ads.meta.json
+          delete-branch: true

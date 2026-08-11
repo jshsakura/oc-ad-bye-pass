@@ -13,6 +13,7 @@
 //   - reject a version older than the cached one (rollback attack)
 
 import { TOGGLE_KEYS, type ToggleKey } from './settings.ts'
+import type { SiteKind } from './sites.ts'
 import { BUNDLED_CLICK, BUNDLED_HIDE, BUNDLED_PRUNE } from './selectors.ts'
 
 export const MAX_LIST_BYTES = 256 * 1024
@@ -345,6 +346,16 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
 }
 
 /**
+ * The one group that applies away from YouTube.
+ *
+ * Off YouTube we emit this and nothing else. The `ytd-*` selectors would never
+ * match there anyway, but not emitting them keeps the stylesheet small on every
+ * page on the web — which is the difference between a cost paid once and a cost
+ * paid everywhere.
+ */
+const GENERIC_GROUP: ToggleKey = 'genericAds'
+
+/**
  * Build the stylesheet from the enabled groups only.
  *
  * One rule per selector, deliberately: joined by commas, a single invalid
@@ -353,12 +364,16 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
 export function buildStylesheet(
   rules: ResolvedRules,
   toggles: Record<ToggleKey, boolean>,
+  kind: SiteKind = 'youtube',
 ): string {
+  const groups = kind === 'youtube' ? TOGGLE_KEYS : [GENERIC_GROUP]
+
   const selectors = new Set<string>()
-  for (const key of TOGGLE_KEYS) {
+  for (const key of groups) {
     if (!toggles[key]) continue
     for (const s of rules.hide[key] ?? []) selectors.add(s)
   }
+  // The user's own rules are theirs — they apply wherever they put them.
   for (const s of rules.custom) selectors.add(s)
   if (!selectors.size) return ''
   return [...selectors].map((s) => `${s} { display: none !important; }`).join('\n')

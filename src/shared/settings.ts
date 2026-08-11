@@ -11,6 +11,7 @@ export const TOGGLE_KEYS = [
   'playerFallback',
   'antiAdblockNag',
   'appPromo',
+  'genericAds',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -34,6 +35,12 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   { key: 'antiAdblockNag', label: '애드블록 경고창 무시', hint: '"광고 차단기를 사용 중입니다" 안내', layer: 2 },
   { key: 'appPromo', label: '앱으로 열기 유도 숨김', hint: '상단 스마트 앱 배너, "앱에서 보기" 바', layer: 2 },
   { key: 'playerFallback', label: '광고 자동 스킵 (폴백)', hint: '위 차단이 뚫렸을 때만 동작', layer: 3 },
+  {
+    key: 'genericAds',
+    label: '다른 사이트 광고 숨김',
+    hint: '유튜브 밖에서도 광고 자리를 숨깁니다',
+    layer: 2,
+  },
 ]
 
 export interface Settings {
@@ -45,6 +52,13 @@ export interface Settings {
   listUrl: string
   /** The user's own rules — one selector per line. */
   customRules: string
+  /**
+   * Hosts where the extension stands down entirely.
+   *
+   * Injecting everywhere means we can break anything, so this is the escape
+   * hatch that makes that defensible. An entry covers its subdomains.
+   */
+  allowlist: string[]
 }
 
 export const DEFAULT_LIST_URL =
@@ -62,10 +76,12 @@ export const DEFAULT_SETTINGS: Settings = {
     playerFallback: true,
     antiAdblockNag: true,
     appPromo: true,
+    genericAds: true,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,
   customRules: '',
+  allowlist: [],
 }
 
 export interface Stats {
@@ -95,6 +111,9 @@ function mergeSettings(stored: unknown): Settings {
     listEnabled: typeof s.listEnabled === 'boolean' ? s.listEnabled : DEFAULT_SETTINGS.listEnabled,
     listUrl: typeof s.listUrl === 'string' && s.listUrl ? s.listUrl : DEFAULT_SETTINGS.listUrl,
     customRules: typeof s.customRules === 'string' ? s.customRules : DEFAULT_SETTINGS.customRules,
+    allowlist: Array.isArray(s.allowlist)
+      ? [...new Set(s.allowlist.filter((h): h is string => typeof h === 'string' && !!h))]
+      : [...DEFAULT_SETTINGS.allowlist],
   }
 }
 

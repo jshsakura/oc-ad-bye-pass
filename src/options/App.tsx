@@ -10,6 +10,7 @@ import {
   saveSettings,
   type Settings,
 } from '../shared/settings.ts'
+import { normalizeHost, removeFromAllowlist } from '../shared/sites.ts'
 import { Switch } from '../ui/Switch.tsx'
 import { formatWhen } from '../ui/format.ts'
 
@@ -34,6 +35,7 @@ export function App() {
   const [status, setStatus] = useState<FilterStatus | null>(null)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [hostDraft, setHostDraft] = useState('')
 
   useEffect(() => {
     void loadSettings().then((s) => {
@@ -54,6 +56,13 @@ export function App() {
 
   const persist = async (patch: Partial<Settings>) => {
     setSettings(await saveSettings(patch))
+  }
+
+  const addHost = () => {
+    const host = normalizeHost(hostDraft.trim().replace(/^https?:\/\//, '').split('/')[0])
+    if (!host) return
+    setHostDraft('')
+    void persist({ allowlist: [...new Set([...settings.allowlist, host])].sort() })
   }
 
   const saveUrl = async () => {
@@ -208,6 +217,48 @@ export function App() {
               {rulesDraft !== settings.customRules ? ' · 저장하지 않음' : ''}
             </span>
           )}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>이 사이트에서 끄기 목록</h2>
+        <p className="desc">
+          여기 적힌 사이트에서는 확장이 완전히 손을 뗍니다 — 광고망 차단도, 요소 숨김도 하지
+          않습니다. 하위 도메인까지 함께 적용됩니다. 사이트를 끄는 것은 확장 아이콘을 눌러
+          그 자리에서 할 수 있고, 여기서는 목록을 정리합니다.
+        </p>
+
+        {settings.allowlist.length === 0 ? (
+          <p className="status">아직 없습니다. 어느 사이트에서도 켜져 있습니다.</p>
+        ) : (
+          <ul className="hosts">
+            {settings.allowlist.map((host) => (
+              <li key={host}>
+                <span>{host}</span>
+                <button
+                  onClick={() => void persist({ allowlist: removeFromAllowlist(host, settings.allowlist) })}
+                >
+                  다시 켜기
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="actions">
+          <input
+            type="text"
+            value={hostDraft}
+            spellCheck={false}
+            placeholder="example.com"
+            onChange={(e) => setHostDraft(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') addHost()
+            }}
+          />
+          <button onClick={addHost} disabled={!hostDraft.trim()}>
+            추가
+          </button>
         </div>
       </section>
 

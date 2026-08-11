@@ -220,6 +220,8 @@ export async function installOtherSiteFixture(context: BrowserContext): Promise<
 <body>
 <div id="masthead-ad">NOT YouTube &mdash; this element must stay visible</div>
 <ytd-ad-slot-renderer>NOT YouTube &mdash; this one too</ytd-ad-slot-renderer>
+<ins id="generic-ad" class="adsbygoogle" style="display:block;height:40px">GENERIC AD &mdash; must be hidden</ins>
+<div id="real-content" style="height:40px">REAL CONTENT &mdash; must survive</div>
 <script>
   window.__parsed = JSON.parse('{"adPlacements":[{}],"videoDetails":{"videoId":"other"}}');
 </script>

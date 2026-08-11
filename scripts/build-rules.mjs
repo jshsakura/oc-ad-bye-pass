@@ -65,9 +65,62 @@ const NEVER_BLOCK = new Set([
 ])
 
 const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/
+/** Bare IPs and numeric junk sneak into hosts-format lists; they are not domains. */
+const IP_LIKE = /^[0-9.]+$/
+
+/**
+ * Networks that must survive the cut no matter what.
+ *
+ * The lists hold far more domains than the ruleset can (170k against 30k), so
+ * something has to be dropped — and dropping the wrong thing is silent. These
+ * are the handful whose absence would make the whole exercise pointless.
+ */
+const ALWAYS_KEEP = [
+  'doubleclick.net',
+  'googlesyndication.com',
+  'googleadservices.com',
+  'google-analytics.com',
+  'googletagmanager.com',
+  'googletagservices.com',
+  'adservice.google.com',
+  'amazon-adsystem.com',
+  'adnxs.com',
+  'rubiconproject.com',
+  'pubmatic.com',
+  'criteo.com',
+  'criteo.net',
+  'taboola.com',
+  'outbrain.com',
+  'scorecardresearch.com',
+  'quantserve.com',
+  'moatads.com',
+  'adsrvr.org',
+  'casalemedia.com',
+  'openx.net',
+  'smartadserver.com',
+  'teads.tv',
+  'zedo.com',
+  'bluekai.com',
+  'demdex.net',
+  'everesttech.net',
+  'branch.io',
+  'appsflyer.com',
+  'adjust.com',
+  'mixpanel.com',
+  'hotjar.com',
+  'fullstory.com',
+  'segment.io',
+  'crwdcntrl.net',
+  'rlcdn.com',
+  'agkn.com',
+  'sharethrough.com',
+  'yieldmo.com',
+  '2mdn.net',
+]
 
 function isUsableDomain(domain) {
   if (!DOMAIN_RE.test(domain)) return false
+  if (IP_LIKE.test(domain)) return false
   if (domain.length > 253) return false
   // Drop it if the domain or any parent of it is on the protected list
   const parts = domain.split('.')
@@ -134,7 +187,7 @@ async function fetchList(source) {
 
 // ---------------------------------------------------------------------------
 
-const block = new Map() // domain → thirdPartyOnly
+const block = new Map() // domain -> { thirdPartyOnly, sources }
 const allow = new Set()
 const stats = []
 
@@ -155,9 +208,17 @@ for (const source of SOURCES) {
     counts[parsed.kind] = (counts[parsed.kind] ?? 0) + 1
 
     if (parsed.kind === 'block') {
-      // Never weaken an existing unconditional block to third-party only
       const existing = block.get(parsed.domain)
-      block.set(parsed.domain, existing === false ? false : (parsed.thirdParty ?? false))
+      if (existing) {
+        // Never weaken an existing unconditional block to third-party only
+        existing.thirdPartyOnly = existing.thirdPartyOnly && (parsed.thirdParty ?? false)
+        existing.sources.add(source.name)
+      } else {
+        block.set(parsed.domain, {
+          thirdPartyOnly: parsed.thirdParty ?? false,
+          sources: new Set([source.name]),
+        })
+      }
     } else if (parsed.kind === 'allow') {
       allow.add(parsed.domain)
     }
@@ -172,19 +233,122 @@ for (const source of SOURCES) {
 // Remove exception-listed domains from the block set
 for (const domain of allow) block.delete(domain)
 
-const domains = [...block.entries()].sort(([a], [b]) => a.localeCompare(b))
-const dropped = Math.max(0, domains.length - MAX_RULES)
-const kept = domains.slice(0, MAX_RULES)
+// --- Preprocessing ----------------------------------------------------------
+//
+// Everything below exists because the lists hold ~170k domains and a static
+// ruleset holds 30k. Cutting is unavoidable; cutting badly is silent, and a
+// ruleset that looks like 30,000 rules of protection while missing
+// doubleclick.net is worse than no ruleset at all.
 
-const rules = kept.map(([domain, thirdPartyOnly], index) => ({
-  id: index + 1,
-  priority: 1,
-  action: { type: 'block' },
-  condition: {
-    urlFilter: `||${domain}^`,
-    ...(thirdPartyOnly ? { domainType: 'thirdParty' } : {}),
-  },
-}))
+// 1. Pinned networks are added whether or not any list names them.
+//    googlesyndication.com, for one, never appears as a bare domain — the lists
+//    carry pagead2.googlesyndication.com and friends instead. Checking that
+//    pinned entries survived the cut therefore missed it entirely: it was never
+//    a candidate.
+for (const domain of ALWAYS_KEEP) {
+  if (!block.has(domain)) {
+    block.set(domain, { thirdPartyOnly: false, sources: new Set(['pinned']) })
+  } else {
+    block.get(domain).thirdPartyOnly = false
+  }
+}
+
+// 2. Subsumption. `||example.com^` already matches every subdomain, so a rule
+//    for ads.example.com next to one for example.com is dead weight. Dropping
+//    the covered ones is free — identical blocking, a fraction of the rules —
+//    and it is where nearly all of the compression comes from.
+//
+//    A third-party-only parent does not cover an unconditional child, so those
+//    are kept.
+function coveringAncestor(domain) {
+  const labels = domain.split('.')
+  for (let i = 1; i < labels.length - 1; i++) {
+    const parent = labels.slice(i).join('.')
+    const info = block.get(parent)
+    if (info && !info.thirdPartyOnly) return parent
+  }
+  return null
+}
+
+let subsumed = 0
+for (const domain of [...block.keys()]) {
+  const info = block.get(domain)
+  const parent = coveringAncestor(domain)
+  if (!parent) continue
+  // Keep an unconditional child under a conditional parent; otherwise it is covered.
+  if (info.thirdPartyOnly || !block.get(parent).thirdPartyOnly) {
+    block.delete(domain)
+    subsumed++
+  }
+}
+
+// 3. Rank whatever is still over budget by how much evidence there is that a
+//    domain matters:
+//      1. pinned networks
+//      2. how many independent lists name it (agreement is the best signal)
+//      3. shorter names first — ad networks sit at the registrable domain, the
+//         long tail is per-campaign subdomains
+function rank([domain, info]) {
+  const pinned = ALWAYS_KEEP.includes(domain) ? 0 : 1
+  return [pinned, -info.sources.size, domain.length, domain]
+}
+
+const domains = [...block.entries()].sort((a, b) => {
+  const ra = rank(a)
+  const rb = rank(b)
+  for (let i = 0; i < ra.length; i++) {
+    if (ra[i] < rb[i]) return -1
+    if (ra[i] > rb[i]) return 1
+  }
+  return 0
+})
+
+// 4. Batch into `requestDomains` rules.
+//
+//    One rule per domain wastes the budget: 30,000 rules buys 30,000 domains,
+//    and the lists hold 166,000. But `condition.requestDomains` takes an array
+//    and, like `||domain^`, matches subdomains — so one rule can carry
+//    thousands of domains and the whole set fits with rules to spare.
+//
+//    Batched rather than one giant rule so a single bad entry cannot invalidate
+//    everything, and so the ruleset stays diffable.
+const BATCH_SIZE = 1000
+
+const dropped = Math.max(0, domains.length - MAX_RULES * BATCH_SIZE)
+const kept = domains.slice(0, MAX_RULES * BATCH_SIZE)
+
+// Loud, not silent: a pinned network missing here means the ranking is broken.
+const keptSet = new Set(kept.map(([domain]) => domain))
+const missingPinned = ALWAYS_KEEP.filter((d) => !keptSet.has(d))
+if (missingPinned.length) {
+  console.error(`pinned domains missing from the ruleset: ${missingPinned.join(', ')}`)
+  process.exit(1)
+}
+
+function batch(items, size) {
+  const out = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
+
+const unconditional = kept.filter(([, info]) => !info.thirdPartyOnly).map(([domain]) => domain)
+const thirdPartyOnly = kept.filter(([, info]) => info.thirdPartyOnly).map(([domain]) => domain)
+
+let nextId = 1
+const rules = [
+  ...batch(unconditional, BATCH_SIZE).map((requestDomains) => ({
+    id: nextId++,
+    priority: 1,
+    action: { type: 'block' },
+    condition: { requestDomains },
+  })),
+  ...batch(thirdPartyOnly, BATCH_SIZE).map((requestDomains) => ({
+    id: nextId++,
+    priority: 1,
+    action: { type: 'block' },
+    condition: { requestDomains, domainType: 'thirdParty' },
+  })),
+]
 
 mkdirSync(OUT_DIR, { recursive: true })
 writeFileSync(path.join(OUT_DIR, 'ads.json'), JSON.stringify(rules))
@@ -192,14 +356,19 @@ writeFileSync(path.join(OUT_DIR, 'ads.json'), JSON.stringify(rules))
 const meta = {
   generatedFrom: stats,
   totalDomains: domains.length,
+  blockedDomains: kept.length,
   ruleCount: rules.length,
+  batchSize: BATCH_SIZE,
   droppedForLimit: dropped,
+  subsumedBySubdomainRule: subsumed,
   maxRules: MAX_RULES,
+  pinned: ALWAYS_KEEP.length,
   neverBlock: [...NEVER_BLOCK],
 }
 writeFileSync(path.join(OUT_DIR, 'ads.meta.json'), JSON.stringify(meta, null, 2) + '\n')
 
-console.log(`\n${domains.length} domains -> ${rules.length} rules`)
+console.log(`\n${subsumed} domains covered by a parent rule and dropped`)
+console.log(`${domains.length} domains -> ${rules.length} rules (batched ${BATCH_SIZE}/rule)`)
 if (dropped > 0) {
   // Truncating silently would leave you believing everything is blocked
   console.log(`${dropped} dropped for exceeding the ${MAX_RULES} rule limit`)

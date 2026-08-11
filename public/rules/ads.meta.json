@@ -1,0 +1,61 @@
+{
+  "generatedFrom": [
+    {
+      "name": "AdGuard DNS filter",
+      "license": "GPL-3.0",
+      "url": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt",
+      "counts": {
+        "block": 153624,
+        "allow": 11,
+        "cosmetic": 0,
+        "unsupported": 724,
+        "skipped": 177
+      }
+    },
+    {
+      "name": "EasyList",
+      "license": "GPL-3.0 / CC BY-SA 3.0",
+      "url": "https://easylist.to/easylist/easylist.txt",
+      "counts": {
+        "block": 45671,
+        "allow": 1,
+        "cosmetic": 10778,
+        "unsupported": 6869,
+        "skipped": 263
+      }
+    },
+    {
+      "name": "EasyPrivacy",
+      "license": "GPL-3.0 / CC BY-SA 3.0",
+      "url": "https://easylist.to/easylist/easyprivacy.txt",
+      "counts": {
+        "block": 46543,
+        "allow": 4,
+        "cosmetic": 32,
+        "unsupported": 9072,
+        "skipped": 53
+      }
+    }
+  ],
+  "totalDomains": 166682,
+  "blockedDomains": 166682,
+  "ruleCount": 168,
+  "batchSize": 1000,
+  "droppedForLimit": 0,
+  "subsumedBySubdomainRule": 3753,
+  "maxRules": 30000,
+  "pinned": 40,
+  "neverBlock": [
+    "youtube.com",
+    "youtu.be",
+    "ytimg.com",
+    "googlevideo.com",
+    "google.com",
+    "accounts.google.com",
+    "gstatic.com",
+    "github.com",
+    "githubusercontent.com",
+    "cloudflare.com",
+    "paypal.com"
+  ]
+}

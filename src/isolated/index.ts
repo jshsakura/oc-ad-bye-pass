@@ -1,6 +1,15 @@
-// ISOLATED world entry point — document_start.
-// Reads the settings, builds the stylesheet, hands the settings to the MAIN
-// world, and watches the DOM.
+// ISOLATED world entry point — document_start, on every site.
+//
+// Two things decide what this file does, both settled on the first line:
+//
+//   Which site is this?   YouTube gets all three layers. Everywhere else gets
+//                         generic cosmetic rules and nothing more — no player
+//                         logic, no app-banner observer, no anti-nag handling.
+//   Are we welcome here?  If the user switched us off for this host we detach
+//                         completely: no stylesheet, no observers, no timers.
+//
+// Injecting on every site means every cost is paid on every page, so the
+// off-YouTube path deliberately stays as thin as it can be.
 
 import { buildStylesheet, resolveRules, type ResolvedRules } from '../shared/filterlist.ts'
 import { loadCache, watchCache, type FilterCache } from '../shared/cache.ts'
@@ -11,6 +20,7 @@ import {
   watchSettings,
   type Settings,
 } from '../shared/settings.ts'
+import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { handleAdState } from './player.ts'
 import {
@@ -22,23 +32,66 @@ import {
 import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
 import { injectMainWorldFallback } from './injectMain.ts'
 
+const SITE: SiteKind = siteKindFor(location.hostname)
+const IS_YOUTUBE = SITE === 'youtube'
+
 let settings: Settings = DEFAULT_SETTINGS
 let rules: ResolvedRules = resolveRules(null, [])
+/** Set once the user's allowlist is known. Until then we act, per the block-first rule. */
+let standDown = false
+
+/** Everything that has to be undone when the user switches this site off. */
+let domObserver: MutationObserver | null = null
+let sweepTimer: ReturnType<typeof setInterval> | null = null
+let playerObserver: MutationObserver | null = null
+let observedPlayer: Element | null = null
 
 // --- Applying settings ---------------------------------------------------------
 
+function detach() {
+  applyStylesheet('')
+  stopWatchingAppBannerHints()
+  domObserver?.disconnect()
+  domObserver = null
+  playerObserver?.disconnect()
+  playerObserver = null
+  observedPlayer = null
+  if (sweepTimer !== null) {
+    clearInterval(sweepTimer)
+    sweepTimer = null
+  }
+  // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
+  if (IS_YOUTUBE) {
+    sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune })
+  }
+}
+
 function recompute(cache: FilterCache | null) {
+  standDown = isAllowlisted(location.hostname, settings.allowlist)
+  const active = settings.enabled && !standDown
+
+  if (!active) {
+    detach()
+    return
+  }
+
+  attachObservers()
+
   const remote = settings.listEnabled && cache?.url === settings.listUrl ? cache.list : null
   rules = resolveRules(remote, parseCustomRules(settings.customRules))
-  applyStylesheet(settings.enabled ? buildStylesheet(rules, settings.toggles) : '')
-  sendConfigToMain({
-    enabled: settings.enabled,
-    videoAds: settings.toggles.videoAds,
-    prunePaths: rules.prune,
-  })
-  // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet — its own observer handles it.
-  if (settings.enabled && settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
-  else stopWatchingAppBannerHints()
+  applyStylesheet(buildStylesheet(rules, settings.toggles, SITE))
+
+  if (IS_YOUTUBE) {
+    sendConfigToMain({
+      enabled: true,
+      videoAds: settings.toggles.videoAds,
+      prunePaths: rules.prune,
+    })
+    // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.
+    if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
+    else stopWatchingAppBannerHints()
+  }
+
   sweep()
 }
 
@@ -51,8 +104,6 @@ async function refresh() {
 // --- Watching the DOM ----------------------------------------------------------
 
 let scheduled = false
-let playerObserver: MutationObserver | null = null
-let observedPlayer: Element | null = null
 
 function schedule() {
   if (scheduled) return
@@ -73,8 +124,24 @@ function attachPlayerObserver() {
   observedPlayer = player
 }
 
+/**
+ * Off YouTube there is nothing for a sweep to do — the work it drives (close
+ * buttons, the ad-block nag, the player fallback) is all YouTube-specific, and
+ * hiding is handled by the stylesheet alone. So no observer and no timer run
+ * there: on every other site this extension costs one stylesheet and no
+ * recurring work at all.
+ */
+function attachObservers() {
+  if (!IS_YOUTUBE || domObserver) return
+
+  domObserver = new MutationObserver(schedule)
+  domObserver.observe(document.documentElement, { childList: true, subtree: true })
+  // Safety net for state changes the observer missed. It is a handful of querySelector calls, so the cost is nil.
+  sweepTimer = setInterval(sweep, 3000)
+}
+
 function sweep() {
-  if (!settings.enabled) return
+  if (!IS_YOUTUBE || !settings.enabled || standDown) return
   attachPlayerObserver()
 
   let acted = 0
@@ -89,31 +156,29 @@ function onBannerRemoved(count: number) {
 }
 
 function start() {
-  // Only does anything when the Safari MAIN world registration failed. Called
-  // before everything else — layer 1 installed late is layer 1 wasted.
-  // (This call disappears from the Chrome bundle.)
-  injectMainWorldFallback()
+  if (IS_YOUTUBE) {
+    // Only does anything when the Safari MAIN world registration failed. Called
+    // before everything else — layer 1 installed late is layer 1 wasted.
+    // (This call disappears from the Chrome bundle.)
+    injectMainWorldFallback()
 
-  // Block first, ask the settings later. The smart app banner is drawn during
-  // parsing, so waiting for a storage round trip (hundreds of ms) is already too
-  // late. Someone who turned the extension off briefly seeing less is better
-  // than someone who left it on seeing the banner — the same principle as the
-  // stylesheet default.
-  watchAppBannerHints(onBannerRemoved)
+    // Block first, ask the settings later. The smart app banner is drawn during
+    // parsing, so waiting for a storage round trip (hundreds of ms) is already
+    // too late. Someone who turned the extension off briefly seeing less is
+    // better than someone who left it on seeing the banner — the same principle
+    // as the stylesheet default.
+    watchAppBannerHints(onBannerRemoved)
 
-  new MutationObserver(schedule).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-  })
-  // Safety net for state changes the observer missed. It is a handful of querySelector calls, so the cost is nil.
-  setInterval(sweep, 3000)
+    attachObservers()
 
-  // Tell the background to refresh if the rules are stale. This stands in for a
-  // periodic alarm — the background enforces its own minimum interval, so
-  // calling on every page load is fine.
-  requestFreshFilters()
+    // Tell the background to refresh if the rules are stale. This stands in for
+    // a periodic alarm — the background enforces its own minimum interval, so
+    // calling on every page load is fine.
+    requestFreshFilters()
 
-  listenForPruneReports((count) => bumpStats({ pruned: count }))
+    listenForPruneReports((count) => bumpStats({ pruned: count }))
+  }
+
   watchSettings((next) => {
     settings = next
     void loadCache().then(recompute)

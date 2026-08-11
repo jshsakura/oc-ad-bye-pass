@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_SETTINGS,
   DEFAULT_STATS,
@@ -10,24 +10,36 @@ import {
   type Stats,
   type ToggleKey,
 } from '../shared/settings.ts'
+import {
+  addToAllowlist,
+  hostFromUrl,
+  isAllowlisted,
+  removeFromAllowlist,
+  siteKindFor,
+} from '../shared/sites.ts'
 import { Switch } from '../ui/Switch.tsx'
-import { formatCount, isYouTubeUrl } from '../ui/format.ts'
+import { formatCount } from '../ui/format.ts'
+
+/** Toggles that only mean anything on YouTube. */
+const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
 export function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
-  const [onYouTube, setOnYouTube] = useState<boolean | null>(null)
+  const [host, setHost] = useState<string | null>(null)
+  const [tabReady, setTabReady] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     void loadSettings().then(setSettings)
     void loadStats().then(setStats)
-    // The activeTab permission lets us see the URL of the tab that was active
-    // when the popup opened — and nothing else. We never request the broader
-    // tabs permission, so other tabs' URLs stay invisible to us.
+    // activeTab lets us read the URL of the tab that was active when the popup
+    // opened, and nothing else. We never request the broader tabs permission.
     void chrome.tabs
       .query({ active: true, currentWindow: true })
-      .then(([tab]) => setOnYouTube(isYouTubeUrl(tab?.url)))
-      .catch(() => setOnYouTube(null))
+      .then(([tab]) => setHost(hostFromUrl(tab?.url)))
+      .catch(() => setHost(null))
+      .finally(() => setTabReady(true))
   }, [])
 
   const update = (patch: Partial<Settings>) => {
@@ -35,8 +47,29 @@ export function App() {
     void saveSettings(patch).then(setSettings)
   }
 
-  const toggle = (key: ToggleKey, value: boolean) =>
-    update({ toggles: { ...settings.toggles, [key]: value } })
+  const siteOff = useMemo(
+    () => (host ? isAllowlisted(host, settings.allowlist) : false),
+    [host, settings.allowlist],
+  )
+  const onYouTube = host ? siteKindFor(host) === 'youtube' : false
+
+  const toggleSite = (on: boolean) => {
+    if (!host) return
+    update({
+      allowlist: on
+        ? removeFromAllowlist(host, settings.allowlist)
+        : addToAllowlist(host, settings.allowlist),
+    })
+  }
+
+  const visibleToggles = TOGGLE_META.filter((meta) => {
+    if (showAll) return true
+    // Lead with what applies here; the rest is one click away.
+    return onYouTube ? YOUTUBE_KEYS.includes(meta.key) : meta.key === 'genericAds'
+  })
+
+  const blocked = stats.pruned + stats.skipped
+  const active = settings.enabled && !siteOff
 
   return (
     <div className="popup">
@@ -44,7 +77,7 @@ export function App() {
         <span className="mark" />
         <h1>
           OC Ad Bye-Pass
-          <span className="sub"> · 유튜브 전용</span>
+          <span className="sub"> · {blocked > 0 ? `${formatCount(blocked)}건 차단` : '광고 차단'}</span>
         </h1>
         <Switch
           label="전체 켜기/끄기"
@@ -53,10 +86,33 @@ export function App() {
         />
       </header>
 
-      {onYouTube === false && (
-        <div className="banner">지금 탭은 유튜브가 아닙니다. 이 확장은 유튜브에서만 동작합니다.</div>
+      {!settings.enabled && (
+        <div className="banner warn">전체가 꺼져 있습니다. 어느 사이트에서도 동작하지 않습니다.</div>
       )}
-      {!settings.enabled && <div className="banner warn">차단이 꺼져 있습니다.</div>}
+
+      {settings.enabled && tabReady && (
+        <div className={`site${siteOff ? ' off' : ''}`}>
+          <div className="site-text">
+            <span className="site-host">{host ?? '이 페이지'}</span>
+            <span className="site-state">
+              {!host
+                ? '확장이 동작할 수 없는 페이지입니다'
+                : siteOff
+                  ? '이 사이트에서 꺼져 있습니다'
+                  : onYouTube
+                    ? '유튜브 — 3계층 전부 동작 중'
+                    : '광고망 차단 + 광고 자리 숨김'}
+            </span>
+          </div>
+          {host && (
+            <Switch
+              label={`${host} 에서 켜기/끄기`}
+              checked={!siteOff}
+              onChange={toggleSite}
+            />
+          )}
+        </div>
+      )}
 
       <div className="stats">
         <div className="stat">
@@ -70,8 +126,8 @@ export function App() {
       </div>
 
       <div className="list">
-        {TOGGLE_META.map((meta) => (
-          <div key={meta.key} className={`row${settings.enabled ? '' : ' disabled'}`}>
+        {visibleToggles.map((meta) => (
+          <div key={meta.key} className={`row${active ? '' : ' disabled'}`}>
             <span className="text">
               <span className="label">{meta.label}</span>
               <span className="hint">{meta.hint}</span>
@@ -82,14 +138,17 @@ export function App() {
             <Switch
               label={meta.label}
               checked={settings.toggles[meta.key]}
-              disabled={!settings.enabled}
-              onChange={(v) => toggle(meta.key, v)}
+              disabled={!active}
+              onChange={(v) => update({ toggles: { ...settings.toggles, [meta.key]: v } })}
             />
           </div>
         ))}
       </div>
 
       <div className="foot">
+        <button onClick={() => setShowAll((v) => !v)}>
+          {showAll ? '이 사이트 항목만' : '전체 항목 보기'}
+        </button>
         <button onClick={() => chrome.runtime.openOptionsPage()}>규칙·고급 설정</button>
       </div>
     </div>

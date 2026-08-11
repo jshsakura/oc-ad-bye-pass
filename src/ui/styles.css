@@ -168,6 +168,41 @@ a {
   flex: none;
 }
 
+/* Current-site card — the escape hatch, so it sits above everything else */
+.site {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+
+.site-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.site-host {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-state {
+  display: block;
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+.site.off .site-host {
+  color: var(--fg-muted);
+  text-decoration: line-through;
+}
+
 /* Switch */
 .switch {
   position: relative;
@@ -327,6 +362,43 @@ textarea:focus {
 
 .status.error {
   color: var(--accent);
+}
+
+.hosts {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hosts li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
+
+.hosts li + li {
+  border-top: 1px solid var(--line);
+}
+
+.hosts li span {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+input[type='text'] {
+  flex: 1;
+  min-width: 160px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
 }
 
 .kv {

@@ -3,12 +3,15 @@
 import type { RuntimeRequest } from '../shared/messages.ts'
 import {
   STATS_KEY,
+  loadSettings,
   loadStats,
   seedDefaultSettings,
+  watchSettings,
   type Stats,
 } from '../shared/settings.ts'
 import { currentStatus, updateFilters } from './updater.ts'
 import { ensureMainWorldScript } from './mainWorld.ts'
+import { syncAllowlistRules } from './network.ts'
 
 // --- Badge ---------------------------------------------------------------------
 
@@ -71,11 +74,16 @@ chrome.runtime.onInstalled.addListener(async () => {
 
   void updateFilters(true)
   void loadStats().then(setBadge)
+  void loadSettings().then((settings) => syncAllowlistRules(settings.allowlist))
 })
 
+// Dynamic rules survive restarts, but the allowlist is the source of truth —
+// re-deriving them on every startup costs one storage read and removes a whole
+// class of "they drifted apart somehow" bugs.
 chrome.runtime.onStartup.addListener(() => {
   void updateFilters()
   void loadStats().then(setBadge)
+  void loadSettings().then((settings) => syncAllowlistRules(settings.allowlist))
 })
 
 // Only does anything on Safari (it vanishes from the Chrome bundle entirely).
@@ -83,6 +91,10 @@ chrome.runtime.onStartup.addListener(() => {
 // failed once gets another chance whenever the worker wakes for any reason.
 // If it is already registered this costs a single lookup.
 void ensureMainWorldScript()
+
+watchSettings((settings) => {
+  void syncAllowlistRules(settings.allowlist)
+})
 
 chrome.runtime.onMessage.addListener((message: RuntimeRequest, _sender, sendResponse) => {
   switch (message?.type) {

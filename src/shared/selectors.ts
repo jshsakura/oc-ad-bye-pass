@@ -77,6 +77,29 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
     'ytd-action-companion-ad-renderer',
     'ytd-companion-slot-renderer',
   ],
+  // The only group applied outside YouTube. Everything here has to be safe on
+  // *any* site, so it is deliberately small and anchored on ad-network markers
+  // rather than on words like "banner" that ordinary pages also use.
+  //
+  // Most display ads are fetched from an ad network, so the network layer (DNR)
+  // already stops them and the slot collapses on its own. These selectors are
+  // for the leftovers: markup the page itself ships.
+  genericAds: [
+    'ins.adsbygoogle',
+    '.adsbygoogle',
+    '[id^="google_ads_iframe"]',
+    '[id^="div-gpt-ad"]',
+    '[id^="taboola-"]',
+    'iframe[src*="googlesyndication.com"]',
+    'iframe[src*="doubleclick.net"]',
+    'iframe[src*="adservice.google"]',
+    'iframe[src*="amazon-adsystem.com"]',
+    'iframe[id^="google_ads"]',
+    '[data-ad-client]',
+    '[data-ad-slot]',
+    '[aria-label="Advertisement"]',
+    '[aria-label="광고"]',
+  ],
   antiAdblockNag: [
     'ytd-enforcement-message-view-model',
     'ytd-popup-container:has(ytd-enforcement-message-view-model)',

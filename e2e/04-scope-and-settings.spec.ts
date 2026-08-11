@@ -28,25 +28,37 @@ async function writeSettings(
   )
 }
 
-test.describe('범위 — 유튜브 밖에서는 아무것도 하지 않는다', () => {
-  test('다른 사이트에는 콘텐츠 스크립트가 주입되지 않는다', async ({ context }) => {
+test.describe('범위 — 유튜브 밖에서는 필요한 것만 한다', () => {
+  test('MAIN world 훅은 유튜브 밖으로 나가지 않는다', async ({ context }) => {
     await installOtherSiteFixture(context)
     const page = await context.newPage()
     await page.goto(OTHER_SITE_URL)
 
-    // Neither layer fires — JSON.parse is untouched and ad selectors do not apply
-    expect(await layer1Active(page), 'MAIN world 훅이 걸리면 안 된다').toBe(false)
-    expect(await layer2Active(page), '광고 숨김 규칙이 적용되면 안 된다').toBe(false)
+    // Layer 1 rewrites JSON.parse. There is no reason for that to run on a
+    // bank's website, so the MAIN world script stays matched to YouTube only —
+    // even though the ISOLATED one now runs everywhere.
+    expect(await layer1Active(page), '다른 사이트에서 JSON.parse 가 후킹되면 안 된다').toBe(false)
     expect(await lateParseHasAds(page)).toBe(true)
   })
 
-  test('유튜브에서 쓰는 셀렉터라도 다른 사이트에서는 숨기지 않는다', async ({ context }) => {
+  test('유튜브 전용 셀렉터는 다른 사이트로 새지 않는다', async ({ context }) => {
     await installOtherSiteFixture(context)
     const page = await context.newPage()
     await page.goto(OTHER_SITE_URL)
 
+    // ytd-* would never match here anyway; the point is that they are not even
+    // emitted, so the stylesheet stays small on every page on the web.
+    expect(await layer2Active(page), '유튜브 셀렉터가 나가면 안 된다').toBe(false)
     await expect(page.locator('#masthead-ad')).toBeVisible()
-    await expect(page.locator('ytd-ad-slot-renderer')).toBeVisible()
+  })
+
+  test('범용 광고 자리는 다른 사이트에서도 숨긴다', async ({ context }) => {
+    await installOtherSiteFixture(context)
+    const page = await context.newPage()
+    await page.goto(OTHER_SITE_URL)
+
+    await expect(page.locator('#generic-ad'), '광고망 마커가 붙은 자리').toBeHidden()
+    await expect(page.locator('#real-content'), '본문은 그대로여야 한다').toBeVisible()
   })
 })
 

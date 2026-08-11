@@ -2,31 +2,47 @@
   "manifest_version": 3,
   "name": "OC Ad Bye-Pass",
   "version": "0.1.0",
-  "description": "유튜브에서만 동작하는 광고 차단기. 다른 사이트에는 일절 개입하지 않습니다.",
+  "description": "광고 차단기. 유튜브는 응답 단계에서 광고를 막고, 다른 사이트는 광고망 요청을 차단합니다.",
   "minimum_chrome_version": "120",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "activeTab"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "declarativeNetRequest"
+  ],
   "host_permissions": [
     "https://raw.githubusercontent.com/*",
     "https://gist.githubusercontent.com/*"
   ],
-  "optional_host_permissions": ["https://*/*"],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
-      "js": ["main.js"],
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://*.youtube-nocookie.com/*"
+      ],
+      "js": [
+        "main.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN",
       "all_frames": true,
       "match_about_blank": false
     },
     {
-      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
-      "js": ["isolated.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "isolated.js"
+      ],
       "run_at": "document_start",
       "world": "ISOLATED",
       "all_frames": true,
@@ -40,5 +56,14 @@
   "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ads",
+        "enabled": true,
+        "path": "rules/ads.json"
+      }
+    ]
   }
 }
