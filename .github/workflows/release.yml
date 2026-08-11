@@ -4,7 +4,7 @@
 # `releases/latest/download/<name>.zip`, so the asset names below are a contract
 # — rename one and every download button on the page 404s.
 #
-#   oc-ad-bye-pass-chrome.zip  Chrome · Edge
+#   oc-ad-bye-pass-desktop.zip  Chrome · Edge
 #   oc-ad-bye-pass-orion.zip   Orion (iOS · macOS). No declarativeNetRequest —
 #                              Orion refused the Chrome package outright.
 
@@ -77,10 +77,10 @@ jobs:
 
       - name: zip 으로 묶기
         run: |
-          (cd dist && zip -qr ../oc-ad-bye-pass-chrome.zip .)
+          (cd dist && zip -qr ../oc-ad-bye-pass-desktop.zip .)
           (cd dist-orion && zip -qr ../oc-ad-bye-pass-orion.zip .)
           ls -lh ./*.zip
-          unzip -l oc-ad-bye-pass-chrome.zip
+          unzip -l oc-ad-bye-pass-desktop.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -108,7 +108,7 @@ jobs:
 
             ## Chrome · Edge
 
-            1. `oc-ad-bye-pass-chrome.zip` 을 받아 압축을 풉니다.
+            1. `oc-ad-bye-pass-desktop.zip` 을 받아 압축을 풉니다.
             2. `chrome://extensions` 를 엽니다.
             3. 우측 상단 **개발자 모드**를 켭니다.
             4. **압축해제된 확장 프로그램을 로드**를 눌러 압축 푼 폴더를 선택합니다.

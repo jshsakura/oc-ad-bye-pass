@@ -155,9 +155,17 @@ test('사이트가 WebKit 에서 오류 없이 뜨고, 브라우저 언어를 �
       const context = await browser.newContext({ locale })
       const page = await context.newPage()
       const errors: string[] = []
-      page.on('pageerror', (e) => errors.push(String(e)))
+      // Anything the page itself gets wrong counts. What does not is the call to
+      // api.github.com for the version — GitHub rate-limits by IP and a CI
+      // runner shares its address with the world, so a 403 there says nothing
+      // about this page. The page already treats that call as optional; the test
+      // has to as well, or the release breaks on somebody else's quota.
+      const ours = (text: string) => !text.includes('api.github.com')
+      page.on('pageerror', (e) => {
+        if (ours(String(e))) errors.push(String(e))
+      })
       page.on('console', (m) => {
-        if (m.type() === 'error') errors.push(m.text())
+        if (m.type() === 'error' && ours(m.text())) errors.push(m.text())
       })
 
       await page.goto(`http://127.0.0.1:${port}/`)

@@ -811,20 +811,38 @@
     </ol>
 
     <div class="note" lang="ko">
+      <p><strong>명령 한 줄로 받아서 풀 수도 있습니다.</strong> 고정된 위치에 풀고, 크롬에
+        붙여넣을 경로를 찍어줍니다. 업데이트도 같은 명령을 다시 돌리면 됩니다.</p>
+      <p>Windows (PowerShell)<br>
+        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code></p>
+      <p>macOS · Linux<br>
+        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code></p>
+    </div>
+
+    <div class="note" lang="ko">
       <p><strong>압축을 푼 폴더는 그대로 두셔야 합니다.</strong></p>
       <p>크롬이 그 폴더를 계속 참조하면서 확장을 실행하기 때문에, 폴더를 지우거나 다른 곳으로 옮기면 확장이 곧바로 멈춥니다.</p>
       <p>다운로드 폴더는 피해 주세요.<br>나중에 정리하다가 실수로 지우기 쉬운 자리입니다.</p>
     </div>
+    <div class="note" lang="en">
+      <p><strong>Or take it in one line.</strong> It unpacks to a fixed location and prints the
+        path to paste into Chrome. Run the same command again to update.</p>
+      <p>Windows (PowerShell)<br>
+        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code></p>
+      <p>macOS · Linux<br>
+        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code></p>
+    </div>
+
     <div class="note" lang="en">
       <p><strong>Leave the unzipped folder where it is.</strong></p>
       <p>Chrome keeps reading that folder to run the extension. Delete it or move it and the extension stops immediately.</p>
       <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
-    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-chrome.zip" id="dl-chrome" data-size="1.5MB">
+    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-desktop.zip" id="dl-chrome" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · CHROME
-      <span class="what">oc-ad-bye-pass-chrome.zip · 1.5MB</span>
+      <span class="what">oc-ad-bye-pass-desktop.zip · 1.5MB</span>
     </a>
   </div>
 
@@ -1275,7 +1293,7 @@
       const base = 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download';
       for (const [id, name] of [
         ['dl-orion', 'oc-ad-bye-pass-orion.zip'],
-        ['dl-chrome', 'oc-ad-bye-pass-chrome.zip'],
+        ['dl-chrome', 'oc-ad-bye-pass-desktop.zip'],
       ]) {
         const a = document.getElementById(id);
         if (!a) continue;
