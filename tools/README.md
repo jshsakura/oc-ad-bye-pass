@@ -15,7 +15,13 @@ A stale Downloads-folder bookmark makes every file install fail
 sitting in iCloud Drive that has not been fetched to the device fails the same
 way a broken package does.
 
-So install this first.
+**Try clearing Orion's cache first.** On 2026-08-11 that is what finally worked
+on the device, after removing-and-reinstalling and the open-then-close-the-sheet
+trick had each worked only sometimes. A cached copy of the previously downloaded
+zip looks like the likely culprit, which is why it comes back with every new
+version fetched from the same URL.
+
+If that does not do it, install this.
 
 - **It installs** → the installer works right now. The problem is our package,
   and it is worth reading the manifest diff between the version that worked and
