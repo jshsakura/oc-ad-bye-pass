@@ -21,10 +21,40 @@
 Chrome 웹스토어에는 올리지 않는다 (유튜브 전용 차단기는 심사 리스크가 크고, Chrome 은
 스토어 밖 `.crx` 설치를 막아뒀다). 압축해제 로드로 쓴다.
 
-1. [Releases](../../releases) 에서 zip 을 받아 압축을 푼다
-2. `chrome://extensions` 를 연다
-3. 우측 상단 **개발자 모드**를 켠다
-4. **압축해제된 확장 프로그램을 로드** → 압축 푼 폴더 선택
+**압축 풀기까지는 명령어 한 줄로 끝난다.** 최신 zip 을 받아 고정된 위치에 풀고,
+크롬에 붙여넣을 경로를 찍어준다 (윈도우는 탐색기로 열고 클립보드에도 복사한다).
+
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex
+```
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash
+```
+
+그다음은 크롬에서 직접 해야 한다. **이 4단계는 자동화할 방법이 없다** — 크롬은 웹에서
+`chrome://extensions` 로 이동하는 것도, 개발자 모드를 켜는 것도 막아뒀다.
+
+1. 주소창에 `chrome://extensions` 입력
+2. 우측 상단 **개발자 모드** 켜기
+3. **압축해제된 확장 프로그램을 로드** → 위에서 찍어준 폴더 선택
+
+명령어를 쓰기 싫으면 [사이트](https://adbyepass.opencourse.kr)나
+[Releases](../../releases) 에서 zip 을 받아 직접 풀어도 된다. 단 **푼 폴더를 지우면
+확장이 죽는다** — 크롬이 그 폴더를 계속 참조한다. 다운로드 폴더에 풀지 말 것.
+
+설치 스크립트가 고정 위치를 쓰는 이유가 이것이다.
+
+| OS | 설치 위치 |
+|---|---|
+| Windows | `%LOCALAPPDATA%\OcAdByePass` |
+| macOS | `~/Library/Application Support/OcAdByePass` |
+| Linux | `~/.local/share/oc-ad-bye-pass` |
+
+코드가 바뀌었을 때는 **같은 명령을 다시 돌리고** `chrome://extensions` 에서 새로고침만
+누르면 된다. 경로가 그대로라 다시 로드할 필요가 없다.
 
 ### Safari (macOS · iOS)
 
@@ -180,15 +210,54 @@ grep -c registerContentScripts dist/background.js   # 0 이어야 한다
 
 ### Xcode 프로젝트 만들기
 
-**macOS + Xcode 가 필요하다.** 맥이 없으면 GitHub Actions 의 `macos-latest` 러너에서
-같은 명령을 돌리면 된다.
+맥이 있으면 `npm run safari:xcode` 한 줄이다. 없으면
+**`.github/workflows/safari.yml`** 이 `macos-latest` 러너에서 같은 일을 한다.
 
-```bash
-npm run safari:xcode
+이 워크플로는 두 단계로 나뉜다.
+
+| 단계 | 언제 도나 | 무엇을 확인하나 |
+|---|---|---|
+| 변환 검증 | **항상** | Linux CI 가 절대 못 보는 것 — 우리 매니페스트가 실제로 Safari 확장으로 변환되고 빌드가 통과하는가 |
+| 서명·IPA | 서명 secrets 가 있을 때만 | Ad Hoc 서명 → `.ipa` + `manifest.plist` |
+
+secrets 가 없으면 1단계까지만 돌고 **성공으로 끝난다.** 그게 정상이다.
+필요한 secrets 목록은 워크플로 파일 맨 위에 적어뒀다.
+
+### 아이폰에 설치하기 — `adbyepass.opencourse.kr`
+
+**iOS 는 확장을 웹에서 못 깐다.** 확장을 담은 앱을 깔아야 하고, 그 앱을 웹에서
+설치하는 유일한 길이 `itms-services://` OTA 다. OTA 는 HTTPS 를 요구한다 — 그
+종단이 [adbyepass.opencourse.kr](https://adbyepass.opencourse.kr) 이다.
+
+```
+GitHub Actions (macos)          홈서버
+  dist-safari/                    /srv/compose/adbyepass     nginx :30130
+    → Xcode 변환                  ← deploy.sh 가 산출물 복사
+    → Ad Hoc 서명 → .ipa                    │
+    → artifact                     cloudflared 터널
+                                            │
+                              https://adbyepass.opencourse.kr
+                                   /ota/manifest.plist  ← 아이폰 사파리가 여는 것
+                                   /ota/*.ipa
+                                   /filters/youtube.json
+                                   /dl/*.zip
 ```
 
-`xcrun safari-web-extension-converter` 가 `dist-safari/` 를 읽어 `safari/` 에 Xcode
-프로젝트를 만든다. 이후 서명·설치는 Xcode 쪽 얘기다.
+배포는 서버에서:
+
+```bash
+/srv/compose/adbyepass/deploy.sh     # 빌드 → 사이트로 복사
+gh run download -n safari-ios -D .   # IPA 를 받아왔다면 ota/ 에 풀고 다시 deploy.sh
+```
+
+**이 호스트에는 Cloudflare Access 를 걸면 안 된다.** OTA 설치는 Safari 가 아니라
+iOS 시스템이 받아가서 Access 쿠키를 안 들고 간다. 걸어두면 안내 페이지는 열리는데
+설치만 조용히 실패한다. 그래서 공개이고, 올라가는 것도 전부 공개해도 되는 것뿐이다
+(필터 리스트는 이미 GitHub 에 공개돼 있고, Ad Hoc IPA 는 등록된 UDID 에서만 실행된다).
+
+`manifest.plist` 는 `scripts/ota-manifest.mjs` 가 만든다. iOS 는 이게 틀리면
+"앱을 설치할 수 없습니다" 한 줄만 보여주고 이유를 안 알려주므로, 까다로운 조건 셋을
+그 파일 주석에 적어뒀다 (HTTPS · Content-Type · bundle-identifier 일치).
 
 ### 알려진 제약
 
