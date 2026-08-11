@@ -16,6 +16,23 @@ export const NS = 'oc-ad-bye-pass'
  */
 export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
 
+/**
+ * "The user is leaving", passed from MAIN to ISOLATED as a DOM event.
+ *
+ * Background playback swallows `visibilitychange` with stopImmediatePropagation
+ * so the page never pauses itself. That flag lives on the event rather than on a
+ * world, and both worlds share one listener list per target — so it silenced the
+ * extension's own listener too, and picture-in-picture, which waits for exactly
+ * that event, never heard the user leave. Two features on by default, one
+ * quietly cancelling the other.
+ *
+ * So MAIN re-announces it under a private name after swallowing it. A DOM event
+ * rather than postMessage because it has to arrive on the same tick: iOS stops
+ * running the page within a frame of the app going away, and a message that
+ * lands in a later task lands after everything is over.
+ */
+export const LEAVING_EVENT = 'oc-ad-bye-pass:leaving'
+
 /** The minimum the MAIN world actually needs to know. */
 export interface MainConfig {
   enabled: boolean

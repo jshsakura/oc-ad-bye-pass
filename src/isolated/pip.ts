@@ -24,6 +24,9 @@
 // one and is what Chrome implements; WebKit has its own
 // `webkitSetPresentationMode`, and on iPhone that is the only one there is.
 
+import { LEAVING_EVENT } from '../shared/messages.ts'
+import { reportDiagnostics } from './diagnostics.ts'
+
 const BUTTON_ID = 'oc-abp-pip'
 
 interface WebkitVideo extends HTMLVideoElement {
@@ -68,6 +71,10 @@ function returningSignals(): [EventTarget, string][] {
 function leavingSignals(): [EventTarget, string][] {
   return [
     [document, 'visibilitychange'],
+    // The same news under our own name, sent by src/main/backgroundPlay.ts after
+    // it swallows the real event. Without this the two features cancel out: the
+    // swallow silences this world's listeners too, and both are on by default.
+    [document, LEAVING_EVENT],
     [window, 'pagehide'],
     [window, 'blur'],
     [document, 'freeze'],
@@ -150,7 +157,10 @@ async function enterPip(video: WebkitVideo, quiet = false): Promise<void> {
   if (typeof video.webkitEnterFullscreen === 'function') {
     try {
       video.webkitEnterFullscreen()
-      say('전체화면으로 넘겼습니다 — 이 상태로 홈으로 나가면 작은 창이 됩니다')
+      say(
+        '전체화면으로 넘겼습니다 — 이 상태로 홈으로 나가면 작은 창이 됩니다 ' +
+          '(설정 → 일반 → 그림 속 그림이 켜져 있어야 합니다)',
+      )
       return
     } catch (e) {
       say(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)
@@ -273,6 +283,7 @@ function sweep(): void {
   ensureButton(video)
 }
 
+/** Read back by src/isolated/diagnostics.ts, which has its own copy of the name. */
 const AUTO_ATTR = 'data-oc-abp-autopip'
 
 export function shouldRestoreInline(state: {
@@ -308,58 +319,97 @@ export function shouldAutoPip(state: {
  * the event, before any promise, any timer, any lookup that can be deferred.
  * This is the whole reason automatic PiP is a separate path from the button.
  */
-function attemptSync(video: WebkitVideo): boolean {
+type Attempt = 'called' | 'threw' | 'no-entry'
+
+function attemptSync(video: WebkitVideo): Attempt {
   try {
     if (typeof video.webkitSetPresentationMode === 'function') {
+      // One call, and no reading back. `webkitPresentationMode` is updated
+      // asynchronously — the button path waits PRESENTATION_SETTLE_MS before
+      // trusting it — so a read on this tick always says `inline`, including
+      // when the request was accepted. This used to read it anyway and
+      // "escalate" to fullscreen on `inline`, which meant a granted PiP was
+      // immediately overridden by a fullscreen request.
       video.webkitSetPresentationMode('picture-in-picture')
-
-      // On iPhone that call is refused for an inline video — measured on the
-      // device: leaving the app while playing inline does nothing, leaving it
-      // while the video is fullscreen puts it in a small window every time.
-      // That is iOS's own automatic PiP, and it only applies to the fullscreen
-      // presentation mode. So if we are not already there, go there: it is the
-      // state from which the system does the rest.
-      if (video.webkitPresentationMode === 'inline') {
-        video.webkitSetPresentationMode('fullscreen')
-      }
       engagedByUs = true
-      return true
+      return 'called'
     }
     if (typeof video.requestPictureInPicture === 'function') {
       // Fires the request now; its promise settles later, which is fine — the
       // browser has already been told.
       void video.requestPictureInPicture().catch(() => {})
       engagedByUs = true
-      return true
+      return 'called'
     }
   } catch {
-    // Refused. The retry below gets another go if the page is still running.
+    // Taken and refused, which is a different thing from there being nothing to
+    // call. The panel keeps them apart because they need opposite fixes.
+    return 'threw'
   }
-  return false
+  return 'no-entry'
 }
+
+/**
+ * Everything that happened at the moment nobody can watch, written where it
+ * survives.
+ *
+ * An attribute, synchronously, because iOS is about to stop running this page: a
+ * storage write started here would never flush, while an attribute is still on
+ * the element when the page comes back.
+ *
+ * Every path writes one, including the ones that decide to do nothing. Silence
+ * used to mean four different things — the handler never ran, it ran on a signal
+ * that fires before the page is hidden, there was no video, the video was
+ * paused — and the first of those is a bug in this extension while the rest are
+ * not. A panel that cannot tell them apart sends the reader after the wrong one.
+ */
+function record(signal: string, outcome: string): void {
+  document.documentElement.setAttribute(AUTO_ATTR, `${signal}:${outcome}`)
+}
+
+/** One hand-over per departure, however many signals announce it. */
+let handedOver = false
 
 /**
  * Hand the video over when the tab goes away.
  *
- * Four signals, not one. visibilitychange is the documented route and the one
- * that fires on a tab switch; pagehide and blur arrive in cases where it does
- * not, and freeze is what iOS sends when it is about to stop the page
- * altogether. They overlap, and overlapping is the point — the cost of a second
- * attempt is nothing, and the cost of missing the only signal that fired is the
- * feature.
+ * Several signals, not one, and they overlap on purpose — the cost of a second
+ * attempt is nothing, the cost of missing the only one that fired is the
+ * feature. What each is worth, measured rather than assumed:
+ *
+ *   visibilitychange  the documented route, and the only one that is reliably
+ *                     hidden by the time it fires. Background playback swallows
+ *                     the real one, so it also arrives under our own name.
+ *   pagehide          not swallowed, and hidden by the time it lands
+ *   blur              fires before the page is hidden, so the guard below turns
+ *                     it away. Kept for the record it leaves, not for the work
+ *                     it does — ungating it would float a window when someone
+ *                     merely tapped the address bar.
+ *   freeze            does not exist in WebKit. Harmless on Chromium, inert on
+ *                     the phone this was written for.
  */
-function onLeaving(): void {
-  const video = playerVideo()
-  if (!shouldAutoPip({ hidden: document.hidden, video })) return
-  if (!video) return
+function onLeaving(event: Event): void {
+  if (handedOver) return
+  const signal = event.type
 
-  document.documentElement.setAttribute(AUTO_ATTR, 'tried')
-  const started = attemptSync(video)
+  const video = playerVideo()
+  if (!video) return record(signal, 'skip:no-video')
+  if (!document.hidden) return record(signal, 'skip:not-hidden')
+  if (!shouldAutoPip({ hidden: document.hidden, video })) return record(signal, 'skip:paused')
+
+  const attempt = attemptSync(video)
+  handedOver = true
+  // The mode read here is the one from before the call — WebKit updates it
+  // later — so it says what we were leaving from, not what came of it. What came
+  // of it is answered on the way back, by onReturning.
+  record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
 
   // WebKit can accept the call, fire its event, and open nothing. If the page is
-  // still running — a tab switch rather than a trip to the home screen — these
-  // get another go. If it is not running, nothing here happens and the
-  // synchronous attempt above was the only shot, which is why it comes first.
+  // still running — a tab switch rather than a trip to the home screen — this
+  // gets another go, and can fall back to the system's own fullscreen player,
+  // which carries a PiP control. On a real home press none of it runs: iOS
+  // suspends the page within a frame, which is why the synchronous attempt above
+  // is the one that matters.
   let tries = 0
   const retry = setInterval(() => {
     tries += 1
@@ -371,10 +421,14 @@ function onLeaving(): void {
       clearInterval(retry)
       return
     }
-    if (!attemptSync(video) && !started && typeof video.webkitEnterFullscreen === 'function') {
-      // Last resort: the system's own fullscreen player carries a PiP control.
+    if (attemptSync(video) === 'called' && video.webkitPresentationMode === 'picture-in-picture') {
+      clearInterval(retry)
+      return
+    }
+    if (tries >= 2 && typeof video.webkitEnterFullscreen === 'function') {
       try {
         video.webkitEnterFullscreen()
+        record(signal, `fullscreen-fallback:from-${video.webkitPresentationMode ?? 'unknown'}`)
       } catch {
         /* nothing left to try */
       }
@@ -392,8 +446,24 @@ function onLeaving(): void {
  * who moved it.
  */
 function onReturning(): void {
+  handedOver = false
   const video = playerVideo()
   if (!video) return
+
+  // Close the record before anything here changes the mode. What the system did
+  // while the app was away is readable only in this instant: the next lines put
+  // the video back inline, and then it looks like nothing ever happened.
+  const record = document.documentElement.getAttribute(AUTO_ATTR)
+  if (record && !record.includes('|')) {
+    document.documentElement.setAttribute(
+      AUTO_ATTR,
+      `${record}|back:${video.webkitPresentationMode ?? 'unknown'}`,
+    )
+    // The page is running again, so this write survives — and the panel is about
+    // to be opened by someone who just watched it not work.
+    reportDiagnostics()
+  }
+
   if (!shouldRestoreInline({
     visible: !document.hidden,
     engagedByUs,

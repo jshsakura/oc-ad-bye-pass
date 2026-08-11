@@ -1,9 +1,9 @@
 {
   "name": "oc-ad-bye-pass",
   "private": true,
-  "version": "0.10.4",
+  "version": "0.10.5",
   "type": "module",
-  "description": "\uad11\uace0 \ucc28\ub2e8 \ud655\uc7a5 (MV3) \u2014 Chrome \u00b7 Edge \u00b7 Orion",
+  "description": "광고 차단 확장 (MV3) — Chrome · Edge · Orion",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "vite build && node scripts/build-content.mjs",

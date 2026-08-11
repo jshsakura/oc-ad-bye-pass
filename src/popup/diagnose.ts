@@ -35,6 +35,8 @@ export interface PageFacts {
   pip: 'webkit' | 'standard' | 'none'
   fullscreenFallback: boolean
   visibilityState: string
+  presentationMode: string
+  autoPip: string | null
   userAgent: string
 }
 
@@ -76,6 +78,46 @@ export async function collect(): Promise<Report> {
   }
 }
 
+const AUTO_PIP_OUTCOMES: Record<string, string> = {
+  called: '호출 수락',
+  threw: '호출 거절',
+  'no-entry': '진입점 없음',
+  'fullscreen-fallback': '전체화면 폴백',
+  'skip:no-video': '비디오 없음 — 넘어감',
+  'skip:not-hidden': '아직 안 숨겨짐 — 넘어감',
+  'skip:paused': '재생 중이 아님 — 넘어감',
+}
+
+/**
+ * The automatic hand-over to a floating window, in words.
+ *
+ * src/isolated/pip.ts records it as `<신호>:<결과>`, plus `|back:<모드>` once the
+ * user is back. The distinctions are the point, because they need opposite
+ * fixes:
+ *
+ *   no record         nothing ran. Either the listener is not there or something
+ *                     swallowed the event before it — a bug on our side.
+ *   넘어감             the handler ran and declined, which is usually correct.
+ *                     `아직 안 숨겨짐` is what blur looks like and is expected.
+ *   호출 수락 · 복귀 시 inline
+ *                     WebKit took the call and did nothing — the shape of a
+ *                     missing user gesture, and not something code can fix.
+ *   호출 수락 · 복귀 시 picture-in-picture
+ *                     it worked.
+ */
+function describeAutoPip(record: string | null): string {
+  if (!record) return '나갔다 온 기록이 없습니다'
+  const [attempt = '', back] = record.split('|')
+  const [signal = '?', ...rest] = attempt.split(':')
+  const outcome = rest.join(':')
+  // `<결과>:from-<모드>` for the paths that called something; a bare key otherwise.
+  const [key = '', from] = outcome.split(':from-')
+  const parts = [signal, AUTO_PIP_OUTCOMES[key] ?? AUTO_PIP_OUTCOMES[outcome] ?? outcome]
+  if (from) parts.push(`나갈 때 ${from}`)
+  if (back) parts.push(`복귀 시 ${back.slice('back:'.length)}`)
+  return parts.join(' · ')
+}
+
 /** The report as text, for pasting into a message. */
 export function format(report: Report): string {
   const { extension: x, page } = report
@@ -94,6 +136,8 @@ export function format(report: Report): string {
       `비디오: ${page.videos}개`,
       `PiP: ${page.pip === 'none' ? '없음' : page.pip}`,
       `전체화면 폴백: ${page.fullscreenFallback ? '있음' : '없음'}`,
+      `표시 모드: ${page.presentationMode}`,
+      `자동 PiP: ${describeAutoPip(page.autoPip)}`,
       `문서 상태: ${page.visibilityState}`,
     )
   } else {

@@ -11,7 +11,12 @@
 // One slot, last writer wins. On a phone there is one page in front of you; on a
 // desktop the timestamp and URL say which one this was.
 
+import { INSTALLED_ATTR } from '../shared/messages.ts'
+
 const KEY = 'diagnostics'
+
+/** Written by src/isolated/pip.ts when the user leaves with a video playing. */
+const AUTO_PIP_ATTR = 'data-oc-abp-autopip'
 
 export interface PageDiagnostics {
   at: number
@@ -21,12 +26,17 @@ export interface PageDiagnostics {
   pip: 'webkit' | 'standard' | 'none'
   fullscreenFallback: boolean
   visibilityState: string
+  /** What the video is doing now: inline, fullscreen or picture-in-picture. */
+  presentationMode: string
+  /** What the automatic hand-over managed last time, or null if it never ran. */
+  autoPip: string | null
   userAgent: string
 }
 
 interface WebkitVideo extends HTMLVideoElement {
   webkitSetPresentationMode?: unknown
   webkitEnterFullscreen?: unknown
+  webkitPresentationMode?: string
 }
 
 export function reportDiagnostics(): void {
@@ -34,7 +44,7 @@ export function reportDiagnostics(): void {
   const facts: PageDiagnostics = {
     at: Date.now(),
     url: location.href,
-    layer1: document.documentElement.hasAttribute('data-oc-ad-bye-pass'),
+    layer1: document.documentElement.hasAttribute(INSTALLED_ATTR),
     videos: document.querySelectorAll('video').length,
     pip:
       typeof video?.webkitSetPresentationMode === 'function'
@@ -44,7 +54,39 @@ export function reportDiagnostics(): void {
           : 'none',
     fullscreenFallback: typeof video?.webkitEnterFullscreen === 'function',
     visibilityState: document.visibilityState,
+    presentationMode: video?.webkitPresentationMode ?? 'inline',
+    autoPip: document.documentElement.getAttribute(AUTO_PIP_ATTR),
     userAgent: navigator.userAgent,
   }
   void chrome.storage.local.set({ [KEY]: facts })
+
+  if (!facts.layer1) watchForLayer1()
+}
+
+let waitingForLayer1: MutationObserver | null = null
+
+/**
+ * Report again if layer 1 turns up late.
+ *
+ * Not installed yet is not the same as failed. The covering path for browsers
+ * that ignore `world: "MAIN"` injects main.js as a <script>, and that load races
+ * the storage read this report is written after — so on the one browser the
+ * panel exists for, a working layer 1 can be reported as missing.
+ *
+ * A false "아니오" here is worse than no answer at all: it is the answer the next
+ * hour is spent on. So the marker is watched for, once, and the report rewritten
+ * when it appears.
+ */
+function watchForLayer1(): void {
+  if (waitingForLayer1) return
+  waitingForLayer1 = new MutationObserver(() => {
+    if (!document.documentElement.hasAttribute(INSTALLED_ATTR)) return
+    waitingForLayer1?.disconnect()
+    waitingForLayer1 = null
+    reportDiagnostics()
+  })
+  waitingForLayer1.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: [INSTALLED_ATTR],
+  })
 }

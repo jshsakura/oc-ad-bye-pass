@@ -123,3 +123,43 @@ test('다시 끄면 버튼이 사라진다', async ({ context, background }) => 
 // visible 로 유지하고, Page.setWebLifecycleState · Emulation.setPageVisibility ·
 // setFocusEmulationEnabled 어느 것도 document.hidden 을 움직이지 못한다.
 // 판단 부분은 tests/auto-pip.test.ts 가 함수로 덮는다.
+
+// 배경 재생이 자동 PiP 를 죽이던 자리.
+//
+// MAIN 세계가 visibilitychange 를 stopImmediatePropagation 으로 삼키면 그 표시는
+// 이벤트에 붙지 세계에 붙지 않는다. 두 세계가 대상마다 리스너 목록 하나를
+// 공유하므로, 페이지를 막으려던 한 줄이 우리 쪽 리스너까지 같이 막았다.
+// 둘 다 기본값이 켜짐이라, 기본 설정에서 자동 PiP 는 신호를 못 받고 있었다.
+//
+// 두 기능을 따로 시험하면 둘 다 통과한다. 이 시험만 둘을 같이 켠다.
+//
+// 이벤트는 페이지에서 직접 쏜다. 헤드리스 크로미움은 탭을 뒤로 보내도 문서를
+// 숨김으로 만들지 않아서, 탭 전환으로는 visibilitychange 자체가 나지 않는다.
+// 숨김이 아니니 핸들러는 넘어가겠지만, 넘어갔다는 기록이 남는다는 것이
+// 곧 신호가 도착했다는 뜻이고 그것이 이 시험이 지키려는 것이다.
+test('배경 재생을 켜도 나가는 신호가 PiP 까지 온다', async ({ context }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await expect(page.locator(BUTTON)).toBeVisible()
+
+  await page.evaluate(() => {
+    // 페이지가 이 이벤트를 못 보는 것도 함께 확인한다 — 삼키기를 없애는 것으로
+    // 이 시험을 통과시키면 배경 재생이 죽는다.
+    let pageSaw = false
+    const spy = () => {
+      pageSaw = true
+    }
+    document.addEventListener('visibilitychange', spy)
+    document.dispatchEvent(new Event('visibilitychange'))
+    document.removeEventListener('visibilitychange', spy)
+    if (pageSaw) throw new Error('페이지가 visibilitychange 를 봤다 — 배경 재생이 안 걸렸다')
+  })
+
+  await expect
+    .poll(
+      () => page.evaluate(() => document.documentElement.getAttribute('data-oc-abp-autopip')),
+      { message: '나가는 신호가 PiP 핸들러까지 오지 않았다' },
+    )
+    .toContain('leaving')
+})

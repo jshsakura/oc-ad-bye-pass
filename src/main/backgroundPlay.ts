@@ -22,13 +22,26 @@
 // or a server. It is the same thing a desktop browser does by simply having
 // tabs.
 
+import { LEAVING_EVENT } from '../shared/messages.ts'
+
 const state = { on: false }
 
 let installed = false
 
-/** Swallow the event before the page's own handler sees it. */
+/**
+ * Swallow the event before the page's own handler sees it — and tell our own
+ * side, which was being swallowed with it.
+ *
+ * stopImmediatePropagation sets a flag on the event, not on a world. Both worlds
+ * share one listener list per target, so this call also silenced the ISOLATED
+ * world's listener — the one picture-in-picture uses to notice the user leaving.
+ * Background playback was switching off automatic PiP, and both are on by
+ * default.
+ */
 function swallow(event: Event): void {
-  if (state.on) event.stopImmediatePropagation()
+  if (!state.on) return
+  event.stopImmediatePropagation()
+  document.dispatchEvent(new CustomEvent(LEAVING_EVENT))
 }
 
 function install(): void {

@@ -58,7 +58,13 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   {
     key: 'pictureInPicture',
     label: '화면 속 화면(PiP)',
-    hint: '아이폰에서 나가도 계속 들으려면 이쪽입니다 — 작은 창은 시스템이 유지합니다',
+    // Not "나가면 알아서 작은 창이 됩니다". iPhone WebKit only leaves the inline
+    // presentation on a real tap — webkitSetPresentationMode called from a
+    // visibilitychange handler carries no user gesture and quietly does nothing.
+    // The system does the rest, but only from fullscreen, and only if the user
+    // has Settings › General › Picture in Picture switched on. So the button is
+    // the feature, and the copy says so rather than promising the platform's part.
+    hint: '버튼을 눌러 전체화면으로 보낸 뒤 나가면 작은 창이 됩니다',
   },
 ]
 
