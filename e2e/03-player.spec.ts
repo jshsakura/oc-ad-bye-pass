@@ -115,3 +115,47 @@ test('대조군 — 확장이 없으면 광고는 스킵되지도, 감기지도 
     await plain.close()
   }
 })
+
+test('모바일 플레이어의 건너뛰기도 누른다 — 이름이 달라도', async ({ context }) => {
+  // What was on the phone: an ad playing, a 건너뛰기 button sitting on screen,
+  // and layer 3 doing nothing. Its selectors were the desktop player's, and
+  // mobile web neither uses those class names nor always sets `ad-showing` —
+  // so it never even believed an ad was on.
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+
+  // Built with DOM calls rather than innerHTML: YouTube sends Trusted Types, and
+  // assigning markup as a string throws there — which is also the environment
+  // the real thing runs in.
+  const clicked = page.evaluate(() => {
+    const player = document.createElement('div')
+    player.id = 'oc-mobile-player'
+    player.className = 'html5-video-player'
+
+    const overlay = document.createElement('div')
+    overlay.className = 'ytp-ad-player-overlay'
+    overlay.style.cssText = 'width:120px;height:20px'
+
+    const button = document.createElement('button')
+    button.className = 'ytm-something-else'
+    button.setAttribute('aria-label', '광고 건너뛰기')
+    button.textContent = '건너뛰기'
+    button.style.cssText = 'width:80px;height:30px'
+
+    player.append(overlay, button)
+
+    // The real player keeps its id; this one takes it over so handleAdState
+    // finds a player with no `ad-showing` class and mobile-only markup.
+    document.getElementById('movie_player')?.removeAttribute('id')
+    player.id = 'movie_player'
+    document.body.append(player)
+
+    return new Promise<boolean>((resolve) => {
+      button.addEventListener('click', () => resolve(true))
+      setTimeout(() => resolve(false), 8000)
+    })
+  })
+
+  expect(await clicked, '모바일 건너뛰기 버튼을 못 눌렀다').toBe(true)
+})

@@ -137,10 +137,45 @@ export const BUNDLED_CLICK: string[] = [
 
 /** Skip buttons for ads that got through (playerFallback toggle). */
 export const SKIP_BUTTONS: string[] = [
+  // Desktop player
   '.ytp-ad-skip-button-modern',
   '.ytp-skip-ad-button',
   '.ytp-ad-skip-button',
   '.ytp-ad-survey-answer-text',
+  // Mobile web. The class names are not the desktop ones and the markup moves
+  // between experiments, so this ends with shapes rather than names — a
+  // 건너뛰기 button was sitting on screen, unpressed, while the list above
+  // matched nothing.
+  '.ytm-ad-skip-button',
+  '.ytm-button-renderer[aria-label*="Skip" i]',
+  'button[aria-label*="Skip" i]',
+  'button[class*="skip" i]',
+  '[id*="skip-button" i]',
+]
+
+/**
+ * Text on a skip button, for when the markup gives nothing to match.
+ *
+ * Compared case-insensitively against the element's own text, and only inside
+ * the player while an ad is showing — the words are common enough that matching
+ * them anywhere else would click something else.
+ */
+export const SKIP_LABELS: string[] = ['건너뛰기', 'skip ad', 'skip ads', 'skip']
+
+/**
+ * Signs an ad is playing, beyond the desktop player's `ad-showing` class.
+ *
+ * Mobile does not always set that class, and layer 3 only fires while it
+ * believes an ad is on — so on a phone it was never firing at all.
+ */
+export const AD_STATE_MARKERS: string[] = [
+  '.ad-showing',
+  '.ad-interrupting',
+  '.ytp-ad-player-overlay',
+  '.ytp-ad-player-overlay-layout',
+  '.ytp-ad-badge',
+  '.ytm-ad-badge',
+  'ytm-ad-slot-renderer',
 ]
 
 /**
