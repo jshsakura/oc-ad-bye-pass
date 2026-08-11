@@ -1,0 +1,73 @@
+name: audit
+
+# 진짜 유튜브에 대고 "광고가 아직 보이는가"를 주기적으로 실측한다.
+#
+# 이 확장이 깨지는 방식은 하나뿐이다 — 유튜브가 바뀌는 것. 코드는 그대로인데
+# 어느 날 갑자기 안 막힌다. push 기반 CI 는 이걸 절대 못 잡는다. 아무도 push 를
+# 안 해도 깨지기 때문이다. 그래서 시간이 트리거다.
+#
+# 메인 CI 에 넣지 않는 이유: 실제 네트워크를 타서 느리고, 광고 노출이 지역·시점에
+# 따라 달라진다. 매 push 마다 돌리면 관계없는 PR 이 남의 사정으로 빨개진다.
+
+on:
+  schedule:
+    # 매일 03:00 UTC (한국 정오)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+
+      - name: 광고 누출 실측
+        id: audit
+        continue-on-error: true
+        run: node scripts/audit-ads.mjs --json audit-report.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-report
+          path: audit-report.json
+          retention-days: 30
+
+      # 누출이 있으면 이슈로 알린다. 이미 열려 있으면 댓글만 단다 —
+      # 매일 새 이슈가 쌓이면 아무도 안 본다.
+      - name: 누출을 이슈로 알린다
+        if: steps.audit.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="광고 누출 감지 — 필터 규칙 갱신 필요"
+          body="$(printf '유튜브가 바뀌어서 광고가 새고 있습니다.\n\n실행: %s\n\n```json\n%s\n```\n\n고치는 법: `filters/youtube.json` 의 해당 그룹에 셀렉터를 추가하고 `version` 을 올려 push 하면 됩니다. 재설치는 필요 없습니다.\n' \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "$(cat audit-report.json)")"
+
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+
+      # 리포트가 없거나 스크립트 자체가 터진 경우도 조용히 넘기지 않는다
+      - name: 결과 반영
+        if: steps.audit.outcome == 'failure'
+        run: |
+          echo "광고 누출이 감지되었습니다. 위 이슈를 확인하세요." >&2
+          exit 1

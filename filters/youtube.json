@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube",
-  "version": 2,
-  "updatedAt": "2026-08-10",
+  "version": 3,
+  "updatedAt": "2026-08-11",
   "_readme": [
     "확장이 6시간마다 이 파일을 받아간다. 규칙만 고치면 재설치 없이 반영된다.",
     "번들 기본 규칙(src/shared/selectors.ts)과 합집합으로 병합되므로,",
@@ -36,7 +36,11 @@
         "ytm-promoted-video-renderer",
         "ytm-companion-ad-renderer",
         "ytm-compact-promoted-video-renderer",
-        "ytmusic-statement-banner-renderer"
+        "ytmusic-statement-banner-renderer",
+        "ytd-ads-engagement-panel-content-renderer",
+        "ytd-rich-item-renderer:has(ad-badge-view-model)",
+        "ytd-video-renderer:has(ad-badge-view-model)",
+        "ytd-rich-section-renderer:has(ad-badge-view-model)"
       ],
       "shortsAds": [
         "ytd-reel-video-renderer:has(ytd-ad-slot-renderer)",
