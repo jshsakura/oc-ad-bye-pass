@@ -1,5 +1,5 @@
-// 눈으로 확인할 수 있는 증거를 남긴다. e2e/__screenshots__/ 에 차단 전후가 저장된다.
-// 어설션 대신 산출물을 만드는 테스트라, 실패하지 않고 항상 그림만 남긴다.
+// Leaves evidence you can look at: before and after shots in e2e/__screenshots__/.
+// This test produces an artefact rather than assertions, so it never fails — it just draws.
 
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
@@ -12,7 +12,7 @@ const OUT_DIR = path.resolve(import.meta.dirname, '__screenshots__')
 test('차단 전후 스크린샷을 남긴다', async ({ context }) => {
   mkdirSync(OUT_DIR, { recursive: true })
 
-  // 차단 후 (확장 있음)
+  // After blocking (extension on)
   await installYouTubeFixture(context)
   const blocked = await context.newPage()
   await blocked.setViewportSize({ width: 640, height: 720 })
@@ -21,7 +21,7 @@ test('차단 전후 스크린샷을 남긴다', async ({ context }) => {
   await blocked.locator('#masthead-ad').waitFor({ state: 'hidden' })
   await blocked.screenshot({ path: path.join(OUT_DIR, 'after-blocked.png'), fullPage: true })
 
-  // 차단 전 (확장 없음)
+  // Before blocking (no extension)
   const plain = await chromium.launchPersistentContext('', {
     channel: 'chromium',
     args: LAUNCH_ARGS,

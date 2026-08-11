@@ -1,5 +1,5 @@
-// 3계층 — 1계층이 뚫렸을 때의 폴백.
-// 여기서는 스텁 없이 진짜 미디어 요소의 상태(paused/currentTime/muted)로만 판단한다.
+// Layer 3 — the fallback for when layer 1 was bypassed.
+// Judged purely on a real media element's state (paused/currentTime/muted), no stubs.
 
 import { chromium, type Page } from '@playwright/test'
 import { LAUNCH_ARGS, expect, test } from './fixtures.ts'
@@ -11,7 +11,7 @@ const videoState = (page: Page) =>
     return { currentTime: v.currentTime, duration: v.duration, muted: v.muted, ended: v.ended }
   })
 
-/** 광고 미디어의 메타데이터가 준비될 때까지 기다린다 (duration 이 있어야 감을 수 있다) */
+/** Wait for the ad media's metadata — seeking needs a duration. */
 async function waitForMediaReady(page: Page) {
   await page.waitForFunction(() => {
     const v = document.querySelector<HTMLVideoElement>('#ad-video')
@@ -19,7 +19,7 @@ async function waitForMediaReady(page: Page) {
   })
 }
 
-/** 확장이 다시 훑도록 DOM 을 건드린다 (진짜 유튜브도 재생 중 DOM 이 끊임없이 바뀐다) */
+/** Nudge the DOM so the extension sweeps again (real YouTube mutates constantly during playback). */
 async function nudge(page: Page) {
   await page.evaluate(() => {
     document.getElementById('late-mount')!.appendChild(document.createElement('span'))
@@ -65,7 +65,7 @@ test('광고가 끝나면 음소거를 되돌린다', async ({ context }) => {
   await nudge(page)
   await expect.poll(async () => (await videoState(page)).muted).toBe(true)
 
-  // 광고 종료 = 유튜브가 .ad-showing 을 뗀다
+  // Ad over = YouTube drops .ad-showing
   await page.evaluate(() => document.getElementById('movie_player')!.classList.remove('ad-showing'))
 
   await expect
@@ -86,7 +86,7 @@ test('사용자가 직접 꺼둔 음소거는 건드리지 않는다', async ({ 
 
   await page.evaluate(() => document.getElementById('movie_player')!.classList.remove('ad-showing'))
 
-  // 우리가 음소거한 게 아니므로 광고가 끝나도 그대로 둬야 한다
+  // We did not mute it, so it must stay muted after the ad ends
   await page.waitForTimeout(1000)
   expect((await videoState(page)).muted).toBe(true)
 })

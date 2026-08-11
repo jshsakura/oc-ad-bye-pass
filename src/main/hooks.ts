@@ -1,25 +1,31 @@
-// MAIN world 훅. 유튜브 스크립트보다 먼저, 동기적으로 설치돼야 한다.
+// MAIN world hooks. Must be installed synchronously, before YouTube's scripts.
 //
-// 후킹 지점을 최소로 잡았다 — 건드리는 네이티브가 많을수록 유튜브가 깨질 확률이 올라간다.
+// The set of hook points is kept minimal — every native we touch is another
+// chance to break YouTube.
 //
-//   1) JSON.parse            : 유튜브가 응답 본문을 파싱하는 거의 모든 경로가 여기를 지난다
-//                              (fetch → res.text() → JSON.parse, XHR responseText → JSON.parse,
-//                               인라인 스크립트의 JSON.parse('{...}') 포함).
-//   2) Response.prototype.json: 이것만 JSON.parse 를 거치지 않고 내부에서 파싱한다.
-//   3) 전역 변수 setter       : ytInitialPlayerResponse / ytInitialData 는 인라인 스크립트의
-//                              객체 리터럴이라 파싱 훅에 걸리지 않는다. 첫 재생 광고를 막는
-//                              데 이 훅이 결정적이다.
+//   1) JSON.parse             : nearly every path by which YouTube parses a
+//                               response body goes through here (fetch ->
+//                               res.text() -> JSON.parse, XHR responseText ->
+//                               JSON.parse, and inline JSON.parse('{...}')).
+//   2) Response.prototype.json: the one path that parses internally without
+//                               going through JSON.parse.
+//   3) Global setters         : ytInitialPlayerResponse / ytInitialData arrive
+//                               as object literals in an inline script, so no
+//                               parse hook sees them. This hook is what stops
+//                               the first pre-roll.
 //
-// fetch / XMLHttpRequest 자체는 감싸지 않는다. 위 3개로 이미 덮이고, 요청 계층까지
-// 건드리면 유튜브의 재시도·스트리밍 로직과 부딪힐 수 있다.
+// fetch and XMLHttpRequest themselves are left alone. The three above already
+// cover them, and reaching into the request layer risks colliding with
+// YouTube's own retry and streaming logic.
 
 import { NS, isBridgeMessage, type MainConfig } from '../shared/messages.ts'
 import { BUNDLED_PRUNE } from '../shared/selectors.ts'
 import { pruneAdFields } from './prune.ts'
 
-// 설정이 도착하기 전 기본값은 "차단". MAIN world 는 chrome.storage 를 못 읽어서
-// ISOLATED 가 설정을 넘겨줄 때까지 수백 ms 가 비는데, 그동안 광고가 새는 것보다
-// 확장을 꺼둔 사람이 잠깐 더 차단되는 쪽이 낫다.
+// Until the settings arrive the default is "block". The MAIN world cannot read
+// chrome.storage, so there is a few-hundred-millisecond gap before ISOLATED
+// hands them over. Briefly over-blocking for someone who turned the extension
+// off beats leaking ads to everyone who left it on.
 const config: MainConfig = {
   enabled: true,
   videoAds: true,
@@ -28,7 +34,7 @@ const config: MainConfig = {
 
 const isActive = () => config.enabled && config.videoAds
 
-// --- 통계 보고 (묶어서 보낸다) -------------------------------------------------
+// --- Stats reporting (batched) -------------------------------------------------
 
 let pendingCount = 0
 let pendingSource = ''
@@ -53,13 +59,13 @@ function tryPrune(data: unknown, source: string) {
   try {
     report(pruneAdFields(data, config.prunePaths), source)
   } catch {
-    // 프루닝이 실패해도 페이지는 그대로 굴러가야 한다
+    // A failed prune must never stop the page from working
   }
 }
 
-// --- toString 위장 -------------------------------------------------------------
-// 후킹한 함수를 toString() 하면 원본 네이티브 코드가 보이게 한다.
-// 유튜브의 애드블록 탐지가 흔히 쓰는 확인 방법이다.
+// --- toString disguise ---------------------------------------------------------
+// Make a hooked function report the original native source when stringified.
+// Checking that is a common way ad-block detection sniffs for tampering.
 
 const originals = new WeakMap<object, object>()
 const nativeToString = Function.prototype.toString
@@ -109,7 +115,7 @@ function installResponseJsonHook() {
   Response.prototype.json = disguise(patched, native) as typeof Response.prototype.json
 }
 
-// --- 3) 전역 변수 setter --------------------------------------------------------
+// --- 3) Global setters ---------------------------------------------------------
 
 function guardGlobal(name: string) {
   try {
@@ -131,15 +137,16 @@ function guardGlobal(name: string) {
       },
     })
   } catch {
-    // 유튜브가 이미 non-configurable 로 박아뒀다면 포기한다 — JSON.parse 훅이 남아 있다
+    // If YouTube already pinned it non-configurable, give up — the JSON.parse hook remains
   }
 }
 
-// --- 설정 수신 ------------------------------------------------------------------
+// --- Receiving settings --------------------------------------------------------
 //
-// 페이지 스크립트도 같은 채널에 메시지를 흘릴 수 있다. 최악의 경우 유튜브가 위조 메시지로
-// 차단을 끌 수 있는데, 그건 확장 존재를 이미 안다는 뜻이라 실익이 없어 감수한다.
-// 반대 방향(카운터)은 신뢰하지 않아도 되는 값이라 문제되지 않는다.
+// Page scripts can post on the same channel. Worst case, YouTube forges a
+// message and switches blocking off — but doing so means it already knows the
+// extension is there, so it gains little; that risk is accepted. Traffic the
+// other way (counters) needs no trust, so it poses no problem.
 
 function listenForConfig() {
   window.addEventListener(

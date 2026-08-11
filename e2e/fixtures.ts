@@ -1,7 +1,8 @@
-// 빌드된 dist/ 를 실제 Chromium 에 확장으로 물려서 띄운다.
+// Loads the built dist/ into a real Chromium as an extension.
 //
-// 확장은 persistent context 에서만 로드된다. headless 는 headless-shell 이 아니라
-// 정식 Chromium(channel: 'chromium')의 새 headless 모드를 써야 확장이 동작한다.
+// Extensions only load in a persistent context. Headless has to be full
+// Chromium's new headless mode (channel: 'chromium'), not headless-shell, or
+// extensions do not work at all.
 
 import { existsSync } from 'node:fs'
 import path from 'node:path'
@@ -10,15 +11,15 @@ import { test as base, chromium, type BrowserContext, type Worker } from '@playw
 const EXTENSION_PATH = path.resolve(import.meta.dirname, '..', 'dist')
 
 /**
- * 대조군도 같은 조건에서 돌려야 비교가 성립한다.
- * autoplay 정책을 풀어두는 이유: 3계층이 광고 영상을 실제로 재생/스킵하는지 보려면
- * 사용자 제스처 없이도 play() 가 먹어야 한다.
+ * The control group has to run under identical conditions for the comparison to
+ * mean anything. Autoplay policy is relaxed because checking that layer 3 really
+ * plays and skips an ad requires play() to work without a user gesture.
  */
 export const LAUNCH_ARGS = ['--no-first-run', '--autoplay-policy=no-user-gesture-required']
 
 export interface ExtensionFixtures {
   context: BrowserContext
-  /** 서비스 워커 — chrome.storage 를 직접 조작하거나 통계를 읽을 때 쓴다 */
+  /** The service worker — used to poke chrome.storage directly or read stats. */
   background: Worker
   extensionId: string
 }
@@ -26,7 +27,7 @@ export interface ExtensionFixtures {
 export const test = base.extend<ExtensionFixtures>({
   context: async ({}, use) => {
     if (!existsSync(path.join(EXTENSION_PATH, 'manifest.json'))) {
-      throw new Error(`먼저 빌드해야 한다: npm run build (${EXTENSION_PATH} 없음)`)
+      throw new Error(`build first: npm run build (${EXTENSION_PATH} is missing)`)
     }
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',

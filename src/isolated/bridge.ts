@@ -1,4 +1,4 @@
-// ISOLATED ↔ MAIN, ISOLATED → background 중계.
+// Relay: ISOLATED to and from MAIN, and ISOLATED to the background.
 
 import { NS, isBridgeMessage, type MainConfig, type RuntimeRequest } from '../shared/messages.ts'
 
@@ -18,7 +18,7 @@ export function listenForPruneReports(onPruned: (count: number) => void): void {
   )
 }
 
-// 통계는 묶어서 보낸다. 광고 하나에 메시지 하나씩 보내면 서비스 워커가 계속 깨어난다.
+// Stats are batched. One message per blocked ad would keep waking the service worker.
 let pendingPruned = 0
 let pendingSkipped = 0
 let flushTimer: ReturnType<typeof setTimeout> | null = null
@@ -30,10 +30,10 @@ function flush() {
   pendingPruned = 0
   pendingSkipped = 0
   try {
-    // 서비스 워커가 자고 있거나 확장이 방금 리로드됐으면 그냥 실패한다 — 통계일 뿐이다
+    // If the worker is asleep or the extension just reloaded this simply fails — it's only stats.
     void chrome.runtime.sendMessage(message).catch(() => {})
   } catch {
-    // 컨텍스트 무효화(확장 업데이트 직후) — 무시
+    // Context invalidated (right after an extension update) — ignore.
   }
 }
 
@@ -44,20 +44,20 @@ export function bumpStats(patch: { pruned?: number; skipped?: number }): void {
 }
 
 /**
- * "유튜브 페이지가 열렸다"고 알린다. 백그라운드가 캐시가 낡았을 때만 받아온다.
+ * Signal "a YouTube page opened". The background only fetches if the cache is stale.
  *
- * 주기 알람 대신 이걸 쓰는 이유:
- *   - 유튜브를 안 보는 동안 서비스 워커를 깨울 이유가 없다
- *   - `alarms` 권한이 통째로 필요 없어진다 (설치 경고가 하나 준다)
+ * Why this instead of a periodic alarm:
+ *   - no reason to wake the service worker while nobody is watching YouTube
+ *   - the `alarms` permission disappears entirely (one less install warning)
  *
- * 과하게 때릴 걱정은 없다 — updater 가 30분 최소 간격을 강제하므로, 탭을 백 번
- * 열어도 실제 네트워크 요청은 30분에 한 번이다. force 를 명시적으로 false 로
- * 보내는 게 그래서 중요하다 (백그라운드 기본값은 true 다).
+ * There is no hammering risk: the updater enforces a minimum interval, so a
+ * hundred tab opens still amount to one network request per interval. That is
+ * why `force` is passed explicitly as false — the background defaults it to true.
  */
 export function requestFreshFilters(): void {
   try {
     void chrome.runtime.sendMessage({ type: 'filters:update', force: false }).catch(() => {})
   } catch {
-    // 컨텍스트 무효화 — 무시
+    // Context invalidated — ignore.
   }
 }

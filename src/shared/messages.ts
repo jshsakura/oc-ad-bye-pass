@@ -1,22 +1,22 @@
-// MAIN world ↔ ISOLATED world 통신 프로토콜.
+// Protocol between the MAIN world and the ISOLATED world.
 //
-// MAIN world 는 chrome.* 에 접근할 수 없다. 그래서 설정은 ISOLATED 가 읽어
-// window.postMessage 로 넘겨주고, 프루닝 카운터는 반대 방향으로 올라온다.
-// 페이지 스크립트도 같은 채널을 볼 수 있으므로 ns 로 구분만 하고
-// 신뢰가 필요한 값(예: 설정)은 ISOLATED → MAIN 단방향으로만 흐르게 한다.
+// The MAIN world cannot reach chrome.*, so ISOLATED reads the settings and
+// hands them over via window.postMessage; pruning counts travel back the other
+// way. Page scripts can see the same channel, so `ns` only separates traffic —
+// anything that needs trust flows one way only, ISOLATED to MAIN.
 
 export const NS = 'oc-ad-bye-pass'
 
 /**
- * MAIN world 훅이 설치되면 documentElement 에 붙는 표시.
+ * Marker set on documentElement once the MAIN world hooks are installed.
  *
- * ISOLATED 는 페이지의 window 를 볼 수 없지만 DOM 은 공유한다. 그래서 "1계층이 정말
- * 페이지 컨텍스트에 걸렸는가"를 이 속성 하나로 판정한다 — Safari 에서 MAIN world
- * 등록이 실패했을 때 폴백 주입을 할지 말지가 여기서 갈린다.
+ * ISOLATED cannot see the page's window but does share its DOM, so this one
+ * attribute answers "did layer 1 really attach in the page context?" — which
+ * is what decides whether Safari falls back to script injection.
  */
 export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
 
-/** MAIN world 가 실제로 필요로 하는 최소 설정 */
+/** The minimum the MAIN world actually needs to know. */
 export interface MainConfig {
   enabled: boolean
   videoAds: boolean
@@ -33,7 +33,7 @@ export interface PrunedMessage {
   ns: typeof NS
   type: 'pruned'
   count: number
-  /** 어디서 잘렸는지 — 디버깅용 (json-parse / fetch / xhr / global) */
+  /** Where it was pruned, for debugging (json-parse / fetch / xhr / global). */
   source: string
 }
 
@@ -45,7 +45,7 @@ export function isBridgeMessage(data: unknown): data is BridgeMessage {
   return m.ns === NS && (m.type === 'config' || m.type === 'pruned')
 }
 
-/** 백그라운드 서비스 워커에게 보내는 런타임 메시지 */
+/** Runtime messages sent to the background service worker. */
 export type RuntimeRequest =
   | { type: 'stats:bump'; pruned?: number; skipped?: number }
   | { type: 'filters:update'; force?: boolean }

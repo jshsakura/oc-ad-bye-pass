@@ -1,16 +1,18 @@
-// 번들 기본 규칙 — 설치 직후, 네트워크 없이도 이만큼은 동작한다.
+// Bundled default rules — what works the moment you install, with no network.
 //
-// 원격 필터 리스트(filters/youtube.json)는 이 목록을 "덮어쓰는" 게 아니라
-// 합집합으로 더한다. 그래서 유튜브가 태그를 바꾸면 새 셀렉터를 JSON 에만 추가하면
-// 되고, 여기 남은 옛 셀렉터는 아무것도 매칭하지 않으므로 무해하다.
+// The remote filter list (filters/youtube.json) does not "override" this list,
+// it unions with it. So when YouTube renames a tag you only add the new
+// selector to the JSON; the stale one left here matches nothing and is harmless.
 //
-// 셀렉터는 ReVanced 의 AdsFilter/ShortsFilter 가 쓰는 litho buffer string 을
-// 웹 렌더러 태그로 옮긴 것이다. 예) carousel_ad → ytd-carousel-ad-renderer,
-// statement_banner → ytd-statement-banner-renderer, product_carousel → ytd-merch-shelf-renderer.
+// The selectors are ReVanced's AdsFilter/ShortsFilter litho buffer strings
+// translated to web renderer tags. e.g. carousel_ad -> ytd-carousel-ad-renderer,
+// statement_banner -> ytd-statement-banner-renderer,
+// product_carousel -> ytd-merch-shelf-renderer.
 //
-// 오탐 방지 원칙: 태그명 기준으로만 쓰고 클래스 휴리스틱은 쓰지 않는다.
-// (ReVanced 도 home_video_with_context / related_video_with_context / comment_thread 를
-//  예외로 두고 있다 — 일반 영상 카드를 건드리면 피드가 통째로 사라진다.)
+// Rule against false positives: match on tag names only, never class-name
+// heuristics. (ReVanced makes the same call, excepting home_video_with_context,
+// related_video_with_context and comment_thread — touch an ordinary video card
+// and the whole feed disappears.)
 
 import type { ToggleKey } from './settings.ts'
 
@@ -34,11 +36,11 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
     'ytd-search-pyv-renderer',
     'ytd-video-masthead-ad-v3-renderer',
     'ytd-video-masthead-ad-advertiser-info-renderer',
-    // 광고 카드를 감싼 껍데기까지 지워야 피드에 빈칸이 남지 않는다
+    // Remove the wrapper too, or the feed is left with a gap where the ad was
     'ytd-rich-item-renderer:has(> #content > ytd-ad-slot-renderer)',
     'ytd-rich-section-renderer:has(ytd-statement-banner-renderer)',
     'ytd-rich-section-renderer:has(ytd-brand-video-shelf-renderer)',
-    // 모바일 웹 / 뮤직
+    // Mobile web and Music
     'ytm-promoted-video-renderer',
     'ytm-companion-ad-renderer',
     'ytm-compact-promoted-video-renderer',
@@ -55,7 +57,7 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
     'ytd-product-details-renderer',
     'ytd-engagement-panel-section-list-renderer[target-id="shopping_panel"]',
     'ytmusic-merch-shelf-renderer',
-    // cta_shelf_card — 영상 위에 뜨는 "이 제품 보기" 류 제안
+    // cta_shelf_card — the "see this product" prompts laid over the video
     '.ytp-suggested-action',
   ],
   getPremium: [
@@ -80,35 +82,37 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
     'ytd-popup-container:has(ytd-enforcement-message-view-model)',
     'tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)',
   ],
-  // "YouTube 앱에서 보기" 유도. 모바일 웹(m.youtube.com)에서만 나타난다.
+  // "Open in the YouTube app" nags. Mobile web (m.youtube.com) only.
   //
-  // iOS Safari 의 스마트 앱 배너는 <meta name="apple-itunes-app"> 로 그려지므로
-  // 여기 셀렉터로는 막을 수 없다 — isolated/appbanner.ts 가 태그 자체를 지운다.
-  // 이 그룹이 맡는 건 유튜브가 직접 DOM 에 그리는 배너·토스트·딥링크다.
+  // iOS Safari draws its smart app banner from <meta name="apple-itunes-app">,
+  // so no selector here can touch it — isolated/appbanner.ts removes the tag
+  // itself. This group covers the banners, toasts and deep links YouTube draws
+  // into the DOM on its own.
   //
-  // ⚠ 아래 렌더러 태그는 실기기 확인 전이다. 유튜브 모바일 웹은 실험군에 따라
-  // 태그가 갈리므로, 안 막히는 게 있으면 개발자도구로 태그를 찍어
-  // filters/youtube.json 의 appPromo 그룹에 추가하면 재설치 없이 반영된다.
+  // NOTE: these renderer tags are unverified on a real device. YouTube mobile
+  // web varies by experiment group, so if something slips through, grab the tag
+  // in devtools and add it to the appPromo group in filters/youtube.json — it
+  // lands without a reinstall.
   appPromo: [
     'ytm-app-promo-renderer',
     'ytm-app-promo-toast-renderer',
     'ytm-mobile-topbar-app-promo-renderer',
     'ytm-app-install-banner-renderer',
     'ytd-app-promo-renderer',
-    // 앱 딥링크 — 눌러도 확장이 안 도는 곳으로 나간다
+    // App deep links — tapping one leaves for somewhere the extension cannot run
     'a[href^="youtube://"]',
     'a[href^="vnd.youtube:"]',
   ],
 }
 
-/** 화면에 나타나면 눌러주는 닫기 버튼들 (fullscreenAds 토글에 묶인다) */
+/** Close buttons we press when they appear (tied to the fullscreenAds toggle). */
 export const BUNDLED_CLICK: string[] = [
   '.ytp-ad-overlay-close-button',
   '.ytp-ad-overlay-close-container',
   '.ytp-ad-feedback-dialog-close-button',
 ]
 
-/** 광고가 뚫렸을 때 누를 스킵 버튼 (playerFallback 토글) */
+/** Skip buttons for ads that got through (playerFallback toggle). */
 export const SKIP_BUTTONS: string[] = [
   '.ytp-ad-skip-button-modern',
   '.ytp-skip-ad-button',
@@ -117,12 +121,13 @@ export const SKIP_BUTTONS: string[] = [
 ]
 
 /**
- * 플레이어 응답에서 잘라낼 경로.
- * ReVanced 의 video-ads 패치가 PlayerResponseModel 에서 없애는 것과 같은 필드들이고,
- * AdGuard 의 json-prune 스크립틀릿이 쓰는 목록과도 일치한다.
+ * Paths to strip from the player response.
  *
- * frameworkUpdates 는 일부러 뺐다 — 광고와 무관한 UI 갱신(구독/재생목록 상태)이
- * 같이 실려 오기 때문에 자르면 유튜브가 깨진다.
+ * The same fields ReVanced's video-ads patch removes from PlayerResponseModel,
+ * and the same list AdGuard's json-prune scriptlet uses.
+ *
+ * frameworkUpdates is deliberately absent: UI updates unrelated to ads
+ * (subscription and playlist state) ride along in it, so cutting it breaks YouTube.
  */
 export const BUNDLED_PRUNE: string[] = [
   'adPlacements',

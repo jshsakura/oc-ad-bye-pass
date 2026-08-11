@@ -1,13 +1,13 @@
-// public/icons/icon{16,48,128}.png 을 생성한다.
-// 이미지 라이브러리 없이 zlib 만으로 RGBA PNG 를 직접 인코딩한다.
-// 디자인: 유튜브 레드 원 + 흰 재생 삼각형 + 대각선 취소선.
+// Generates public/icons/icon{16,48,128}.png.
+// Encodes RGBA PNGs directly using nothing but zlib — no image library.
+// Design: a YouTube-red circle crossed by a white diagonal (a "blocked" sign).
 
 import { deflateSync } from 'node:zlib'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 const OUT_DIR = join(dirname(import.meta.dirname), 'public', 'icons')
-const SS = 4 // 슈퍼샘플링 배수 (안티에일리어싱)
+const SS = 4 // Supersampling factor (anti-aliasing)
 
 const CRC_TABLE = (() => {
   const t = new Int32Array(256)
@@ -55,7 +55,7 @@ function encodePng(width, height, rgba) {
   ])
 }
 
-/** 점과 선분 사이 거리 (취소선 두께 판정용) */
+/** Distance from a point to a line segment — used to give the slash its width. */
 function distToSegment(px, py, ax, ay, bx, by) {
   const dx = bx - ax
   const dy = by - ay
@@ -67,9 +67,9 @@ const RED = [230, 33, 23]
 const WHITE = [255, 255, 255]
 
 /**
- * 단위 좌표(0..1)에서의 색. null 이면 투명.
- * 16px 에서도 뭉개지지 않아야 해서 형태를 최대한 단순하게 잡았다 —
- * 유튜브 레드 원 + 흰 대각선(금지 표시).
+ * Colour at unit coordinates (0..1), or null for transparent.
+ * The shape is deliberately minimal so it survives at 16px — a YouTube-red
+ * circle with a white diagonal.
  */
 function sample(x, y) {
   if (Math.hypot(x - 0.5, y - 0.5) > 0.47) return null
@@ -98,7 +98,7 @@ function render(size) {
       const n = SS * SS
       const i = (y * size + x) * 4
       if (a > 0) {
-        // 커버리지로 나눠 색을 구하고, 알파는 전체 샘플 대비 비율
+        // Divide colour by coverage; alpha is the share of samples that hit
         const cov = a / 255
         rgba[i] = Math.round(r / cov)
         rgba[i + 1] = Math.round(g / cov)

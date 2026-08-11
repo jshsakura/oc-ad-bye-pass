@@ -6,9 +6,10 @@ import { writeManifest } from './scripts/manifest.mjs'
 
 const target = resolveTarget()
 
-// vite 가 public/manifest.json 을 복사한 "뒤에" 타깃별 manifest 로 덮어쓴다.
-// closeBundle 이라 watch 재빌드에서도 매번 다시 쓰인다 — dev 중에 Safari 매니페스트가
-// Chrome 정본으로 되돌아가는 사고를 막는다.
+// Overwrites the copied manifest with the target-specific one *after* vite has
+// copied public/manifest.json. Being in closeBundle means it reruns on every
+// watch rebuild too, so a Safari manifest never silently reverts to the Chrome
+// original mid-development.
 const manifestPlugin = {
   name: 'oc-manifest',
   closeBundle() {
@@ -16,10 +17,10 @@ const manifestPlugin = {
   },
 }
 
-// 팝업 / 옵션 페이지(React)만 담당한다.
-// content script 와 service worker 는 scripts/build-content.mjs 가 esbuild 로
-// 별도 IIFE 번들을 만든다 — 1계층 훅은 유튜브 스크립트보다 먼저 "동기적으로"
-// 실행돼야 하므로 ESM 로더로 감싸면 안 된다.
+// Handles only the popup and options pages (React).
+// The content scripts and service worker are built separately as IIFE bundles
+// by scripts/build-content.mjs — the layer 1 hooks must run **synchronously**
+// ahead of YouTube's scripts, so they cannot be wrapped in an ESM loader.
 export default defineConfig({
   plugins: [react(), manifestPlugin],
   define: {

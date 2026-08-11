@@ -1,28 +1,31 @@
-// 실제 youtube.com 을 때리지 않고 유튜브의 "구조"를 재현한다.
+// Reproduces YouTube's *structure* without ever touching the real youtube.com.
 //
-// 핵심 트릭: Playwright 의 route 로 https://www.youtube.com/** 를 가로채 우리 HTML 을
-// 돌려준다. 문서의 origin 은 진짜 https://www.youtube.com 이므로 확장의 content_scripts
-// 매치가 그대로 걸린다 — 즉 "유튜브에서만 동작한다"는 조건까지 같이 검증된다.
+// The trick: Playwright's route intercepts https://www.youtube.com/** and
+// returns our own HTML. The document's origin is genuinely
+// https://www.youtube.com, so the extension's content_scripts match applies
+// exactly as it would in the wild — which means "it only runs on YouTube" gets
+// verified along the way.
 //
-// 광고가 실제로 실리는 세 경로를 모두 재현한다.
-//   A. 인라인 스크립트의 var ytInitialPlayerResponse = {...}   (전역 setter 훅)
-//   B. JSON.parse('{...}')                                     (JSON.parse 훅)
-//   C. fetch('/youtubei/v1/player') → res.json()               (Response.json 훅)
+// All three paths by which ads actually arrive are reproduced:
+//   A. inline script's var ytInitialPlayerResponse = {...}   (global setter hook)
+//   B. JSON.parse('{...}')                                   (JSON.parse hook)
+//   C. fetch('/youtubei/v1/player') -> res.json()            (Response.json hook)
 
 import type { BrowserContext } from '@playwright/test'
 
 export const YOUTUBE_URL = 'https://www.youtube.com/watch?v=testvideo'
 
-/** 광고 영상 길이(초). 3계층이 여기까지 감아버리는지 본다. */
+/** Ad clip length in seconds. Layer 3 is expected to seek all the way here. */
 export const AD_DURATION_SECONDS = 2
 
 /**
- * 진짜 재생 가능한 미디어를 만든다 (무음 WAV).
+ * Builds genuinely playable media (a silent WAV).
  *
- * 스텁으로 때울 수 없어서 실물을 쓴다: 확장의 콘텐츠 스크립트는 ISOLATED world 라
- * 페이지(MAIN world)에서 HTMLMediaElement.prototype 을 갈아끼워도 보이지 않는다.
- * 반대로 currentTime·muted·paused 같은 실제 DOM 상태는 두 월드가 공유하므로,
- * 진짜 미디어를 물려두면 "정말로 광고를 끝까지 감았는가"를 있는 그대로 볼 수 있다.
+ * Stubs cannot do this job. The extension's content script runs in the ISOLATED
+ * world, so replacing HTMLMediaElement.prototype from the page (MAIN world) is
+ * invisible to it. Real DOM state such as currentTime, muted and paused *is*
+ * shared between the worlds, so attaching real media lets us read "did it
+ * genuinely seek the ad to the end?" directly.
  */
 function silentWavDataUri(seconds: number): string {
   const sampleRate = 8000
@@ -33,23 +36,23 @@ function silentWavDataUri(seconds: number): string {
   buffer.writeUInt32LE(36 + samples, 4)
   buffer.write('WAVE', 8, 'ascii')
   buffer.write('fmt ', 12, 'ascii')
-  buffer.writeUInt32LE(16, 16) // fmt 청크 크기
+  buffer.writeUInt32LE(16, 16) // fmt chunk size
   buffer.writeUInt16LE(1, 20) // PCM
-  buffer.writeUInt16LE(1, 22) // 모노
+  buffer.writeUInt16LE(1, 22) // mono
   buffer.writeUInt32LE(sampleRate, 24)
-  buffer.writeUInt32LE(sampleRate, 28) // byteRate (8bit 모노라 sampleRate 와 같다)
+  buffer.writeUInt32LE(sampleRate, 28) // byteRate (equals sampleRate for 8-bit mono)
   buffer.writeUInt16LE(1, 32) // blockAlign
   buffer.writeUInt16LE(8, 34) // bitsPerSample
   buffer.write('data', 36, 'ascii')
   buffer.writeUInt32LE(samples, 40)
-  buffer.fill(128, 44) // 8bit unsigned PCM 의 무음
+  buffer.fill(128, 44) // silence in 8-bit unsigned PCM
 
   return `data:audio/wav;base64,${buffer.toString('base64')}`
 }
 
 const AD_MEDIA_SRC = silentWavDataUri(AD_DURATION_SECONDS)
 
-/** 광고 필드 + 정상 필드가 섞인 플레이어 응답 */
+/** A player response mixing ad fields with legitimate ones. */
 function playerResponse(tag: string) {
   return {
     responseContext: { visitorData: 'fake' },
@@ -66,9 +69,9 @@ function playerResponse(tag: string) {
 export const PLAYER_API_RESPONSE = playerResponse('from-fetch')
 
 interface FixtureOptions {
-  /** false 면 스킵 버튼이 없는 "건너뛸 수 없는 광고" 시나리오 */
+  /** false gives the "unskippable ad" scenario, with no skip button. */
   skippable?: boolean
-  /** 사용자가 이미 음소거해 둔 상태 — 확장이 이걸 멋대로 풀면 안 된다 */
+  /** The user already muted it — the extension must not undo that. */
   userMuted?: boolean
 }
 
@@ -88,8 +91,9 @@ function html({ skippable = true, userMuted = false }: FixtureOptions): string {
 <title>Fake YouTube</title>
 
 <script>
-// ── 클릭 관찰. DOM 이벤트는 MAIN/ISOLATED 월드가 공유하므로 확장이 누른 것도 여기서 보인다.
-//    (capture 를 쓰면 아직 존재하지 않는 요소의 이벤트까지 잡을 수 있다)
+// ── Click observation. DOM events are shared between the MAIN and ISOLATED
+//    worlds, so a click made by the extension shows up here too.
+//    (Capture phase catches events from elements that do not exist yet.)
 window.__observed = { skipClicked: false, feedbackClosed: false };
 
 document.addEventListener('click', function (e) {
@@ -101,11 +105,11 @@ document.addEventListener('click', function (e) {
 </script>
 
 <script>
-// ── 경로 A: 인라인 전역 대입. 진짜 유튜브가 하는 그대로다.
+// ── Path A: inline global assignment, exactly as real YouTube does it.
 var ytInitialPlayerResponse = ${inlinePlayerResponse};
 var ytInitialData = { contents: {}, adSlots: [{ adSlotRenderer: {} }] };
 
-// ── 경로 B: JSON.parse
+// ── Path B: JSON.parse
 window.__parsed = JSON.parse('${parseTarget.replace(/'/g, "\\'")}');
 </script>
 
@@ -117,8 +121,8 @@ window.__parsed = JSON.parse('${parseTarget.replace(/'/g, "\\'")}');
   .ytp-ad-overlay-slot, #movie_player, .ytp-suggested-action, .ytp-ad-feedback-dialog-close-button {
     display: block; min-height: 28px; padding: 4px; border: 1px solid #ddd; margin: 4px 0;
   }
-  /* 진짜 backdrop 은 화면을 덮는다. 크기가 0 이면 "막고 있다"는 신호가 못 된다 —
-     확장이 재생을 되살릴지 판단할 때 이걸 본다. */
+  /* A real backdrop covers the screen. At zero size it signals nothing is
+     blocking — which is what the extension checks before resuming playback. */
   tp-yt-iron-overlay-backdrop {
     display: block; position: fixed; inset: 0; background: rgba(0,0,0,.5);
   }
@@ -153,14 +157,14 @@ window.__parsed = JSON.parse('${parseTarget.replace(/'/g, "\\'")}');
 <div id="late-mount"></div>
 
 <script>
-// ── 경로 C: fetch → Response.json()
+// ── Path C: fetch -> Response.json()
 window.__fetchState = 'pending';
 fetch('/youtubei/v1/player', { method: 'POST', body: '{}' })
   .then(function (r) { return r.json(); })
   .then(function (j) { window.__fetched = j; window.__fetchState = 'done'; })
   .catch(function (e) { window.__fetchState = 'error: ' + e.message; });
 
-// ── 애드블록 경고창은 스텁이 다 깔린 뒤에 띄운다 (진짜 유튜브도 나중에 띄운다)
+// ── The ad-block warning appears after the stubs are in place (real YouTube raises it late too)
 window.showAdblockNag = function () {
   var container = document.createElement('ytd-popup-container');
   container.id = 'nag-container';
@@ -179,7 +183,7 @@ window.showAdblockNag = function () {
 </html>`
 }
 
-/** youtube.com 을 통째로 가로채 가짜 페이지와 가짜 InnerTube API 를 물린다. */
+/** Intercept all of youtube.com, serving the fake page and a fake InnerTube API. */
 export async function installYouTubeFixture(
   context: BrowserContext,
   options: FixtureOptions = {},
@@ -204,7 +208,7 @@ export async function installYouTubeFixture(
   })
 }
 
-/** 유튜브가 아닌 사이트 — 확장이 개입하지 않아야 한다 */
+/** A site that is not YouTube — the extension must stay out of it. */
 export const OTHER_SITE_URL = 'https://example.com/'
 
 export async function installOtherSiteFixture(context: BrowserContext): Promise<void> {

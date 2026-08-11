@@ -1,10 +1,12 @@
-// 원격 리스트 검증기 테스트. 이 확장에서 신뢰 경계에 있는 유일한 코드라서
-// 브라우저 없이 돌 수 있게 순수 함수로 짜 두었다.
+// Tests for the remote list validator. This is the only code in the extension
+// sitting on a trust boundary, so it is written as pure functions that run
+// without a browser.
 //
 //   node --test tests/
 //
-// document 가 없는 환경이므로 defaultCanParseSelector 는 문자 검사까지만 한다
-// (실제 파싱 검사는 콘텐츠 스크립트의 resolveRules 가 한 번 더 한다).
+// With no document available, defaultCanParseSelector only gets as far as the
+// character checks — the real parse check runs again in resolveRules inside the
+// content script.
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -12,7 +14,6 @@ import {
   MAX_CLICK_SELECTORS,
   MAX_LIST_BYTES,
   buildStylesheet,
-  isSafeClickSelector,
   isSafePrunePath,
   isSafeSelector,
   parseFilterList,
@@ -20,7 +21,7 @@ import {
   validateFilterList,
   type FilterList,
 } from '../src/shared/filterlist.ts'
-import { BUNDLED_HIDE } from '../src/shared/selectors.ts'
+import { BUNDLED_CLICK, BUNDLED_HIDE } from '../src/shared/selectors.ts'
 import { DEFAULT_SETTINGS, TOGGLE_KEYS } from '../src/shared/settings.ts'
 
 function listWith(rules: Record<string, unknown>, version = 1) {
@@ -32,7 +33,6 @@ test('정상 리스트를 통과시킨다', () => {
     listWith({
       hide: { generalAds: ['ytd-ad-slot-renderer', '#masthead-ad'] },
       prune: ['adPlacements', 'playerConfig.adConfig'],
-      click: ['.ytp-ad-overlay-close-button'],
       allow: [],
     }),
   )
@@ -58,7 +58,7 @@ test('스타일시트를 탈출하려는 셀렉터는 버린다', () => {
   const result = validateFilterList(listWith({ hide: { generalAds: [...evil, 'ytd-ad-slot-renderer'] } }))
   assert.equal(result.ok, true)
   if (!result.ok) return
-  // 나쁜 것만 빠지고 멀쩡한 건 살아남는다
+  // Only the bad ones are dropped; the sound one survives
   assert.deepEqual(result.list.rules.hide.generalAds, ['ytd-ad-slot-renderer'])
   assert.equal(result.dropped.length, evil.length)
 })
@@ -131,7 +131,7 @@ test('번들 규칙과 원격 규칙을 합치고 allow 로 뺀다', () => {
       hide: { generalAds: ['ytd-brand-new-ad-renderer'] },
       prune: ['newAdField'],
       click: [],
-      // 번들에 있던 규칙 하나를 예외로 끈다
+      // Switch off one of the bundled rules via an exception
       allow: ['#masthead-ad'],
     },
   }
@@ -164,11 +164,11 @@ test('켜진 그룹만, 셀렉터 하나당 규칙 하나로 스타일시트를 
   assert.ok(css.includes('my-custom-ad'), '내 규칙은 토글과 무관하게 항상 들어간다')
 })
 
-// --- 적대적 리뷰에서 나온 것들 (회귀 방지) ---------------------------------
+// --- Findings from the adversarial review (regression guards) ----------------
 
 test('페이지를 통째로 지우는 셀렉터는 거부한다', () => {
-  // 리스트가 털리면 전 사용자의 페이지가 백지가 되고, 캐시에 남아서
-  // 확장을 끄기 전에는 돌아오지 않는다.
+  // A compromised list would blank the page for every user, and it persists in
+  // cache until the extension is switched off.
   for (const selector of ['*', 'html', ':root', 'body', 'head', 'HTML', ' * ']) {
     assert.equal(isSafeSelector(selector), false, `허용되면 안 됨: ${selector}`)
   }
@@ -179,34 +179,26 @@ test('페이지를 통째로 지우는 셀렉터는 거부한다', () => {
   assert.deepEqual(result.list.rules.hide.generalAds, ['#masthead-ad'])
 })
 
-test('누를 수 있는 셀렉터는 닫기/건너뛰기 뜻이 있어야 한다', () => {
-  // click 은 숨기는 게 아니라 사용자 대신 누른다. 매니페스트 매치에
-  // studio.youtube.com 이 포함되므로 임의 버튼을 누를 수 있으면 영상·채널 삭제까지 된다.
-  assert.equal(isSafeClickSelector('.ytp-ad-overlay-close-button'), true)
-  assert.equal(isSafeClickSelector('.ytp-ad-skip-button-modern'), true)
-
-  for (const evil of ['#danger', '#confirm-button', 'button.delete', 'tp-yt-paper-button']) {
-    assert.equal(isSafeClickSelector(evil), false, `허용되면 안 됨: ${evil}`)
-  }
-})
-
-test('악성 리스트의 click 규칙은 걸러지고 개수도 조인다', () => {
-  const many = Array.from({ length: 100 }, (_, i) => `.ad-close-${i}`)
+test('remote lists never contribute click rules', () => {
+  // A click rule makes us press a button as the user. The manifest match covers
+  // studio.youtube.com, so an arbitrary click means channel/video deletion.
+  //
+  // A name-based allowlist was tried first and defeated: the attacker owns the
+  // whole selector string, so they kept the target and appended a harmless
+  // condition containing the magic word — `#danger:not([data-close])`.
   const result = validateFilterList(
-    listWith({ hide: {}, click: ['#danger', ...many] }),
+    listWith({ hide: {}, click: ['#danger:not([data-close])', '.ytp-ad-overlay-close-button'] }),
   )
   assert.equal(result.ok, true)
   if (!result.ok) return
 
-  assert.ok(!result.list.rules.click.includes('#danger'), '의도 없는 셀렉터는 빠져야 한다')
-  assert.equal(result.list.rules.click.length, MAX_CLICK_SELECTORS)
-  // sweep 이 셀렉터마다 문서 전체를 훑기 때문에 개수 상한이 곧 성능 상한이다
-  assert.ok(MAX_CLICK_SELECTORS <= 50)
+  assert.deepEqual(result.list.rules.click, [], 'no remote click rule survives')
+  assert.ok(result.dropped.some((d) => d.startsWith('click:')), 'and the user is told')
 })
 
-test('병합 결과의 click 도 상한과 검사를 다시 통과한다', () => {
-  // 캐시에 예전 규칙이 남아 있을 수 있고, 서비스 워커에는 DOM 이 없어서
-  // 저장 시점에는 실제 매칭 검사를 못 했다.
+test('resolved click rules come only from the bundle', () => {
+  // An older build may have cached remote click rules, so the merge step
+  // enforces this too rather than trusting validation alone.
   const remote: FilterList = {
     name: 'r',
     version: 2,
@@ -220,8 +212,30 @@ test('병합 결과의 click 도 상한과 검사를 다시 통과한다', () =>
   }
   const resolved = resolveRules(remote, [])
   assert.ok(!resolved.click.includes('#danger'))
-  assert.ok(resolved.click.includes('.something-close-button'))
+  assert.ok(!resolved.click.includes('.something-close-button'), 'remote rule must not leak in')
+  assert.deepEqual(resolved.click, BUNDLED_CLICK)
   assert.ok(resolved.click.length <= MAX_CLICK_SELECTORS)
+})
+
+test('selectors that blank the page are rejected even without touching the root', () => {
+  // `body > *` and `div` never match html/body themselves, so a root check
+  // lets them through — and they empty the document anyway.
+  for (const selector of ['body > *', 'body *', 'div', 'span', '* > *', 'html > body > *']) {
+    assert.equal(isSafeSelector(selector), false, `must be rejected: ${selector}`)
+  }
+
+  // Real ad selectors keep working: the subject carries an id, class,
+  // attribute, or a custom-element name.
+  for (const selector of [
+    '#masthead-ad',
+    '.ytp-ad-overlay-slot',
+    'ytd-ad-slot-renderer',
+    'ytd-rich-item-renderer:has(> #content > ytd-ad-slot-renderer)',
+    'div[class*="advert"]',
+    '[id^="google_ads"]',
+  ]) {
+    assert.equal(isSafeSelector(selector), true, `must be allowed: ${selector}`)
+  }
 })
 
 test('전부 꺼져 있고 내 규칙도 없으면 빈 스타일시트', () => {

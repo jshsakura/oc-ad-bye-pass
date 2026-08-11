@@ -1,12 +1,15 @@
-// 배포 모델 자체를 검증한다.
+// Verifies the distribution model itself.
 //
-//   "설치는 로컬로 한 번. 이후는 버튼을 누르든 자동 갱신이든 알아서."
+//   "Install locally once. After that a button press or an automatic refresh
+//    takes care of it."
 //
-// 여기까지가 진짜 제품이다. 앞의 스펙들은 dist/ 를 직접 물려서 차단 로직만 봤고,
-// 원격 갱신은 chrome.storage 에 값을 심어서 흉내냈다. 이 파일은 그 두 구멍을 메운다.
-//   - 사용자가 실제로 받는 zip 을 풀어서 설치했을 때 동작하는가
-//   - 옵션 페이지 버튼을 눌렀을 때 fetch → 검증 → 캐시 → 페이지 반영이 다 도는가
-//   - 갱신이 실패하거나 이상한 리스트가 와도 기존 규칙이 살아남는가
+// That is where the real product lives. The earlier specs loaded dist/ directly
+// and only exercised the blocking logic, and they faked remote updates by
+// planting values in chrome.storage. This file closes both gaps:
+//   - does it work when installed from the zip a user actually downloads?
+//   - does pressing the options-page button really run fetch -> validate ->
+//     cache -> apply to the page?
+//   - do the existing rules survive a failed update or a malformed list?
 
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
@@ -21,7 +24,7 @@ const DIST = path.resolve(import.meta.dirname, '..', 'dist')
 const LIST_URL = 'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/youtube.json'
 
 // ---------------------------------------------------------------------------
-// 1. 로컬 설치 — 사용자가 받는 zip 그대로
+// 1. Local install — the very zip a user receives
 // ---------------------------------------------------------------------------
 
 test.describe('로컬 설치', () => {
@@ -32,10 +35,10 @@ test.describe('로컬 설치', () => {
     workDir = mkdtempSync(path.join(os.tmpdir(), 'ocabp-install-'))
     const zipPath = path.join(workDir, 'oc-ad-bye-pass.zip')
 
-    // npm run zip 이 만드는 것과 같은 산출물
+    // The same artefact npm run zip produces
     execFileSync('zip', ['-qr', zipPath, '.'], { cwd: DIST })
 
-    // 사용자가 하는 일: 압축 풀기
+    // What the user does: unzip it
     unpacked = path.join(workDir, 'unpacked')
     mkdirSync(unpacked)
     execFileSync('unzip', ['-q', zipPath, '-d', unpacked])
@@ -46,7 +49,7 @@ test.describe('로컬 설치', () => {
   })
 
   test('zip 을 풀어서 로드하면 광고가 막힌다', async () => {
-    // "압축해제된 확장 프로그램을 로드" 와 같은 경로
+    // The same path as "Load unpacked extension"
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       args: [
@@ -56,7 +59,7 @@ test.describe('로컬 설치', () => {
       ],
     })
     try {
-      // 서비스 워커가 뜨는지 = manifest 가 유효한지
+      // A service worker starting means the manifest is valid
       const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
       expect(worker.url()).toContain('background.js')
 
@@ -75,7 +78,7 @@ test.describe('로컬 설치', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 2. 원격 갱신 — 설치 이후의 모든 것
+// 2. Remote refresh — everything after installation
 // ---------------------------------------------------------------------------
 
 interface ListOptions {
@@ -92,7 +95,7 @@ function remoteList({ version, hide = [] }: ListOptions) {
   }
 }
 
-/** 원격 리스트 서버를 흉내낸다. 확장의 서비스 워커가 나가는 fetch 를 가로챈다. */
+/** Stands in for the remote list server, intercepting the extension service worker's fetch. */
 async function serveList(context: BrowserContext, respond: () => unknown) {
   await context.unroute('https://raw.githubusercontent.com/**')
   await context.route('https://raw.githubusercontent.com/**', async (route) => {
@@ -109,7 +112,7 @@ async function serveList(context: BrowserContext, respond: () => unknown) {
   })
 }
 
-/** 옵션 페이지의 "지금 업데이트" 버튼을 실제로 누른다 */
+/** Actually press the "update now" button on the options page. */
 async function clickUpdateButton(optionsPage: Page) {
   await optionsPage.getByRole('button', { name: '지금 업데이트' }).click()
 }
@@ -128,17 +131,18 @@ async function readCache(context: BrowserContext) {
 }
 
 /**
- * 캐시를 낡은 것으로 만든다.
+ * Age the cache.
  *
- * 설치 직후 한 번 받아오므로, 그대로 두면 updater 의 최소 간격(10분)에 걸려
- * 다음 갱신 시도가 아예 나가지 않는다. 시간을 기다릴 수는 없으니 시계를 되감는다.
+ * The extension fetches once right after installing, so left alone the next
+ * attempt runs into the updater's minimum interval and never goes out at all.
+ * We cannot wait out the clock, so we wind it back.
  */
 async function makeCacheStale(context: BrowserContext) {
   const worker = context.serviceWorkers()[0]
   await worker.evaluate(async () => {
     const got = await chrome.storage.local.get('filterCache')
     const cache = got.filterCache as { fetchedAt: number } | undefined
-    if (!cache) return // 아직 받아온 게 없으면 어차피 간격 검사에 안 걸린다
+    if (!cache) return // Nothing fetched yet, so the interval check will not bite anyway
     cache.fetchedAt = 0
     await chrome.storage.local.set({ filterCache: cache })
   })
@@ -148,36 +152,36 @@ test.describe('설치 이후 원격 갱신', () => {
   test('버튼 한 번으로 새 규칙이 받아져 페이지에 반영된다', async ({ context, extensionId }) => {
     await installYouTubeFixture(context)
 
-    // 유튜브를 먼저 열어둔다 — 새로고침 없이 반영되는지 보려고
+    // Open YouTube first, to see the rules land without a reload
     const youtube = await context.newPage()
     await youtube.goto(YOUTUBE_URL)
     await expect(youtube.locator('#normal-card')).toBeVisible()
 
-    // 번들에는 없는 규칙을 실은 리스트를 서버가 내려준다
+    // The server serves a list carrying a rule the bundle does not have
     await serveList(context, () => remoteList({ version: 100, hide: ['#normal-card'] }))
 
     const options = await context.newPage()
     await options.goto(`chrome-extension://${extensionId}/options.html`)
     await clickUpdateButton(options)
 
-    // 옵션 화면의 상태 표가 갱신되고 ("원격 리스트 사용" 토글 라벨과 겹치지 않게 dl 안에서 찾는다)
+    // The options status table updates (scoped to the dl so it does not collide with the toggle label)
     const statusTable = options.locator('dl.kv')
     await expect(statusTable.getByText('원격 리스트', { exact: true })).toBeVisible()
     await expect(statusTable.getByText('100', { exact: true })).toBeVisible()
 
-    // 캐시에 검증을 통과한 리스트가 들어가고
+    // The validated list lands in the cache…
     await expect.poll(async () => (await readCache(context))?.version).toBe(100)
     expect((await readCache(context))?.url).toBe(LIST_URL)
 
-    // 열려 있던 유튜브 탭에 새 규칙이 새로고침 없이 먹는다
+    // …and the new rule applies to the already-open YouTube tab, with no reload
     await expect(youtube.locator('#normal-card'), '원격 규칙이 닿아야 한다').toBeHidden()
-    // 번들 기본 규칙도 그대로 (합집합 병합)
+    // The bundled defaults still apply (union merge)
     await expect(youtube.locator('#masthead-ad')).toBeHidden()
   })
 
   test('유튜브 탭을 열면 낡은 규칙을 알아서 받아온다 (주기 알람 없이)', async ({ context }) => {
     await installYouTubeFixture(context)
-    // 설치 직후에 한 번 받아왔을 수 있다. 그대로면 최소 간격에 걸려 안 나간다.
+    // It may already have fetched once on install; left as-is the minimum interval blocks the next one.
     await makeCacheStale(context)
 
     let hits = 0
@@ -191,14 +195,14 @@ test.describe('설치 이후 원격 갱신', () => {
       })
     })
 
-    // 사용자가 하는 일은 이것뿐이다 — 유튜브를 연다
+    // All the user does is this — open YouTube
     const youtube = await context.newPage()
     await youtube.goto(YOUTUBE_URL)
 
     await expect
       .poll(() => hits, { message: '탭을 열었는데 갱신을 시도조차 하지 않았다' })
       .toBeGreaterThan(0)
-    // 받아온 규칙이 지금 열려 있는 그 탭에 바로 먹는다
+    // The fetched rule applies immediately to the tab that is already open
     await expect(youtube.locator('#normal-card')).toBeHidden()
   })
 
@@ -209,7 +213,7 @@ test.describe('설치 이후 원격 갱신', () => {
 
     await context.unroute('https://raw.githubusercontent.com/**')
     await context.route('https://raw.githubusercontent.com/**', async (route) => {
-      // 확장이 지난번 ETag 를 되돌려주면 서버는 본문을 안 보낸다
+      // When the extension replays the previous ETag, the server sends no body
       if (route.request().headers()['if-none-match'] === ETAG) {
         notModified++
         await route.fulfill({ status: 304, headers: { etag: ETAG } })
@@ -227,19 +231,19 @@ test.describe('설치 이후 원격 갱신', () => {
     const options = await context.newPage()
     await options.goto(`chrome-extension://${extensionId}/options.html`)
 
-    // 1회차 — ETag 가 없으니 본문을 받는다
+    // First pass — no ETag yet, so the body comes down
     await clickUpdateButton(options)
     await expect.poll(async () => (await readCache(context))?.version).toBe(300)
     expect(bodyServed, '첫 요청은 본문을 받아야 한다').toBe(1)
 
-    // 2회차 — 이번엔 If-None-Match 를 달고 나가서 304 를 받는다
+    // Second pass — now it goes out with If-None-Match and gets a 304
     await clickUpdateButton(options)
     await expect
       .poll(() => notModified, { message: 'ETag 를 안 보냈다 — 매번 4KB 를 다시 받는다' })
       .toBeGreaterThan(0)
 
     expect(bodyServed, '바뀐 게 없는데 본문을 다시 받았다').toBe(1)
-    // 304 를 받았다고 이미 가진 규칙을 잃으면 안 된다
+    // A 304 must never cost us the rules we already hold
     expect((await readCache(context))?.version).toBe(300)
     expect((await readCache(context))?.error).toBeNull()
   })
@@ -250,21 +254,21 @@ test.describe('설치 이후 원격 갱신', () => {
     const options = await context.newPage()
     await options.goto(`chrome-extension://${extensionId}/options.html`)
 
-    // 한 번 성공시켜 캐시를 채우고
+    // Succeed once to fill the cache…
     await serveList(context, () => remoteList({ version: 200, hide: ['#normal-card'] }))
     await clickUpdateButton(options)
     await expect.poll(async () => (await readCache(context))?.version).toBe(200)
 
-    // 그다음 서버가 죽는다
+    // …then the server dies
     await serveList(context, () => null)
     await clickUpdateButton(options)
 
-    // 오류는 표시하되
+    // The error is surfaced…
     await expect(options.locator('.status.error')).toBeVisible()
-    // 캐시는 그대로 살아 있고
+    // …the cache survives intact…
     await expect.poll(async () => (await readCache(context))?.version).toBe(200)
 
-    // 차단도 계속 된다
+    // …and blocking carries on
     const youtube = await context.newPage()
     await youtube.goto(YOUTUBE_URL)
     await expect(youtube.locator('#normal-card')).toBeHidden()
@@ -294,7 +298,7 @@ test.describe('설치 이후 원격 갱신', () => {
     await clickUpdateButton(options)
     await expect.poll(async () => (await readCache(context))?.version).toBe(400)
 
-    // 공격자가 예전 스냅샷을 다시 먹이려는 상황
+    // An attacker replaying an older snapshot
     await serveList(context, () => remoteList({ version: 399, hide: [] }))
     await clickUpdateButton(options)
 
@@ -320,9 +324,9 @@ test.describe('설치 이후 원격 갱신', () => {
     const youtube = await context.newPage()
     await youtube.goto(YOUTUBE_URL)
 
-    // 멀쩡한 규칙은 먹고
+    // The sound rule applies…
     await expect(youtube.locator('#normal-card')).toBeHidden()
-    // 페이지를 통째로 지우려는 시도는 안 먹는다
+    // …while the attempt to wipe the page does not
     expect(await youtube.evaluate(() => getComputedStyle(document.body).display)).toBe('block')
   })
 })

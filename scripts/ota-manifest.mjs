@@ -1,16 +1,18 @@
-// iOS OTA 설치용 manifest.plist 를 만든다.
+// Builds the manifest.plist used for iOS OTA installation.
 //
-// 사파리에서 `itms-services://?action=download-manifest&url=<이 파일의 https URL>`
-// 을 열면 iOS 가 이걸 읽어 IPA 를 내려받아 설치한다.
+// Opening `itms-services://?action=download-manifest&url=<https URL of this
+// file>` in Safari makes iOS read it, download the IPA and install it.
 //
-// 까다로운 점 셋. 하나라도 틀리면 iOS 는 "앱을 설치할 수 없습니다" 한 줄만 보여준다.
-//   1. 매니페스트와 IPA 둘 다 **HTTPS** 여야 한다 (그래서 adbyepass.opencourse.kr 이 있다)
-//   2. 매니페스트의 Content-Type 이 XML 이어야 한다 (nginx.conf 에서 .plist → text/xml)
-//   3. bundle-identifier 와 bundle-version 이 IPA 안의 Info.plist 와 정확히 같아야 한다
+// Three things are fussy. Get any one wrong and iOS shows a single line,
+// "Unable to install".
+//   1. Both the manifest and the IPA must be served over **HTTPS** (which is
+//      what adbyepass.opencourse.kr is for)
+//   2. The manifest must be served as XML (nginx.conf maps .plist -> text/xml)
+//   3. bundle-identifier and bundle-version must match the IPA's Info.plist exactly
 //
-// 사용:
+// Usage:
 //   node scripts/ota-manifest.mjs --ipa-url https://…/app.ipa --bundle-id com.x.y \
-//     --title "앱 이름" [--version 1.0] [--out ota/manifest.plist]
+//     --title "App name" [--version 1.0] [--out ota/manifest.plist]
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
@@ -25,7 +27,7 @@ function parseArgs(argv) {
   return out
 }
 
-/** plist 문자열 값 이스케이프. URL 에 & 가 들어가는 일이 실제로 있다. */
+/** Escape a plist string value. URLs really do contain '&'. */
 function esc(s) {
   return String(s)
     .replace(/&/g, '&amp;')

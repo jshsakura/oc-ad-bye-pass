@@ -1,11 +1,11 @@
-// 1계층 — 광고가 애초에 로드되지 않는지.
-// ReVanced 의 video-ads 패치가 PlayerResponseModel 에서 하는 일과 같은 지점이다.
+// Layer 1 — is the ad never loaded in the first place?
+// The same place ReVanced's video-ads patch works on PlayerResponseModel.
 
 import { chromium } from '@playwright/test'
 import { LAUNCH_ARGS, expect, test } from './fixtures.ts'
 import { YOUTUBE_URL, installYouTubeFixture } from './youtube-fixture.ts'
 
-// page.evaluate 안으로는 클로저가 넘어가지 않는다 — 헬퍼는 쓰지 않고 매번 인라인으로 쓴다.
+// Closures do not cross into page.evaluate — no helpers, everything inline.
 type Bag = Record<string, unknown>
 
 test.describe('1계층 응답 프루닝', () => {
@@ -25,7 +25,7 @@ test.describe('1계층 응답 프루닝', () => {
         adSlots: r.adSlots,
         adBreakHeartbeatParams: r.adBreakHeartbeatParams,
         adConfig: (r.playerConfig as Bag)?.adConfig,
-        // 광고와 무관한 필드는 그대로 있어야 한다
+        // Fields unrelated to ads must survive untouched
         videoId: (r.videoDetails as Bag)?.videoId,
         formats: (r.streamingData as Bag)?.formats,
         audioConfig: (r.playerConfig as Bag)?.audioConfig,
@@ -99,7 +99,7 @@ test.describe('1계층 응답 프루닝', () => {
   })
 })
 
-// 위 테스트들이 헛돌지 않는다는 증거. 확장 없이 같은 페이지를 열면 광고가 그대로 있어야 한다.
+// Proof the tests above are not vacuous: open the same page without the extension and the ads must still be there.
 test('대조군 — 확장이 없으면 광고 필드가 그대로 남아 있다', async () => {
   const plain = await chromium.launchPersistentContext('', {
     channel: 'chromium',

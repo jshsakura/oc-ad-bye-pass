@@ -1,20 +1,23 @@
-// public/manifest.json(Chrome 정본)을 읽어 타깃별 manifest 를 출력 디렉터리에 쓴다.
+// Reads public/manifest.json (the Chrome original) and writes a per-target
+// manifest into the output directory.
 //
-// vite 가 public/ 을 통째로 복사하므로 chrome 타깃에서는 사실상 통과다.
-// Safari 에서만 아래 넷을 바꾼다.
+// vite copies public/ wholesale, so for the chrome target this is effectively a
+// pass-through. Only Safari changes, in four ways.
 //
-// 1. MAIN world 콘텐츠 스크립트를 **매니페스트에서 뺀다.**
-//    Safari 는 scripting.registerContentScripts 의 world:'MAIN' 은 지원하지만
-//    정적 content_scripts 의 world 필드는 버전에 따라 무시한다. 무시되면 main.js 가
-//    ISOLATED 로 실행되는데, 이건 "안 도는 것"보다 나쁘다 — 훅이 페이지에 안 걸린
-//    채로 조용히 성공한 척한다. 그래서 Safari 에서는 아예 선언하지 않고
-//    background/mainWorld.ts 가 런타임에 등록한다 (실패하면 ISOLATED 가 폴백 주입).
-// 2. scripting 권한 — 위 등록에 필요하다.
-// 3. web_accessible_resources — 폴백 주입 경로가 main.js 를 <script src> 로 부른다.
-// 4. Chrome 전용 키 제거 — Safari 가 경고를 뱉는다.
+// 1. **Drop the MAIN world content script from the manifest.**
+//    Safari supports world:'MAIN' in scripting.registerContentScripts, but
+//    ignores the `world` field on static content_scripts depending on version.
+//    When it does, main.js runs in ISOLATED — worse than not running at all,
+//    because the hooks never reach the page while everything quietly appears to
+//    have succeeded. So Safari declares nothing here and
+//    background/mainWorld.ts registers it at runtime (with ISOLATED injecting
+//    as a fallback if that fails).
+// 2. The scripting permission, needed for that registration.
+// 3. web_accessible_resources — the fallback path loads main.js via <script src>.
+// 4. Remove Chrome-only keys, which Safari warns about.
 //
-// vite 의 closeBundle 훅에서 불린다(vite.config.ts). vite 가 public/manifest.json 을
-// 복사한 "뒤"에 덮어써야 하므로 순서가 중요하다.
+// Called from vite's closeBundle hook (vite.config.ts). Order matters: this has
+// to overwrite public/manifest.json *after* vite has copied it.
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -27,7 +30,7 @@ function toSafari(manifest) {
   const m = structuredClone(manifest)
 
   delete m.minimum_chrome_version
-  // Safari 는 optional_host_permissions 를 인식하지 못하고 설치 경고만 늘린다.
+  // Safari does not recognise optional_host_permissions and only adds install warnings.
   delete m.optional_host_permissions
 
   m.content_scripts = (m.content_scripts ?? []).filter((cs) => cs.world !== 'MAIN')
@@ -40,7 +43,7 @@ function toSafari(manifest) {
   return m
 }
 
-/** 타깃 manifest 를 outDir 에 쓴다. 쓴 경로를 돌려준다. */
+/** Write the target manifest into outDir. Returns the path written. */
 export function writeManifest(target) {
   const base = JSON.parse(readFileSync(join(ROOT, 'public', 'manifest.json'), 'utf8'))
   const out = target.name === 'safari' ? toSafari(base) : base
@@ -49,7 +52,7 @@ export function writeManifest(target) {
   return path
 }
 
-// 단독 실행도 지원한다 — vite 없이 매니페스트만 다시 뽑고 싶을 때.
+// Also runnable on its own, for regenerating just the manifest without vite.
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*\/scripts\//, 'scripts/'))) {
   const target = resolveTarget()
   writeManifest(target)

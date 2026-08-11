@@ -1,5 +1,6 @@
-// ISOLATED world 진입점 — document_start.
-// 설정을 읽어 스타일시트를 만들고, MAIN world 에 설정을 넘기고, DOM 을 지켜본다.
+// ISOLATED world entry point — document_start.
+// Reads the settings, builds the stylesheet, hands the settings to the MAIN
+// world, and watches the DOM.
 
 import { buildStylesheet, resolveRules, type ResolvedRules } from '../shared/filterlist.ts'
 import { loadCache, watchCache, type FilterCache } from '../shared/cache.ts'
@@ -24,7 +25,7 @@ import { injectMainWorldFallback } from './injectMain.ts'
 let settings: Settings = DEFAULT_SETTINGS
 let rules: ResolvedRules = resolveRules(null, [])
 
-// --- 설정 반영 -----------------------------------------------------------------
+// --- Applying settings ---------------------------------------------------------
 
 function recompute(cache: FilterCache | null) {
   const remote = settings.listEnabled && cache?.url === settings.listUrl ? cache.list : null
@@ -35,7 +36,7 @@ function recompute(cache: FilterCache | null) {
     videoAds: settings.toggles.videoAds,
     prunePaths: rules.prune,
   })
-  // 스마트 앱 배너는 <meta> 라 스타일시트로 못 막는다 — 전용 옵저버를 여닫는다.
+  // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet — its own observer handles it.
   if (settings.enabled && settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
   else stopWatchingAppBannerHints()
   sweep()
@@ -47,7 +48,7 @@ async function refresh() {
   recompute(cache)
 }
 
-// --- DOM 감시 -------------------------------------------------------------------
+// --- Watching the DOM ----------------------------------------------------------
 
 let scheduled = false
 let playerObserver: MutationObserver | null = null
@@ -62,7 +63,7 @@ function schedule() {
   })
 }
 
-/** #movie_player 의 class 변화(.ad-showing)는 전용 옵저버로 본다 — 문서 전체 속성 감시는 너무 비싸다 */
+/** A dedicated observer watches #movie_player's class (.ad-showing) — watching attributes document-wide is far too expensive. */
 function attachPlayerObserver() {
   const player = document.querySelector('#movie_player')
   if (!player || player === observedPlayer) return
@@ -88,24 +89,28 @@ function onBannerRemoved(count: number) {
 }
 
 function start() {
-  // Safari 에서 MAIN world 등록이 실패했을 때만 실제로 일한다. 무엇보다 먼저 부른다 —
-  // 1계층은 늦게 걸리면 의미가 없다. (Chrome 번들에서는 이 호출이 사라진다.)
+  // Only does anything when the Safari MAIN world registration failed. Called
+  // before everything else — layer 1 installed late is layer 1 wasted.
+  // (This call disappears from the Chrome bundle.)
   injectMainWorldFallback()
 
-  // 설정을 기다리지 않고 먼저 막는다. 스마트 앱 배너는 파싱 중에 그려지므로
-  // storage 왕복(수백 ms)을 기다리면 이미 늦다. 확장을 꺼둔 사람이 배너를 잠깐 덜
-  // 보는 쪽이, 켜둔 사람이 배너를 보는 것보다 낫다 — 스타일시트 기본값과 같은 원칙이다.
+  // Block first, ask the settings later. The smart app banner is drawn during
+  // parsing, so waiting for a storage round trip (hundreds of ms) is already too
+  // late. Someone who turned the extension off briefly seeing less is better
+  // than someone who left it on seeing the banner — the same principle as the
+  // stylesheet default.
   watchAppBannerHints(onBannerRemoved)
 
   new MutationObserver(schedule).observe(document.documentElement, {
     childList: true,
     subtree: true,
   })
-  // 옵저버가 놓친 상태 변화를 위한 안전망. 하는 일은 querySelector 몇 번이라 부담이 없다.
+  // Safety net for state changes the observer missed. It is a handful of querySelector calls, so the cost is nil.
   setInterval(sweep, 3000)
 
-  // 규칙이 낡았으면 지금 받아오라고 알린다. 주기 알람을 대신하는 자리다 —
-  // 백그라운드가 알아서 최소 간격을 지키므로 여기서는 그냥 매번 부르면 된다.
+  // Tell the background to refresh if the rules are stale. This stands in for a
+  // periodic alarm — the background enforces its own minimum interval, so
+  // calling on every page load is fine.
   requestFreshFilters()
 
   listenForPruneReports((count) => bumpStats({ pruned: count }))

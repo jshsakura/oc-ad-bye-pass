@@ -1,15 +1,16 @@
-// 3계층 — 폴백. 1계층이 뚫렸을 때만 발화한다.
+// Layer 3 — the fallback. Fires only when layer 1 has been bypassed.
 //
-// ReVanced 에서 AdsFilter.closeFullscreenAd() 가 뒤로가기 키를 보내 전면 광고를 닫는 것과
-// 같은 성격의 "그래도 떴을 때" 처리다. 서버에서 스트림에 광고를 이어붙이는 경우처럼
-// 응답 프루닝으로 막을 수 없는 상황을 위해 남겨둔다.
+// The same kind of "it showed up anyway" handling as ReVanced's
+// AdsFilter.closeFullscreenAd(), which sends a back-key press to dismiss a
+// fullscreen ad. Kept for cases response pruning cannot reach, such as ads
+// stitched into the stream server-side.
 
 import { SKIP_BUTTONS } from '../shared/selectors.ts'
 
 let adPlayer: HTMLElement | null = null
-/** 광고 1건당 한 번만 감기 위한 플래그 */
+/** Ensures we seek at most once per ad. */
 let handledCurrentAd = false
-/** 우리가 음소거했을 때만 되돌린다 — 사용자가 끈 음소거를 켜버리면 안 된다 */
+/** Only unmute if we were the ones who muted — never undo the user's own choice. */
 let mutedByUs = false
 
 function findVideo(player: HTMLElement): HTMLVideoElement | null {
@@ -17,7 +18,7 @@ function findVideo(player: HTMLElement): HTMLVideoElement | null {
 }
 
 function skipAd(player: HTMLElement): number {
-  // 1) 스킵 버튼이 있으면 그게 가장 안전하다
+  // 1) A skip button, when present, is the safest route.
   for (const selector of SKIP_BUTTONS) {
     const button = player.querySelector<HTMLElement>(selector)
     if (button && button.getClientRects().length > 0) {
@@ -26,7 +27,7 @@ function skipAd(player: HTMLElement): number {
     }
   }
 
-  // 2) 건너뛸 수 없는 광고 — 음소거하고 끝으로 감는다
+  // 2) Unskippable ad — mute it and seek to the end.
   if (handledCurrentAd) return 0
   const video = findVideo(player)
   if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return 0
@@ -54,8 +55,8 @@ function restoreAfterAd(player: HTMLElement) {
 }
 
 /**
- * 현재 광고 상태를 확인하고 필요하면 처리한다. 처리한 횟수를 돌려준다.
- * ISOLATED 쪽 MutationObserver 가 DOM 이 움직일 때마다 불러준다.
+ * Check the current ad state and act if needed, returning how many actions
+ * were taken. The ISOLATED-side MutationObserver calls this whenever the DOM moves.
  */
 export function handleAdState(): number {
   const player = document.querySelector<HTMLElement>('#movie_player')

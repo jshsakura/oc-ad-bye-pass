@@ -1,4 +1,4 @@
-// "유튜브에서만 동작한다"는 약속과, 설정·필터 리스트가 실제 페이지까지 닿는지.
+// The "only runs on YouTube" promise, and whether settings and the filter list reach the real page.
 
 import type { Page } from '@playwright/test'
 import { DEFAULT_SETTINGS, type Settings } from '../src/shared/settings.ts'
@@ -11,7 +11,7 @@ import {
   installYouTubeFixture,
 } from './youtube-fixture.ts'
 
-/** 페이지에서 새로 파싱해 본다 — MAIN world 훅이 지금 살아 있는지 확인하는 가장 확실한 방법 */
+/** Parse fresh from the page — the surest way to know whether the MAIN world hook is live right now. */
 const lateParseHasAds = (page: Page) =>
   page.evaluate(() => {
     const parsed = JSON.parse('{"adPlacements":[{}],"videoDetails":{"videoId":"late"}}')
@@ -34,7 +34,7 @@ test.describe('범위 — 유튜브 밖에서는 아무것도 하지 않는다',
     const page = await context.newPage()
     await page.goto(OTHER_SITE_URL)
 
-    // 두 계층 모두 발화하지 않는다 — JSON.parse 는 원본 그대로고, 광고 셀렉터도 안 먹는다
+    // Neither layer fires — JSON.parse is untouched and ad selectors do not apply
     expect(await layer1Active(page), 'MAIN world 훅이 걸리면 안 된다').toBe(false)
     expect(await layer2Active(page), '광고 숨김 규칙이 적용되면 안 된다').toBe(false)
     expect(await lateParseHasAds(page)).toBe(true)
@@ -66,19 +66,19 @@ test.describe('설정이 실제 페이지에 반영된다', () => {
     })
 
     await expect(page.locator('#masthead-ad'), '끄면 즉시 되살아나야 한다').toBeVisible()
-    // 다른 그룹은 그대로 켜져 있다
+    // Other groups stay on
     await expect(page.locator('#merch')).toBeHidden()
   })
 
   test('마스터 스위치를 끄면 1계층 프루닝도 멈춘다', async ({ context, background }) => {
     const page = await context.newPage()
     await page.goto(YOUTUBE_URL)
-    // 켜져 있는 동안에는 새로 파싱해도 광고가 잘린다
+    // While it is on, even a fresh parse comes back pruned
     await expect.poll(() => lateParseHasAds(page)).toBe(false)
 
     await writeSettings(background, { ...DEFAULT_SETTINGS, enabled: false })
 
-    // 설정이 MAIN world 까지 건너가면 훅이 손을 뗀다
+    // Once the setting reaches the MAIN world the hook stands down
     await expect.poll(() => lateParseHasAds(page)).toBe(true)
     await expect(page.locator('#masthead-ad')).toBeVisible()
   })
@@ -102,15 +102,15 @@ test.describe('설정이 실제 페이지에 반영된다', () => {
 
     await writeSettings(background, {
       ...DEFAULT_SETTINGS,
-      // 스타일시트를 탈출하려는 시도 + 멀쩡한 규칙 하나
+      // An attempt to escape the stylesheet, plus one sound rule
       customRules: 'body { display: none }\n#normal-card',
     })
 
-    // 멀쩡한 규칙은 먹고
+    // The sound rule applies…
     await expect(page.locator('#normal-card')).toBeHidden()
 
-    // 탈출 시도는 스타일시트에 아예 들어가지 못한다.
-    // 스타일 노드를 뒤지는 대신 결과로 확인한다 — 페이지가 멀쩡히 살아 있는지.
+    // …while the escape attempt never enters the stylesheet at all.
+    // Checked by result rather than by inspecting the style node: is the page still intact?
     expect(await page.evaluate(() => getComputedStyle(document.body).display)).toBe('block')
     expect(
       await page.evaluate(() => {
@@ -136,8 +136,9 @@ test.describe('원격 필터 리스트', () => {
     await page.goto(YOUTUBE_URL)
     await expect(page.locator('#normal-card')).toBeVisible()
 
-    // 백그라운드가 검증까지 마치고 캐시에 넣은 상태를 그대로 재현한다.
-    // (유튜브가 태그를 바꿨을 때 JSON 만 고쳐서 배포하는 바로 그 경로다)
+    // Reproduces exactly the state the background leaves behind after validating
+    // and caching — the very path used when YouTube renames a tag and only the
+    // JSON needs shipping.
     await background.evaluate(
       async ({ url }) => {
         await chrome.storage.local.set({
@@ -164,7 +165,7 @@ test.describe('원격 필터 리스트', () => {
     )
 
     await expect(page.locator('#normal-card'), '원격 규칙이 반영돼야 한다').toBeHidden()
-    // 번들 기본 규칙도 그대로 살아 있다 (합집합 병합)
+    // The bundled defaults survive alongside it (union merge)
     await expect(page.locator('#masthead-ad')).toBeHidden()
   })
 })
@@ -174,7 +175,7 @@ test('차단 통계가 쌓인다', async ({ context, background }) => {
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
 
-  // 콘텐츠 스크립트는 3초마다 모아서 보고한다
+  // The content script batches its reports every 3 seconds
   await expect
     .poll(
       async () => {

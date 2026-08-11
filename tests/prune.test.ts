@@ -1,5 +1,5 @@
-// 1계층의 핵심. 광고 필드는 확실히 지우고, 그 외에는 절대 손대지 않아야 한다.
-// (유튜브를 깨뜨리는 사고는 대부분 "너무 많이 지워서" 난다.)
+// The heart of layer 1: remove the ad fields for certain, and touch nothing
+// else. (Breaking YouTube is almost always a matter of deleting too much.)
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
@@ -65,7 +65,7 @@ test('객체가 아니면 그냥 0 을 돌려준다', () => {
 })
 
 test('깊은 곳까지 파고들지 않는다 — 피드 광고는 2계층(CSS) 담당', () => {
-  // 응답이 수 MB 라 전체 순회하면 스크롤이 끊긴다. 의도적으로 얕게 본다.
+  // Responses run to megabytes; walking all of it stutters scrolling. Deliberately shallow.
   const deep = { contents: { section: { item: { adPlacements: [{}] } } } }
   assert.equal(pruneAdFields(deep, BUNDLED_PRUNE), 0)
   assert.ok('adPlacements' in deep.contents.section.item)

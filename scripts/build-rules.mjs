@@ -1,26 +1,28 @@
-// 공개 광고·트래커 목록을 받아 declarativeNetRequest 룰로 변환한다.
+// Fetches public ad and tracker lists and converts them into
+// declarativeNetRequest rules.
 //
-//   node scripts/build-rules.mjs            # public/rules/ads.json 생성
-//   node scripts/build-rules.mjs --stats    # 통계만 출력
+//   node scripts/build-rules.mjs            # writes public/rules/ads.json
+//   node scripts/build-rules.mjs --stats    # statistics only
 //
-// ── 왜 도메인만 다루나
+// ── Why only domains
 //
-// ABP 문법 전체(코스메틱, 정규식, 수십 개의 옵션)를 DNR 로 옮기는 건 별개 프로젝트다.
-// 대신 **광고·트래커의 90% 를 차지하는 도메인 차단**만 정확히 옮긴다. 변환할 수 없는
-// 규칙은 조용히 버리지 않고 몇 개를 왜 버렸는지 보고한다 — 조용히 버리면 "다 됐겠지"로
-// 착각하게 된다.
+// Porting the whole ABP syntax (cosmetics, regex, dozens of options) to DNR is
+// a separate project. Instead this converts, accurately, the **domain blocking
+// that accounts for ~90% of ads and trackers**. Rules that cannot be converted
+// are not dropped silently: the count and the reason are reported, because
+// silent dropping leaves you believing everything was covered.
 //
-// ── 라이선스
+// ── Licensing
 //
-// 이 프로젝트는 GPLv3 다. 아래 목록들도 GPLv3(또는 호환)이라 그대로 쓸 수 있다.
-// 출처는 생성물 안에 남긴다.
+// This project is GPLv3. The lists below are GPLv3 (or compatible), so they can
+// be used as-is. Their provenance is recorded in the generated output.
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 const OUT_DIR = path.resolve(import.meta.dirname, '..', 'public', 'rules')
 
-/** DNR 정적 룰셋 한도. 크롬이 보장하는 최소치가 30,000 이다. */
+/** Static ruleset limit. 30,000 is the minimum Chrome guarantees. */
 const MAX_RULES = 30_000
 
 const SOURCES = [
@@ -42,10 +44,11 @@ const SOURCES = [
 ]
 
 /**
- * 절대 차단하면 안 되는 도메인.
+ * Domains that must never be blocked.
  *
- * 공개 목록은 대체로 안전하지만 한 줄만 잘못 들어와도 로그인이나 결제가 통째로
- * 막힌다. 그런 사고는 "광고가 안 막힌다"와 차원이 다르므로 우리 쪽에서 한 번 더 막는다.
+ * Public lists are generally safe, but one bad line is enough to break sign-in
+ * or payment entirely. That failure is in a different class from "an ad got
+ * through", so we guard against it on our side as well.
  */
 const NEVER_BLOCK = new Set([
   'youtube.com',
@@ -66,7 +69,7 @@ const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])
 function isUsableDomain(domain) {
   if (!DOMAIN_RE.test(domain)) return false
   if (domain.length > 253) return false
-  // 자기 자신이든 상위 도메인이든 보호 목록에 걸리면 버린다
+  // Drop it if the domain or any parent of it is on the protected list
   const parts = domain.split('.')
   for (let i = 0; i < parts.length - 1; i++) {
     if (NEVER_BLOCK.has(parts.slice(i).join('.'))) return false
@@ -75,24 +78,24 @@ function isUsableDomain(domain) {
 }
 
 /**
- * 한 줄을 해석한다. 우리가 다루는 것만 인식하고 나머지는 null 을 돌려준다.
+ * Parse one line. Recognises only the forms we handle and returns null otherwise.
  *
- * 다루는 형태:
- *   ||example.com^                 → 차단
- *   ||example.com^$third-party     → 3rd-party 일 때만 차단
- *   @@||example.com^               → 예외 (차단하지 않음)
- *   0.0.0.0 example.com            → 차단 (hosts 형식)
+ * Handled forms:
+ *   ||example.com^                 -> block
+ *   ||example.com^$third-party     -> block third-party requests only
+ *   @@||example.com^               -> exception (do not block)
+ *   0.0.0.0 example.com            -> block (hosts format)
  */
 function parseLine(raw) {
   const line = raw.trim()
   if (!line || line.startsWith('!') || line.startsWith('#') || line.startsWith('[')) return null
 
-  // 코스메틱 규칙은 DNR 이 다루지 않는다
+  // DNR does not handle cosmetic rules
   if (line.includes('##') || line.includes('#@#') || line.includes('#?#') || line.includes('#$#')) {
     return { kind: 'cosmetic' }
   }
 
-  // hosts 형식
+  // hosts format
   const hosts = line.match(/^(?:0\.0\.0\.0|127\.0\.0\.1)\s+(\S+)/)
   if (hosts) {
     const domain = hosts[1].toLowerCase()
@@ -111,7 +114,7 @@ function parseLine(raw) {
   const domain = match[1].toLowerCase()
   if (!isUsableDomain(domain)) return { kind: 'skipped', why: 'domain' }
 
-  // 우리가 표현할 수 있는 옵션만 통과시킨다
+  // Accept only the options we can actually express
   const options = optionText ? optionText.split(',').filter(Boolean) : []
   let thirdParty = false
   for (const option of options) {
@@ -141,7 +144,7 @@ for (const source of SOURCES) {
   try {
     text = await fetchList(source)
   } catch (e) {
-    console.error(`  ${source.name}: 실패 — ${e.message}`)
+    console.error(`  ${source.name}: failed — ${e.message}`)
     stats.push({ ...source, error: e.message })
     continue
   }
@@ -152,7 +155,7 @@ for (const source of SOURCES) {
     counts[parsed.kind] = (counts[parsed.kind] ?? 0) + 1
 
     if (parsed.kind === 'block') {
-      // 이미 무조건 차단이면 third-party 한정으로 낮추지 않는다
+      // Never weaken an existing unconditional block to third-party only
       const existing = block.get(parsed.domain)
       block.set(parsed.domain, existing === false ? false : (parsed.thirdParty ?? false))
     } else if (parsed.kind === 'allow') {
@@ -162,11 +165,11 @@ for (const source of SOURCES) {
 
   stats.push({ name: source.name, license: source.license, url: source.url, counts })
   console.log(
-    `  ${source.name.padEnd(22)} 차단 ${String(counts.block).padStart(6)} · 예외 ${String(counts.allow).padStart(5)} · 코스메틱 ${String(counts.cosmetic).padStart(6)} · 미지원 ${counts.unsupported}`,
+    `  ${source.name.padEnd(22)} block ${String(counts.block).padStart(6)} · except ${String(counts.allow).padStart(5)} · cosmetic ${String(counts.cosmetic).padStart(6)} · unsupported ${counts.unsupported}`,
   )
 }
 
-// 예외 목록에 있는 도메인은 차단에서 뺀다
+// Remove exception-listed domains from the block set
 for (const domain of allow) block.delete(domain)
 
 const domains = [...block.entries()].sort(([a], [b]) => a.localeCompare(b))
@@ -196,9 +199,9 @@ const meta = {
 }
 writeFileSync(path.join(OUT_DIR, 'ads.meta.json'), JSON.stringify(meta, null, 2) + '\n')
 
-console.log(`\n도메인 ${domains.length}개 → 룰 ${rules.length}개`)
+console.log(`\n${domains.length} domains -> ${rules.length} rules`)
 if (dropped > 0) {
-  // 조용히 자르면 "다 막힌다"고 착각하게 된다
-  console.log(`한도(${MAX_RULES})를 넘어 ${dropped}개를 버렸다`)
+  // Truncating silently would leave you believing everything is blocked
+  console.log(`${dropped} dropped for exceeding the ${MAX_RULES} rule limit`)
 }
-console.log(`출력: ${path.join(OUT_DIR, 'ads.json')}`)
+console.log(`wrote: ${path.join(OUT_DIR, 'ads.json')}`)

@@ -1,8 +1,9 @@
-// AdGuard 의 json-prune 과 같은 일을 한다: 플레이어 응답 객체에서 광고 필드를 지운다.
-// ReVanced 의 video-ads 패치가 PlayerResponseModel 에서 adPlacements/playerAds/adSlots 를
-// 없애는 것과 같은 지점이다. 광고를 "숨기는" 게 아니라 애초에 로드되지 않게 만든다.
+// Does what AdGuard's json-prune does: strip ad fields out of the player
+// response object. Same place ReVanced's video-ads patch removes
+// adPlacements/playerAds/adSlots from PlayerResponseModel. This does not
+// "hide" ads — it stops them being loaded at all.
 
-/** 광고 필드가 붙어 있을 수 있는 컨테이너 키 — 여기까지만 내려간다 (전체 순회는 비싸다) */
+/** Container keys an ad field may sit under. We descend no further — a full walk is expensive. */
 const NESTED_ROOT_KEYS = ['playerResponse', 'player_response', 'response']
 
 function deleteAtPath(node: unknown, segments: string[]): number {
@@ -19,9 +20,12 @@ function deleteAtPath(node: unknown, segments: string[]): number {
 }
 
 /**
- * data 와 그 바로 아래 응답 컨테이너에서 paths 를 지운다. 지운 개수를 돌려준다.
- * 깊은 재귀는 하지 않는다 — 유튜브 응답은 수 MB 라 전체 순회하면 스크롤이 끊긴다.
- * 피드에 박히는 광고 카드는 2계층(CSS)이 맡는다.
+ * Delete `paths` from `data` and from the response containers directly under
+ * it, returning how many were removed.
+ *
+ * No deep recursion: YouTube responses run to megabytes, and walking all of it
+ * on every parse makes scrolling stutter. Ad cards embedded in the feed are
+ * layer 2's job (CSS).
  */
 export function pruneAdFields(data: unknown, paths: string[]): number {
   if (typeof data !== 'object' || data === null) return 0

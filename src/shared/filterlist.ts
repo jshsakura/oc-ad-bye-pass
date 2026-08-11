@@ -1,15 +1,16 @@
-// 원격 필터 리스트의 스키마 · 검증 · 병합.
+// Schema, validation and merging for the remote filter list.
 //
-// 원격에서 가져오는 것은 **데이터일 뿐 코드가 아니다.** eval 도, 원격 스크립트 주입도
-// 하지 않는다 (MV3 가 금지하기도 하고, 리스트 저장소가 털렸을 때 유튜브 세션에서
-// 임의 코드가 도는 사태를 막기 위해서다).
+// What we fetch is **data, never code.** No eval, no remote script injection —
+// MV3 forbids it, and it would mean a compromised list repository could run
+// arbitrary code inside the user's session.
 //
-// 그래도 남는 위험이 있다: 셀렉터는 결국 스타일시트에 들어가므로 악의적인 리스트가
-// youtube.com 의 임의 요소를 숨길 수 있다. 그래서 아래를 강제한다.
-//   - `{` `}` `@` `<` 주석 등 스타일시트를 탈출할 수 있는 문자는 거부
-//   - 실제로 파싱되는 셀렉터만 통과 (브라우저에서 시험 파싱)
-//   - 크기·개수 상한
-//   - version 이 캐시본보다 낮으면 거부 (롤백 공격)
+// A risk remains: selectors end up in a stylesheet, so a hostile list could
+// still hide or act on things it shouldn't. Hence the rules below.
+//   - reject characters that could escape the stylesheet (`{` `}` `@` `<`, comments)
+//   - only selectors that actually parse (test-parsed in the browser)
+//   - only selectors whose subject is identifiable (see hasSpecificAnchor)
+//   - size and count caps
+//   - reject a version older than the cached one (rollback attack)
 
 import { TOGGLE_KEYS, type ToggleKey } from './settings.ts'
 import { BUNDLED_CLICK, BUNDLED_HIDE, BUNDLED_PRUNE } from './selectors.ts'
@@ -21,30 +22,40 @@ export const MAX_SELECTORS_TOTAL = 8000
 export const MAX_PRUNE_PATHS = 200
 
 /**
- * `click` 은 `hide` 와 신뢰 등급이 다르다 — 숨기는 게 아니라 **사용자 대신 누른다.**
- * 매니페스트 매치에 `studio.youtube.com` 이 포함되므로, 임의 셀렉터를 누를 수 있으면
- * 영상·채널 삭제 확인이나 광고 클릭 사기가 사용자 세션으로 가능해진다.
+ * `click` sits at a different trust level than `hide`: it does not hide an
+ * element, it **presses it as the user**. So remote lists get no say — only
+ * the bundled selectors are ever clicked.
  *
- * 그래서 둘로 조인다.
- *   1. 개수를 훨씬 낮게 (아래 상한). sweep 이 셀렉터마다 문서 전체를 훑기 때문에
- *      성능 한도이기도 하다 — 2000개면 프레임이 33ms → 2150ms 로 뛴다.
- *   2. 이름에 닫기/건너뛰기 뜻이 없으면 거부. "확인" 버튼을 누르게 만들 수 없다.
+ * A name-based allowlist was tried first and abandoned. It admitted any
+ * selector containing `close|skip|dismiss`, which is no defence when the
+ * attacker owns the whole string: keep the target, bolt on a harmless clause.
+ *
+ *     #danger:not([data-close])      ← still the "confirm delete" button
+ *     a[href*="signout"]:not(.skip)
+ *
+ * You cannot filter by name when the attacker writes the name. Rather than
+ * keep playing that game, the attack surface is gone. The only thing lost is
+ * "fix a changed close button via the list" — that ships in an extension update.
  */
 export const MAX_CLICK_SELECTORS = 25
-const CLICK_INTENT = /close|skip|dismiss|next-?ad|ad-?feedback/i
 
 /**
- * 문서 전체를 지우는 셀렉터. 리스트가 털리면 전 사용자의 페이지가 백지가 되고,
- * 캐시에 남아서 확장을 끄기 전에는 돌아오지 않는다.
- * DOM 이 있으면 아래 `matchesDocumentRoot` 가 더 넓게 잡는다.
+ * Selectors that wipe the document. A compromised list would blank the page
+ * for every user, and the rule persists in cache until the extension is off.
  */
 const TOO_BROAD = new Set(['*', 'html', ':root', 'body', 'head', 'html *', ':root *'])
+
+/**
+ * A plain HTML tag. A selector made only of one points at an entire class of
+ * document content rather than a single ad (`div`, `body > *`, `body span`).
+ */
+const GENERIC_TAG = /^[a-z][a-z0-9]*$/
 
 export interface FilterRules {
   hide: Partial<Record<ToggleKey, string[]>>
   prune: string[]
   click: string[]
-  /** 오탐 제거용 예외 — 여기 적힌 셀렉터는 최종 결과에서 문자열 일치로 빠진다 */
+  /** Escape hatch for false positives: removed from the result by exact string match. */
   allow: string[]
 }
 
@@ -56,9 +67,9 @@ export interface FilterList {
 }
 
 export interface ValidateOptions {
-  /** 이 값보다 낮은 version 은 거부한다 */
+  /** Reject any list whose version is below this. */
   minVersion?: number
-  /** 셀렉터 파싱 검사기. 기본값은 DOM 이 있으면 DOM, 없으면 통과 */
+  /** Selector parse check. Defaults to the DOM when there is one, otherwise a no-op. */
   canParseSelector?: (selector: string) => boolean
 }
 
@@ -70,7 +81,7 @@ const FORBIDDEN_IN_SELECTOR = /[{}<@;]|\/\*|\*\/|javascript:/i
 const PRUNE_PATH_RE = /^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*$/
 const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'])
 
-/** 브라우저에서는 실제로 파싱해 보고, 그 외(테스트/워커)에서는 문자 검사까지만 한다. */
+/** In a browser, actually parse it. Elsewhere (tests, worker) character checks are all we have. */
 export function defaultCanParseSelector(selector: string): boolean {
   if (typeof document === 'undefined') return true
   try {
@@ -81,7 +92,7 @@ export function defaultCanParseSelector(selector: string): boolean {
   }
 }
 
-/** 제어문자 검사. 정규식에 리터럴 제어문자를 넣지 않으려고 코드포인트로 본다. */
+/** Control-character check, done by code point so no literal control chars sit in a regex. */
 function hasControlChar(s: string): boolean {
   for (let i = 0; i < s.length; i++) {
     const c = s.charCodeAt(i)
@@ -91,10 +102,10 @@ function hasControlChar(s: string): boolean {
 }
 
 /**
- * 문서 루트(또는 body)를 잡는 셀렉터인가.
+ * Does this selector match the document root (or body)?
  *
- * 문자열 블랙리스트만으로는 `html:has(body)`, `:has(*)`, `*:not(#nope)` 같은 변형을
- * 다 막을 수 없다. DOM 이 있으면 실제로 매칭시켜 보는 게 확실하다.
+ * A string blocklist alone cannot cover `html:has(body)`, `:has(*)` or
+ * `*:not(#nope)`. Where a DOM exists, actually matching against it is certain.
  */
 function matchesDocumentRoot(selector: string): boolean {
   if (typeof document === 'undefined') return false
@@ -107,6 +118,56 @@ function matchesDocumentRoot(selector: string): boolean {
   return false
 }
 
+/**
+ * Extract the selector's **subject** — its rightmost compound.
+ *
+ * Combinators can appear inside parentheses, as in
+ * `ytd-rich-item-renderer:has(> #content > ytd-ad-slot-renderer)`, so this
+ * tracks depth while scanning. Splitting naively would mistake the inside of
+ * `:has()` for the subject.
+ */
+function rightmostCompound(selector: string): string {
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < selector.length; i++) {
+    const c = selector[i]
+    if (c === '(' || c === '[') depth++
+    else if (c === ')' || c === ']') depth--
+    else if (depth === 0 && (c === ' ' || c === '>' || c === '+' || c === '~' || c === ',')) {
+      start = i + 1
+    }
+  }
+  return selector.slice(start).trim()
+}
+
+/**
+ * Does the selector name what it targets?
+ *
+ * The subject must carry an id, class or attribute, or be a custom element
+ * (contains `-`). In other words, we only hide elements that actually bear a
+ * mark identifying them as an ad.
+ *
+ * Without this you can empty a page without ever touching the root — this was
+ * an actual bypass:
+ *
+ *     body > *   body *   div   span
+ *
+ * None of those match `html` or `body`, so a root check waves them through,
+ * yet they erase the content. The test moved from "does it point at the root"
+ * to "does it say what it points at".
+ */
+function hasSpecificAnchor(selector: string): boolean {
+  const subject = rightmostCompound(selector)
+  if (!subject) return false
+
+  // Strip pseudo-classes so only the element part remains (`:has(...)`, `:not(...)`, …)
+  const bare = subject.replace(/:[^\s(]+(\([^)]*\))?/g, '').trim()
+  if (!bare || bare === '*') return false
+  if (bare.includes('#') || bare.includes('.') || bare.includes('[')) return true
+  // For a custom element the tag name is itself the mark (ytd-ad-slot-renderer)
+  return bare.includes('-') && !GENERIC_TAG.test(bare)
+}
+
 export function isSafeSelector(selector: string, canParse = defaultCanParseSelector): boolean {
   if (typeof selector !== 'string') return false
   const s = selector.trim()
@@ -114,18 +175,10 @@ export function isSafeSelector(selector: string, canParse = defaultCanParseSelec
   if (hasControlChar(s)) return false
   if (FORBIDDEN_IN_SELECTOR.test(s)) return false
   if (TOO_BROAD.has(s.toLowerCase())) return false
+  if (!hasSpecificAnchor(s)) return false
   if (!canParse(s)) return false
-  // 페이지를 통째로 지우는 셀렉터는 어떤 리스트에서 와도 받지 않는다
+  // No list, from any source, gets to blank the page.
   return !matchesDocumentRoot(s)
-}
-
-/** 누를 수 있는 셀렉터인가 — `hide` 보다 훨씬 좁다 */
-export function isSafeClickSelector(
-  selector: string,
-  canParse = defaultCanParseSelector,
-): boolean {
-  if (!isSafeSelector(selector, canParse)) return false
-  return CLICK_INTENT.test(selector)
 }
 
 export function isSafePrunePath(path: unknown): path is string {
@@ -155,7 +208,7 @@ function sanitizeSelectors(
   return out
 }
 
-/** JSON 텍스트 → 검증된 리스트. 크기 상한은 파싱 전에 본다. */
+/** JSON text to a validated list. The size cap is checked before parsing. */
 export function parseFilterList(text: string, opts: ValidateOptions = {}): ValidateResult {
   const bytes = new TextEncoder().encode(text).length
   if (bytes > MAX_LIST_BYTES) {
@@ -209,19 +262,10 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
     }
   }
 
-  // click 은 별도 검사기와 훨씬 낮은 상한을 쓴다 (위 MAX_CLICK_SELECTORS 주석 참조)
+  // Remote lists never get click rules. See MAX_CLICK_SELECTORS above for why.
   const click: string[] = []
-  if (Array.isArray(r.click)) {
-    for (const raw of r.click) {
-      if (click.length >= MAX_CLICK_SELECTORS) {
-        dropped.push(`click: 상한(${MAX_CLICK_SELECTORS}) 초과분 제외`)
-        break
-      }
-      if (typeof raw !== 'string') continue
-      const s = raw.trim()
-      if (isSafeClickSelector(s, canParse)) click.push(s)
-      else dropped.push(`click: ${s.slice(0, 80)}`)
-    }
+  if (Array.isArray(r.click) && r.click.length > 0) {
+    dropped.push(`click: ${r.click.length} rule(s) ignored — remote click rules are not accepted`)
   }
 
   const allow = sanitizeSelectors(r.allow, canParse, dropped, 'allow')
@@ -251,13 +295,13 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
 }
 
 // ---------------------------------------------------------------------------
-// 병합
+// Merging
 // ---------------------------------------------------------------------------
 
 export interface ResolvedRules {
-  /** 토글 그룹별 숨김 셀렉터 */
+  /** Hide selectors, grouped by the toggle that controls them. */
   hide: Partial<Record<ToggleKey, string[]>>
-  /** 내 규칙 — 토글과 무관하게 항상 적용 */
+  /** The user's own rules. Always applied, regardless of toggles. */
   custom: string[]
   click: string[]
   prune: string[]
@@ -273,14 +317,15 @@ function union(...lists: (string[] | undefined)[]): string[] {
 }
 
 /**
- * 우선순위: 내 규칙 > 원격 리스트 > 번들 기본. 실제로는 합집합이라 "우선순위"가
- * 문제되는 건 allow(예외) 뿐인데, allow 는 원격/번들 결과에만 적용하고
- * 내 규칙은 건드리지 않는다 — 사용자가 직접 넣은 건 언제나 이긴다.
+ * Precedence: user rules > remote list > bundled defaults. Since the merge is
+ * a union, precedence only really matters for `allow`, which applies to the
+ * remote and bundled sets but never to the user's own rules — what the user
+ * typed always wins.
  */
 export function resolveRules(remote: FilterList | null, customRules: string[]): ResolvedRules {
   const allow = new Set(remote?.rules.allow ?? [])
-  // 여기서 한 번 더 isSafeSelector 를 태운다. 리스트를 받아 검증한 곳(서비스 워커)에는
-  // document 가 없어서 "실제로 파싱되는 셀렉터인가"까지는 못 봤기 때문이다.
+  // Re-run isSafeSelector here. The service worker that validated the list on
+  // arrival has no document, so it could not check that a selector really parses.
   const keep = (list: string[]) => list.filter((s) => !allow.has(s) && isSafeSelector(s))
 
   const hide: Partial<Record<ToggleKey, string[]>> = {}
@@ -292,20 +337,18 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
   return {
     hide,
     custom: customRules.filter((s) => isSafeSelector(s)),
-    // click 은 여기서도 다시 조인다. 캐시에 예전 규칙이 남아 있을 수 있고,
-    // 서비스 워커에는 DOM 이 없어서 실제 매칭 검사를 못 했기 때문이다.
-    click: keep(union(BUNDLED_CLICK, remote?.rules.click))
-      .filter((s) => isSafeClickSelector(s))
-      .slice(0, MAX_CLICK_SELECTORS),
+    // Bundled only — a cache written by an older build may still hold remote
+    // click rules, so this is enforced here too, not just at validation time.
+    click: keep(BUNDLED_CLICK).slice(0, MAX_CLICK_SELECTORS),
     prune: union(BUNDLED_PRUNE, remote?.rules.prune),
   }
 }
 
 /**
- * 켜진 그룹만 골라 스타일시트를 만든다.
+ * Build the stylesheet from the enabled groups only.
  *
- * 셀렉터 하나당 규칙 하나로 뽑는 이유: 콤마로 묶으면 셀렉터 하나가
- * (예: 미지원 문법) 무효일 때 규칙 전체가 통째로 무시된다.
+ * One rule per selector, deliberately: joined by commas, a single invalid
+ * selector (unsupported syntax, say) makes the browser discard the whole rule.
  */
 export function buildStylesheet(
   rules: ResolvedRules,

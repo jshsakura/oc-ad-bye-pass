@@ -1,11 +1,12 @@
-// content script(MAIN/ISOLATED) 와 service worker 를 esbuild 로 번들한다.
+// Bundles the content scripts (MAIN/ISOLATED) and the service worker with esbuild.
 //
-// 왜 vite 가 아니라 esbuild 인가:
-//   - MAIN world 훅은 유튜브 스크립트보다 먼저 "동기적으로" 실행돼야 한다.
-//     ESM/로더로 감싸면 실행이 한 틱 밀려서 ytInitialPlayerResponse 를 놓친다.
-//   - rollup 의 iife 포맷은 빌드당 엔트리 1개만 허용한다. esbuild 는 여러 엔트리를
-//     각각 독립 IIFE 로 뽑아준다.
-// esbuild 는 vite 의 의존성이라 추가 설치가 없다.
+// Why esbuild rather than vite:
+//   - The MAIN world hooks must run **synchronously**, ahead of YouTube's own
+//     scripts. Wrapping them in an ESM loader delays execution by a tick, which
+//     is enough to miss ytInitialPlayerResponse.
+//   - rollup's iife format allows one entry per build. esbuild emits several
+//     entries, each as its own self-contained IIFE.
+// esbuild is already a vite dependency, so this adds nothing to install.
 
 import * as esbuild from 'esbuild'
 import { resolveTarget } from './targets.mjs'
@@ -25,9 +26,10 @@ const options = {
   format: 'iife',
   platform: 'browser',
   target: target.esbuildTarget,
-  // 브라우저별로 갈리는 코드는 src/shared/target.ts 한 곳에서만 읽는다.
-  // 불리언까지 여기서 계산해 넘기는 이유는 target.ts 주석 참조 — 리터럴이어야
-  // esbuild 가 모듈을 넘어 인라인하고 죽은 분기를 지운다.
+  // Everything browser-specific is read from one place, src/shared/target.ts.
+  // The boolean is computed here and passed in for the reason described in that
+  // file: it has to be a literal for esbuild to inline it across modules and
+  // drop the dead branch.
   define: {
     __TARGET__: JSON.stringify(target.name),
     __IS_SAFARI__: String(target.name === 'safari'),

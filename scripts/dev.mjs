@@ -1,5 +1,6 @@
-// vite(팝업/옵션) watch 와 esbuild(content/background) watch 를 함께 띄운다.
-// 둘 다 dist/ 로 떨어지므로 chrome://extensions 에서 dist/ 를 한 번만 로드하면 된다.
+// Runs the vite watcher (popup/options) and the esbuild watcher
+// (content/background) side by side. Both emit into dist/, so you load dist/
+// once in chrome://extensions and leave it there.
 
 import { spawn } from 'node:child_process'
 

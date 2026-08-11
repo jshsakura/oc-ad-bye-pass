@@ -1,4 +1,4 @@
-// 서비스 워커. 하는 일은 셋뿐이다: 기본값 시드, 필터 리스트 주기 갱신, 통계/배지.
+// Service worker. Three jobs only: seed defaults, refresh the filter list, keep stats and the badge.
 
 import type { RuntimeRequest } from '../shared/messages.ts'
 import {
@@ -10,7 +10,7 @@ import {
 import { currentStatus, updateFilters } from './updater.ts'
 import { ensureMainWorldScript } from './mainWorld.ts'
 
-// --- 배지 ----------------------------------------------------------------------
+// --- Badge ---------------------------------------------------------------------
 
 function compact(n: number): string {
   if (n < 1000) return String(n)
@@ -24,8 +24,8 @@ async function setBadge(stats: Stats) {
   await chrome.action.setBadgeText({ text: total > 0 ? compact(total) : '' })
 }
 
-// --- 통계 ----------------------------------------------------------------------
-// 탭 여러 개가 동시에 올려도 값이 뭉개지지 않게 쓰기를 한 줄로 세운다.
+// --- Stats ---------------------------------------------------------------------
+// Writes are serialised so counts from several tabs at once don't clobber each other.
 
 let writeChain: Promise<void> = Promise.resolve()
 
@@ -45,19 +45,21 @@ function bumpStats(patch: { pruned?: number; skipped?: number }): Promise<void> 
   return writeChain
 }
 
-// --- 수명주기 -------------------------------------------------------------------
+// --- Lifecycle -----------------------------------------------------------------
 //
-// 주기 알람은 쓰지 않는다. 갱신은 **유튜브 탭이 열릴 때** 콘텐츠 스크립트가 찔러서
-// 일어나고(`filters:update`, force=false), 낡지 않았으면 updater 가 바로 돌려보낸다.
+// No periodic alarm. A refresh happens when **a YouTube tab opens** and the
+// content script pokes us (`filters:update`, force=false); if the cache is
+// fresh the updater returns immediately.
 //
-// 알람을 뺀 이유 둘:
-//   - 유튜브를 안 보는 동안 서비스 워커를 깨울 이유가 없다
-//   - `alarms` 권한이 통째로 사라진다 (설치 경고가 하나 준다)
+// Two reasons the alarm went away:
+//   - no point waking the service worker while nobody is watching YouTube
+//   - the `alarms` permission disappears entirely (one less install warning)
 //
-// 호환성 때문은 아니다 — Orion API 표를 확인해보니 `alarms` 는 macOS·iOS 모두
-// Full support 다. 순전히 "안 깨워도 되는 걸 깨우지 말자"는 얘기다.
+// Not a compatibility call — the Orion API table lists `alarms` as fully
+// supported on both macOS and iOS. It is purely "don't wake what needn't wake".
 //
-// 자주 찔러도 싸다 — ETag 조건부 요청이라 바뀐 게 없으면 304 로 끝난다.
+// Frequent pokes are cheap: the request is conditional on ETag, so an unchanged
+// list ends at a 304.
 
 chrome.runtime.onInstalled.addListener(async () => {
   await seedDefaultSettings()
@@ -76,10 +78,10 @@ chrome.runtime.onStartup.addListener(() => {
   void loadStats().then(setBadge)
 })
 
-// Safari 에서만 실제로 일한다 (Chrome 번들에서는 통째로 사라진다).
-// onInstalled/onStartup 밖에서도 부르는 이유: 등록이 한 번 실패한 뒤 서비스 워커가
-// 다른 이유로 깨어났을 때 다시 시도할 기회를 주기 위해서다. 이미 등록돼 있으면
-// 조회 한 번으로 끝난다.
+// Only does anything on Safari (it vanishes from the Chrome bundle entirely).
+// Called outside onInstalled/onStartup as well, so that a registration which
+// failed once gets another chance whenever the worker wakes for any reason.
+// If it is already registered this costs a single lookup.
 void ensureMainWorldScript()
 
 chrome.runtime.onMessage.addListener((message: RuntimeRequest, _sender, sendResponse) => {

@@ -1,17 +1,20 @@
-// AltStore / SideStore 소스 JSON 을 만든다.
+// Builds the AltStore / SideStore source JSON.
 //
-// **이게 "아이폰에서 웹으로 설치"의 진짜 답이다.**
+// **This is the real answer to "install on iPhone from the web".**
 //
-// AltStore 는 소스 URL 을 등록하면 그 안의 앱 목록을 보여주고, 받아서 **사용자의
-// 무료 Apple ID 로 직접 재서명해** 설치한다. 우리가 서명할 필요도, $99 를 낼 필요도
-// 없다. 대가는 7일마다 갱신인데 SideStore 는 최초 1회 PC 설정 뒤 무선으로 알아서 한다.
+// Register a source URL with AltStore and it lists the apps inside, downloads
+// one, and **re-signs it with the user's own free Apple ID** to install. No
+// signing on our side, no $99. The price is a renewal every 7 days, which
+// SideStore handles wirelessly after a one-time setup from a PC.
 //
-// itms-services(OTA) 와의 차이:
-//   OTA          유료 계정 + UDID 등록 필요. 대신 사파리에서 바로 설치, 1년 유효
-//   AltStore     무료 Apple ID 로 충분. 대신 AltStore 앱을 거치고 7일마다 갱신
+// Versus itms-services (OTA):
+//   OTA        needs a paid account and UDID registration; installs straight
+//              from Safari and lasts a year
+//   AltStore   a free Apple ID is enough; goes through the AltStore app and
+//              renews every 7 days
 //
-// 스키마는 AltStore 2.x 의 versions 배열을 쓰되, 구버전이 읽는 최상위 필드도 같이
-// 넣는다 (둘 다 있으면 각자 아는 것을 읽는다).
+// The schema uses AltStore 2.x's versions array, but also carries the top-level
+// fields older releases read — with both present, each reads what it knows.
 
 import { mkdirSync, statSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
@@ -60,7 +63,7 @@ export function buildSource({ baseUrl, ipaPath, ipaUrl, version, date, bundleId 
         screenshotURLs: [],
         // AltStore 2.x
         versions: [entry],
-        // 구버전 AltStore 가 읽는 자리
+        // Where older AltStore versions look
         version,
         versionDate: date,
         versionDescription: '유튜브 광고 차단 Safari 확장',

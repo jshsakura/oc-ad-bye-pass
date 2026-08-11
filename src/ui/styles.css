@@ -168,7 +168,7 @@ a {
   flex: none;
 }
 
-/* 스위치 */
+/* Switch */
 .switch {
   position: relative;
   width: 34px;
@@ -251,7 +251,7 @@ button.primary {
   color: var(--accent-fg);
 }
 
-/* 옵션 페이지 */
+/* Options page */
 .page h1 {
   font-size: 19px;
   margin: 0 0 4px;

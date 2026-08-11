@@ -1,22 +1,22 @@
-// 원격 필터 리스트 캐시. 백그라운드가 쓰고, 콘텐츠 스크립트/UI 가 읽는다.
-// 콘텐츠 스크립트는 네트워크에 직접 접근하지 않는다 — 이 캐시만 본다.
+// Cache for the remote filter list. The background writes it; content scripts
+// and the UI read it. Content scripts never touch the network — only this cache.
 
 import type { FilterList } from './filterlist.ts'
 import { CACHE_KEY } from './settings.ts'
 
 export interface FilterCache {
-  /** 어느 URL 에서 받았는지 (URL 이 바뀌면 캐시를 버린다) */
+  /** Where it came from. A changed URL means a different list, so the cache is dropped. */
   url: string
   fetchedAt: number
   list: FilterList
-  /** 검증에서 걸러낸 항목 수 */
+  /** How many entries validation threw away. */
   dropped: number
-  /** 마지막 갱신 실패 사유. 성공했으면 null */
+  /** Why the last refresh failed, or null if it succeeded. */
   error: string | null
   /**
-   * 서버가 준 ETag. 다음 요청에 If-None-Match 로 되돌려주면, 바뀐 게 없을 때
-   * 서버가 본문 없이 304 만 준다 — 4KB 대신 헤더 몇 줄이다.
-   * 없을 수도 있다 (ETag 를 안 주는 서버).
+   * The ETag the server gave us. Sending it back as If-None-Match means an
+   * unchanged list costs a bare 304 instead of 4KB of body — a few headers.
+   * May be absent; not every server sends one.
    */
   etag?: string | null
 }

@@ -21,8 +21,9 @@ export function App() {
   useEffect(() => {
     void loadSettings().then(setSettings)
     void loadStats().then(setStats)
-    // activeTab 권한 덕분에 팝업을 연 순간의 활성 탭 주소만 볼 수 있다.
-    // (탭 권한을 따로 받지 않으므로 다른 탭의 주소는 알 수 없다.)
+    // The activeTab permission lets us see the URL of the tab that was active
+    // when the popup opened — and nothing else. We never request the broader
+    // tabs permission, so other tabs' URLs stay invisible to us.
     void chrome.tabs
       .query({ active: true, currentWindow: true })
       .then(([tab]) => setOnYouTube(isYouTubeUrl(tab?.url)))

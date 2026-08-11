@@ -1,4 +1,4 @@
-// 2계층 — 광고 컴포넌트가 그려지지 않는지, 그리고 멀쩡한 콘텐츠는 건드리지 않는지.
+// Layer 2 — are ad components kept from rendering, and is real content left alone?
 
 import { chromium } from '@playwright/test'
 import { LAUNCH_ARGS, expect, test } from './fixtures.ts'
@@ -30,10 +30,10 @@ test.describe('2계층 컴포넌트 필터', () => {
     const page = await context.newPage()
     await page.goto(YOUTUBE_URL)
 
-    // 광고 카드는 사라졌는데
+    // The ad card is gone…
     await expect(page.locator('#ad-card')).toBeHidden()
-    // 같은 태그를 쓰는 일반 카드는 살아 있어야 한다.
-    // ReVanced 가 home_video_with_context 를 예외로 두는 것과 같은 이유다.
+    // …while an ordinary card using the same tag has to survive.
+    // The same reason ReVanced excepts home_video_with_context.
     await expect(page.locator('#normal-card')).toBeVisible()
     await expect(page.locator('#normal-card ytd-rich-grid-media')).toContainText('normal card')
   })
@@ -42,7 +42,7 @@ test.describe('2계층 컴포넌트 필터', () => {
     const page = await context.newPage()
     await page.goto(YOUTUBE_URL)
 
-    // 유튜브는 스크롤할 때 광고를 나중에 붙인다. CSS 로 막으므로 새로 붙어도 즉시 안 보인다.
+    // YouTube appends ads as you scroll. Blocking via CSS means a new one is hidden the moment it lands.
     await page.evaluate(() => {
       const late = document.createElement('ytd-ad-slot-renderer')
       late.id = 'lazy-ad'
@@ -59,12 +59,12 @@ test.describe('2계층 컴포넌트 필터', () => {
 
     await page.evaluate(() => (window as unknown as { showAdblockNag: () => void }).showAdblockNag())
 
-    // 경고 다이얼로그와 뒤 배경이 사라지고
+    // The warning dialog and its backdrop disappear…
     await expect(page.locator('#nag')).toHaveCount(0)
     await expect(page.locator('tp-yt-iron-overlay-backdrop')).toHaveCount(0)
-    // 모달이 걸어둔 스크롤 잠금이 풀리고
+    // …the modal's scroll lock is released…
     await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('')
-    // 경고창이 멈춰 세운 재생이 실제로 다시 돈다 (스텁이 아니라 진짜 미디어 상태다)
+    // …and playback the warning stopped really resumes (real media state, not a stub)
     await expect
       .poll(() =>
         page.evaluate(() => document.querySelector<HTMLVideoElement>('#ad-video')!.paused),

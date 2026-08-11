@@ -1,5 +1,6 @@
-// 저장소에 올리는 filters/youtube.json 이 확장의 검증기를 통과하는지 확인한다.
-// 이게 깨진 채로 push 되면 모두의 확장이 갱신에 실패하므로 CI 에서 막는다.
+// Checks that the filters/youtube.json we publish passes the extension's own
+// validator. Pushing a broken one makes every installed extension fail to
+// update, so CI blocks it.
 
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
