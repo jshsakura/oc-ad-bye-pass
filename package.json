@@ -18,7 +18,9 @@
     "icons": "node scripts/make-icons.mjs",
     "zip": "npm run build && cd dist && zip -qr ../oc-ad-bye-pass.zip . && cd .. && echo 'oc-ad-bye-pass.zip'",
     "zip:safari": "npm run build:safari && cd dist-safari && zip -qr ../oc-ad-bye-pass-safari.zip . && cd .. && echo 'oc-ad-bye-pass-safari.zip'",
-    "safari:xcode": "npm run build:safari && xcrun safari-web-extension-converter dist-safari --project-location safari --app-name \"OC Ad Bye-Pass\" --bundle-identifier com.jshsakura.ocadbyepass --swift --no-open --force"
+    "safari:xcode": "npm run build:safari && xcrun safari-web-extension-converter dist-safari --project-location safari --app-name \"OC Ad Bye-Pass\" --bundle-identifier com.jshsakura.ocadbyepass --swift --no-open --force",
+    "check:orion": "node scripts/check-orion-api.mjs",
+    "audit": "npm run build && node scripts/audit-ads.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",

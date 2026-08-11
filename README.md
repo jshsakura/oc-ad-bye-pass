@@ -443,6 +443,35 @@ Despacito        adPlacements 1
 달라져서다. 그래서 차단 로직의 상시 판정은 대조군이 있는 픽스처 테스트가 맡고,
 여기는 "진짜에서도 되더라"를 확인하는 자리다.
 
+## Orion 브라우저
+
+[Orion](https://browser.kagi.com/) 은 WebKit 기반인데 **Chrome · Firefox · Safari 확장을
+전부 받는다.** 그리고 Chrome 웹스토어에서 원클릭 설치가 되고 자동 업데이트를 지원한다 —
+Chrome 과 Orion 을 하나의 확장으로 덮을 수 있다는 뜻이다.
+
+문제는 Orion 이 WebExtensions API 를 **약 70%만** 구현했다는 것이다. 안 되는 API 를 쓰면
+**오류 없이 조용히 기능만 죽는다.** Chrome 에서는 멀쩡히 도니까 눈치채기가 어렵다.
+
+그래서 Kagi 가 공개하는 지원 표에 우리가 호출하는 API 를 전부 대조한다
+(`npm run check:orion`, CI 에서도 돈다).
+
+```
+scripting.registerContentScripts   Full support   ← 1계층이 Orion 에서 사는 근거
+storage.local · alarms · action · permissions · runtime · tabs   Full support
+storage.sync                       Partial support ← 유일한 구멍
+```
+
+`registerContentScripts` 가 되는 게 결정적이다. WebKit 계열은 정적 `content_scripts` 의
+`world` 를 못 믿는데, Safari 용으로 만들어 둔 **런타임 등록 경로가 Orion 에도 그대로
+적용된다.** 새로 만들 게 없다.
+
+`storage.sync` 만 Partial 이라 설정을 sync/local **양쪽에** 쓰고 읽을 때 sync 를 우선한다
+(`src/shared/settings.ts`). sync 에만 쓰면 조용히 저장이 안 돼서 사용자 눈에는 설정이
+매번 초기화되는 것처럼 보인다.
+
+지원 표를 못 받으면(네트워크·시트 이동) 검사는 실패가 아니라 건너뛴다 — 남의 인프라에
+우리 CI 를 묶어두지 않는다.
+
 ## 라이선스와 출처
 
 **GPLv3** ([LICENSE](LICENSE)).

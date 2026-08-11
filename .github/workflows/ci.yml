@@ -32,6 +32,12 @@ jobs:
       - name: 타깃 분기 검증
         run: node scripts/verify-targets.mjs
 
+      # Orion(WebKit)은 WebExtensions API 를 약 70%만 구현했다. 안 되는 API 를 쓰면
+      # 오류 없이 조용히 기능만 죽는다 — Chrome 에서는 멀쩡하니 눈치채기 어렵다.
+      # 표를 못 받으면 실패시키지 않고 건너뛴다 (남의 인프라에 CI 를 묶지 않는다).
+      - name: Orion API 호환성 검사
+        run: node scripts/check-orion-api.mjs
+
       # 실제 Chromium 에 확장을 물려서 광고가 정말 막히는지 본다
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test

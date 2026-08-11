@@ -98,24 +98,74 @@ function mergeSettings(stored: unknown): Settings {
   }
 }
 
+// 설정은 sync 와 local **양쪽에** 쓰고, 읽을 때 sync 를 우선한다.
+//
+// 왜: Orion(WebKit)은 `storage.sync` 가 Partial support 다 — API 는 있는데 기기 간
+// 동기화가 보장되지 않는다. sync 에만 쓰면 조용히 안 저장돼서 사용자 눈에는 설정이
+// 매번 초기화되는 것처럼 보인다. 실패해도 티가 안 나는 종류라 더 나쁘다.
+// (`storage.local` 은 Orion macOS·iOS 모두 Full support 다.)
+//
+// 양쪽에 쓰는 비용은 무시할 만하다 — 설정은 작고 자주 바뀌지 않는다.
+
+const AREAS = ['sync', 'local'] as const
+type AreaName = (typeof AREAS)[number]
+
+async function areaGet(area: AreaName, key: string): Promise<unknown> {
+  const got = await chrome.storage[area].get(key)
+  return got[key]
+}
+
+async function areaSet(area: AreaName, key: string, value: unknown): Promise<void> {
+  await chrome.storage[area].set({ [key]: value })
+}
+
 export async function loadSettings(): Promise<Settings> {
-  const got = await chrome.storage.sync.get(SETTINGS_KEY)
-  return mergeSettings(got[SETTINGS_KEY])
+  for (const area of AREAS) {
+    try {
+      const value = await areaGet(area, SETTINGS_KEY)
+      if (value !== undefined) return mergeSettings(value)
+    } catch {
+      // 이 영역을 못 쓰면 다음 영역으로
+    }
+  }
+  return mergeSettings(undefined)
 }
 
 export async function saveSettings(patch: Partial<Settings>): Promise<Settings> {
   const next = mergeSettings({ ...(await loadSettings()), ...patch })
-  await chrome.storage.sync.set({ [SETTINGS_KEY]: next })
+  const results = await Promise.allSettled(AREAS.map((area) => areaSet(area, SETTINGS_KEY, next)))
+  if (results.every((r) => r.status === 'rejected')) {
+    throw new Error('설정을 저장할 수 없습니다')
+  }
   return next
 }
 
-/** sync 영역의 설정 변경을 구독한다. 해제 함수를 돌려준다. */
+/** 설치 직후 기본값 심기. 이미 저장된 값이 있으면 건드리지 않는다. */
+export async function seedDefaultSettings(): Promise<void> {
+  for (const area of AREAS) {
+    try {
+      if ((await areaGet(area, SETTINGS_KEY)) !== undefined) return
+    } catch {
+      // 못 읽는 영역은 없는 셈 친다
+    }
+  }
+  await saveSettings({})
+}
+
+/**
+ * 설정 변경을 구독한다. 해제 함수를 돌려준다.
+ *
+ * 두 영역을 다 보므로 한 번의 저장에 콜백이 두 번 올 수 있다. 받는 쪽이
+ * 멱등이라(스타일시트를 다시 만들 뿐) 중복 제거는 하지 않는다.
+ */
 export function watchSettings(cb: (settings: Settings) => void): () => void {
   const listener = (
     changes: Record<string, chrome.storage.StorageChange>,
     area: chrome.storage.AreaName,
   ) => {
-    if (area === 'sync' && changes[SETTINGS_KEY]) cb(mergeSettings(changes[SETTINGS_KEY].newValue))
+    if ((area === 'sync' || area === 'local') && changes[SETTINGS_KEY]) {
+      cb(mergeSettings(changes[SETTINGS_KEY].newValue))
+    }
   }
   chrome.storage.onChanged.addListener(listener)
   return () => chrome.storage.onChanged.removeListener(listener)

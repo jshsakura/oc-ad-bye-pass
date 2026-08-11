@@ -2,10 +2,9 @@
 
 import type { RuntimeRequest } from '../shared/messages.ts'
 import {
-  DEFAULT_SETTINGS,
-  SETTINGS_KEY,
   STATS_KEY,
   loadStats,
+  seedDefaultSettings,
   type Stats,
 } from '../shared/settings.ts'
 import { currentStatus, updateFilters } from './updater.ts'
@@ -56,8 +55,7 @@ function scheduleUpdates(delayInMinutes?: number) {
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
-  const stored = await chrome.storage.sync.get(SETTINGS_KEY)
-  if (!stored[SETTINGS_KEY]) await chrome.storage.sync.set({ [SETTINGS_KEY]: DEFAULT_SETTINGS })
+  await seedDefaultSettings()
 
   const stats = await chrome.storage.local.get(STATS_KEY)
   if (!stats[STATS_KEY]) {
