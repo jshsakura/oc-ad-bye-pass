@@ -794,10 +794,10 @@
       <li>Pick the zip you downloaded and allow the <code>youtube.com</code> permission</li>
     </ol>
 
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip" id="dl-orion" data-size="87KB">
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip" id="dl-orion" data-size="92KB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · ORION
-      <span class="what">oc-ad-bye-pass-orion.zip · 87KB</span>
+      <span class="what">oc-ad-bye-pass-orion.zip · 92KB</span>
     </a>
 
     <div class="note" lang="ko">
@@ -1366,10 +1366,18 @@
   // reports. Building the packages here as well only created a second answer to
   // "which version is this", and the two drifted apart the moment a commit
   // touched src/ and not site/.
+  // The whole release, not just its tag: the file sizes live in it too, and a
+  // size typed into the markup is stale the next time a package grows. The Orion
+  // button spent several releases saying 87KB about a 92KB file.
   const latest = fetch(RELEASE)
     .then((r) => (r.ok ? r.json() : null))
-    .then((j) => j?.tag_name?.replace(/^v/, '') || null)
     .catch(() => null);
+
+  /** Bytes as the download button says them. */
+  const humanSize = (bytes) =>
+    bytes >= 1024 * 1024
+      ? `${(bytes / 1024 / 1024).toFixed(1)}MB`
+      : `${Math.round(bytes / 1024)}KB`;
   // No releases API here any more. The buttons serve what this deploy built, so
   // the footer has to name that same thing — quoting the newest tag instead
   // would be a number nobody on the page can download.
@@ -1377,7 +1385,8 @@
     .then((r) => (r.ok ? r.json() : null))
     .then(async (b) => {
       if (!b) return;
-      b = { ...b, version: (await latest) ?? b.version };
+      const release = await latest;
+      b = { ...b, version: release?.tag_name?.replace(/^v/, '') || b.version };
       // One line, versions only. The dates that used to be here — when the rules
       // last moved, when the page last deployed — answered a question nobody was
       // asking on a download page.
@@ -1401,8 +1410,10 @@
         const a = document.getElementById(id);
         if (!a) continue;
         a.href = `${base}/${name}`;
+        const asset = release?.assets?.find((x) => x.name === name);
+        const size = asset ? humanSize(asset.size) : (a.dataset.size ?? '');
         const what = a.querySelector('.what');
-        if (what) what.textContent = `${name} · v${b.version} · ${a.dataset.size ?? ''}`.trim();
+        if (what) what.textContent = [name, `v${b.version}`, size].filter(Boolean).join(' · ');
       }
 
       const paint = () => { el.innerHTML = line[document.documentElement.dataset.lang] ?? line.ko; };
