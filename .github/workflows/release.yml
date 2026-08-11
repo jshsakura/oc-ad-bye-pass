@@ -42,7 +42,7 @@ jobs:
       - run: npm run verify
 
       # 광고가 실제로 막히지 않는 빌드는 내보내지 않는다
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test
 
       # The version is what a user reads on the extensions page to tell whether

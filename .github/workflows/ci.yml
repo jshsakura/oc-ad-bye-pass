@@ -34,7 +34,10 @@ jobs:
         run: node scripts/check-orion-api.mjs
 
       # 실제 Chromium 에 확장을 물려서 광고가 정말 막히는지 본다
-      - run: npx playwright install --with-deps chromium
+      # WebKit as well as Chromium. Chromium is the only engine that loads an
+      # extension, so it runs the product; WebKit is the engine people actually
+      # install this on, and e2e/12 checks the techniques hold there.
+      - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test
 
       - if: failure()
