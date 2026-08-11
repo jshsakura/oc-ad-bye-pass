@@ -24,25 +24,25 @@ async function setPip(background: import('@playwright/test').Worker, on: boolean
   }, on)
 }
 
-test('기본값은 켜짐 — 유튜브를 열면 버튼이 있다', async ({ context }) => {
+test('기본값은 꺼짐 — 남의 플레이어에 버튼부터 얹지 않는다', async ({ context }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
-  // 이 확장을 폰에 까는 이유가 이것이라, 켜달라고 요구하지 않는다.
-  await expect(page.locator(BUTTON)).toBeVisible()
+  // 이 기능만은 화면에 무언가를 더한다. 더하는 것은 요청받고 한다.
+  await expect(page.locator(BUTTON)).toHaveCount(0)
 })
 
-test('끄면 사라지고, 다시 켜면 돌아온다', async ({ context, background }) => {
+test('켜면 나타나고, 다시 끄면 사라진다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
-  await expect(page.locator(BUTTON)).toBeVisible()
-
-  await setPip(background, false)
   await expect(page.locator(BUTTON)).toHaveCount(0)
 
   await setPip(background, true)
   await expect(page.locator(BUTTON)).toBeVisible()
+
+  await setPip(background, false)
+  await expect(page.locator(BUTTON)).toHaveCount(0)
 })
 
 test('켜면 버튼이 붙고, 유튜브가 걸어둔 차단이 풀린다', async ({ context, background }) => {
@@ -89,10 +89,11 @@ test('누르면 어느 경로를 탔는지 화면에 말해준다', async ({ con
 // 크로미움에는 진짜 PiP 가 있으므로 여기서는 끝까지 간다. 픽스처의 <video> 에는
 // 비디오 트랙이 없어서 브라우저가 요청 자체를 거절하니(측정된 문구:
 // "The video element has no video track"), 캔버스 스트림으로 진짜 트랙을 물린다.
-test('누르면 진짜로 작은 창이 열린다', async ({ context }) => {
+test('누르면 진짜로 작은 창이 열린다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
+  await setPip(background, true)
   await expect(page.locator(BUTTON)).toBeVisible()
 
   await page.evaluate(async () => {
@@ -203,10 +204,11 @@ test('다시 끄면 버튼이 사라진다', async ({ context, background }) => 
 // 숨김으로 만들지 않아서, 탭 전환으로는 visibilitychange 자체가 나지 않는다.
 // 숨김이 아니니 핸들러는 넘어가겠지만, 넘어갔다는 기록이 남는다는 것이
 // 곧 신호가 도착했다는 뜻이고 그것이 이 시험이 지키려는 것이다.
-test('배경 재생을 켜도 나가는 신호가 PiP 까지 온다', async ({ context }) => {
+test('배경 재생을 켜도 나가는 신호가 PiP 까지 온다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
+  await setPip(background, true)
   await expect(page.locator(BUTTON)).toBeVisible()
 
   await page.evaluate(() => {

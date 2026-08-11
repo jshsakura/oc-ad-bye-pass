@@ -149,3 +149,51 @@ test('webkit 진입점이 없는 브라우저에서는 아무 일도 하지 않�
   // 크로미움·안드로이드에서 남의 탭에 전체화면을 걸 이유가 없다.
   assert.equal(shouldArm({ ...iphone, hasApi: false, mode: undefined }), false)
 })
+
+// 나가는 순간의 멈춤은 누구 것인가.
+//
+// 기기 로그가 알려준 사실: 나가는 신호가 도착할 때 영상은 이미 멈춰 있다. WebKit 이
+// 앱을 백그라운드로 보내면서 엔진 레벨에서 먼저 세우기 때문이다. 그래서 "멈춰 있으면
+// 넘어간다" 는 판단은 매번 걸렸다.
+//
+// 그렇다고 아무 멈춤이나 되살리면, 직접 멈추고 나간 사람의 영상이 그 사람이 하러 간
+// 일 위에서 다시 재생된다. 그 둘을 가르는 것이 이 함수다.
+import { shouldResumeOnLeave } from '../src/isolated/pip.ts'
+
+const now = 1_000_000
+
+test('엔진이 세운 것이면 되살린다 — 이미 숨겨진 뒤에 멈췄다', () => {
+  assert.equal(
+    shouldResumeOnLeave({ now, pausedAt: now - 10, pausedWhileHidden: true, lastPlayingAt: now - 50 }),
+    true,
+  )
+})
+
+test('나가는 것과 같은 순간에 멈췄으면 되살린다', () => {
+  assert.equal(
+    shouldResumeOnLeave({ now, pausedAt: now - 100, pausedWhileHidden: false, lastPlayingAt: now - 200 }),
+    true,
+  )
+})
+
+test('보면서 멈춘 것은 건드리지 않는다', () => {
+  // 멈추고 나간 사람의 영상이 다시 켜지면 그건 기능이 아니라 참견이다.
+  assert.equal(
+    shouldResumeOnLeave({ now, pausedAt: now - 3000, pausedWhileHidden: false, lastPlayingAt: now - 3200 }),
+    false,
+  )
+})
+
+test('한참 전에 멈춘 영상은 되살릴 것이 없다', () => {
+  assert.equal(
+    shouldResumeOnLeave({ now, pausedAt: now - 60_000, pausedWhileHidden: true, lastPlayingAt: now - 60_000 }),
+    false,
+  )
+})
+
+test('한 번도 재생된 적 없으면 아무것도 안 한다', () => {
+  assert.equal(
+    shouldResumeOnLeave({ now, pausedAt: 0, pausedWhileHidden: false, lastPlayingAt: 0 }),
+    false,
+  )
+})

@@ -522,6 +522,7 @@ function sweep(): void {
   if (!video) return
   allowPip(video)
   guardPresentation(video)
+  watchPlayback(video)
   watchForStall(video)
   // Drawn whenever there is a video. Gating on a capability check meant no
   // button at all on the device this was written for — webkitSupportsPresentation
@@ -622,6 +623,69 @@ function record(signal: string, outcome: string): void {
 let handedOver = false
 
 /**
+ * When the video was last known to be playing.
+ *
+ * Because by the time we are told the user is leaving, it is not playing any
+ * more. Measured on the device: every leaving signal arrives with
+ * `paused === true`, since WebKit stops media at the engine level as the app
+ * goes to the background — before the page hears about it. Bailing on "not
+ * playing" therefore bailed every single time.
+ *
+ * A few seconds of memory separates that from a video the user paused and walked
+ * away from, which nobody wants floating over what they went to do.
+ */
+let lastPlayingAt = 0
+
+/** When it stopped, and whether the page was already gone when it did. */
+let pausedAt = 0
+let pausedWhileHidden = false
+
+function watchPlayback(video: WebkitVideo): void {
+  if (video.dataset.ocAbpPlayWatch === '1') return
+  video.dataset.ocAbpPlayWatch = '1'
+  const playing = () => {
+    lastPlayingAt = Date.now()
+  }
+  video.addEventListener('playing', playing)
+  video.addEventListener('timeupdate', playing)
+  video.addEventListener('pause', () => {
+    pausedAt = Date.now()
+    // The real value: this world does not see the spoof the page is given.
+    pausedWhileHidden = document.hidden
+  })
+  if (!video.paused) playing()
+}
+
+/**
+ * Who stopped this video?
+ *
+ * It matters, because one of them wants it back and the other does not. WebKit
+ * stops media at the engine level as the app goes to the background, so by the
+ * time anything hears about the leaving, the video is paused — resuming that is
+ * restoring what the user had. Someone who pressed pause and then left wants it
+ * to stay paused, and starting it again over whatever they went to do is the
+ * extension helping itself to their phone.
+ *
+ * The two are told apart by when and where the pause happened: the engine's
+ * lands with the page already hidden, or in the same breath as the departure.
+ * A pause made while looking at the page, a moment earlier, is a person's.
+ */
+export function shouldResumeOnLeave(state: {
+  now: number
+  pausedAt: number
+  pausedWhileHidden: boolean
+  lastPlayingAt: number
+}): boolean {
+  // Never played, or not for a while — nothing here is being taken away.
+  if (state.lastPlayingAt === 0) return false
+  if (state.now - state.lastPlayingAt > 5000) return false
+  if (state.pausedWhileHidden) return true
+  // Same breath as the departure. A person's pause is separated from it by the
+  // time it takes to then leave the app.
+  return state.now - state.pausedAt < 400
+}
+
+/**
  * Hand the video over when the tab goes away.
  *
  * Several signals, not one, and they overlap on purpose — the cost of a second
@@ -646,7 +710,29 @@ function onLeaving(event: Event): void {
   const video = playerVideo()
   if (!video) return record(signal, 'skip:no-video')
   if (!document.hidden) return record(signal, 'skip:not-hidden')
-  if (!shouldAutoPip({ hidden: document.hidden, video })) return record(signal, 'skip:paused')
+
+  // Paused is the normal state here rather than a reason to stop: the engine
+  // stops the media before the page is told anything. Whose pause it was decides
+  // whether to undo it.
+  const resume =
+    video.paused &&
+    shouldResumeOnLeave({ now: Date.now(), pausedAt, pausedWhileHidden, lastPlayingAt })
+
+  if (!shouldAutoPip({ hidden: document.hidden, video }) && !resume) {
+    return record(signal, video.paused ? 'skip:사용자가-멈춤' : 'skip:paused')
+  }
+
+  // Ask for it back before asking for the window: WebKit will not float a video
+  // that is not playing. The call is synchronous even if its promise is not,
+  // which is all that can be had at this point in the page's life.
+  if (resume) {
+    try {
+      void video.play().catch(() => {})
+      log('나감: 엔진이 멈춘 영상 되살리기 시도')
+    } catch {
+      // Refused. The attempt below is still worth making.
+    }
+  }
 
   const attempt = attemptSync(video)
   handedOver = true

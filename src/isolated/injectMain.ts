@@ -61,7 +61,10 @@ export function injectMainWorldFallback(): void {
     script.remove()
   })
 
+  // Marked before insertion, not after: the load event can arrive during the
+  // insert, and marking afterwards wrote `injected` over the `loaded` that had
+  // already happened — which is what the phone reported.
+  mark('injected')
   const parent = document.head ?? document.documentElement
   parent.insertBefore(script, parent.firstChild)
-  mark('injected')
 }

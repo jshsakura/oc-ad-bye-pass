@@ -14,7 +14,6 @@ export const TOGGLE_KEYS = [
   'genericAds',
   'backgroundPlay',
   'pictureInPicture',
-  'leaveFloating',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -57,24 +56,13 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     hint: '페이지가 스스로 멈추는 것을 막습니다 (아이폰에서 홈으로 나갈 때는 PiP 쪽)',
   },
   {
-    key: 'leaveFloating',
-    label: '나갈 때 작은 창으로',
-    // The honest description of a workaround. Nothing can float a video at the
-    // moment the app goes away — WebKit wants a user gesture and there is none
-    // then — but iOS floats a *fullscreen* video by itself. So the fullscreen is
-    // arranged earlier, on a tap the user was making anyway.
-    hint: '플레이어를 한 번 누르면 전체화면으로 넘겨 둡니다 (iOS 설정의 "자동으로 PiP 시작" 필요)',
-  },
-  {
     key: 'pictureInPicture',
-    label: '화면 속 화면(PiP)',
-    // Not "나가면 알아서 작은 창이 됩니다". iPhone WebKit only leaves the inline
-    // presentation on a real tap — webkitSetPresentationMode called from a
-    // visibilitychange handler carries no user gesture and quietly does nothing.
-    // The system does the rest, but only from fullscreen, and only if the user
-    // has Settings › General › Picture in Picture switched on. So the button is
-    // the feature, and the copy says so rather than promising the platform's part.
-    hint: '버튼을 눌러 전체화면으로 보낸 뒤 나가면 작은 창이 됩니다',
+    label: '나갈 때 작은 창으로',
+    // One switch, because there was never more than one thing being asked for.
+    // It was briefly two — a button, and the arming that makes leaving work —
+    // which is two settings for one intention and a control on the player nobody
+    // asked to see.
+    hint: '재생 중 화면을 한 번 누르면 준비됩니다 (iOS 설정의 "자동으로 PiP 시작" 필요)',
   },
 ]
 
@@ -112,14 +100,13 @@ export const DEFAULT_SETTINGS: Settings = {
     antiAdblockNag: true,
     appPromo: true,
     genericAds: true,
-    // On. These two are why the extension is on a phone at all — the mobile web
-    // player stops when you leave and offers no small window, and the app that
-    // does both is the one with the ads in it.
+    // On, and the reason the extension is on a phone at all: the mobile web
+    // player stops when you leave, and the app that does not is the one with the
+    // ads in it.
     backgroundPlay: true,
-    pictureInPicture: true,
-    // Off by default: it changes how a video is watched, not what is shown, and
-    // the person who wants it is the person who will turn it on.
-    leaveFloating: false,
+    // Off. It puts a control on someone else's player and changes what a tap
+    // does — that is not something to help yourself to on their behalf.
+    pictureInPicture: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

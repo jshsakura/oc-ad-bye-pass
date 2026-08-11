@@ -11,6 +11,7 @@
 // Injecting on every site means every cost is paid on every page, so the
 // off-YouTube path deliberately stays as thin as it can be.
 
+import { log } from '../shared/log.ts'
 import { buildStylesheet, resolveRules, type ResolvedRules } from '../shared/filterlist.ts'
 import { loadCache, watchCache, type FilterCache } from '../shared/cache.ts'
 import {
@@ -102,13 +103,16 @@ function recompute(cache: FilterCache | null) {
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
     else stopWatchingAppBannerHints()
 
-    // PiP adds a control rather than removing one, so it only runs when asked.
-    if (settings.toggles.pictureInPicture) enablePictureInPicture()
-    else disablePictureInPicture()
-
-    // Spends a tap the user is making anyway on the state iOS floats from.
-    if (settings.toggles.leaveFloating) enableLeaveFloating()
-    else disableLeaveFloating()
+    // One switch for one intention: the button and the arming that makes leaving
+    // work are halves of the same thing, and it adds a control rather than
+    // removing one, so it runs only when asked for.
+    if (settings.toggles.pictureInPicture) {
+      enablePictureInPicture()
+      enableLeaveFloating()
+    } else {
+      disablePictureInPicture()
+      disableLeaveFloating()
+    }
 
     // The transport controls are the way back once iOS has stopped the page.
     // Bound under the same setting as background playback, since that is the
@@ -185,6 +189,7 @@ function onBannerRemoved(count: number) {
 }
 
 function start() {
+  log(`시작: ${SITE}`)
   if (IS_YOUTUBE) {
     // Runs whenever layer 1 has not marked itself installed — which covers the
     // registration failing outright, and the case that actually bit: a browser

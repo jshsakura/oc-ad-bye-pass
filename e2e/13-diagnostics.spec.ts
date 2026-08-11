@@ -58,7 +58,7 @@ test('유튜브를 한 번 열면 그 페이지의 사실이 담긴다', async (
   // 그리고 기록. 폰에는 콘솔이 없고, 알고 싶은 순간은 앱을 나가 있는 동안이라
   // 그때 남길 수 있는 곳은 DOM 뿐이다 — 스토리지 쓰기는 얼어붙는 사이에 날아간다.
   await expect(panel).toContainText('--- 기록 ---')
-  await expect(panel).toContainText('PiP 버튼 붙임')
+  await expect(panel).toContainText('시작: youtube')
 })
 
 test('1계층이 늦게 붙어도 아니오로 굳지 않는다', async ({ context, extensionId }) => {
@@ -79,7 +79,7 @@ test('1계층이 늦게 붙어도 아니오로 굳지 않는다', async ({ conte
   await youtube.evaluate(() => document.documentElement.removeAttribute('data-oc-ad-bye-pass'))
   // 팝업이 확장 페이지 위에서 열려 유튜브 전용 항목은 접혀 있다.
   await popup.getByRole('button', { name: '전체 항목 보기' }).click()
-  await popup.getByRole('switch', { name: '화면 속 화면(PiP)' }).click()
+  await popup.getByRole('switch', { name: '나갈 때 작은 창으로' }).click()
   await expect.poll(layer1Reported, { message: '전제가 안 만들어졌다' }).toBe(false)
 
   // 늦게 도착한 1계층. 이걸 못 보고 넘어가면 멀쩡한 계층을 놓고 몇 시간을 쓴다.
