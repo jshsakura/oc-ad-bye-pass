@@ -355,6 +355,15 @@
     transition: background-color .12s ease, border-color .12s ease, color .12s ease;
   }
   .btn svg { width: 15px; height: 15px; }
+  /* Two download buttons that look alike is how someone ends up installing the
+     desktop package on a phone — which is the one Orion refuses. Each says which
+     file it hands over. */
+  .btn { flex-wrap: wrap; }
+  .btn .what {
+    flex-basis: 100%; margin-top: 5px; text-align: center;
+    font-family: var(--body); font-size: 11px; font-weight: 500;
+    letter-spacing: 0; opacity: .75;
+  }
   .btn:hover { background-color: var(--lavender); border-color: var(--lavender); }
   .btn-line {
     background-color: var(--mantle); color: var(--text); border-color: var(--surface1);
@@ -711,7 +720,8 @@
 
     <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD ZIP
+      DOWNLOAD · ORION
+      <span class="what">oc-ad-bye-pass-orion.zip · 87KB</span>
     </a>
 
     <div class="note" lang="ko">
@@ -777,7 +787,8 @@
 
     <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD ZIP
+      DOWNLOAD · CHROME
+      <span class="what">oc-ad-bye-pass.zip · 1.5MB</span>
     </a>
   </div>
 
