@@ -164,10 +164,10 @@ export function App() {
                 L{meta.layer}
               </span>
             ) : (
-              // Not a blocking layer — background playback changes what YouTube
-              // does, not what it shows. A layer badge there would be a lie.
-              <span className="layer opt" title="기본 꺼짐 — 직접 켜는 항목">
-                OPT
+              // Not a blocking layer — these change what YouTube does rather
+              // than what it shows. A layer badge there would be a lie.
+              <span className="layer opt" title="차단 계층이 아닌 기능">
+                APP
               </span>
             )}
             <Switch

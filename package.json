@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "type": "module",
   "description": "\uad11\uace0 \ucc28\ub2e8 \ud655\uc7a5 (MV3) \u2014 Chrome \u00b7 Edge \u00b7 Orion",
   "license": "GPL-3.0-or-later",

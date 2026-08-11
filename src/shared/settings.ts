@@ -27,8 +27,6 @@ export interface ToggleMeta {
    * Absent for what is not a blocking layer at all.
    */
   layer?: 1 | 2 | 3
-  /** Off unless asked for. Used for anything that changes what YouTube does. */
-  optIn?: boolean
 }
 
 /** Named after the ReVanced patches (video-ads, hide-general-ads, …). */
@@ -52,13 +50,11 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     key: 'backgroundPlay',
     label: '화면을 나가도 계속 재생',
     hint: '유튜브 모바일 웹은 화면을 벗어나면 멈춥니다',
-    optIn: true,
   },
   {
     key: 'pictureInPicture',
-    label: '화면 속 화면(PiP) 버튼',
-    hint: '유튜브가 막아둔 PiP 를 열 수 있게 버튼을 붙입니다',
-    optIn: true,
+    label: '화면 속 화면(PiP)',
+    hint: '버튼을 붙이고, 화면을 나가면 알아서 작은 창으로 넘깁니다',
   },
 ]
 
@@ -96,11 +92,11 @@ export const DEFAULT_SETTINGS: Settings = {
     antiAdblockNag: true,
     appPromo: true,
     genericAds: true,
-    // Off by default. It changes what YouTube does rather than what it shows,
-    // and that is the user's call to make, not ours.
-    backgroundPlay: false,
-    // Adds a control to someone else's interface. Ask first.
-    pictureInPicture: false,
+    // On. These two are why the extension is on a phone at all — the mobile web
+    // player stops when you leave and offers no small window, and the app that
+    // does both is the one with the ads in it.
+    backgroundPlay: true,
+    pictureInPicture: true,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

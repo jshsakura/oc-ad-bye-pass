@@ -28,34 +28,27 @@ async function pageSees(page: import('@playwright/test').Page) {
   })
 }
 
-test('기본값은 꺼짐 — 문서 가시성에 손대지 않는다', async ({ context }) => {
+test('기본값은 켜짐 — 페이지가 계속 보이는 줄 안다', async ({ context }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
+
+  // 폰에서 화면을 나가면 재생이 멈추는 것이 이 확장을 까는 이유라, 켜달라고
+  // 요구하지 않는다.
+  await expect
+    .poll(async () => (await pageSees(page)).sawEvent, { message: '설정이 MAIN 까지 오지 않았다' })
+    .toBe(false)
 
   const seen = await pageSees(page)
-  expect(seen.hidden).toBe(false) // 실제로 보이는 탭이니 false 가 맞다
+  expect(seen.hidden).toBe(false)
   expect(seen.state).toBe('visible')
-  // 손대지 않았다면 페이지의 리스너에 이벤트가 그대로 도착한다
-  expect(seen.sawEvent, '끈 상태인데 visibilitychange 를 삼켰다').toBe(true)
 })
 
-test('켜면 숨겨져도 보이는 것으로 보이고, 이벤트는 페이지에 닿지 않는다', async ({
-  context,
-  background,
-}) => {
+test('숨겨져도 보이는 것으로 보이고, 이벤트는 페이지에 닿지 않는다', async ({ context }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
 
-  await background.evaluate(async () => {
-    const got = await chrome.storage.local.get('settings')
-    const settings = got.settings as { toggles: Record<string, boolean> }
-    settings.toggles.backgroundPlay = true
-    await chrome.storage.local.set({ settings })
-  })
-
-  // 설정은 storage → ISOLATED → postMessage → MAIN 을 거쳐 도착한다
   await expect
     .poll(async () => (await pageSees(page)).sawEvent, { message: '설정이 MAIN 까지 오지 않았다' })
     .toBe(false)
