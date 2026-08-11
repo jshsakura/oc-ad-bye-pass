@@ -147,11 +147,12 @@ async function readCache(context: BrowserContext) {
  * Wait out the install-time fetch, then clear what it left.
  *
  * `onInstalled` calls `updateFilters(true)` — a forced fetch, every time the
- * extension loads, which is once per test here. Nothing routes it yet at that
- * moment, so it goes to the real raw.githubusercontent.com and comes back
- * whenever it comes back: in the middle of an assertion, after a test has
- * seeded the cache with version 200, after another has wound `fetchedAt` back
- * to zero. Both of the flaky failures on this file traced to that one request.
+ * extension loads, which is once per test here. The fixture answers it (see
+ * e2e/fixtures.ts, which keeps it off the network), but answering it is only
+ * half the problem: it still lands whenever it lands, in the middle of an
+ * assertion, after a test has seeded the cache with version 200, after another
+ * has wound `fetchedAt` back to zero. Both of the flaky failures on this file
+ * traced to that one request.
  *
  *   "탭을 열었는데 갱신을 시도조차 하지 않았다" — it landed after the wind-back,
  *   restoring a fresh timestamp, so the 10-minute floor blocked the fetch the
@@ -159,11 +160,10 @@ async function readCache(context: BrowserContext) {
  *   "expect(200) received 4"                  — it landed after the seed and
  *   overwrote it with the list that is actually on main.
  *
- * So: serve it ourselves, wait for it to land, and delete it. Every test then
- * starts from an empty cache with nothing in flight.
+ * So: wait for it to land, then delete what it left. Every test in this file
+ * then starts from an empty cache with nothing in flight.
  */
 async function settleInstallFetch(context: BrowserContext) {
-  await serveList(context, () => remoteList({ version: 1 }))
   const worker = await serviceWorker(context)
 
   await expect

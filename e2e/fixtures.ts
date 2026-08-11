@@ -37,6 +37,40 @@ export const test = base.extend<ExtensionFixtures>({
         ...LAUNCH_ARGS,
       ],
     })
+    // **No test may reach the network.**
+    //
+    // The extension force-fetches its filter list on install — onInstalled calls
+    // updateFilters(true) — and that happens once per test, because each test
+    // gets its own freshly installed extension. Unrouted, the request goes to
+    // the live raw.githubusercontent.com. Two things follow, and both were
+    // observed: the suite starts depending on GitHub being reachable, and the
+    // response (whatever list is on main today) drops into the cache at an
+    // arbitrary moment, changing what is hidden in the middle of an assertion.
+    //
+    // It cost two days' worth of confusing red CI on 06 before it was traced.
+    // Routing it here covers every spec, including the ones that never mention
+    // the list and would fail in a way pointing nowhere near it.
+    //
+    // The served list is valid and empty: rules merge as a union, so bundled
+    // behaviour is untouched by it.
+    for (const pattern of [
+      'https://raw.githubusercontent.com/**',
+      'https://gist.githubusercontent.com/**',
+    ]) {
+      await context.route(pattern, (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json; charset=utf-8',
+          body: JSON.stringify({
+            name: 'e2e install-time list',
+            version: 1,
+            updatedAt: '2026-08-10',
+            rules: { hide: { generalAds: [] }, prune: [], click: [], allow: [] },
+          }),
+        }),
+      )
+    }
+
     await use(context)
     await context.close()
   },
