@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass",
   "private": true,
-  "version": "0.10.7",
+  "version": "0.10.8",
   "type": "module",
   "description": "광고 차단 확장 (MV3) — Chrome · Edge · Orion",
   "license": "GPL-3.0-or-later",

@@ -33,6 +33,7 @@
 // `webkitSetPresentationMode`, and on iPhone that is the only one there is.
 
 import { LEAVING_EVENT } from '../shared/messages.ts'
+import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
@@ -184,6 +185,7 @@ function enterPip(video: WebkitVideo): void {
   ].filter(Boolean)
   toast(`PiP 진입점: ${routes.length ? routes.join(' · ') : '없음'} · 지원: ${supported ?? '알 수 없음'}`)
 
+  log(`탭: 지원=${supported ?? '?'} 모드=${video.webkitPresentationMode ?? '?'} 재생=${!video.paused}`)
   const route = chooseEntry({
     preferFullscreen,
     supported,
@@ -192,6 +194,7 @@ function enterPip(video: WebkitVideo): void {
     fullscreen: typeof video.webkitEnterFullscreen === 'function',
   })
 
+  log(`탭: 경로=${route}`)
   if (route === 'webkit' && typeof video.webkitSetPresentationMode === 'function') {
     try {
       video.webkitSetPresentationMode('picture-in-picture')
@@ -241,6 +244,7 @@ function enterPip(video: WebkitVideo): void {
  */
 async function confirmOrOfferFullscreen(video: WebkitVideo): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, PRESENTATION_SETTLE_MS))
+  log(`탭 결과: 모드=${video.webkitPresentationMode ?? '?'}`)
   if (video.webkitPresentationMode === 'picture-in-picture') {
     preferFullscreen = false
     return
@@ -324,6 +328,7 @@ function ensureButton(video: WebkitVideo): void {
     event.stopPropagation()
     enterPip(video)
   }
+  log('PiP 버튼 붙임')
 
   // Parented to <html> rather than <body>: YouTube rewrites body's children on
   // navigation, and a button that vanishes on every tap through the app is
@@ -455,6 +460,7 @@ function attemptSync(video: WebkitVideo): Attempt {
  */
 function record(signal: string, outcome: string): void {
   document.documentElement.setAttribute(AUTO_ATTR, `${signal}:${outcome}`)
+  log(`나감 ${signal} → ${outcome}`)
 }
 
 /** One hand-over per departure, however many signals announce it. */
@@ -537,6 +543,7 @@ function onLeaving(event: Event): void {
  */
 function onReturning(): void {
   handedOver = false
+  log(`돌아옴: 모드=${playerVideo()?.webkitPresentationMode ?? '?'}`)
   const video = playerVideo()
   if (!video) return
 
@@ -549,10 +556,11 @@ function onReturning(): void {
       AUTO_ATTR,
       `${record}|back:${video.webkitPresentationMode ?? 'unknown'}`,
     )
-    // The page is running again, so this write survives — and the panel is about
-    // to be opened by someone who just watched it not work.
-    reportDiagnostics()
   }
+  // Unconditionally, because the page is running again and this is the first
+  // moment the log written during the leave can reach storage. Whoever is about
+  // to open the panel just watched the thing not work.
+  reportDiagnostics()
 
   if (!shouldRestoreInline({
     visible: !document.hidden,

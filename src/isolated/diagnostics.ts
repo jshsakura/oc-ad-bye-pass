@@ -12,6 +12,7 @@
 // desktop the timestamp and URL say which one this was.
 
 import { INSTALLED_ATTR } from '../shared/messages.ts'
+import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
 
@@ -42,6 +43,8 @@ export interface PageDiagnostics {
   autoPip: string | null
   /** Whether the injection fallback was needed, and whether the page allowed it. */
   inject: string | null
+  /** The tail of what happened, including while the app was away. */
+  log: string | null
   userAgent: string
 }
 
@@ -74,6 +77,7 @@ export function reportDiagnostics(): void {
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     autoPip: document.documentElement.getAttribute(AUTO_PIP_ATTR),
     inject: document.documentElement.getAttribute(INJECT_ATTR),
+    log: readLog(),
     userAgent: navigator.userAgent,
   }
   void chrome.storage.local.set({ [KEY]: facts })

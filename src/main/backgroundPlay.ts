@@ -23,6 +23,7 @@
 // tabs.
 
 import { LEAVING_EVENT } from '../shared/messages.ts'
+import { log } from '../shared/log.ts'
 
 const state = { on: false }
 
@@ -41,6 +42,7 @@ let installed = false
 function swallow(event: Event): void {
   if (!state.on) return
   event.stopImmediatePropagation()
+  log('배경재생: visibilitychange 삼킴 → 우리 쪽으로 다시 알림')
   document.dispatchEvent(new CustomEvent(LEAVING_EVENT))
 }
 

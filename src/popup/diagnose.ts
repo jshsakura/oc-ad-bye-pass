@@ -39,6 +39,7 @@ export interface PageFacts {
   presentationMode: string
   autoPip: string | null
   inject: string | null
+  log: string | null
   userAgent: string
 }
 
@@ -165,5 +166,9 @@ export function format(report: Report): string {
     lines.push(`페이지: 읽지 못함 — ${report.pageError ?? '알 수 없음'}`)
   }
   lines.push(`UA: ${page?.userAgent ?? navigator.userAgent}`)
+  // Last, because it is the longest and the least often needed — until it is the
+  // only thing that answers the question, which is every time the phone is the
+  // only place the bug happens.
+  if (page?.log) lines.push('', '--- 기록 ---', page.log)
   return lines.join('\n')
 }
