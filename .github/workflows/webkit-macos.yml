@@ -60,6 +60,18 @@ jobs:
       - name: WebKit 시험 (헤드리스)
         run: npx playwright test e2e/12-webkit.spec.ts e2e/14-webkit-pip.spec.ts
 
+      # 그리고 진짜 사파리. Playwright 의 WebKit 은 API 만 있고 표시 모드 기계가
+      # 없어서 어떤 영상에도 못 띄운다고 답한다(헤드리스·창 띄우기 둘 다 확인).
+      # 러너에는 진짜 사파리가 있고, 그쪽에는 그 기계가 있다.
+      - name: 사파리에서 진짜로 열리나
+        if: always()
+        continue-on-error: true
+        run: |
+          sudo safaridriver --enable
+          safaridriver -p 4444 &
+          sleep 3
+          node scripts/safari-pip-probe.mjs
+
       # 같은 시험을 창을 띄우고 한 번 더. 표시 모드는 화면에 창을 만드는 기능이라,
       # 헤드리스에서 API 가 있어도 못 하겠다고 답할 수 있다 — 그 둘을 가른다.
       - name: WebKit 시험 (창 띄우고)
