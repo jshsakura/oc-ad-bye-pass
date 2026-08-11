@@ -8,8 +8,10 @@
 // esbuild 는 vite 의 의존성이라 추가 설치가 없다.
 
 import * as esbuild from 'esbuild'
+import { resolveTarget } from './targets.mjs'
 
 const watch = process.argv.includes('--watch')
+const target = resolveTarget()
 
 /** @type {import('esbuild').BuildOptions} */
 const options = {
@@ -18,11 +20,18 @@ const options = {
     isolated: 'src/isolated/index.ts',
     background: 'src/background/index.ts',
   },
-  outdir: 'dist',
+  outdir: target.outDir,
   bundle: true,
   format: 'iife',
   platform: 'browser',
-  target: 'chrome120',
+  target: target.esbuildTarget,
+  // 브라우저별로 갈리는 코드는 src/shared/target.ts 한 곳에서만 읽는다.
+  // 불리언까지 여기서 계산해 넘기는 이유는 target.ts 주석 참조 — 리터럴이어야
+  // esbuild 가 모듈을 넘어 인라인하고 죽은 분기를 지운다.
+  define: {
+    __TARGET__: JSON.stringify(target.name),
+    __IS_SAFARI__: String(target.name === 'safari'),
+  },
   minify: !watch,
   sourcemap: watch ? 'inline' : false,
   legalComments: 'none',
@@ -32,7 +41,7 @@ const options = {
 if (watch) {
   const ctx = await esbuild.context(options)
   await ctx.watch()
-  console.log('[build-content] watching…')
+  console.log(`[build-content] watching… (${target.name} → ${target.outDir})`)
 } else {
   await esbuild.build(options)
 }

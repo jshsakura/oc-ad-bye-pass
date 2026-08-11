@@ -3,16 +3,21 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "YouTube 전용 광고 차단 Chrome 확장 (MV3)",
+  "description": "YouTube 전용 광고 차단 확장 (MV3) — Chrome · Safari",
   "scripts": {
     "build": "vite build && node scripts/build-content.mjs",
+    "build:safari": "TARGET=safari npm run build",
+    "build:all": "npm run build && npm run build:safari",
     "dev": "node scripts/dev.mjs",
+    "dev:safari": "TARGET=safari node scripts/dev.mjs",
     "check": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\"",
-    "test:e2e": "npm run build && playwright test",
+    "test:e2e": "npm run build:all && playwright test",
     "test:all": "npm run check && npm test && npm run test:e2e",
     "icons": "node scripts/make-icons.mjs",
-    "zip": "npm run build && cd dist && zip -qr ../oc-ad-bye-pass.zip . && cd .. && echo 'oc-ad-bye-pass.zip'"
+    "zip": "npm run build && cd dist && zip -qr ../oc-ad-bye-pass.zip . && cd .. && echo 'oc-ad-bye-pass.zip'",
+    "zip:safari": "npm run build:safari && cd dist-safari && zip -qr ../oc-ad-bye-pass-safari.zip . && cd .. && echo 'oc-ad-bye-pass-safari.zip'",
+    "safari:xcode": "npm run build:safari && xcrun safari-web-extension-converter dist-safari --project-location safari --app-name \"OC Ad Bye-Pass\" --bundle-identifier com.jshsakura.ocadbyepass --swift --no-open --force"
   },
   "dependencies": {
     "react": "^19.2.0",

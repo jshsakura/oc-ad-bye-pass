@@ -1,6 +1,6 @@
 {
   "name": "oc-ad-bye-pass / youtube",
-  "version": 1,
+  "version": 2,
   "updatedAt": "2026-08-10",
   "_readme": [
     "확장이 6시간마다 이 파일을 받아간다. 규칙만 고치면 재설치 없이 반영된다.",
@@ -72,6 +72,15 @@
         "ytd-enforcement-message-view-model",
         "ytd-popup-container:has(ytd-enforcement-message-view-model)",
         "tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)"
+      ],
+      "appPromo": [
+        "ytm-app-promo-renderer",
+        "ytm-app-promo-toast-renderer",
+        "ytm-mobile-topbar-app-promo-renderer",
+        "ytm-app-install-banner-renderer",
+        "ytd-app-promo-renderer",
+        "a[href^=\"youtube://\"]",
+        "a[href^=\"vnd.youtube:\"]"
       ]
     },
     "prune": [

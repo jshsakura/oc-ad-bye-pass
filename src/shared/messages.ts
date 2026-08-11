@@ -7,6 +7,15 @@
 
 export const NS = 'oc-ad-bye-pass'
 
+/**
+ * MAIN world 훅이 설치되면 documentElement 에 붙는 표시.
+ *
+ * ISOLATED 는 페이지의 window 를 볼 수 없지만 DOM 은 공유한다. 그래서 "1계층이 정말
+ * 페이지 컨텍스트에 걸렸는가"를 이 속성 하나로 판정한다 — Safari 에서 MAIN world
+ * 등록이 실패했을 때 폴백 주입을 할지 말지가 여기서 갈린다.
+ */
+export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
+
 /** MAIN world 가 실제로 필요로 하는 최소 설정 */
 export interface MainConfig {
   enabled: boolean

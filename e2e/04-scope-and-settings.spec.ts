@@ -3,6 +3,7 @@
 import type { Page } from '@playwright/test'
 import { DEFAULT_SETTINGS, type Settings } from '../src/shared/settings.ts'
 import { expect, test } from './fixtures.ts'
+import { layer1Active, layer2Active } from './probes.ts'
 import {
   OTHER_SITE_URL,
   YOUTUBE_URL,
@@ -33,13 +34,9 @@ test.describe('범위 — 유튜브 밖에서는 아무것도 하지 않는다',
     const page = await context.newPage()
     await page.goto(OTHER_SITE_URL)
 
-    // MAIN world 훅 없음
-    expect(
-      await page.evaluate(() => (window as unknown as Record<string, unknown>).__ocAdByePassInstalled),
-    ).toBeUndefined()
-    // ISOLATED world 스타일시트 없음
-    expect(await page.locator('style#oc-ad-bye-pass').count()).toBe(0)
-    // JSON.parse 도 원본 그대로 — 광고 필드가 살아 있다
+    // 두 계층 모두 발화하지 않는다 — JSON.parse 는 원본 그대로고, 광고 셀렉터도 안 먹는다
+    expect(await layer1Active(page), 'MAIN world 훅이 걸리면 안 된다').toBe(false)
+    expect(await layer2Active(page), '광고 숨김 규칙이 적용되면 안 된다').toBe(false)
     expect(await lateParseHasAds(page)).toBe(true)
   })
 
@@ -112,12 +109,20 @@ test.describe('설정이 실제 페이지에 반영된다', () => {
     // 멀쩡한 규칙은 먹고
     await expect(page.locator('#normal-card')).toBeHidden()
 
-    // 탈출 시도는 스타일시트에 아예 들어가지 못한다 — body 가 살아 있는지로 확인한다
+    // 탈출 시도는 스타일시트에 아예 들어가지 못한다.
+    // 스타일 노드를 뒤지는 대신 결과로 확인한다 — 페이지가 멀쩡히 살아 있는지.
     expect(await page.evaluate(() => getComputedStyle(document.body).display)).toBe('block')
-    const css = await page.evaluate(
-      () => document.getElementById('oc-ad-bye-pass')?.textContent ?? '',
-    )
-    expect(css.split('\n').some((line) => line.startsWith('body'))).toBe(false)
+    expect(
+      await page.evaluate(() => {
+        const probe = document.createElement('div')
+        probe.textContent = 'probe'
+        document.body.appendChild(probe)
+        const display = getComputedStyle(probe).display
+        probe.remove()
+        return display
+      }),
+      '광고와 무관한 요소까지 숨는 규칙이 들어가면 안 된다',
+    ).toBe('block')
   })
 })
 

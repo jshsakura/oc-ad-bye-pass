@@ -9,6 +9,7 @@ import {
   type Stats,
 } from '../shared/settings.ts'
 import { currentStatus, updateFilters } from './updater.ts'
+import { ensureMainWorldScript } from './mainWorld.ts'
 
 const ALARM_NAME = 'filters-update'
 const PERIOD_MINUTES = 6 * 60
@@ -73,6 +74,12 @@ chrome.runtime.onStartup.addListener(() => {
   void updateFilters()
   void loadStats().then(setBadge)
 })
+
+// Safari 에서만 실제로 일한다 (Chrome 번들에서는 통째로 사라진다).
+// onInstalled/onStartup 밖에서도 부르는 이유: 등록이 한 번 실패한 뒤 서비스 워커가
+// 다른 이유로 깨어났을 때 다시 시도할 기회를 주기 위해서다. 이미 등록돼 있으면
+// 조회 한 번으로 끝난다.
+void ensureMainWorldScript()
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) void updateFilters()

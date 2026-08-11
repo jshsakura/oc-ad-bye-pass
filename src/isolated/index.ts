@@ -13,6 +13,8 @@ import {
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { handleAdState } from './player.ts'
 import { bumpStats, listenForPruneReports, sendConfigToMain } from './bridge.ts'
+import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
+import { injectMainWorldFallback } from './injectMain.ts'
 
 let settings: Settings = DEFAULT_SETTINGS
 let rules: ResolvedRules = resolveRules(null, [])
@@ -28,6 +30,9 @@ function recompute(cache: FilterCache | null) {
     videoAds: settings.toggles.videoAds,
     prunePaths: rules.prune,
   })
+  // 스마트 앱 배너는 <meta> 라 스타일시트로 못 막는다 — 전용 옵저버를 여닫는다.
+  if (settings.enabled && settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
+  else stopWatchingAppBannerHints()
   sweep()
 }
 
@@ -73,7 +78,20 @@ function sweep() {
   if (acted) bumpStats({ skipped: acted })
 }
 
+function onBannerRemoved(count: number) {
+  bumpStats({ skipped: count })
+}
+
 function start() {
+  // Safari 에서 MAIN world 등록이 실패했을 때만 실제로 일한다. 무엇보다 먼저 부른다 —
+  // 1계층은 늦게 걸리면 의미가 없다. (Chrome 번들에서는 이 호출이 사라진다.)
+  injectMainWorldFallback()
+
+  // 설정을 기다리지 않고 먼저 막는다. 스마트 앱 배너는 파싱 중에 그려지므로
+  // storage 왕복(수백 ms)을 기다리면 이미 늦다. 확장을 꺼둔 사람이 배너를 잠깐 덜
+  // 보는 쪽이, 켜둔 사람이 배너를 보는 것보다 낫다 — 스타일시트 기본값과 같은 원칙이다.
+  watchAppBannerHints(onBannerRemoved)
+
   new MutationObserver(schedule).observe(document.documentElement, {
     childList: true,
     subtree: true,

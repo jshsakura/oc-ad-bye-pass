@@ -5,6 +5,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    // 빌드 스크립트(scripts/*.mjs)는 node 가 그대로 실행해야 해서 .ts 로 못 옮긴다.
+    // vite.config.ts 가 그중 둘을 import 하므로 JS 를 읽을 수 있게 열어둔다.
+    "allowJs": true,
     "rewriteRelativeImportExtensions": true,
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,

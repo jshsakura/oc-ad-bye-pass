@@ -22,6 +22,16 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      # Safari 빌드. dist-safari/ 로 나가므로 아래 E2E 가 쓰는 dist/ 는 그대로다.
+      - run: npm run build:safari
+
+      # 타깃 분기가 조용히 무너지는 두 가지를 막는다.
+      #  - Safari 매니페스트에 world:MAIN 이 남으면 Safari 가 그걸 무시하고
+      #    main.js 를 ISOLATED 로 돌린다 (오류 없이 1계층만 죽는다)
+      #  - Chrome 번들에 Safari 전용 코드가 남으면 define 인라인이 깨진 것이다
+      - name: 타깃 분기 검증
+        run: node scripts/verify-targets.mjs
+
       # 실제 Chromium 에 확장을 물려서 광고가 정말 막히는지 본다
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test

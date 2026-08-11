@@ -10,6 +10,7 @@ export const TOGGLE_KEYS = [
   'fullscreenAds',
   'playerFallback',
   'antiAdblockNag',
+  'appPromo',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -31,6 +32,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   { key: 'getPremium', label: 'Premium 권유 숨김', hint: '하단 배너, 가입 유도 팝업', layer: 2 },
   { key: 'fullscreenAds', label: '전면·오버레이 광고 닫기', hint: '재생 중 겹쳐 뜨는 광고', layer: 2 },
   { key: 'antiAdblockNag', label: '애드블록 경고창 무시', hint: '"광고 차단기를 사용 중입니다" 안내', layer: 2 },
+  { key: 'appPromo', label: '앱으로 열기 유도 숨김', hint: '상단 스마트 앱 배너, "앱에서 보기" 바', layer: 2 },
   { key: 'playerFallback', label: '광고 자동 스킵 (폴백)', hint: '위 차단이 뚫렸을 때만 동작', layer: 3 },
 ]
 
@@ -59,6 +61,7 @@ export const DEFAULT_SETTINGS: Settings = {
     fullscreenAds: true,
     playerFallback: true,
     antiAdblockNag: true,
+    appPromo: true,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

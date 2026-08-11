@@ -80,6 +80,25 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
     'ytd-popup-container:has(ytd-enforcement-message-view-model)',
     'tp-yt-paper-dialog:has(ytd-enforcement-message-view-model)',
   ],
+  // "YouTube 앱에서 보기" 유도. 모바일 웹(m.youtube.com)에서만 나타난다.
+  //
+  // iOS Safari 의 스마트 앱 배너는 <meta name="apple-itunes-app"> 로 그려지므로
+  // 여기 셀렉터로는 막을 수 없다 — isolated/appbanner.ts 가 태그 자체를 지운다.
+  // 이 그룹이 맡는 건 유튜브가 직접 DOM 에 그리는 배너·토스트·딥링크다.
+  //
+  // ⚠ 아래 렌더러 태그는 실기기 확인 전이다. 유튜브 모바일 웹은 실험군에 따라
+  // 태그가 갈리므로, 안 막히는 게 있으면 개발자도구로 태그를 찍어
+  // filters/youtube.json 의 appPromo 그룹에 추가하면 재설치 없이 반영된다.
+  appPromo: [
+    'ytm-app-promo-renderer',
+    'ytm-app-promo-toast-renderer',
+    'ytm-mobile-topbar-app-promo-renderer',
+    'ytm-app-install-banner-renderer',
+    'ytd-app-promo-renderer',
+    // 앱 딥링크 — 눌러도 확장이 안 도는 곳으로 나간다
+    'a[href^="youtube://"]',
+    'a[href^="vnd.youtube:"]',
+  ],
 }
 
 /** 화면에 나타나면 눌러주는 닫기 버튼들 (fullscreenAds 토글에 묶인다) */
