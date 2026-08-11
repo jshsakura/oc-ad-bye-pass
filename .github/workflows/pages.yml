@@ -107,6 +107,25 @@ jobs:
           (cd work/b && zip -qr "../../_site/dl/test/b-old-files-new-version-$version.zip" .)
 
           cp "_site/dl/oc-ad-bye-pass-orion-$version.zip" "_site/dl/test/c-current-$version.zip"
+
+          # And the releases in between, for when c is the one that fails. Each
+          # is that release's own package with the one manifest line that was
+          # later reverted taken back out, so what is left between them is code.
+          for tag in v0.5.0 v0.6.0 v0.7.0; do
+            rm -rf work/t && mkdir work/t
+            gh release download "$tag" -p 'oc-ad-bye-pass-orion.zip' -O work/t.zip || continue
+            (cd work/t && unzip -q ../t.zip)
+            node -e "
+              const fs = require('fs');
+              const p = 'work/t/manifest.json';
+              const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+              m.host_permissions = m.host_permissions.filter((h) => !h.includes('jshsakura.github.io'));
+              fs.writeFileSync(p, JSON.stringify(m, null, 2) + '\n');
+            "
+            (cd work/t && zip -qr "../../_site/dl/test/d-code-${tag}.zip" .)
+            rm -f work/t.zip
+          done
+
           ls -l _site/dl/test
 
       - name: Assemble the site
