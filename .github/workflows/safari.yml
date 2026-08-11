@@ -50,22 +50,45 @@ jobs:
       - run: npm ci
       - run: npm run build:safari
 
-      # Linux CI 가 못 하는 유일한 검증
-      - name: Xcode 프로젝트로 변환
+      # The one check Linux CI cannot do
+      - name: Convert into an Xcode project
         run: |
           xcrun safari-web-extension-converter dist-safari \
             --project-location safari \
             --app-name "$APP_NAME" \
             --bundle-identifier "$BUNDLE_ID" \
             --swift --ios-only --no-open --force --no-prompt
-          echo "--- 생성된 스킴 ---"
-          xcodebuild -list -project "safari/$APP_NAME/$APP_NAME.xcodeproj"
 
-      - name: 서명 없이 빌드 (변환 결과가 실제로 컴파일되는지)
+      # Do not hardcode either name. The converter decides the project layout and
+      # the scheme names, and it changes them between Xcode releases: an earlier
+      # revision of this workflow assumed "<app> (iOS)" and the run died with
+      # "does not contain a scheme named ...". With --ios-only there is usually a
+      # single scheme and no platform suffix at all. Ask the tool instead.
+      - name: Resolve project and scheme
+        id: xcode
+        run: |
+          PROJECT=$(find safari -maxdepth 3 -name '*.xcodeproj' | head -1)
+          [ -n "$PROJECT" ] || { echo "::error::converter produced no .xcodeproj"; exit 1; }
+
+          xcodebuild -list -json -project "$PROJECT" > "$RUNNER_TEMP/schemes.json"
+          cat "$RUNNER_TEMP/schemes.json"
+
+          # Kept to one line on purpose: inside a YAML block scalar every line
+          # must stay indented, and an indented heredoc breaks Python's own
+          # indentation rules. Prefer a scheme that names iOS; with --ios-only
+          # there is only one anyway.
+          SCHEME=$(python3 -c "import json;s=json.load(open('$RUNNER_TEMP/schemes.json'))['project']['schemes'];print(next((x for x in s if 'ios' in x.lower()), s[0] if s else ''))")
+          [ -n "$SCHEME" ] || { echo "::error::the project declares no schemes"; exit 1; }
+
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
+          echo "::notice::building $PROJECT with scheme '$SCHEME'"
+
+      - name: Build unsigned (does the conversion actually compile?)
         run: |
           xcodebuild build \
-            -project "safari/$APP_NAME/$APP_NAME.xcodeproj" \
-            -scheme "$APP_NAME (iOS)" \
+            -project "${{ steps.xcode.outputs.project }}" \
+            -scheme "${{ steps.xcode.outputs.scheme }}" \
             -sdk iphoneos \
             -configuration Release \
             -derivedDataPath "$RUNNER_TEMP/dd" \
@@ -148,8 +171,8 @@ jobs:
           PLIST
 
           xcodebuild archive \
-            -project "safari/$APP_NAME/$APP_NAME.xcodeproj" \
-            -scheme "$APP_NAME (iOS)" \
+            -project "${{ steps.xcode.outputs.project }}" \
+            -scheme "${{ steps.xcode.outputs.scheme }}" \
             -sdk iphoneos -configuration Release \
             -archivePath "$RUNNER_TEMP/app.xcarchive" \
             DEVELOPMENT_TEAM="$TEAM_ID" \

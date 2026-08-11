@@ -10,13 +10,12 @@
 // the first pre-roll can leak through. Layers 2 and 3 still work, so it beats
 // blocking nothing.
 //
-// On Chrome this whole file drops out of the bundle (IS_SAFARI is a constant false).
+// This is the last line of defence, and it runs on every browser: registration
+// can fail anywhere, and the failure is invisible without it.
 
 import { INSTALLED_ATTR } from '../shared/messages.ts'
 
 export function injectMainWorldFallback(): void {
-  // A build constant (see shared/target.ts). Everything below vanishes from the Chrome bundle.
-  if (!__IS_SAFARI__) return
   // Nothing to do if the normal route already installed the hooks.
   if (document.documentElement?.hasAttribute(INSTALLED_ATTR)) return
 

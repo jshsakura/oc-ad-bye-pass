@@ -1,12 +1,22 @@
-// Safari only — register the MAIN world content script at runtime.
+// Register the MAIN world content script at runtime, in addition to the static
+// declaration in the manifest.
 //
-// Why here instead of the manifest:
-//   Safari ignores the `world` field on static content_scripts, depending on
-//   version. When it does, main.js runs in ISOLATED, and hooking JSON.parse
-//   there leaves the page seeing the original — layer 1 dies completely with no
-//   error at all. By contrast scripting.registerContentScripts with
-//   world:'MAIN' is properly supported from Safari 16.4, and where it is not,
-//   it **throws**. Failing loudly beats being silently wrong.
+// Why both:
+//   Chrome honours `world` on static content_scripts, and that path is the fast
+//   one: the script is there before the parser reaches YouTube's first inline
+//   script. Nothing beats it, so it stays.
+//
+//   WebKit-based browsers — Orion among them — ignore that field depending on
+//   version. When they do, main.js runs in ISOLATED and hooking JSON.parse
+//   there leaves the page seeing the original: layer 1 dies completely, with no
+//   error at all. registerContentScripts with world:'MAIN' is fully supported
+//   there, and where it is not supported it **throws**. Failing loudly beats
+//   being silently wrong.
+//
+//   Registering something the manifest already declared is harmless — the guard
+//   in main/index.ts installs the hooks once however many times the script runs.
+//   Measured: dropping the static declaration and relying on this alone made
+//   layer 1 lose the race against YouTube's inline script.
 //
 // persistAcrossSessions registers it with the browser permanently, so from then
 // on it is injected at document_start whether or not the worker is awake.
@@ -17,9 +27,6 @@ const SCRIPT_ID = 'oc-ad-bye-pass-main'
 const MATCHES = ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*']
 
 export async function ensureMainWorldScript(): Promise<void> {
-  // A build constant (see shared/target.ts). Everything below vanishes from the Chrome bundle.
-  if (!__IS_SAFARI__) return
-
   try {
     const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] })
     if (existing.length > 0) return
