@@ -91,7 +91,7 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
   <div class="card">
     <div class="top">
       <div class="mark">
-        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#7e4dc5"/><path fill="#181825" d="M13.44 13.44a3.52 3.52 0 0 1 3.52-3.52h30.08a3.52 3.52 0 0 1 3.52 3.52V29.14C50.56 42 42.5 50.5 32 55.68 21.5 50.5 13.44 42 13.44 29.14Z"/><path fill="#fab387" transform="translate(17.32 14.12) scale(0.4587)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/><path fill="#ffffff" transform="translate(24.15 20.95) scale(0.2453)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
+        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#7e4dc5"/><g transform="translate(32 32) scale(0.9) translate(-32 -32)"><path fill="#181825" d="M13.44 13.44a3.52 3.52 0 0 1 3.52-3.52h30.08a3.52 3.52 0 0 1 3.52 3.52V29.14C50.56 42 42.5 50.5 32 55.68 21.5 50.5 13.44 42 13.44 29.14Z"/></g><path fill="#fab387" transform="translate(19.39 16.19) scale(0.4128)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/><path fill="#ffffff" transform="translate(25.53 22.34) scale(0.2208)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
       </div>
       <h1><span class="a">AD</span> <span class="b">BYE-PASS</span></h1>
     </div>

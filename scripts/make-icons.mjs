@@ -16,6 +16,10 @@
 // spark with a white core. At 16px the shield and the core are dropped — three
 // tones inside sixteen pixels is one too many, and the taper would be two
 // pixels wide.
+//
+// The mark sits inside the circle inscribed in the tile, with room to spare.
+// Chrome shows the square; Orion crops it to a circle, and at full size the
+// shield's shoulders ran right up against that crop.
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -36,14 +40,17 @@ const PEACH = '#fab387'
 function svg(size) {
   const small = size <= 16
   const spark = small
-    ? `<path fill="${PEACH}" transform="translate(15.4 12.2) scale(0.5187)" d="${SPARK}"/>`
-    : `<path fill="${PEACH}" transform="translate(17.32 14.12) scale(0.4587)" d="${SPARK}"/>` +
-      `<path fill="#ffffff" transform="translate(24.15 20.95) scale(0.2453)" d="${SPARK}"/>`
+    ? `<path fill="${PEACH}" transform="translate(17.06 14.18) scale(0.4668)" d="${SPARK}"/>`
+    : `<path fill="${PEACH}" transform="translate(19.39 16.19) scale(0.4128)" d="${SPARK}"/>` +
+      `<path fill="#ffffff" transform="translate(25.53 22.34) scale(0.2208)" d="${SPARK}"/>`
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64">` +
     `<rect width="64" height="64" rx="14" fill="${TILE}"/>` +
-    (small ? '' : `<path fill="${PANEL}" d="${SHIELD}"/>`) +
+    (small
+      ? ''
+      : `<g transform="translate(32 32) scale(0.9) translate(-32 -32)">` +
+        `<path fill="${PANEL}" d="${SHIELD}"/></g>`) +
     spark +
     '</svg>'
   )
