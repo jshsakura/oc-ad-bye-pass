@@ -518,8 +518,14 @@ git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
        oc-ad-bye-pass.zip            Chrome · Edge · Orion
        oc-ad-bye-pass-fallback.zip   declarativeNetRequest 를 뺀 빌드
-   → pages.yml     릴리스가 게시되면 사이트 푸터의 버전을 새 태그로 갱신
 ```
+
+사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은
+`releases/latest/download/...` 를 가리키고, 푸터의 버전은 브라우저가 릴리스 API 에서
+직접 읽는다. `pages.yml` 은 `site/` 나 필터가 바뀔 때만 돈다.
+
+> `release: published` 트리거는 안 쓴다. **안 걸린다.** 릴리스를 만든 주체가
+> `GITHUB_TOKEN` 이면 GitHub 은 그 이벤트로 다른 워크플로를 시작하지 않는다.
 
 | 어디 | 무엇 |
 |---|---|

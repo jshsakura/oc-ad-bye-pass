@@ -1046,13 +1046,24 @@
 })();
 
 // ── 푸터 ──
+// 버전은 **릴리스에서 직접 읽는다.** build.json 에 구워 넣어 봤자 릴리스가 새로
+// 나가는 순간 낡는다 — 릴리스 게시로 이 사이트를 다시 배포시킬 수가 없기 때문이다
+// (GITHUB_TOKEN 이 만든 이벤트는 다른 워크플로를 트리거하지 못한다).
+// API 를 못 부르면 build.json 의 값으로 물러난다.
 (() => {
   const el = document.getElementById('build');
+  const RELEASE = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases/latest';
+
+  const latest = fetch(RELEASE)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => j?.tag_name?.replace(/^v/, '') || null)
+    .catch(() => null);
 
   fetch('build.json', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
-    .then((b) => {
+    .then(async (b) => {
       if (!b) return;
+      b = { ...b, version: (await latest) ?? b.version };
       // Two dates, and they mean different things: the rules move on their own
       // schedule, the site only changes when it is redeployed. Labelling them
       // separately keeps "last updated" from being a guess.

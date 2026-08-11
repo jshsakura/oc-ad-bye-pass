@@ -4,9 +4,12 @@
 # `releases/latest/download/...`, so a new release changes what people get
 # without this workflow running at all.
 #
-# It still runs on `release: published`, for one reason: the footer names the
-# version, and a footer that says 0.2.0 while the button hands out 0.3.0 is
-# worse than no footer.
+# It does **not** run on `release: published`, though the footer does name the
+# version. That trigger was tried and never fires: a release created by
+# softprops/action-gh-release is made with GITHUB_TOKEN, and events raised by
+# GITHUB_TOKEN do not start further workflow runs. So the page reads the version
+# from the releases API at runtime instead, and the value written below is only
+# the fallback for when that call fails.
 #
 # What gets published:
 #   site/**              the page and its fonts
@@ -24,8 +27,6 @@ on:
       - 'site/**'
       - 'filters/**'
       - '.github/workflows/pages.yml'
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -56,9 +57,8 @@ jobs:
           cp -R site/. _site/
           cp filters/youtube.json _site/filters/youtube.json
 
-          # The footer must name the release the buttons actually serve, not the
-          # working tree. Before the first release there is none — fall back to
-          # package.json rather than failing the deploy.
+          # Fallback only — the page asks the releases API first. Still worth
+          # writing: it is what shows when GitHub's API is rate-limited or blocked.
           version=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
           version=${version#v}
           [ -n "$version" ] || version=$(node -p "require('./package.json').version")

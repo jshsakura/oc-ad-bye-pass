@@ -22,15 +22,11 @@
 
 name: safari
 
+# Manual only, since 2026-08-11. iPhone installs go through Orion now, which
+# takes the Chrome zip directly, so nothing ships from here — and a workflow
+# that fails on every push teaches everyone to ignore red marks.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/manifest.json'
-      - 'scripts/**'
-      - '.github/workflows/safari.yml'
 
 env:
   APP_NAME: OC Ad Bye-Pass
