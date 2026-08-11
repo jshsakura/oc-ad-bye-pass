@@ -21,9 +21,9 @@
 // with the extension. No ads in the control means there is nothing to prove, so
 // the test skips.
 
-import { mkdirSync } from 'node:fs'
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import { chromium, type Page } from '@playwright/test'
+import { chromium, devices, type Page } from '@playwright/test'
 import { LAUNCH_ARGS, expect, test } from './fixtures.ts'
 
 const SHOTS_DIR = path.resolve(import.meta.dirname, '__screenshots__')
@@ -59,6 +59,34 @@ async function readPlayerResponse(page: Page): Promise<AdInfo | null> {
 }
 
 const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`
+/** What an iPhone gets. Different page, different player, and the one that matters. */
+const mobileWatchUrl = (id: string) => `https://m.youtube.com/watch?v=${id}`
+
+const DIST = path.resolve(import.meta.dirname, '..', 'dist')
+const IPHONE = devices['iPhone 13']
+
+/**
+ * The package as Orion runs it, near enough to be worth something: no static
+ * `world: "MAIN"` declaration, because WebKit ignores it, and the runtime
+ * registration torn down, because it may not be there either. What is left is
+ * the injected <script>, which cannot block the parser — the reason the first
+ * pre-roll can leak.
+ */
+function packageWithoutStaticMain(into: string): string {
+  rmSync(into, { recursive: true, force: true })
+  cpSync(DIST, into, { recursive: true })
+  const manifestPath = path.join(into, 'manifest.json')
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+    content_scripts: { world?: string }[]
+  }
+  const before = manifest.content_scripts.length
+  manifest.content_scripts = manifest.content_scripts.filter((cs) => cs.world !== 'MAIN')
+  if (manifest.content_scripts.length !== before - 1) {
+    throw new Error('dist 매니페스트에 world:MAIN 항목이 없다')
+  }
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
+  return into
+}
 
 test.describe('실제 유튜브 (E2E_LIVE=1 일 때만)', () => {
   test.skip(!LIVE, 'E2E_LIVE=1 이 아니면 건너뛴다')
@@ -141,5 +169,94 @@ test.describe('실제 유튜브 (E2E_LIVE=1 일 때만)', () => {
     expect(info?.videoId, '영상 정보는 살아 있어야 한다').toBeTruthy()
     expect(info?.hasStreamingData, '재생 정보는 살아 있어야 한다').toBe(true)
     expect(pageErrors, `페이지 오류: ${pageErrors.join(' | ')}`).toHaveLength(0)
+  })
+
+  // The condition the phone is actually in, against the site the phone actually
+  // gets. Everything above runs the desktop page with layer 1 installed the fast
+  // way — neither of which is true on an iPhone, and an ad played through on one
+  // while every test here was green.
+  //
+  // Both halves are swapped: m.youtube.com under an iPhone user agent, and layer
+  // 1 arriving only by injection. The control group is what makes it mean
+  // anything; plenty of videos carry no ads at all, and mobile serves different
+  // ones from desktop.
+  test('아이폰 조건 — 모바일 유튜브에 주입 폴백만으로도 잘라낸다', async () => {
+    const fixture = packageWithoutStaticMain(
+      path.resolve(import.meta.dirname, '..', 'test-results', 'live-orion-pkg'),
+    )
+    const mobile = {
+      userAgent: IPHONE.userAgent,
+      viewport: IPHONE.viewport,
+      isMobile: true,
+      hasTouch: true,
+    }
+
+    const read = async (page: Page) => {
+      const info = await readPlayerResponse(page)
+      return (info?.adPlacements ?? 0) + (info?.playerAds ?? 0) + (info?.adSlots ?? 0)
+    }
+
+    const plain = await chromium.launchPersistentContext('', {
+      channel: 'chromium',
+      args: LAUNCH_ARGS,
+      ...mobile,
+    })
+    let target: string | null = null
+    let control = 0
+    try {
+      for (const id of AD_VIDEOS) {
+        const page = await plain.newPage()
+        await page.goto(mobileWatchUrl(id), { waitUntil: 'domcontentloaded', timeout: 60_000 })
+        control = await read(page)
+        await page.close()
+        if (control > 0) {
+          target = id
+          break
+        }
+      }
+    } finally {
+      await plain.close()
+    }
+    test.skip(target === null, '지금 모바일에 광고를 싣는 영상이 없다 — 증명할 것이 없다')
+
+    const context = await chromium.launchPersistentContext('', {
+      channel: 'chromium',
+      args: [`--disable-extensions-except=${fixture}`, `--load-extension=${fixture}`, ...LAUNCH_ARGS],
+      ...mobile,
+    })
+    try {
+      const worker =
+        context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+      // Registration succeeding would prove the easy path, not this one.
+      await expect
+        .poll(() =>
+          worker.evaluate(
+            (id) =>
+              chrome.scripting.getRegisteredContentScripts({ ids: [id] }).then((s) => s.length),
+            'oc-ad-bye-pass-main',
+          ),
+        )
+        .toBe(1)
+      await worker.evaluate(
+        (id) => chrome.scripting.unregisterContentScripts({ ids: [id] }),
+        'oc-ad-bye-pass-main',
+      )
+
+      const page = await context.newPage()
+      const pageErrors: string[] = []
+      page.on('pageerror', (error) => pageErrors.push(error.message))
+      await page.goto(mobileWatchUrl(target!), { waitUntil: 'domcontentloaded', timeout: 60_000 })
+
+      expect(await read(page), `대조군 ${control}개가 그대로 남았다`).toBe(0)
+      const how = await page.evaluate(() => ({
+        layer1: document.documentElement.hasAttribute('data-oc-ad-bye-pass'),
+        inject: document.documentElement.getAttribute('data-oc-abp-inject'),
+      }))
+      expect(how.layer1, '주입으로도 1계층이 붙지 않았다').toBe(true)
+      expect(how.inject, '이 경로는 주입이어야 한다').toBe('loaded')
+      expect(pageErrors, `페이지 오류: ${pageErrors.join(' | ')}`).toHaveLength(0)
+    } finally {
+      await context.close()
+    }
   })
 })
