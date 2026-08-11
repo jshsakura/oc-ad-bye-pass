@@ -4,19 +4,23 @@
 # `releases/latest/download/...`, so a new release changes what people get
 # without this workflow running at all.
 #
-# It does **not** run on `release: published`, though the footer does name the
-# version. That trigger was tried and never fires: a release created by
-# softprops/action-gh-release is made with GITHUB_TOKEN, and events raised by
-# GITHUB_TOKEN do not start further workflow runs. So the page reads the version
-# from the releases API at runtime instead, and the value written below is only
-# the fallback for when that call fails.
+# It does not run on `release: published` — that trigger never fires, because a
+# release made by softprops/action-gh-release is created with GITHUB_TOKEN and
+# events raised by that token start no further runs. It does not need to: the
+# packages here are built from this commit, so the page hands out its own
+# version rather than reporting somebody else's.
 #
 # What gets published:
 #   site/**              the page and its fonts
-#   filters/youtube.json so the list has a URL here too (the extension's default
-#                        is raw.githubusercontent.com; this is the alternative
-#                        offered on the page)
+#   filters/youtube.json the rule list, for reading
+#   dl/*.zip             the packages themselves, built here
 #   build.json           footer data, generated below
+#
+# The zips are served from this origin on purpose. Linking
+# releases/latest/download/... sends a phone through a cross-host redirect to a
+# URL whose name never changes while its contents do, which is exactly the shape
+# a cache mangles — and a half-downloaded zip installs as "Something went
+# wrong", with no way to tell it from a bad package.
 
 name: pages
 
@@ -49,6 +53,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:all
+      - run: npm run verify
+
+      # The version goes in the file name. On a phone the downloaded file is the
+      # only thing you can actually see, and "which build did I just install"
+      # was otherwise unanswerable — every failure looks identical, whether the
+      # package is wrong, the download was truncated, or the file picked was a
+      # stale copy from an earlier attempt.
+      - name: Package
+        run: |
+          version=$(node -p "require('./package.json').version")
+          mkdir -p _site/dl
+          (cd dist && zip -qr "../_site/dl/oc-ad-bye-pass-$version.zip" .)
+          (cd dist-orion && zip -qr "../_site/dl/oc-ad-bye-pass-orion-$version.zip" .)
+          ls -l _site/dl
+
       - name: Assemble the site
         env:
           GH_TOKEN: ${{ github.token }}
@@ -57,11 +83,11 @@ jobs:
           cp -R site/. _site/
           cp filters/youtube.json _site/filters/youtube.json
 
-          # Fallback only — the page asks the releases API first. Still worth
-          # writing: it is what shows when GitHub's API is rate-limited or blocked.
-          version=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
-          version=${version#v}
-          [ -n "$version" ] || version=$(node -p "require('./package.json').version")
+          # Also the cache-buster for the download links: the file names are
+          # stable and their contents are not.
+          # The zips above are built from this commit, so the page's own version
+          # is the one it hands out — not whatever the newest tag happens to be.
+          version=$(node -p "require('./package.json').version")
           echo "version = $version"
 
           node -e '

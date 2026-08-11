@@ -274,6 +274,30 @@
   .card.chrome { --accent: var(--blue);  --ink: var(--blue-ink); }
   .card.filter { --accent: var(--green); --ink: var(--green-ink); }
   .card.what   { --accent: var(--teal);  --ink: var(--teal-ink); }
+  .card.browsers { --accent: var(--peach); --ink: var(--peach-ink); }
+
+  /* Support table. Narrow screens scroll it rather than squeezing the columns —
+     a table that wraps to two lines per cell is a table nobody reads. */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table {
+    border-collapse: collapse; width: 100%; min-width: 320px;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left; padding: 9px 10px;
+    border-bottom: 1px solid var(--surface0);
+    white-space: nowrap;
+  }
+  th {
+    font-family: var(--pixel); font-size: 7.5px; line-height: 1.6;
+    color: var(--ink); font-weight: 400;
+  }
+  :root[data-lang="ko"] th { font-family: var(--body); font-size: 12px; font-weight: 700; }
+  td { color: var(--subtext0); }
+  td:first-child { color: var(--text); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .yes { color: var(--green-ink); }
+  .no { color: var(--overlay0); }
 
   /* Feature list. A <dl> because that is what it is — a term and what it means.
      The accent rule on the left ties each entry to the card's colour. */
@@ -647,7 +671,7 @@
   <div class="card what">
     <div class="card-head">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7l9 4 9-4-9-4Z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
-      <h2 lang="ko">플러그인 소개</h2>
+      <h2 lang="ko">확장 프로그램 소개</h2>
       <h2 lang="en">What it does</h2>
     </div>
 
@@ -718,7 +742,7 @@
       <li>Pick the zip you downloaded and allow the <code>youtube.com</code> permission</li>
     </ol>
 
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip">
+    <a class="btn" href="dl/oc-ad-bye-pass-orion.zip" id="dl-orion" data-size="87KB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · ORION
       <span class="what">oc-ad-bye-pass-orion.zip · 87KB</span>
@@ -785,11 +809,74 @@
       <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
-    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
+    <a class="btn btn-line" href="dl/oc-ad-bye-pass.zip" id="dl-chrome" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · CHROME
       <span class="what">oc-ad-bye-pass.zip · 1.5MB</span>
     </a>
+  </div>
+
+
+  <!-- ── 지원 브라우저 ───────────────────────────────── -->
+  <div class="card browsers">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z"/></svg>
+      <h2 lang="ko">지원 브라우저</h2>
+      <h2 lang="en">Supported browsers</h2>
+    </div>
+
+    <div class="table-wrap" lang="ko">
+      <table>
+        <thead>
+          <tr><th>브라우저</th><th>받는 파일</th><th>유튜브</th><th>다른 사이트</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Orion (아이폰·아이패드·맥)</td><td>Orion zip</td><td class="yes">전부</td><td>숨김만</td></tr>
+          <tr><td>Chrome (데스크톱)</td><td>Chrome zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
+          <tr><td>Edge (데스크톱)</td><td>Chrome zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
+          <tr><td>Brave · Vivaldi 등</td><td>Chrome zip</td><td>될 것</td><td>될 것</td></tr>
+          <tr><td>Safari</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Firefox</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>안드로이드 Chrome</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap" lang="en">
+      <table>
+        <thead>
+          <tr><th>Browser</th><th>Package</th><th>YouTube</th><th>Elsewhere</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Orion (iPhone · iPad · Mac)</td><td>Orion zip</td><td class="yes">all layers</td><td>hiding only</td></tr>
+          <tr><td>Chrome (desktop)</td><td>Chrome zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
+          <tr><td>Edge (desktop)</td><td>Chrome zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
+          <tr><td>Brave · Vivaldi · …</td><td>Chrome zip</td><td>should work</td><td>should work</td></tr>
+          <tr><td>Safari</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Firefox</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
+          <tr><td>Chrome for Android</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note" lang="ko">
+      <p><strong>Orion 에서는 "다른 사이트"가 숨김만 됩니다.</strong> Orion 이 크롬의 네트워크 차단
+        기능을 구현하지 않아서, 광고 요청은 나가되 광고 자리는 보이지 않습니다. 유튜브 차단은
+        아무것도 빠지지 않습니다.</p>
+      <p>Brave · Vivaldi 는 크로미움 계열이라 Chrome 과 같은 파일로 동작할 것으로 보지만,
+        직접 확인하지는 않았습니다.</p>
+      <p>Safari 는 확장을 앱으로 감싸 서명해야 해서 접었고, Firefox 는 매니페스트가 달라
+        그대로는 안 됩니다. 안드로이드 Chrome 은 확장 자체를 지원하지 않습니다.</p>
+    </div>
+
+    <div class="note" lang="en">
+      <p><strong>On Orion, "elsewhere" is hiding only.</strong> Orion does not implement Chrome's
+        network blocking, so ad requests go out but the slots stay invisible. Nothing is missing
+        from the YouTube side.</p>
+      <p>Brave and Vivaldi are Chromium, so the Chrome package should work there — untested.</p>
+      <p>Safari needs the extension wrapped in a signed app, which was dropped; Firefox has a
+        different manifest; Chrome for Android supports no extensions at all.</p>
+    </div>
   </div>
 
   <!-- ── 필터 리스트 ─────────────────────────────────── -->
@@ -1140,18 +1227,13 @@
 // API 를 못 부르면 build.json 의 값으로 물러난다.
 (() => {
   const el = document.getElementById('build');
-  const RELEASE = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases/latest';
-
-  const latest = fetch(RELEASE)
-    .then((r) => (r.ok ? r.json() : null))
-    .then((j) => j?.tag_name?.replace(/^v/, '') || null)
-    .catch(() => null);
-
+  // No releases API here any more. The buttons serve what this deploy built, so
+  // the footer has to name that same thing — quoting the newest tag instead
+  // would be a number nobody on the page can download.
   fetch('build.json', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
-    .then(async (b) => {
+    .then((b) => {
       if (!b) return;
-      b = { ...b, version: (await latest) ?? b.version };
       // One line, versions only. The dates that used to be here — when the rules
       // last moved, when the page last deployed — answered a question nobody was
       // asking on a download page.
@@ -1159,6 +1241,25 @@
         ko: `확장 <b>v${b.version}</b> · 차단 규칙 v${b.filterVersion}`,
         en: `Extension <b>v${b.version}</b> · rules v${b.filterVersion}`,
       };
+      // The file names are stable and their contents are not, so the version
+      // rides along as a query. A phone that cached the previous zip and hands
+      // the installer a stale or half-written file fails with the same one-line
+      // error a bad package does — indistinguishable, and it cost an evening.
+      // The version is in the file name, so what lands in Files says which
+      // build it is. Every install failure looks the same on the device — wrong
+      // package, truncated download, stale copy picked by mistake — and this is
+      // the one thing that tells them apart.
+      for (const [id, name] of [
+        ['dl-orion', `oc-ad-bye-pass-orion-${b.version}.zip`],
+        ['dl-chrome', `oc-ad-bye-pass-${b.version}.zip`],
+      ]) {
+        const a = document.getElementById(id);
+        if (!a) continue;
+        a.href = `dl/${name}`;
+        const what = a.querySelector('.what');
+        if (what) what.textContent = `${name} · ${a.dataset.size ?? ''}`.trim();
+      }
+
       const paint = () => { el.innerHTML = line[document.documentElement.dataset.lang] ?? line.ko; };
       addEventListener('langchange', paint);
       paint();
