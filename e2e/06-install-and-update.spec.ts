@@ -267,6 +267,18 @@ test.describe('설치 이후 원격 갱신', () => {
 
     await context.unroute('https://raw.githubusercontent.com/**')
     await context.route('https://raw.githubusercontent.com/**', async (route) => {
+      // The options page also reads package.json from this host to see whether a
+      // newer build exists. Same origin, different question — counting it as a
+      // list fetch made the first pass look like two.
+      if (route.request().url().endsWith('package.json')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json; charset=utf-8',
+          body: JSON.stringify({ version: '0.0.0' }),
+        })
+        return
+      }
+
       // When the extension replays the previous ETag, the server sends no body
       if (route.request().headers()['if-none-match'] === ETAG) {
         notModified++
