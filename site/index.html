@@ -803,12 +803,14 @@
     <p class="lede" lang="en">The blocking rules are kept apart from the extension code.<br>
       The extension checks for new ones whenever you open YouTube, so a rule change never means reinstalling.</p>
     <div class="note" lang="ko">
-      <p>확장 옵션의 <strong>리스트 주소</strong>에 아래 주소를 넣으시면, GitHub 대신 이곳에서 규칙을 받아갑니다.</p>
-      <p><code>https://jshsakura.github.io/oc-ad-bye-pass/filters/youtube.json</code></p>
+      <p>확장이 기본으로 쓰는 주소입니다. 직접 고친 규칙을 쓰시려면 확장 옵션의
+        <strong>리스트 주소</strong>를 바꾸시면 됩니다.</p>
+      <p><code>https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/youtube.json</code></p>
     </div>
     <div class="note" lang="en">
-      <p>Put this address in the extension's <strong>list URL</strong> option and it will fetch the rules from here instead of GitHub.</p>
-      <p><code>https://jshsakura.github.io/oc-ad-bye-pass/filters/youtube.json</code></p>
+      <p>This is the address the extension uses by default. To run your own rules, change the
+        <strong>list URL</strong> in the extension's options.</p>
+      <p><code>https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/youtube.json</code></p>
     </div>
     <a class="btn btn-line" href="filters/youtube.json">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
