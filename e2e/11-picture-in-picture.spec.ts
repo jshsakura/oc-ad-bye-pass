@@ -80,6 +80,63 @@ test('누르면 어느 경로를 탔는지 화면에 말해준다', async ({ con
   await expect(page.getByText(/standard/)).toBeVisible()
 })
 
+// 스텁이 아니라 진짜 창.
+//
+// 위의 시험들은 API 가 불렸는지까지만 본다. 그것으로는 이 기능이 폰에서 실패해온
+// 방식들이 하나도 안 잡힌다 — 탭 안에서 불렀는지, 그 순간에 유튜브의 차단이
+// 걷혀 있었는지, 창이 열리자마자 도로 닫히지는 않는지.
+//
+// 크로미움에는 진짜 PiP 가 있으므로 여기서는 끝까지 간다. 픽스처의 <video> 에는
+// 비디오 트랙이 없어서 브라우저가 요청 자체를 거절하니(측정된 문구:
+// "The video element has no video track"), 캔버스 스트림으로 진짜 트랙을 물린다.
+test('누르면 진짜로 작은 창이 열린다', async ({ context }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await expect(page.locator(BUTTON)).toBeVisible()
+
+  await page.evaluate(async () => {
+    const video = document.querySelector('video')
+    if (!video) throw new Error('픽스처에 video 가 없다')
+    const canvas = document.createElement('canvas')
+    canvas.width = 320
+    canvas.height = 180
+    const ctx = canvas.getContext('2d')!
+    setInterval(() => {
+      ctx.fillStyle = '#89b4fa'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }, 100)
+    video.srcObject = canvas.captureStream(30)
+    video.muted = true
+    await video.play()
+  })
+
+  // 유튜브가 차단을 되붙인 상태에서 시작한다. 이 시험이 증명하는 것은 "되붙어도
+  // 창이 열린다" 까지고, 그것을 누가 걷어냈는지는 가르지 않는다 — 속성 관찰자가
+  // 클릭보다 먼저 걷어내기 때문이다(핸들러 안의 걷어내기를 빼고 돌려도 통과한다).
+  // 핸들러 쪽은 관찰자가 놓치는 순간을 위한 것이고, 그 순간은 여기서 만들 수 없다.
+  await page.evaluate(() => {
+    document.querySelector('video')!.setAttribute('disablePictureInPicture', '')
+  })
+
+  await page.locator(BUTTON).click()
+
+  await expect
+    .poll(() => page.evaluate(() => document.pictureInPictureElement !== null), {
+      message: '버튼을 눌렀는데 작은 창이 열리지 않았다',
+    })
+    .toBe(true)
+
+  // 그리고 열린 채로 있어야 한다. 유튜브는 표시 모드가 바뀌면 영상을 도로
+  // 인라인으로 끌어내리는데, 그 방어는 우리가 연 창일 때만 도는 것이라
+  // 버튼 경로에서 켜지지 않으면 창이 열렸다가 사라진다.
+  await page.waitForTimeout(600)
+  expect(
+    await page.evaluate(() => document.pictureInPictureElement !== null),
+    '열린 작은 창이 곧바로 닫혔다',
+  ).toBe(true)
+})
+
 test('버튼이 플레이어 밖에, 화면에 고정돼 있다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
