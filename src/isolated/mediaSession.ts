@@ -22,6 +22,8 @@
 
 interface WebkitVideo extends HTMLVideoElement {
   webkitPresentationMode?: string
+  // disableRemotePlayback is already on HTMLVideoElement — YouTube sets it, and
+  // it takes the video out of Now Playing along with AirPlay.
 }
 
 let bound: WebkitVideo | null = null
@@ -47,6 +49,28 @@ export function bindMediaSession(): void {
   if (!video || video === bound) return
   bound = video
 
+  // YouTube marks the element disableRemotePlayback, which is not only about
+  // AirPlay: it is what keeps the video out of the system's Now Playing
+  // handling, and with it out of there the Control Centre button has nothing to
+  // resume. Attribute and property both, as with the picture-in-picture opt-out.
+  if (video.hasAttribute('disableremoteplayback')) {
+    video.removeAttribute('disableremoteplayback')
+  }
+  if (video.disableRemotePlayback) video.disableRemotePlayback = false
+
+  // Without metadata iOS has nothing to draw on the lock screen, and a media
+  // session it cannot present is one it need not keep.
+  try {
+    const title = document.title.replace(/\s*-\s*YouTube\s*$/, '').trim() || 'YouTube'
+    const artwork = [...document.querySelectorAll<HTMLMetaElement>('meta[property="og:image"]')]
+      .map((m) => m.content)
+      .filter(Boolean)
+      .map((src) => ({ src, sizes: '480x360', type: 'image/jpeg' }))
+    session.metadata = new MediaMetadata({ title, artist: 'YouTube', artwork })
+  } catch {
+    // MediaMetadata is missing on some engines; the handlers below still help.
+  }
+
   const safely = (action: MediaSessionAction, handler: () => void) => {
     try {
       session.setActionHandler(action, handler)
@@ -58,8 +82,21 @@ export function bindMediaSession(): void {
 
   safely('play', () => {
     void video.play().catch(() => {})
+    session.playbackState = 'playing'
   })
-  safely('pause', () => video.pause())
+  safely('pause', () => {
+    video.pause()
+    session.playbackState = 'paused'
+  })
+
+  // Keep the state honest, so the button on the lock screen shows the right
+  // symbol and iOS does not decide the session is stale.
+  const sync = () => {
+    session.playbackState = video.paused ? 'paused' : 'playing'
+  }
+  video.addEventListener('play', sync)
+  video.addEventListener('pause', sync)
+  sync()
   safely('seekbackward', () => {
     video.currentTime = Math.max(0, video.currentTime - 10)
   })
@@ -70,6 +107,7 @@ export function bindMediaSession(): void {
 
 export function unbindMediaSession(): void {
   bound = null
+  if (navigator.mediaSession) navigator.mediaSession.metadata = null
   const session = navigator.mediaSession
   if (!session?.setActionHandler) return
   for (const action of ['play', 'pause', 'seekbackward', 'seekforward'] as MediaSessionAction[]) {
