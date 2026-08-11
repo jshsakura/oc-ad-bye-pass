@@ -88,11 +88,46 @@ async function readCapped(response: Response, limit: number): Promise<string> {
   return new TextDecoder().decode(merged)
 }
 
+/**
+ * Whether we may fetch this list.
+ *
+ * The manifest is consulted first, and it is the answer for the addresses this
+ * extension ships with. `permissions.contains` is not to be trusted for those:
+ * on Orion it answers false for an origin the manifest declares outright, and
+ * the update then never even attempted — the options page said "이 주소에 접근할
+ * 권한이 없습니다" about raw.githubusercontent.com, which is the default list.
+ *
+ * For anything else — a URL somebody typed in — the API is still the only way
+ * to know, but a refusal there means "ask for it", not "give up".
+ */
+function declaredInManifest(origin: string): boolean {
+  const declared: string[] = chrome.runtime.getManifest().host_permissions ?? []
+  return declared.some((pattern) => {
+    const host = pattern.replace(/^\*:\/\//, 'https://').replace(/\/\*$/, '')
+    try {
+      return new URL(host).origin === origin
+    } catch {
+      return false
+    }
+  })
+}
+
 async function hasPermissionFor(url: string): Promise<boolean> {
+  let origin: string
   try {
-    return await chrome.permissions.contains({ origins: [`${new URL(url).origin}/*`] })
+    origin = new URL(url).origin
   } catch {
     return false
+  }
+
+  if (declaredInManifest(origin)) return true
+
+  try {
+    return await chrome.permissions.contains({ origins: [`${origin}/*`] })
+  } catch {
+    // The call itself failed. Attempting the fetch and reporting what actually
+    // happens beats refusing on the strength of an API that did not answer.
+    return true
   }
 }
 
