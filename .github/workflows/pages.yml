@@ -25,12 +25,13 @@
 name: pages
 
 on:
+  # Every push to main, not just the ones that touch site/. The page ships the
+  # packages it builds, so a commit that changes only src/ still changes what
+  # this hands out — filtering by path left the download a version behind the
+  # release, silently, which is the exact failure this project moved to
+  # release-driven distribution to avoid.
   push:
     branches: [main]
-    paths:
-      - 'site/**'
-      - 'filters/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
