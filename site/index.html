@@ -341,6 +341,10 @@
     border-bottom: 1px solid var(--surface0);
   }
   .card-head svg { width: 20px; height: 20px; flex: none; color: var(--ink); }
+  /* Browser marks carry their own colours — they identify someone else's
+     product, so they do not take the card's accent. */
+  .card.orion .card-head svg,
+  .card.chrome .card-head svg { width: 22px; height: 22px; border-radius: 5px; }
   h2 { font-family: var(--pixel); font-size: 11px; line-height: 1.6; color: var(--text); }
   .chip {
     margin-left: auto; font-family: var(--pixel); font-size: 7px; line-height: 1;
@@ -719,9 +723,7 @@
   <!-- ── iPhone / iPad ───────────────────────────────── -->
   <div class="card orion">
     <div class="card-head">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/>
-      </svg>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#ffffff"/><path fill="#7e4dc5" transform="translate(6.4 6.4) scale(0.8)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
       <h2>iPhone · iPad</h2>
       <span class="chip beta">ORION BETA</span>
     </div>
@@ -788,7 +790,7 @@
   <!-- ── Chrome ──────────────────────────────────────── -->
   <div class="card chrome">
     <div class="card-head">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 8h9.5M8.5 14 3.8 6.2M15.5 14l-4.7 7.8"/></svg>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#f4b400"/><path d="M32 2a30 30 0 0 1 26 15H32a15 15 0 0 0-13 7.6Z" fill="#db4437"/><path d="M6 17a30 30 0 0 0 20 44l13-22a15 15 0 0 1-20-5.6Z" fill="#0f9d58"/><circle cx="32" cy="32" r="13" fill="#ffffff"/><circle cx="32" cy="32" r="8" fill="#4285f4"/></svg>
       <h2>Chrome · Edge</h2>
       <span class="chip">READY</span>
     </div>
@@ -819,10 +821,10 @@
       <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
-    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip" id="dl-chrome" data-size="1.5MB">
+    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-chrome.zip" id="dl-chrome" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · CHROME
-      <span class="what">oc-ad-bye-pass.zip · 1.5MB</span>
+      <span class="what">oc-ad-bye-pass-chrome.zip · 1.5MB</span>
     </a>
   </div>
 
@@ -1273,7 +1275,7 @@
       const base = 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download';
       for (const [id, name] of [
         ['dl-orion', 'oc-ad-bye-pass-orion.zip'],
-        ['dl-chrome', 'oc-ad-bye-pass.zip'],
+        ['dl-chrome', 'oc-ad-bye-pass-chrome.zip'],
       ]) {
         const a = document.getElementById(id);
         if (!a) continue;

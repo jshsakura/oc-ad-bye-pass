@@ -16,7 +16,7 @@ set -euo pipefail
 # The GitHub release is the distribution. `latest/download/<asset>` always
 # redirects to the newest release, so this URL never has to change — which is
 # also why the asset name in .github/workflows/release.yml must not.
-ZIP_URL="${OCABP_ZIP:-https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip}"
+ZIP_URL="${OCABP_ZIP:-https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-chrome.zip}"
 
 case "$(uname -s)" in
   Darwin) DEFAULT_DIR="$HOME/Library/Application Support/OcAdByePass" ;;

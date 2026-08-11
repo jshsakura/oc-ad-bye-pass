@@ -472,7 +472,7 @@ storage.sync                       Partial support ← 유일한 구멍
 ```
 git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
-       oc-ad-bye-pass.zip         Chrome · Edge
+       oc-ad-bye-pass-chrome.zip  Chrome · Edge
        oc-ad-bye-pass-orion.zip   Orion (아이폰 포함). DNR 을 뺀 276KB
 ```
 

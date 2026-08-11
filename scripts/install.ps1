@@ -14,7 +14,7 @@
 $ErrorActionPreference = 'Stop'
 
 # The GitHub release is the distribution — see the comment in install.sh.
-$ZipUrl = if ($env:OCABP_ZIP)  { $env:OCABP_ZIP }  else { 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip' }
+$ZipUrl = if ($env:OCABP_ZIP)  { $env:OCABP_ZIP }  else { 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-chrome.zip' }
 $Target = if ($env:OCABP_DIR)  { $env:OCABP_DIR }  else { Join-Path $env:LOCALAPPDATA 'OcAdByePass' }
 
 $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ocabp-" + [System.Guid]::NewGuid().ToString('N'))
