@@ -75,6 +75,40 @@ jobs:
           (cd dist-orion && zip -qr "../_site/dl/oc-ad-bye-pass-orion-$version.zip" .)
           ls -l _site/dl
 
+      # Three packages that differ by one thing each, for when an install fails
+      # and the error says only "Something went wrong". A phone cannot tell a bad
+      # package from a truncated download from the wrong file picked out of a
+      # list, so the packages have to differ by something we control.
+      #
+      #   a  v0.4.0 exactly — the build known to have installed
+      #   b  v0.4.0's files with the current version number
+      #   c  the current build
+      #
+      # a fails  → not us; Orion or the device changed under us
+      # a works, b fails → the version string, or something about replacing
+      # b works, c fails → our code, and the range is v0.4.0..HEAD
+      - name: Bisect packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          mkdir -p _site/dl/test work
+          gh release download v0.4.0 -p 'oc-ad-bye-pass-orion.zip' -O work/a.zip
+          cp work/a.zip "_site/dl/test/a-known-good-0.4.0.zip"
+
+          rm -rf work/b && mkdir work/b && (cd work/b && unzip -q ../a.zip)
+          node -e "
+            const fs = require('fs');
+            const p = 'work/b/manifest.json';
+            const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+            m.version = process.argv[1];
+            fs.writeFileSync(p, JSON.stringify(m, null, 2) + '\n');
+          " "$version"
+          (cd work/b && zip -qr "../../_site/dl/test/b-old-files-new-version-$version.zip" .)
+
+          cp "_site/dl/oc-ad-bye-pass-orion-$version.zip" "_site/dl/test/c-current-$version.zip"
+          ls -l _site/dl/test
+
       - name: Assemble the site
         env:
           GH_TOKEN: ${{ github.token }}
