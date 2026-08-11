@@ -2,6 +2,11 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
+    <!-- Without this, iOS WebKit lays the page out at 980px and scales it down:
+         on a phone the popup renders as a legible-on-a-desktop panel shrunk to
+         a third of its size. Orion is a WebKit browser, and Orion on iPhone is
+         how this extension gets onto a phone. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>OC Ad Bye-Pass</title>
   </head>
   <body>

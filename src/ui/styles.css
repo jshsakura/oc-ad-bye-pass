@@ -38,7 +38,11 @@ a {
 }
 
 .popup {
+  /* 320px is the panel a desktop browser hangs off its toolbar button. On a
+     phone the popup is a full-width sheet, so it has to give — pinned at 320 it
+     sits stranded in the corner of the sheet. */
   width: 320px;
+  max-width: 100%;
 }
 
 .page {

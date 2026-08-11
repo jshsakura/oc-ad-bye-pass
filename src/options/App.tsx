@@ -28,6 +28,22 @@ function ask(request: RuntimeRequest): Promise<FilterStatus> {
   return chrome.runtime.sendMessage(request) as Promise<FilterStatus>
 }
 
+/**
+ * Ask for one origin, and survive browsers that cannot be asked.
+ *
+ * The Orion package ships without `optional_host_permissions` — it is one of
+ * the keys stripped to get the thing to install at all — so this request has
+ * nowhere to go there. It can reject, or resolve false, or not exist. All three
+ * mean the same thing to the user, and the message below says it.
+ */
+async function requestOrigin(origin: string): Promise<boolean> {
+  try {
+    return await chrome.permissions.request({ origins: [`${origin}/*`] })
+  } catch {
+    return false
+  }
+}
+
 export function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [urlDraft, setUrlDraft] = useState('')
@@ -74,9 +90,12 @@ export function App() {
     setNote(null)
     try {
       if (needsPermission) {
-        const granted = await chrome.permissions.request({ origins: [`${urlOrigin}/*`] })
+        const granted = await requestOrigin(urlOrigin)
         if (!granted) {
-          setNote('권한을 허용하지 않아서 이 주소는 쓸 수 없습니다.')
+          setNote(
+            '이 주소를 쓸 권한을 얻지 못했습니다. 브라우저가 권한 요청을 지원하지 않는 경우도 있습니다 — ' +
+              '기본 주소나 jshsakura.github.io 주소는 권한 없이 바로 됩니다.',
+          )
           return
         }
       }

@@ -20,6 +20,30 @@ import {
 import { Switch } from '../ui/Switch.tsx'
 import { formatCount } from '../ui/format.ts'
 
+/**
+ * Open the settings page.
+ *
+ * `openOptionsPage` is the idiomatic call and the right one on desktop. On iOS
+ * there is no options entry point at all — the extension is reachable only
+ * through its popup — and the call can resolve having done nothing. Opening the
+ * page as an ordinary tab always works, so that is the fallback, and it is the
+ * only way settings are reachable at all on a phone.
+ */
+async function openSettings() {
+  const url = chrome.runtime.getURL('options.html')
+  try {
+    if (chrome.runtime.openOptionsPage) {
+      await chrome.runtime.openOptionsPage()
+      // It resolved, but on WebKit that is not proof anything opened. Check.
+      const open = await chrome.tabs.query({ url })
+      if (open.length > 0) return
+    }
+  } catch {
+    // fall through
+  }
+  await chrome.tabs.create({ url })
+}
+
 /** Toggles that only mean anything on YouTube. */
 const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
@@ -149,7 +173,7 @@ export function App() {
         <button onClick={() => setShowAll((v) => !v)}>
           {showAll ? '이 사이트 항목만' : '전체 항목 보기'}
         </button>
-        <button onClick={() => chrome.runtime.openOptionsPage()}>규칙·고급 설정</button>
+        <button onClick={() => void openSettings()}>규칙·고급 설정</button>
       </div>
     </div>
   )
