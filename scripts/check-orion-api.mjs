@@ -22,6 +22,13 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?for
  * Every entry must state how it is handled.
  */
 const HANDLED = {
+  // Network blocking simply does not exist on these targets; the manifest
+  // generator strips the key and the ruleset, and network.ts checks for the API
+  // before calling it. YouTube is unaffected — layers 1-3 never touch DNR.
+  'declarativeNetRequest.getDynamicRules':
+    'Absent on Safari/Orion. network.ts returns early when the API is missing; the Safari manifest drops the key entirely.',
+  'declarativeNetRequest.updateDynamicRules':
+    'Absent on Safari/Orion. Same guard as above — no network layer on those targets, so nothing to exempt.',
   'storage.sync':
     'Partial on Orion. settings.ts writes to both sync and local and reads whichever was saved most recently.',
 }
@@ -54,7 +61,13 @@ const grepped = execFileSync(
   { encoding: 'utf8' },
 )
 /** Type names, not runtime APIs — support is irrelevant since they vanish at build time. */
-const TYPES_ONLY = new Set(['storage.AreaName', 'storage.StorageChange'])
+const TYPES_ONLY = new Set([
+  'storage.AreaName',
+  'storage.StorageChange',
+  'declarativeNetRequest.Rule',
+  'declarativeNetRequest.RuleActionType',
+  'declarativeNetRequest.ResourceType',
+])
 
 const used = [...new Set(grepped.split('\n').filter(Boolean))]
   .map((call) => call.replace(/^chrome\./, ''))

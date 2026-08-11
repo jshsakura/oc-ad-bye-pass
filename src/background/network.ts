@@ -86,6 +86,11 @@ function allowRulesFor(allowlist: readonly string[]): chrome.declarativeNetReque
  * user would experience as "ads came back on that one site" and never report.
  */
 export async function syncAllowlistRules(allowlist: readonly string[]): Promise<void> {
+  // Safari and Orion do not implement declarativeNetRequest at all, so there is
+  // nothing to exempt there — the network layer never existed. Checking for the
+  // API rather than for the browser keeps this true whichever target ships it.
+  if (typeof chrome.declarativeNetRequest?.updateDynamicRules !== 'function') return
+
   try {
     const existing = await chrome.declarativeNetRequest.getDynamicRules()
     const removeRuleIds = existing.filter((r) => r.id >= DYNAMIC_ID_BASE).map((r) => r.id)
