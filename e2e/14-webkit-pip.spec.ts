@@ -39,7 +39,8 @@ const TINY_MP4 = readFileSync(path.resolve(import.meta.dirname, 'assets', 'tiny.
 
 const test = base.extend<{ wk: import('@playwright/test').Page }>({
   wk: async ({}, use) => {
-    const browser = await webkit.launch()
+    // 헤드리스 WebKit 에 PiP 가 실제로 있는지가 미지수라, 창을 띄우고도 본다.
+    const browser = await webkit.launch({ headless: process.env.WK_HEADED !== '1' })
     const page = await browser.newPage()
     await page.setContent(PAGE())
     // 메타데이터가 오기 전에는 WebKit 이 표시 모드를 지원하지 않는다고 답한다.

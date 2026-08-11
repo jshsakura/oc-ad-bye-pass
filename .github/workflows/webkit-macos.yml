@@ -57,5 +57,13 @@ jobs:
           EOF
           node probe.tmp.mjs
 
-      - name: WebKit 시험
+      - name: WebKit 시험 (헤드리스)
         run: npx playwright test e2e/12-webkit.spec.ts e2e/14-webkit-pip.spec.ts
+
+      # 같은 시험을 창을 띄우고 한 번 더. 표시 모드는 화면에 창을 만드는 기능이라,
+      # 헤드리스에서 API 가 있어도 못 하겠다고 답할 수 있다 — 그 둘을 가른다.
+      - name: WebKit 시험 (창 띄우고)
+        if: always()
+        env:
+          WK_HEADED: '1'
+        run: npx playwright test e2e/14-webkit-pip.spec.ts
