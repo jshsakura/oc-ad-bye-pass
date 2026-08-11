@@ -126,6 +126,17 @@ jobs:
             rm -f work/t.zip
           done
 
+          # And one that isolates the icons: today's code wearing v0.4.0's icons.
+          # They are hand-encoded PNGs from scripts/make-icons.mjs — same format
+          # as the ones that installed, but a stricter parser than Chromium's is
+          # exactly the sort of thing that would not say so.
+          rm -rf work/e && mkdir work/e
+          (cd work/e && unzip -q "../../_site/dl/oc-ad-bye-pass-orion-$version.zip")
+          rm -rf work/a-icons && mkdir work/a-icons
+          (cd work/a-icons && unzip -q ../a.zip 'icons/*')
+          cp work/a-icons/icons/*.png work/e/icons/
+          (cd work/e && zip -qr "../../_site/dl/test/e-current-with-old-icons-$version.zip" .)
+
           ls -l _site/dl/test
 
       - name: Assemble the site
