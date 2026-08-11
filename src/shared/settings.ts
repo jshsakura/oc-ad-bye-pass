@@ -98,17 +98,42 @@ function mergeSettings(stored: unknown): Settings {
   }
 }
 
-// 설정은 sync 와 local **양쪽에** 쓰고, 읽을 때 sync 를 우선한다.
+// 설정은 sync 와 local **양쪽에** 쓰고, 읽을 때 **더 최근에 저장된 쪽**을 고른다.
 //
-// 왜: Orion(WebKit)은 `storage.sync` 가 Partial support 다 — API 는 있는데 기기 간
+// 왜 양쪽에 쓰나: Orion(WebKit)은 `storage.sync` 가 Partial support 다 — API 는 있는데
 // 동기화가 보장되지 않는다. sync 에만 쓰면 조용히 안 저장돼서 사용자 눈에는 설정이
-// 매번 초기화되는 것처럼 보인다. 실패해도 티가 안 나는 종류라 더 나쁘다.
-// (`storage.local` 은 Orion macOS·iOS 모두 Full support 다.)
+// 매번 초기화되는 것처럼 보인다. (`local` 은 Orion 도 Full support 다.)
 //
-// 양쪽에 쓰는 비용은 무시할 만하다 — 설정은 작고 자주 바뀌지 않는다.
+// 왜 "sync 우선"이 아니라 "최신 우선"인가 — 여기서 실제로 데이터가 날아갔다:
+//
+//   `storage.sync` 는 항목당 8KB(QUOTA_BYTES_PER_ITEM) 제한이 있다. `customRules` 가
+//   길면 sync 쓰기만 거부되고 local 쓰기는 성공한다. 그런데 "둘 다 실패했을 때만
+//   예외"라서 저장은 성공한 것처럼 보이고, 읽기가 sync 를 우선하니 **옛 값이 돌아온다.**
+//   사용자는 규칙을 붙여넣고 저장 → 성공 표시 → 새로고침하면 사라진 걸 본다.
+//   더 나쁜 건 그 뒤로 토글 하나만 바꿔도 같은 일이 반복돼 설정이 통째로 얼어붙는다.
+//
+// 원인은 "쓰기에 성공한 영역"과 "읽기 우선순위"가 따로 논 것이다. 저장 시각을 같이
+// 넣고 읽을 때 큰 쪽을 고르면 부분 실패가 나도 항상 최신값이 이긴다.
 
 const AREAS = ['sync', 'local'] as const
 type AreaName = (typeof AREAS)[number]
+
+/** 저장되는 실제 모양. `savedAt` 은 두 영역이 갈렸을 때 승자를 가리는 용도다. */
+type StoredSettings = Settings & { savedAt?: number }
+
+/**
+ * sync 에 넣어볼 최대 크기(바이트). `QUOTA_BYTES_PER_ITEM` 이 8192B 라 여유를 뒀다.
+ *
+ * 글자 수가 아니라 바이트로 재는 이유: 한글 주석이 섞이면 한 글자가 3바이트라
+ * 글자 수로 재면 한도를 그냥 넘어간다.
+ *
+ * 넘치면 **sync 시도 자체를 건너뛴다.** 던져서 실패하게 두면 사용자에게는 저장이
+ * 실패한 것처럼 보이는데, local 은 멀쩡히 받을 수 있으므로 그럴 이유가 없다.
+ */
+const SYNC_ITEM_BUDGET_BYTES = 7500
+
+/** local 에도 무한정 넣지는 않는다. 사람이 손으로 쓰는 규칙에 이 정도면 충분하다. */
+export const MAX_CUSTOM_RULES_CHARS = 20_000
 
 async function areaGet(area: AreaName, key: string): Promise<unknown> {
   const got = await chrome.storage[area].get(key)
@@ -120,24 +145,62 @@ async function areaSet(area: AreaName, key: string, value: unknown): Promise<voi
 }
 
 export async function loadSettings(): Promise<Settings> {
+  let best: { value: unknown; savedAt: number } | null = null
+
   for (const area of AREAS) {
     try {
       const value = await areaGet(area, SETTINGS_KEY)
-      if (value !== undefined) return mergeSettings(value)
+      if (value === undefined) continue
+      const savedAt = (value as StoredSettings).savedAt ?? 0
+      // 같은 시각이면 먼저 온 것(sync)을 남긴다 — 순서가 우선순위를 겸한다
+      if (!best || savedAt > best.savedAt) best = { value, savedAt }
     } catch {
       // 이 영역을 못 쓰면 다음 영역으로
     }
   }
-  return mergeSettings(undefined)
+
+  return mergeSettings(best?.value)
+}
+
+export interface SaveResult {
+  settings: Settings
+  /** 저장에 실패한 영역. 비어 있으면 완전 성공 */
+  failedAreas: AreaName[]
+}
+
+/** 어디에 저장됐는지까지 알려주는 버전. UI 가 부분 실패를 사용자에게 알릴 수 있다. */
+export async function saveSettingsDetailed(patch: Partial<Settings>): Promise<SaveResult> {
+  const merged = mergeSettings({ ...(await loadSettings()), ...patch })
+
+  if (merged.customRules.length > MAX_CUSTOM_RULES_CHARS) {
+    throw new Error(
+      `내 규칙이 너무 깁니다 (${merged.customRules.length} / ${MAX_CUSTOM_RULES_CHARS}자)`,
+    )
+  }
+
+  const stored: StoredSettings = { ...merged, savedAt: Date.now() }
+  const bytes = new TextEncoder().encode(JSON.stringify(stored)).length
+  // sync 한도를 넘으면 시도조차 하지 않는다 — 어차피 거부당하고, local 은 받는다
+  const targets = AREAS.filter((area) => area !== 'sync' || bytes <= SYNC_ITEM_BUDGET_BYTES)
+
+  const results = await Promise.allSettled(targets.map((area) => areaSet(area, SETTINGS_KEY, stored)))
+  const failedAreas = [
+    ...AREAS.filter((area) => !targets.includes(area)),
+    ...targets.filter((_, i) => results[i].status === 'rejected'),
+  ]
+
+  if (failedAreas.length === AREAS.length) {
+    const reason = results.find((r) => r.status === 'rejected')
+    throw new Error(
+      `설정을 저장할 수 없습니다${reason?.status === 'rejected' ? `: ${String(reason.reason)}` : ''}`,
+    )
+  }
+
+  return { settings: merged, failedAreas }
 }
 
 export async function saveSettings(patch: Partial<Settings>): Promise<Settings> {
-  const next = mergeSettings({ ...(await loadSettings()), ...patch })
-  const results = await Promise.allSettled(AREAS.map((area) => areaSet(area, SETTINGS_KEY, next)))
-  if (results.every((r) => r.status === 'rejected')) {
-    throw new Error('설정을 저장할 수 없습니다')
-  }
-  return next
+  return (await saveSettingsDetailed(patch)).settings
 }
 
 /** 설치 직후 기본값 심기. 이미 저장된 값이 있으면 건드리지 않는다. */

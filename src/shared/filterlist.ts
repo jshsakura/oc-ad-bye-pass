@@ -20,6 +20,26 @@ export const MAX_SELECTORS_PER_GROUP = 2000
 export const MAX_SELECTORS_TOTAL = 8000
 export const MAX_PRUNE_PATHS = 200
 
+/**
+ * `click` 은 `hide` 와 신뢰 등급이 다르다 — 숨기는 게 아니라 **사용자 대신 누른다.**
+ * 매니페스트 매치에 `studio.youtube.com` 이 포함되므로, 임의 셀렉터를 누를 수 있으면
+ * 영상·채널 삭제 확인이나 광고 클릭 사기가 사용자 세션으로 가능해진다.
+ *
+ * 그래서 둘로 조인다.
+ *   1. 개수를 훨씬 낮게 (아래 상한). sweep 이 셀렉터마다 문서 전체를 훑기 때문에
+ *      성능 한도이기도 하다 — 2000개면 프레임이 33ms → 2150ms 로 뛴다.
+ *   2. 이름에 닫기/건너뛰기 뜻이 없으면 거부. "확인" 버튼을 누르게 만들 수 없다.
+ */
+export const MAX_CLICK_SELECTORS = 25
+const CLICK_INTENT = /close|skip|dismiss|next-?ad|ad-?feedback/i
+
+/**
+ * 문서 전체를 지우는 셀렉터. 리스트가 털리면 전 사용자의 페이지가 백지가 되고,
+ * 캐시에 남아서 확장을 끄기 전에는 돌아오지 않는다.
+ * DOM 이 있으면 아래 `matchesDocumentRoot` 가 더 넓게 잡는다.
+ */
+const TOO_BROAD = new Set(['*', 'html', ':root', 'body', 'head', 'html *', ':root *'])
+
 export interface FilterRules {
   hide: Partial<Record<ToggleKey, string[]>>
   prune: string[]
@@ -70,13 +90,42 @@ function hasControlChar(s: string): boolean {
   return false
 }
 
+/**
+ * 문서 루트(또는 body)를 잡는 셀렉터인가.
+ *
+ * 문자열 블랙리스트만으로는 `html:has(body)`, `:has(*)`, `*:not(#nope)` 같은 변형을
+ * 다 막을 수 없다. DOM 이 있으면 실제로 매칭시켜 보는 게 확실하다.
+ */
+function matchesDocumentRoot(selector: string): boolean {
+  if (typeof document === 'undefined') return false
+  try {
+    if (document.documentElement?.matches(selector)) return true
+    if (document.body?.matches(selector)) return true
+  } catch {
+    return false
+  }
+  return false
+}
+
 export function isSafeSelector(selector: string, canParse = defaultCanParseSelector): boolean {
   if (typeof selector !== 'string') return false
   const s = selector.trim()
   if (!s || s.length > MAX_SELECTOR_LENGTH) return false
   if (hasControlChar(s)) return false
   if (FORBIDDEN_IN_SELECTOR.test(s)) return false
-  return canParse(s)
+  if (TOO_BROAD.has(s.toLowerCase())) return false
+  if (!canParse(s)) return false
+  // 페이지를 통째로 지우는 셀렉터는 어떤 리스트에서 와도 받지 않는다
+  return !matchesDocumentRoot(s)
+}
+
+/** 누를 수 있는 셀렉터인가 — `hide` 보다 훨씬 좁다 */
+export function isSafeClickSelector(
+  selector: string,
+  canParse = defaultCanParseSelector,
+): boolean {
+  if (!isSafeSelector(selector, canParse)) return false
+  return CLICK_INTENT.test(selector)
 }
 
 export function isSafePrunePath(path: unknown): path is string {
@@ -160,7 +209,21 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
     }
   }
 
-  const click = sanitizeSelectors(r.click, canParse, dropped, 'click')
+  // click 은 별도 검사기와 훨씬 낮은 상한을 쓴다 (위 MAX_CLICK_SELECTORS 주석 참조)
+  const click: string[] = []
+  if (Array.isArray(r.click)) {
+    for (const raw of r.click) {
+      if (click.length >= MAX_CLICK_SELECTORS) {
+        dropped.push(`click: 상한(${MAX_CLICK_SELECTORS}) 초과분 제외`)
+        break
+      }
+      if (typeof raw !== 'string') continue
+      const s = raw.trim()
+      if (isSafeClickSelector(s, canParse)) click.push(s)
+      else dropped.push(`click: ${s.slice(0, 80)}`)
+    }
+  }
+
   const allow = sanitizeSelectors(r.allow, canParse, dropped, 'allow')
 
   const prune: string[] = []
@@ -229,7 +292,11 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
   return {
     hide,
     custom: customRules.filter((s) => isSafeSelector(s)),
-    click: keep(union(BUNDLED_CLICK, remote?.rules.click)),
+    // click 은 여기서도 다시 조인다. 캐시에 예전 규칙이 남아 있을 수 있고,
+    // 서비스 워커에는 DOM 이 없어서 실제 매칭 검사를 못 했기 때문이다.
+    click: keep(union(BUNDLED_CLICK, remote?.rules.click))
+      .filter((s) => isSafeClickSelector(s))
+      .slice(0, MAX_CLICK_SELECTORS),
     prune: union(BUNDLED_PRUNE, remote?.rules.prune),
   }
 }

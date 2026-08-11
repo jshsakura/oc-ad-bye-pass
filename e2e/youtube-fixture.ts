@@ -117,6 +117,11 @@ window.__parsed = JSON.parse('${parseTarget.replace(/'/g, "\\'")}');
   .ytp-ad-overlay-slot, #movie_player, .ytp-suggested-action, .ytp-ad-feedback-dialog-close-button {
     display: block; min-height: 28px; padding: 4px; border: 1px solid #ddd; margin: 4px 0;
   }
+  /* 진짜 backdrop 은 화면을 덮는다. 크기가 0 이면 "막고 있다"는 신호가 못 된다 —
+     확장이 재생을 되살릴지 판단할 때 이걸 본다. */
+  tp-yt-iron-overlay-backdrop {
+    display: block; position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  }
 </style>
 </head>
 <body>

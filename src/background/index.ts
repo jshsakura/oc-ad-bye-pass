@@ -10,9 +10,6 @@ import {
 import { currentStatus, updateFilters } from './updater.ts'
 import { ensureMainWorldScript } from './mainWorld.ts'
 
-const ALARM_NAME = 'filters-update'
-const PERIOD_MINUTES = 6 * 60
-
 // --- 배지 ----------------------------------------------------------------------
 
 function compact(n: number): string {
@@ -49,10 +46,18 @@ function bumpStats(patch: { pruned?: number; skipped?: number }): Promise<void> 
 }
 
 // --- 수명주기 -------------------------------------------------------------------
-
-function scheduleUpdates(delayInMinutes?: number) {
-  chrome.alarms.create(ALARM_NAME, { periodInMinutes: PERIOD_MINUTES, delayInMinutes })
-}
+//
+// 주기 알람은 쓰지 않는다. 갱신은 **유튜브 탭이 열릴 때** 콘텐츠 스크립트가 찔러서
+// 일어나고(`filters:update`, force=false), 낡지 않았으면 updater 가 바로 돌려보낸다.
+//
+// 알람을 뺀 이유 둘:
+//   - 유튜브를 안 보는 동안 서비스 워커를 깨울 이유가 없다
+//   - `alarms` 권한이 통째로 사라진다 (설치 경고가 하나 준다)
+//
+// 호환성 때문은 아니다 — Orion API 표를 확인해보니 `alarms` 는 macOS·iOS 모두
+// Full support 다. 순전히 "안 깨워도 되는 걸 깨우지 말자"는 얘기다.
+//
+// 자주 찔러도 싸다 — ETag 조건부 요청이라 바뀐 게 없으면 304 로 끝난다.
 
 chrome.runtime.onInstalled.addListener(async () => {
   await seedDefaultSettings()
@@ -62,13 +67,11 @@ chrome.runtime.onInstalled.addListener(async () => {
     await chrome.storage.local.set({ [STATS_KEY]: { pruned: 0, skipped: 0, since: Date.now() } })
   }
 
-  scheduleUpdates(1)
   void updateFilters(true)
   void loadStats().then(setBadge)
 })
 
 chrome.runtime.onStartup.addListener(() => {
-  scheduleUpdates()
   void updateFilters()
   void loadStats().then(setBadge)
 })
@@ -78,10 +81,6 @@ chrome.runtime.onStartup.addListener(() => {
 // 다른 이유로 깨어났을 때 다시 시도할 기회를 주기 위해서다. 이미 등록돼 있으면
 // 조회 한 번으로 끝난다.
 void ensureMainWorldScript()
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ALARM_NAME) void updateFilters()
-})
 
 chrome.runtime.onMessage.addListener((message: RuntimeRequest, _sender, sendResponse) => {
   switch (message?.type) {

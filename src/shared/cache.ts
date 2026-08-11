@@ -13,6 +13,12 @@ export interface FilterCache {
   dropped: number
   /** 마지막 갱신 실패 사유. 성공했으면 null */
   error: string | null
+  /**
+   * 서버가 준 ETag. 다음 요청에 If-None-Match 로 되돌려주면, 바뀐 게 없을 때
+   * 서버가 본문 없이 304 만 준다 — 4KB 대신 헤더 몇 줄이다.
+   * 없을 수도 있다 (ETag 를 안 주는 서버).
+   */
+  etag?: string | null
 }
 
 export async function loadCache(): Promise<FilterCache | null> {

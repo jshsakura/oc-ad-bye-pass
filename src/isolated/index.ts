@@ -12,7 +12,12 @@ import {
 } from '../shared/settings.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { handleAdState } from './player.ts'
-import { bumpStats, listenForPruneReports, sendConfigToMain } from './bridge.ts'
+import {
+  bumpStats,
+  listenForPruneReports,
+  requestFreshFilters,
+  sendConfigToMain,
+} from './bridge.ts'
 import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
 import { injectMainWorldFallback } from './injectMain.ts'
 
@@ -98,6 +103,10 @@ function start() {
   })
   // 옵저버가 놓친 상태 변화를 위한 안전망. 하는 일은 querySelector 몇 번이라 부담이 없다.
   setInterval(sweep, 3000)
+
+  // 규칙이 낡았으면 지금 받아오라고 알린다. 주기 알람을 대신하는 자리다 —
+  // 백그라운드가 알아서 최소 간격을 지키므로 여기서는 그냥 매번 부르면 된다.
+  requestFreshFilters()
 
   listenForPruneReports((count) => bumpStats({ pruned: count }))
   watchSettings((next) => {

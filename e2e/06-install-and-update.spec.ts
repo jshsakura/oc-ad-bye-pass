@@ -127,6 +127,23 @@ async function readCache(context: BrowserContext) {
   })
 }
 
+/**
+ * 캐시를 낡은 것으로 만든다.
+ *
+ * 설치 직후 한 번 받아오므로, 그대로 두면 updater 의 최소 간격(10분)에 걸려
+ * 다음 갱신 시도가 아예 나가지 않는다. 시간을 기다릴 수는 없으니 시계를 되감는다.
+ */
+async function makeCacheStale(context: BrowserContext) {
+  const worker = context.serviceWorkers()[0]
+  await worker.evaluate(async () => {
+    const got = await chrome.storage.local.get('filterCache')
+    const cache = got.filterCache as { fetchedAt: number } | undefined
+    if (!cache) return // 아직 받아온 게 없으면 어차피 간격 검사에 안 걸린다
+    cache.fetchedAt = 0
+    await chrome.storage.local.set({ filterCache: cache })
+  })
+}
+
 test.describe('설치 이후 원격 갱신', () => {
   test('버튼 한 번으로 새 규칙이 받아져 페이지에 반영된다', async ({ context, extensionId }) => {
     await installYouTubeFixture(context)
@@ -158,17 +175,73 @@ test.describe('설치 이후 원격 갱신', () => {
     await expect(youtube.locator('#masthead-ad')).toBeHidden()
   })
 
-  test('자동 갱신 알람이 6시간 주기로 걸려 있다', async ({ background }) => {
-    // onInstalled 가 storage 를 몇 번 왕복한 뒤 알람을 걸어서 곧바로는 없을 수 있다
+  test('유튜브 탭을 열면 낡은 규칙을 알아서 받아온다 (주기 알람 없이)', async ({ context }) => {
+    await installYouTubeFixture(context)
+    // 설치 직후에 한 번 받아왔을 수 있다. 그대로면 최소 간격에 걸려 안 나간다.
+    await makeCacheStale(context)
+
+    let hits = 0
+    await context.unroute('https://raw.githubusercontent.com/**')
+    await context.route('https://raw.githubusercontent.com/**', async (route) => {
+      hits++
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify(remoteList({ version: 200, hide: ['#normal-card'] })),
+      })
+    })
+
+    // 사용자가 하는 일은 이것뿐이다 — 유튜브를 연다
+    const youtube = await context.newPage()
+    await youtube.goto(YOUTUBE_URL)
+
     await expect
-      .poll(
-        async () => {
-          const alarm = await background.evaluate(() => chrome.alarms.get('filters-update'))
-          return alarm?.periodInMinutes ?? null
-        },
-        { message: '알람이 없으면 자동 갱신이 영영 안 돈다' },
-      )
-      .toBe(360)
+      .poll(() => hits, { message: '탭을 열었는데 갱신을 시도조차 하지 않았다' })
+      .toBeGreaterThan(0)
+    // 받아온 규칙이 지금 열려 있는 그 탭에 바로 먹는다
+    await expect(youtube.locator('#normal-card')).toBeHidden()
+  })
+
+  test('바뀐 게 없으면 304 로 끝난다 — 본문을 다시 받지 않는다', async ({ context, extensionId }) => {
+    let bodyServed = 0
+    let notModified = 0
+    const ETAG = '"list-v300"'
+
+    await context.unroute('https://raw.githubusercontent.com/**')
+    await context.route('https://raw.githubusercontent.com/**', async (route) => {
+      // 확장이 지난번 ETag 를 되돌려주면 서버는 본문을 안 보낸다
+      if (route.request().headers()['if-none-match'] === ETAG) {
+        notModified++
+        await route.fulfill({ status: 304, headers: { etag: ETAG } })
+        return
+      }
+      bodyServed++
+      await route.fulfill({
+        status: 200,
+        headers: { etag: ETAG },
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify(remoteList({ version: 300, hide: ['#normal-card'] })),
+      })
+    })
+
+    const options = await context.newPage()
+    await options.goto(`chrome-extension://${extensionId}/options.html`)
+
+    // 1회차 — ETag 가 없으니 본문을 받는다
+    await clickUpdateButton(options)
+    await expect.poll(async () => (await readCache(context))?.version).toBe(300)
+    expect(bodyServed, '첫 요청은 본문을 받아야 한다').toBe(1)
+
+    // 2회차 — 이번엔 If-None-Match 를 달고 나가서 304 를 받는다
+    await clickUpdateButton(options)
+    await expect
+      .poll(() => notModified, { message: 'ETag 를 안 보냈다 — 매번 4KB 를 다시 받는다' })
+      .toBeGreaterThan(0)
+
+    expect(bodyServed, '바뀐 게 없는데 본문을 다시 받았다').toBe(1)
+    // 304 를 받았다고 이미 가진 규칙을 잃으면 안 된다
+    expect((await readCache(context))?.version).toBe(300)
+    expect((await readCache(context))?.error).toBeNull()
   })
 
   test('서버가 죽어도 이미 받아둔 규칙으로 계속 막는다', async ({ context, extensionId }) => {

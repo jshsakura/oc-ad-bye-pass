@@ -9,8 +9,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
+  MAX_CLICK_SELECTORS,
   MAX_LIST_BYTES,
   buildStylesheet,
+  isSafeClickSelector,
   isSafePrunePath,
   isSafeSelector,
   parseFilterList,
@@ -160,6 +162,66 @@ test('켜진 그룹만, 셀렉터 하나당 규칙 하나로 스타일시트를 
   assert.ok(css.includes('ytd-reel-video-renderer:has(ytd-ad-slot-renderer)'), 'shorts 그룹은 켜져 있다')
   assert.ok(!css.includes('#masthead-ad'), 'generalAds 는 꺼져 있어야 한다')
   assert.ok(css.includes('my-custom-ad'), '내 규칙은 토글과 무관하게 항상 들어간다')
+})
+
+// --- 적대적 리뷰에서 나온 것들 (회귀 방지) ---------------------------------
+
+test('페이지를 통째로 지우는 셀렉터는 거부한다', () => {
+  // 리스트가 털리면 전 사용자의 페이지가 백지가 되고, 캐시에 남아서
+  // 확장을 끄기 전에는 돌아오지 않는다.
+  for (const selector of ['*', 'html', ':root', 'body', 'head', 'HTML', ' * ']) {
+    assert.equal(isSafeSelector(selector), false, `허용되면 안 됨: ${selector}`)
+  }
+
+  const result = validateFilterList(listWith({ hide: { generalAds: ['html', '#masthead-ad'] } }))
+  assert.equal(result.ok, true)
+  if (!result.ok) return
+  assert.deepEqual(result.list.rules.hide.generalAds, ['#masthead-ad'])
+})
+
+test('누를 수 있는 셀렉터는 닫기/건너뛰기 뜻이 있어야 한다', () => {
+  // click 은 숨기는 게 아니라 사용자 대신 누른다. 매니페스트 매치에
+  // studio.youtube.com 이 포함되므로 임의 버튼을 누를 수 있으면 영상·채널 삭제까지 된다.
+  assert.equal(isSafeClickSelector('.ytp-ad-overlay-close-button'), true)
+  assert.equal(isSafeClickSelector('.ytp-ad-skip-button-modern'), true)
+
+  for (const evil of ['#danger', '#confirm-button', 'button.delete', 'tp-yt-paper-button']) {
+    assert.equal(isSafeClickSelector(evil), false, `허용되면 안 됨: ${evil}`)
+  }
+})
+
+test('악성 리스트의 click 규칙은 걸러지고 개수도 조인다', () => {
+  const many = Array.from({ length: 100 }, (_, i) => `.ad-close-${i}`)
+  const result = validateFilterList(
+    listWith({ hide: {}, click: ['#danger', ...many] }),
+  )
+  assert.equal(result.ok, true)
+  if (!result.ok) return
+
+  assert.ok(!result.list.rules.click.includes('#danger'), '의도 없는 셀렉터는 빠져야 한다')
+  assert.equal(result.list.rules.click.length, MAX_CLICK_SELECTORS)
+  // sweep 이 셀렉터마다 문서 전체를 훑기 때문에 개수 상한이 곧 성능 상한이다
+  assert.ok(MAX_CLICK_SELECTORS <= 50)
+})
+
+test('병합 결과의 click 도 상한과 검사를 다시 통과한다', () => {
+  // 캐시에 예전 규칙이 남아 있을 수 있고, 서비스 워커에는 DOM 이 없어서
+  // 저장 시점에는 실제 매칭 검사를 못 했다.
+  const remote: FilterList = {
+    name: 'r',
+    version: 2,
+    updatedAt: '',
+    rules: {
+      hide: {},
+      prune: [],
+      click: ['#danger', '.something-close-button'],
+      allow: [],
+    },
+  }
+  const resolved = resolveRules(remote, [])
+  assert.ok(!resolved.click.includes('#danger'))
+  assert.ok(resolved.click.includes('.something-close-button'))
+  assert.ok(resolved.click.length <= MAX_CLICK_SELECTORS)
 })
 
 test('전부 꺼져 있고 내 규칙도 없으면 빈 스타일시트', () => {

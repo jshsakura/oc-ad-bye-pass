@@ -48,28 +48,83 @@ export function clickCloseButtons(selectors: string[]): number {
   return count
 }
 
+function isVisible(element: Element): boolean {
+  const rect = element.getBoundingClientRect()
+  if (rect.width === 0 && rect.height === 0) return false
+  const style = getComputedStyle(element)
+  return style.display !== 'none' && style.visibility !== 'hidden'
+}
+
+const DIALOG_SELECTOR = 'tp-yt-paper-dialog, ytd-popup-container > *'
+
 /**
  * "광고 차단기를 사용 중입니다" 안내창을 치우고 재생을 되살린다.
  * 컨테이너(ytd-popup-container)는 남겨야 한다 — 통째로 지우면 이후 모든 팝업이 죽는다.
+ *
+ * ── 여기는 두 번 조심해야 한다
+ *
+ * 1. **보이는 것만 건드린다.** 예전에는 DOM 어딘가에 enforcement 요소가 있기만 하면
+ *    발화했다. 유튜브가 `display:none` 인 요소 하나를 팝업 컨테이너에 상시로 심어두면,
+ *    우리가 3초마다 사용자의 **무관한 대화상자·배경·스크롤 잠금을 전부 부순다.**
+ *    사용자 눈에는 "확장 깔았더니 유튜브가 이상해졌다"로 보이고 원인은 우리다.
+ *    광고를 못 막는 것보다 나쁘다.
+ *
+ * 2. **뒷정리는 남은 모달이 없을 때만.** 배경과 스크롤 잠금은 공용 자원이라,
+ *    다른 대화상자가 떠 있는데 걷어내면 그쪽이 깨진다.
  */
+/**
+ * 지울 범위를 정한다. **다른 내용을 담고 있는 조상은 절대 넘지 않는다.**
+ *
+ * 예전에는 `closest('tp-yt-paper-dialog, …')` 로 무조건 위로 올라갔다. 그러면
+ * 유튜브가 공유 대화상자 안에 숨은 enforcement 요소 하나만 심어둬도 우리가 그
+ * 대화상자를 통째로 날린다. 자식이 하나뿐일 때만 올라가면 그런 일이 없다.
+ */
+function nagRoot(message: Element): Element {
+  let node = message
+  for (;;) {
+    const parent = node.parentElement
+    if (!parent) break
+    if (parent === document.body || parent === document.documentElement) break
+    // 컨테이너 자체는 남겨야 한다 — 지우면 이후 모든 팝업이 죽는다
+    if (parent.tagName.toLowerCase() === 'ytd-popup-container') break
+    // 형제가 있다 = 이 조상은 다른 내용도 담고 있다
+    if (parent.childElementCount !== 1) break
+    node = parent
+  }
+  return node
+}
+
 export function dismissAdblockNag(): number {
   const messages = document.querySelectorAll('ytd-enforcement-message-view-model')
   if (!messages.length) return 0
 
+  // 배경이 떠 있었나 = 모달이 실제로 화면을 막고 있었나.
+  // 뒷정리를 할지 말지의 기준으로 쓴다 (우리 스타일시트가 nag 를 이미 숨겼을 수
+  // 있어서, nag 요소 자체의 가시성으로는 판단할 수 없다).
+  const backdrops = [...document.querySelectorAll('tp-yt-iron-overlay-backdrop')]
+  const hadBackdrop = backdrops.some(isVisible)
+
   let count = 0
   for (const message of messages) {
-    const dialog = message.closest('tp-yt-paper-dialog, ytd-popup-container > *')
-    ;(dialog ?? message).remove()
+    nagRoot(message).remove()
     count++
   }
 
-  for (const backdrop of document.querySelectorAll('tp-yt-iron-overlay-backdrop')) backdrop.remove()
-  // 모달이 걸어둔 스크롤 잠금 해제
-  document.body?.style.removeProperty('overflow')
-  document.documentElement.removeAttribute('scroll-lock')
+  // 배경·스크롤 잠금은 공용 자원이다. 다른 대화상자가 떠 있으면 그쪽 것이므로
+  // 건드리지 않는다.
+  const otherDialogOpen = [...document.querySelectorAll(DIALOG_SELECTOR)].some(isVisible)
+  if (!otherDialogOpen) {
+    for (const backdrop of backdrops) backdrop.remove()
+    document.body?.style.removeProperty('overflow')
+    document.documentElement.removeAttribute('scroll-lock')
 
-  const video = document.querySelector<HTMLVideoElement>('video')
-  if (video?.paused) void video.play().catch(() => {})
+    // 경고창이 세운 재생만 되살린다. 배경도 없었다면 애초에 막고 있지 않았다는
+    // 뜻이므로, 사용자가 일부러 멈춰둔 영상을 되살리지 않는다.
+    if (hadBackdrop) {
+      const video = document.querySelector<HTMLVideoElement>('video')
+      if (video?.paused) void video.play().catch(() => {})
+    }
+  }
 
   return count
 }
