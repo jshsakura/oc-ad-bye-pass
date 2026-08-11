@@ -17,6 +17,7 @@ import {
   removeFromAllowlist,
   siteKindFor,
 } from '../shared/sites.ts'
+import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
 import { collect, format, type Report } from './diagnose.ts'
 import { formatCount } from '../ui/format.ts'
@@ -182,15 +183,20 @@ export function App() {
 
       <div className="foot">
         <button onClick={() => setShowAll((v) => !v)}>
+          <Icon name="layers" />
           {showAll ? '이 사이트 항목만' : '전체 항목 보기'}
         </button>
-        <button onClick={() => void openSettings()}>규칙·고급 설정</button>
+        <button onClick={() => void openSettings()}>
+          <Icon name="settings" />
+          설정
+        </button>
         <button
           onClick={() => {
             setCopied(false)
             void collect().then(setReport)
           }}
         >
+          <Icon name="stethoscope" />
           진단
         </button>
       </div>

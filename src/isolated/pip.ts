@@ -231,10 +231,41 @@ function ensureButton(video: WebkitVideo): void {
   document.documentElement.appendChild(button)
 }
 
+/**
+ * Stop the page pulling the video back out of the small window.
+ *
+ * YouTube reacts to presentation mode changes and can put the video back
+ * inline — from its point of view a floating window is a state it did not ask
+ * for. The event is stopped in the capture phase, before its listeners see it,
+ * while the window is one we opened.
+ *
+ * Only while ours: the user closing the window themselves has to work, and it
+ * arrives as the same event.
+ */
+function guardPresentation(video: WebkitVideo): void {
+  if (video.dataset.ocAbpGuarded === '1') return
+  video.dataset.ocAbpGuarded = '1'
+  video.addEventListener(
+    'webkitpresentationmodechanged',
+    (event) => {
+      if (!engagedByUs) return
+      if (video.webkitPresentationMode === 'inline') {
+        // It came back inline on its own — that is either the user or YouTube,
+        // and either way the window is gone, so stop guarding.
+        engagedByUs = false
+        return
+      }
+      event.stopPropagation()
+    },
+    true,
+  )
+}
+
 function sweep(): void {
   const video = playerVideo()
   if (!video) return
   allowPip(video)
+  guardPresentation(video)
   // Drawn whenever there is a video. Gating on a capability check meant no
   // button at all on the device this was written for — webkitSupportsPresentation
   // Mode answers "not yet" before the video has metadata — and a button that

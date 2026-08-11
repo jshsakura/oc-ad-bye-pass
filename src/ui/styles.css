@@ -67,6 +67,79 @@ a {
   -webkit-user-select: text;
 }
 
+/* ── Controls ──────────────────────────────────────────────────────────────
+   One button. Buttons were being sized by whatever text they happened to hold,
+   which is how a settings page ends up looking like a form somebody assembled
+   in a hurry. */
+button,
+.btn-primary,
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .12s ease, background-color .12s ease;
+}
+
+button:hover,
+.btn-link:hover { border-color: var(--accent); }
+
+button:disabled { opacity: .55; cursor: default; }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+button svg,
+.btn-primary svg,
+.btn-link svg { width: 15px; height: 15px; flex: none; }
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+/* A notice that leads somewhere: text on the left, the thing to press on the
+   right, and never two different heights. */
+.banner.update {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  font-size: 13px;
+}
+
 .popup {
   /* Fluid. The panel takes whatever it is given and centres itself past a
      comfortable reading width.
@@ -379,6 +452,14 @@ textarea:focus {
   outline-offset: -1px;
   border-color: transparent;
 }
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 
 .actions {
   display: flex;

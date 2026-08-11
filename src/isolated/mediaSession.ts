@@ -27,6 +27,34 @@ interface WebkitVideo extends HTMLVideoElement {
 }
 
 let bound: WebkitVideo | null = null
+let remoteWatcher: MutationObserver | null = null
+
+/**
+ * Put the video back in the system's Now Playing.
+ *
+ * disableRemotePlayback reads like an AirPlay switch and is more than that:
+ * with it set, the element is out of Now Playing, and the play button on the
+ * lock screen has nothing behind it. That button is the only thing that wakes a
+ * suspended web process on iOS, so this is the difference between "stopped" and
+ * "stopped for good".
+ */
+function allowRemotePlayback(video: WebkitVideo): void {
+  if (video.hasAttribute('disableremoteplayback')) {
+    video.removeAttribute('disableremoteplayback')
+  }
+  if (video.disableRemotePlayback) video.disableRemotePlayback = false
+}
+
+/**
+ * And keep putting it back. YouTube sets it again — on navigation, on quality
+ * changes, whenever its player reinitialises — so clearing it once holds until
+ * the first thing that happens.
+ */
+function watchRemotePlayback(video: WebkitVideo): void {
+  remoteWatcher?.disconnect()
+  remoteWatcher = new MutationObserver(() => allowRemotePlayback(video))
+  remoteWatcher.observe(video, { attributes: true, attributeFilter: ['disableremoteplayback'] })
+}
 
 function largestVideo(): WebkitVideo | null {
   const videos = [...document.querySelectorAll<WebkitVideo>('video')]
@@ -49,14 +77,8 @@ export function bindMediaSession(): void {
   if (!video || video === bound) return
   bound = video
 
-  // YouTube marks the element disableRemotePlayback, which is not only about
-  // AirPlay: it is what keeps the video out of the system's Now Playing
-  // handling, and with it out of there the Control Centre button has nothing to
-  // resume. Attribute and property both, as with the picture-in-picture opt-out.
-  if (video.hasAttribute('disableremoteplayback')) {
-    video.removeAttribute('disableremoteplayback')
-  }
-  if (video.disableRemotePlayback) video.disableRemotePlayback = false
+  allowRemotePlayback(video)
+  watchRemotePlayback(video)
 
   // Without metadata iOS has nothing to draw on the lock screen, and a media
   // session it cannot present is one it need not keep.
@@ -93,6 +115,9 @@ export function bindMediaSession(): void {
   // symbol and iOS does not decide the session is stale.
   const sync = () => {
     session.playbackState = video.paused ? 'paused' : 'playing'
+    // Re-applied here too: YouTube can set the property directly, and a
+    // property assignment leaves no attribute for the observer above to see.
+    allowRemotePlayback(video)
   }
   video.addEventListener('play', sync)
   video.addEventListener('pause', sync)
@@ -107,6 +132,8 @@ export function bindMediaSession(): void {
 
 export function unbindMediaSession(): void {
   bound = null
+  remoteWatcher?.disconnect()
+  remoteWatcher = null
   if (navigator.mediaSession) navigator.mediaSession.metadata = null
   const session = navigator.mediaSession
   if (!session?.setActionHandler) return
