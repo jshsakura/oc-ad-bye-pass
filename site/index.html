@@ -9,10 +9,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- The project's icon: the spark cutting through an ad slot. It was a white
-     tile with a purple spark until that turned out to be Kagi Orion's own
-     icon — which this extension has no business wearing. -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23181825'/><rect x='14.1' y='14.1' width='35.8' height='35.8' rx='2.6' fill='%23fab387'/><path fill='%23ffffff' transform='translate(2 2) scale(0.938)' d='M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z'/></svg>">">
+<!-- The project's icon: the spark inside a shield. It was a white tile with a
+     purple spark until that turned out to be Kagi Orion's own icon, which this
+     extension has no business wearing. Same drawing as public/icons — see
+     scripts/make-icons.mjs, which draws it as geometry so it survives at 16px. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%237e4dc5'/><path fill='%23181825' d='M10.9 12.5a3.5 3.5 0 0 1 3.5-3.5h35.2a3.5 3.5 0 0 1 3.5 3.5V28.9C53.1 42 44 51 32 56.3 20 51 10.9 42 10.9 28.9Z'/><path fill='%23fab387' transform='translate(18.98 16.38) scale(0.407)' d='M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z'/></svg>">
 <link rel="apple-touch-icon" href="icon-180.png">
 
 <!-- Link preview. Crawlers do not run the language switch, so this is the
@@ -626,7 +627,7 @@
 
   <div class="hero">
     <div class="mark">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#181825"/><rect x="14.1" y="14.1" width="35.8" height="35.8" rx="2.6" fill="#fab387"/><path fill="#ffffff" transform="translate(2 2) scale(0.938)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#7e4dc5"/><path fill="#181825" d="M10.9 12.5a3.5 3.5 0 0 1 3.5-3.5h35.2a3.5 3.5 0 0 1 3.5 3.5V28.9C53.1 42 44 51 32 56.3 20 51 10.9 42 10.9 28.9Z"/><path fill="#fab387" transform="translate(18.98 16.38) scale(0.407)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
     </div>
     <h1><span class="t1">AD</span> <span class="t2">BYE-PASS</span></h1>
     <div class="quote"><p><span id="quote-text"></span><span class="cursor" aria-hidden="true">▌</span></p></div>

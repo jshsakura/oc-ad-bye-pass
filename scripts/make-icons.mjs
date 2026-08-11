@@ -1,9 +1,9 @@
 // Generates public/icons/icon{16,48,128}.png.
 // Encodes RGBA PNGs directly using nothing but zlib — no image library.
 //
-// Design: the mark cutting through an ad slot. A dark tile, a peach square
-// standing for the slot, and a white four-pointed spark over it whose points
-// run past the square's edges.
+// Design: a shield with the spark inside it. A purple tile, a dark shield, and
+// the spark in peach at its centre — the project's two colours doing the two
+// jobs, blocking and marking.
 //
 // It is drawn as geometry rather than traced from the reference render, because
 // the icon has to survive being 16 pixels wide in a toolbar and a downscaled
@@ -68,9 +68,9 @@ function encodePng(width, height, rgba) {
   ])
 }
 
-const TILE = [24, 24, 37] // #181825 — the site's panel colour
-const PEACH = [250, 179, 135] // #fab387 — the ad slot being cut
-const WHITE = [255, 255, 255]
+const TILE = [126, 77, 197] // #7e4dc5 — mauve, the site's accent
+const SHIELD = [24, 24, 37] // #181825 — the site's panel colour
+const PEACH = [250, 179, 135] // #fab387
 
 /** Signed distance to a rounded square centred on the tile. Negative inside. */
 function roundedSquare(x, y, half, radius) {
@@ -83,10 +83,33 @@ function roundedSquare(x, y, half, radius) {
  * The four-pointed spark, as a superellipse: |x|^p + |y|^p <= 1 with p below 1
  * puts the points on the axes and bows the sides inward. No path data needed.
  */
-function inSpark(x, y, half, power) {
+function inSpark(x, y, cy, half, power) {
   const nx = Math.abs(x - 0.5) / half
-  const ny = Math.abs(y - 0.5) / half
+  const ny = Math.abs(y - cy) / half
   return nx ** power + ny ** power <= 1
+}
+
+/**
+ * A shield: straight shoulders that taper to a point.
+ *
+ * Drawn rather than traced so it can be tuned per size. The taper is a quarter
+ * cosine — a straight one reads as a kite, and a circular one as a spade.
+ */
+function inShield(x, y, top, bottom, halfWidth) {
+  if (y < top || y > bottom) return false
+  const t = (y - top) / (bottom - top)
+  const straight = 0.42
+  const w =
+    t <= straight ? halfWidth : halfWidth * Math.cos(((t - straight) / (1 - straight)) * (Math.PI / 2)) ** 0.7
+  if (Math.abs(x - 0.5) > w) return false
+  // Round the shoulders, or the top edge meets the sides in a hard corner.
+  const r = 0.055
+  if (t * (bottom - top) < r) {
+    const dx = Math.abs(x - 0.5) - (halfWidth - r)
+    const dy = top + r - y
+    if (dx > 0 && dy > 0 && Math.hypot(dx, dy) > r) return false
+  }
+  return true
 }
 
 /**
@@ -99,16 +122,18 @@ function inSpark(x, y, half, power) {
 function sample(x, y, size) {
   if (roundedSquare(x, y, 0.5, 0.22) > 0) return null
 
-  // At 16px the slot and the spark overlap into porridge — three tones inside
-  // sixteen pixels is one too many. That size keeps the spark alone, which is
-  // the part that has to be recognisable in a toolbar; the slot is what the
-  // icon means, and there is room for meaning at 48 and above.
-  if (size <= 16) return inSpark(x, y, 0.42, 0.62) ? WHITE : TILE
+  // The shield's centre of mass sits above its point, so the spark is placed
+  // there rather than at the middle of the tile — centred on the tile it looks
+  // like it is sliding out of the bottom.
+  const CENTRE = 0.46
 
-  if (inSpark(x, y, 0.44, 0.62)) return WHITE
-  // The slot sits behind the spark, and the spark's points break out of it.
-  if (roundedSquare(x, y, 0.28, 0.04) <= 0) return PEACH
-  return TILE
+  // At 16px three tones inside sixteen pixels is one too many, and the shield's
+  // taper is two pixels wide. That size keeps the spark alone: it is the part
+  // that has to be recognisable in a toolbar.
+  if (size <= 16) return inSpark(x, y, 0.5, 0.42, 0.62) ? PEACH : TILE
+
+  if (!inShield(x, y, 0.14, 0.88, 0.33)) return TILE
+  return inSpark(x, y, CENTRE, 0.19, 0.62) ? PEACH : SHIELD
 }
 
 function render(size) {
