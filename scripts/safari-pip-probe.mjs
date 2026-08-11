@@ -24,7 +24,10 @@ import path from 'node:path'
 
 const DRIVER = process.env.SAFARIDRIVER ?? 'http://127.0.0.1:4444'
 const PORT = 8099
-const MP4 = readFileSync(path.resolve(import.meta.dirname, '..', 'e2e', 'assets', 'tiny.mp4'))
+const ASSETS = path.resolve(import.meta.dirname, '..', 'e2e', 'assets')
+const MP4 = readFileSync(path.join(ASSETS, 'tiny.mp4'))
+/** Fragmented, because that is what MediaSource takes — and what YouTube feeds. */
+const FRAG = readFileSync(path.join(ASSETS, 'tiny-frag.mp4'))
 
 // A player shaped like YouTube's: inline, muted, opted out of picture-in-picture.
 // Served rather than inlined because Safari will not run a top-level data: URL.
@@ -34,8 +37,10 @@ const PAGE = `<!doctype html><meta charset="utf-8">
   src="/tiny.mp4" style="width:320px;height:180px"></video>
 <video id="ctrl" playsinline muted loop autoplay disablePictureInPicture
   src="/tiny.mp4" style="width:320px;height:180px"></video>
+<video id="mse" playsinline muted style="width:320px;height:180px"></video>
 <button id="tap" style="width:200px;height:60px;font-size:20px">tap</button>
 <button id="tapctrl" style="width:200px;height:60px;font-size:20px">tap control</button>
+<button id="tapmse" style="width:200px;height:60px;font-size:20px">tap mse</button>
 <script>
   const video = document.getElementById('v')
   window.__result = { clicked: false }
@@ -69,6 +74,40 @@ const PAGE = `<!doctype html><meta charset="utf-8">
     }
     window.__control = { clicked: true, threw, optOut: control.disablePictureInPicture }
   })
+
+  // MSE — 유튜브가 실제로 쓰는 방식이다. 파일을 직접 물린 <video> 와 WebKit 이
+  // 같은 답을 주는지가, 데스크톱에서의 증명이 폰으로 넘어가는지를 가른다.
+  const mse = document.getElementById('mse')
+  window.__mse = { state: 'init' }
+  ;(async () => {
+    try {
+      const source = new MediaSource()
+      mse.src = URL.createObjectURL(source)
+      await new Promise((resolve) => source.addEventListener('sourceopen', resolve, { once: true }))
+      const buffer = source.addSourceBuffer('video/mp4; codecs="avc1.42E01E"')
+      const data = await (await fetch('/tiny-frag.mp4')).arrayBuffer()
+      buffer.appendBuffer(data)
+      await new Promise((resolve) => buffer.addEventListener('updateend', resolve, { once: true }))
+      source.endOfStream()
+      await mse.play()
+      window.__mse = { state: 'playing', readyState: mse.readyState }
+    } catch (e) {
+      window.__mse = { state: 'failed', error: String(e) }
+    }
+  })()
+
+  document.getElementById('tapmse').addEventListener('click', () => {
+    let threw = null
+    const supported = typeof mse.webkitSupportsPresentationMode === 'function'
+      ? mse.webkitSupportsPresentationMode('picture-in-picture')
+      : null
+    try {
+      mse.webkitSetPresentationMode('picture-in-picture')
+    } catch (e) {
+      threw = String(e)
+    }
+    window.__mse = { ...window.__mse, clicked: true, supported, threw }
+  })
 </script>
 </body>`
 
@@ -76,6 +115,11 @@ const server = createServer((req, res) => {
   if (req.url === '/tiny.mp4') {
     res.writeHead(200, { 'content-type': 'video/mp4', 'content-length': MP4.length })
     res.end(MP4)
+    return
+  }
+  if (req.url === '/tiny-frag.mp4') {
+    res.writeHead(200, { 'content-type': 'video/mp4', 'content-length': FRAG.length })
+    res.end(FRAG)
     return
   }
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
@@ -152,6 +196,28 @@ try {
     args: [],
   })
   console.log('대조군(opt-out 유지):', JSON.stringify(control))
+
+  // MSE 영상도 같은지. 유튜브가 그것이라, 여기서 갈리면 데스크톱의 증명은
+  // 폰으로 넘어가지 않는다.
+  await call('POST', at('/execute/sync'), {
+    script: 'document.getElementById("ctrl").webkitSetPresentationMode("inline"); return null',
+    args: [],
+  })
+  await new Promise((resolve) => setTimeout(resolve, 800))
+  console.log('MSE 준비:', JSON.stringify(await call('POST', at('/execute/sync'), {
+    script: 'return window.__mse',
+    args: [],
+  })))
+  const mseButton = await call('POST', at('/element'), { using: 'css selector', value: '#tapmse' })
+  await call('POST', at(`/element/${Object.values(mseButton)[0]}/click`), {})
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+  const mse = await call('POST', at('/execute/sync'), {
+    script:
+      'const m = document.getElementById("mse");' +
+      'return { result: window.__mse, mode: m.webkitPresentationMode, readyState: m.readyState }',
+    args: [],
+  })
+  console.log('MSE(유튜브 방식):', JSON.stringify(mse))
 
   if (after.mode === 'picture-in-picture') {
     console.log('\n✅ 사파리에서 webkitSetPresentationMode 가 실제로 작은 창을 열었다')
