@@ -23,6 +23,7 @@ import {
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { reportDiagnostics } from './diagnostics.ts'
+import { bindMediaSession, unbindMediaSession } from './mediaSession.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
@@ -63,6 +64,7 @@ function detach() {
     sweepTimer = null
   }
   disablePictureInPicture()
+  unbindMediaSession()
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
     sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune, backgroundPlay: false })
@@ -98,6 +100,12 @@ function recompute(cache: FilterCache | null) {
     // PiP adds a control rather than removing one, so it only runs when asked.
     if (settings.toggles.pictureInPicture) enablePictureInPicture()
     else disablePictureInPicture()
+
+    // The transport controls are the way back once iOS has stopped the page.
+    // Bound under the same setting as background playback, since that is the
+    // problem it belongs to.
+    if (settings.toggles.backgroundPlay) bindMediaSession()
+    else unbindMediaSession()
   }
 
   sweep()

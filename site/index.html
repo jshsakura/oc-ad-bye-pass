@@ -354,11 +354,13 @@
   }
   .cmd .copy {
     grid-area: copy;
-    font-family: var(--pixel); font-size: 7px; line-height: 1;
-    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    padding: 0; border: none; border-radius: 8px; cursor: pointer;
     color: var(--on-accent); background-color: var(--accent);
-    border: none; white-space: nowrap;
+    transition: background-color .14s ease;
   }
+  .cmd .copy svg { width: 16px; height: 16px; }
   .cmd .copy.done { background-color: var(--green); }
 
   .legal {
@@ -725,13 +727,19 @@
       <dd>화면이 깨지는 사이트가 있으면 확장 아이콘을 눌러 <strong>그 사이트만</strong> 끄실 수 있습니다. 하위 도메인도 함께 꺼집니다.</dd>
       <dt>규칙 자동 갱신</dt>
       <dd>차단 규칙은 확장과 따로 관리합니다. 유튜브가 화면을 바꿔도 <strong>다시 설치하실 필요가 없습니다.</strong></dd>
-      <dt>화면을 나가도 계속 재생</dt>
-      <dd>유튜브 모바일 웹은 화면을 벗어나면 재생이 멈춥니다. 이 확장을 깔면 계속 재생됩니다.</dd>
+      <dt>탭을 옮겨도 계속 재생</dt>
+      <dd>유튜브는 화면이 가려지면 스스로 재생을 멈춥니다. 그걸 막습니다.<br>
+        <strong>아이폰에서 홈으로 나가는 경우는 다릅니다.</strong> 그건 WebKit 이 엔진 안에서
+        비디오를 세우는 것이라 웹페이지가 손댈 수 없습니다. 대신 두 갈래가 있습니다 —
+        나가기 전에 <strong>작은 창(PiP)으로 넘겨두면 계속 재생</strong>되고, 이미 멈췄다면
+        <strong>제어센터의 재생 버튼</strong>으로 이어집니다. 그 버튼이 듣도록 이 확장이
+        미디어 세션을 걸어 둡니다.</dd>
       <dt>화면 속 화면(PiP)</dt>
       <dd>유튜브가 모바일 웹에서 PiP 를 막아 두었습니다. 플레이어에 버튼이 붙습니다.<br>
-        <strong>아이폰에서는 전체화면 상태로 홈에 나가야 작은 창이 됩니다</strong> — 그 전환은
-        iOS 가 스스로 하는 것이고, 확장이 하는 일은 한 번의 탭으로 그 상태를 만들어 주는
-        것입니다.</dd>
+        <strong>아이폰에서 나가고도 계속 들으려면 이 방법뿐입니다.</strong> 작은 창에 있는 동안은
+        시스템이 재생을 유지하거든요. 다만 iOS 는 <strong>전체화면 상태로 나갈 때만</strong> 작은
+        창으로 넘겨줍니다 — 그 전환 자체는 iOS 가 하고, 확장이 하는 일은 한 번의 탭으로 그
+        상태를 만들어 주는 것입니다.</dd>
       <dt>계정 없음 · 서버 없음</dt>
       <dd>모든 처리가 브라우저 안에서 끝납니다. 밖으로 나가는 데이터는 없습니다.</dd>
     </dl>
@@ -745,9 +753,13 @@
       <dd>If a page breaks, click the icon and turn it off <strong>for that site only</strong> — subdomains included.</dd>
       <dt>Rules update themselves</dt>
       <dd>The blocking rules live apart from the extension. When YouTube changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
-      <dt>Keeps playing off-screen</dt>
-      <dd>YouTube's mobile web player stops when you leave the screen. With this installed it
-        keeps going.</dd>
+      <dt>Keeps playing across tabs</dt>
+      <dd>YouTube pauses itself when its page is covered. This stops that.<br>
+        <strong>Leaving the app on iPhone is a different thing</strong>: WebKit stops the video
+        inside the engine, where no page can reach. Two ways round it — hand the video to a
+        small window before you go and it keeps playing, or press play in Control Centre once
+        it has stopped. The extension wires the media session so that button reaches the
+        video.</dd>
       <dt>Picture-in-picture</dt>
       <dd>YouTube opts its mobile player out of picture-in-picture. A button is added.<br>
         <strong>On iPhone the video has to be fullscreen when you leave</strong> — that hand-off
@@ -853,12 +865,12 @@
       <div class="cmd">
         <span class="cmd-os">Windows · PowerShell</span>
         <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code>
-        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
       </div>
       <div class="cmd">
         <span class="cmd-os">macOS · Linux</span>
         <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code>
-        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
       </div>
 
     </div>
@@ -874,12 +886,12 @@
       <div class="cmd">
         <span class="cmd-os">Windows · PowerShell</span>
         <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code>
-        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
       </div>
       <div class="cmd">
         <span class="cmd-os">macOS · Linux</span>
         <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code>
-        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
       </div>
 
     </div>
@@ -1305,15 +1317,20 @@
 // 클립보드가 막힌 환경(비보안 컨텍스트 등)에서는 대신 전체를 선택해 준다.
 // 아무 일도 안 일어나는 버튼보다 낫다.
 (() => {
+  const TICK =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>';
   for (const button of document.querySelectorAll('.cmd .copy')) {
     button.addEventListener('click', () => {
       const code = button.parentElement.querySelector('code');
       const text = code.textContent.trim();
+      // 아이콘만 바꾼다 — 글자를 넣었다 빼면 버튼 크기가 흔들리고, 그 흔들림이
+      // 눌렸다는 신호보다 먼저 눈에 띈다.
+      const copyIcon = button.innerHTML;
       const done = () => {
-        button.textContent = '복사됨';
+        button.innerHTML = TICK;
         button.classList.add('done');
         setTimeout(() => {
-          button.textContent = '복사';
+          button.innerHTML = copyIcon;
           button.classList.remove('done');
         }, 1600);
       };

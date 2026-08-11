@@ -48,13 +48,17 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   },
   {
     key: 'backgroundPlay',
-    label: '화면을 나가도 계속 재생',
-    hint: '유튜브 모바일 웹은 화면을 벗어나면 멈춥니다',
+    label: '탭을 옮겨도 계속 재생',
+    // Deliberately not "화면을 나가도". On iPhone, leaving the app suspends
+    // media at the system level and no amount of lying to the page about its
+    // visibility changes that. What this does defeat is the page pausing
+    // itself, which is what happens on a tab switch, on desktop and on Android.
+    hint: '페이지가 스스로 멈추는 것을 막습니다 (아이폰에서 홈으로 나갈 때는 PiP 쪽)',
   },
   {
     key: 'pictureInPicture',
     label: '화면 속 화면(PiP)',
-    hint: '버튼을 붙이고, 화면을 나가면 알아서 작은 창으로 넘깁니다',
+    hint: '아이폰에서 나가도 계속 들으려면 이쪽입니다 — 작은 창은 시스템이 유지합니다',
   },
 ]
 
