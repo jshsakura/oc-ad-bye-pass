@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "YouTube 전용 광고 차단 확장 (MV3) — Chrome · Safari",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "vite build && node scripts/build-content.mjs",
     "build:safari": "TARGET=safari npm run build",

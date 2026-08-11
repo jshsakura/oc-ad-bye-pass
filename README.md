@@ -374,6 +374,33 @@ Despacito        adPlacements 1
 달라져서다. 그래서 차단 로직의 상시 판정은 대조군이 있는 픽스처 테스트가 맡고,
 여기는 "진짜에서도 되더라"를 확인하는 자리다.
 
+## 라이선스와 출처
+
+**GPLv3** ([LICENSE](LICENSE)).
+
+이 바닥이 거의 다 GPLv3 라서 맞췄다 — uBlock Origin, AdGuard, ReVanced 전부 GPLv3 다.
+같은 라이선스면 저쪽에서 코드든 필터 규칙이든 가져올 때 라이선스 문제가 생기지 않는다.
+MIT 로 갔다가 GPL 프로젝트의 규칙을 복사해 오면 그 순간 위반이 된다.
+
+### 무엇을 참조했나
+
+지금까지 **코드를 복사한 곳은 없다.** 기법과 구조를 참조했고, 그건 저작권 대상이 아니다.
+다만 어디서 왔는지는 밝혀두는 게 맞다.
+
+| 출처 | 참조한 것 |
+|---|---|
+| [ReVanced Patches](https://github.com/ReVanced/revanced-patches) (GPLv3) | `video-ads` 가 PlayerResponse 에서 광고를 없애는 접근. `AdsFilter`/`ShortsFilter` 의 litho buffer string 을 읽고 웹 렌더러 태그로 옮긴 것이 2계층 셀렉터의 출발점이다 (대응표는 위 "2계층" 절) |
+| [AdGuard](https://github.com/AdguardTeam/AdguardFilters) (GPLv3) | `json-prune` 스크립틀릿이 잘라내는 필드 목록, 코스메틱 규칙을 해당 호스트에만 적용하는 원칙 |
+| SmartTube | 별도 클라이언트라서 인페이지 차단기처럼 깨지지 않는다는 구조적 교훈. 사이드로드 배포 모델도 여기와 같다 |
+
+### 앞으로 규칙을 가져올 때
+
+안 막히는 광고를 [uAssets](https://github.com/uBlockOrigin/uAssets) 나
+[AdguardFilters](https://github.com/AdguardTeam/AdguardFilters) 에서 퍼오는 일이 생길 텐데,
+**셀렉터 목록은 편집저작물로 보호될 수 있다.** 둘 다 GPLv3 이고 이 프로젝트도 GPLv3 이라
+가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/youtube.json` 의 해당 항목에
+주석으로 남긴다.
+
 ## 한계
 
 - **서버가 스트림에 광고를 이어붙이는 경우**(server-side stitching)는 응답 프루닝으로
