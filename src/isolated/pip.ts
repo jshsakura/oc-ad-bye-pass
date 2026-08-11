@@ -21,9 +21,14 @@ const BUTTON_ID = 'oc-abp-pip'
 interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
   webkitSetPresentationMode?: (mode: string) => void
+  /** 'inline' | 'fullscreen' | 'picture-in-picture' — what actually happened. */
+  webkitPresentationMode?: string
   /** iOS only. Its native player carries a PiP control of its own. */
   webkitEnterFullscreen?: () => void
 }
+
+/** How long to wait before deciding webkitSetPresentationMode did nothing. */
+const PRESENTATION_SETTLE_MS = 900
 
 let observer: MutationObserver | null = null
 
@@ -57,10 +62,18 @@ function canPip(video: WebkitVideo): boolean {
 
 async function enterPip(video: WebkitVideo): Promise<void> {
   // WebKit first: on iOS the standard call exists on no version we target.
+  //
+  // It can also fail without failing. WebKit's own reports have
+  // webkitSetPresentationMode throwing nothing, firing
+  // webkitpresentationmodechanged, and leaving no window on screen. Returning on
+  // the strength of "it did not throw" would leave the button dead in exactly
+  // that case, so this waits and reads back what mode the video ended up in.
   if (typeof video.webkitSetPresentationMode === 'function') {
     try {
       video.webkitSetPresentationMode('picture-in-picture')
-      return
+      await new Promise((resolve) => setTimeout(resolve, PRESENTATION_SETTLE_MS))
+      if (video.webkitPresentationMode === 'picture-in-picture') return
+      console.warn('[oc-ad-bye-pass] PiP 요청이 조용히 무시되었습니다 — 폴백으로 넘어갑니다')
     } catch (e) {
       console.warn('[oc-ad-bye-pass] PiP 전환이 거절되었습니다', e)
     }
