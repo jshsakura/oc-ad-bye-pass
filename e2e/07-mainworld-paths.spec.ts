@@ -200,3 +200,41 @@ test('두 경로가 겹쳐도 훅은 한 번만 걸린다', async () => {
     await context.close()
   }
 })
+
+test('엉뚱한 world 에서 돌면 설치됐다고 말하지 않는다', async () => {
+  // The failure this guards: a browser ignores world:"MAIN" and runs main.js in
+  // the extension's world instead. Hooking JSON.parse there wraps a copy
+  // YouTube never calls — the ads come through — and if the file marks itself
+  // installed anyway, isolated/injectMain.ts sees the marker and stands down.
+  // Both layers of defence gone, nothing logged, every test on the desk green.
+  // It happened on a phone.
+  const context = await chromium.launchPersistentContext('', {
+    channel: 'chromium',
+    args: [`--disable-extensions-except=${FIXTURE}`, `--load-extension=${FIXTURE}`, ...LAUNCH_ARGS],
+  })
+  try {
+    const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+    const extensionId = new URL(worker.url()).host
+
+    await installYouTubeFixture(context)
+    const page = await context.newPage()
+    await page.goto(YOUTUBE_URL)
+
+    // main.js as the extension's own world would see it: chrome.runtime.id set.
+    // Fetched from the extension rather than the page, which would answer with
+    // the fixture's HTML.
+    const marked = await page.evaluate(async (url) => {
+      document.documentElement.removeAttribute('data-oc-ad-bye-pass')
+      const wrong = new Function(
+        'chrome',
+        await (await fetch(url)).text(),
+      )
+      wrong({ runtime: { id: 'pretend-extension-id' } })
+      return document.documentElement.hasAttribute('data-oc-ad-bye-pass')
+    }, `chrome-extension://${extensionId}/main.js`)
+
+    expect(marked, '페이지 밖에서 돌았는데 설치됐다고 표시했다').toBe(false)
+  } finally {
+    await context.close()
+  }
+})

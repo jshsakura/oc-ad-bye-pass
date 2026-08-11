@@ -177,9 +177,11 @@ function onBannerRemoved(count: number) {
 
 function start() {
   if (IS_YOUTUBE) {
-    // Only does anything when the Safari MAIN world registration failed. Called
-    // before everything else — layer 1 installed late is layer 1 wasted.
-    // (This call disappears from the Chrome bundle.)
+    // Runs whenever layer 1 has not marked itself installed — which covers the
+    // registration failing outright, and the case that actually bit: a browser
+    // ignoring world:"MAIN" and running main.js in this world instead, where
+    // hooking JSON.parse reaches nobody. Called before everything else, because
+    // layer 1 installed late is layer 1 wasted.
     injectMainWorldFallback()
 
     // Block first, ask the settings later. The smart app banner is drawn during
