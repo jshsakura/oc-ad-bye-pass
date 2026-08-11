@@ -201,6 +201,7 @@ function enterPip(video: WebkitVideo): void {
   // set only on the automatic one, so a tap could open a window that YouTube
   // closed again a moment later.
   engagedByUs = true
+  engagedAt = Date.now()
 
   // WebKit refuses to float a video that is not playing, and on YouTube the tap
   // that reaches this button often happens while paused.
@@ -449,6 +450,12 @@ function placementSignals(): [EventTarget, string][] {
  * Only while ours: the user closing the window themselves has to work, and it
  * arrives as the same event.
  */
+/** How long YouTube gets held off after a change we asked for. */
+const GUARD_MS = 1500
+
+/** When we last asked for a presentation change, so the guard can expire. */
+let engagedAt = 0
+
 function guardPresentation(video: WebkitVideo): void {
   if (video.dataset.ocAbpGuarded === '1') return
   video.dataset.ocAbpGuarded = '1'
@@ -462,9 +469,51 @@ function guardPresentation(video: WebkitVideo): void {
         engagedByUs = false
         return
       }
+      // Only for as long as the change we made is settling.
+      //
+      // It used to hold for the whole time the window was open, and the player
+      // is a state machine fed by these events: kept blind to a mode it is
+      // living in, it can come back to a video it thinks is still elsewhere —
+      // spinner on screen, audio playing, which is what the phone showed. The
+      // window closing is the case worth defending, and that is over in a
+      // moment; after that YouTube is better off knowing.
+      if (Date.now() - engagedAt > GUARD_MS) return
+      log(`표시 모드 이벤트 삼킴 (모드=${video.webkitPresentationMode ?? '?'})`)
       event.stopPropagation()
     },
     true,
+  )
+}
+
+/** Last state the stall watch reported, so it says it once rather than every sweep. */
+let stalledSince = 0
+
+/**
+ * Playing with nothing to show.
+ *
+ * Reported from the phone: the spinner runs forever while the audio keeps going.
+ * It is a state the page cannot be asked about after the fact, so it is written
+ * down as it happens — readyState says whether there are frames to draw,
+ * networkState whether it is still fetching, and the presentation mode whether
+ * this followed a trip to a floating window.
+ */
+function watchForStall(video: WebkitVideo): void {
+  const stalled = !video.paused && !video.ended && video.readyState < 3
+  if (!stalled) {
+    stalledSince = 0
+    return
+  }
+  const now = Date.now()
+  if (stalledSince === 0) {
+    stalledSince = now
+    return
+  }
+  if (now - stalledSince < 4000) return
+  stalledSince = now
+  log(
+    `멈춤: readyState=${video.readyState} network=${video.networkState} ` +
+      `모드=${video.webkitPresentationMode ?? '?'} 시간=${video.currentTime.toFixed(1)} ` +
+      `버퍼=${video.buffered.length}`,
   )
 }
 
@@ -473,6 +522,7 @@ function sweep(): void {
   if (!video) return
   allowPip(video)
   guardPresentation(video)
+  watchForStall(video)
   // Drawn whenever there is a video. Gating on a capability check meant no
   // button at all on the device this was written for — webkitSupportsPresentation
   // Mode answers "not yet" before the video has metadata — and a button that
@@ -530,6 +580,7 @@ function attemptSync(video: WebkitVideo): Attempt {
       // immediately overridden by a fullscreen request.
       video.webkitSetPresentationMode('picture-in-picture')
       engagedByUs = true
+      engagedAt = Date.now()
       return 'called'
     }
     if (typeof video.requestPictureInPicture === 'function') {
@@ -537,6 +588,7 @@ function attemptSync(video: WebkitVideo): Attempt {
       // browser has already been told.
       void video.requestPictureInPicture().catch(() => {})
       engagedByUs = true
+      engagedAt = Date.now()
       return 'called'
     }
   } catch {
@@ -673,11 +725,44 @@ function onReturning(): void {
     return
   }
   engagedByUs = false
+  // Whether it was playing has to be read before the mode changes, because
+  // changing it is what stops it.
+  const wasPlaying = !video.paused && !video.ended
   try {
     video.webkitSetPresentationMode?.('inline')
   } catch {
     // Refused — leave it where it is rather than fight the browser for it.
   }
+  if (wasPlaying) resumeAfterRestore(video)
+}
+
+/**
+ * Coming back out of the small window stopped the video.
+ *
+ * Reported from the phone, and it is the presentation change that does it —
+ * either WebKit or YouTube reacting to it. Whatever pauses it, someone who left
+ * a video playing and came back to it expects it playing, and there is no tap in
+ * the way to make that happen.
+ *
+ * Resuming is allowed here: iOS gates the *first* play on a gesture, and this
+ * media has long since been started by one. Two attempts, because the pause can
+ * land after the mode has finished changing — and no more than two, because a
+ * loop that fights the player is worse than a video that stays paused.
+ */
+function resumeAfterRestore(video: WebkitVideo): void {
+  let tries = 0
+  const tick = () => {
+    tries += 1
+    if (!video.paused || video.ended) {
+      if (tries > 1) log(`복귀 후 재생 재개 (시도 ${tries})`)
+      return
+    }
+    video.play().catch((e: unknown) => {
+      log(`복귀 후 재생 거절: ${e instanceof Error ? e.message : String(e)}`)
+    })
+    if (tries < 2) setTimeout(tick, 400)
+  }
+  setTimeout(tick, 120)
 }
 
 /** Start offering PiP. Safe to call repeatedly. */
