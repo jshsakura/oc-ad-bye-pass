@@ -17,6 +17,7 @@ import { join } from 'node:path'
 import { expect, test as base, webkit } from '@playwright/test'
 import { buildStylesheet, resolveRules } from '../src/shared/filterlist.ts'
 import { DEFAULT_SETTINGS } from '../src/shared/settings.ts'
+import { chooseEntry } from '../src/isolated/pip.ts'
 
 const test = base.extend<{ wk: import('@playwright/test').Page }>({
   wk: async ({}, use) => {
@@ -251,4 +252,74 @@ test('2계층 스타일시트가 WebKit 에서 실제로 광고를 숨긴다', a
   // 그리고 멀쩡한 것을 지우지 않아야 한다. 피드가 통째로 사라지는 실패가 여기다.
   expect(result.normalCard, '평범한 카드까지 숨겼다').toBe(false)
   expect(result.shortsNormal, '광고 없는 Shorts 까지 숨겼다').toBe(false)
+})
+
+// The route decision, run in WebKit, by the function that ships.
+//
+// The rest of this file re-implements a mechanism and checks the engine allows
+// it. This one is different: `chooseEntry` is pure, so its source goes into the
+// page and the real thing decides, against a <video> this engine created.
+//
+// It matters because that branch — the webkit-prefixed one — is the branch an
+// iPhone takes and the one no test has ever executed. Linux WebKit has none of
+// those APIs, so the shape is supplied here; what is being checked is our
+// decision, not Apple's implementation.
+test('아이폰 모양의 비디오에서 우리 판정 함수가 webkit 경로를 고른다', async ({ wk }) => {
+  const decide = await wk.evaluate(
+    ({ source }) => {
+      const chooseEntry = new Function(`return (${source})`)() as (state: {
+        preferFullscreen: boolean
+        supported: boolean | undefined
+        webkit: boolean
+        standard: boolean
+        fullscreen: boolean
+      }) => string
+
+      const shaped = (opts: { supports: boolean }) => {
+        const video = document.createElement('video') as HTMLVideoElement &
+          Record<string, unknown>
+        // 아이폰 사파리가 가진 것만 붙인다. 표준 API 는 일부러 두지 않는다 —
+        // 아이폰에는 믿을 수 있는 형태로 없기 때문이다.
+        video.webkitSupportsPresentationMode = () => opts.supports
+        video.webkitSetPresentationMode = () => {}
+        video.webkitEnterFullscreen = () => {}
+        return {
+          supported:
+            typeof video.webkitSupportsPresentationMode === 'function'
+              ? (video.webkitSupportsPresentationMode as (m: string) => boolean)(
+                  'picture-in-picture',
+                )
+              : undefined,
+          webkit: typeof video.webkitSetPresentationMode === 'function',
+          standard: typeof video.requestPictureInPicture === 'function',
+          fullscreen: typeof video.webkitEnterFullscreen === 'function',
+        }
+      }
+
+      const allowed = shaped({ supports: true })
+      const refused = shaped({ supports: false })
+      return {
+        firstTap: chooseEntry({ preferFullscreen: false, ...allowed }),
+        afterNoOp: chooseEntry({ preferFullscreen: true, ...allowed }),
+        videoRefuses: chooseEntry({ preferFullscreen: false, ...refused }),
+        bare: chooseEntry({
+          preferFullscreen: false,
+          supported: undefined,
+          webkit: false,
+          standard: typeof document.createElement('video').requestPictureInPicture === 'function',
+          fullscreen: false,
+        }),
+      }
+    },
+    { source: chooseEntry.toString() },
+  )
+
+  // 첫 탭은 작은 창을 시도한다.
+  expect(decide.firstTap).toBe('webkit')
+  // 무응답이었으면 다음 탭은 전체화면 — 아이폰이 스스로 띄워주는 상태다.
+  expect(decide.afterNoOp).toBe('fullscreen')
+  // 이 영상은 안 된다고 하면 제스처를 낭비하지 않는다.
+  expect(decide.videoRefuses).toBe('fullscreen')
+  // 그리고 아무것도 없는 이 WebKit 에서는 부를 것이 없다고 답해야 한다.
+  expect(decide.bare).toBe('none')
 })
