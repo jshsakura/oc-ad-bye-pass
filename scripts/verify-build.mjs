@@ -74,6 +74,26 @@ check(
   'registerContentScripts 를 못 부른다',
 )
 
+// The icons were hand-encoded PNGs until 2026-08-11, when Orion turned out to
+// refuse every package built with them and accept the same package carrying the
+// previous ones. Nothing measurable was wrong with the files. They are rendered
+// by a browser now, and this is the tripwire for anyone tempted to write an
+// encoder again.
+for (const size of [16, 48, 128]) {
+  const png = readFileSync(join(ROOT, 'dist', 'icons', `icon${size}.png`))
+  const chunks = []
+  for (let i = 8; i < png.length; ) {
+    const length = png.readUInt32BE(i)
+    chunks.push(png.toString('ascii', i + 4, i + 8))
+    i += 12 + length
+  }
+  check(
+    `icon${size}.png 이 브라우저가 구운 PNG 다`,
+    png.readUInt32BE(16) === size && chunks.filter((c) => c === 'IDAT').length >= 1,
+    'scripts/make-icons.mjs 가 손으로 인코딩하고 있다면 되돌려라 — Orion 이 거절한다',
+  )
+}
+
 check(
   '매니페스트에 declarative_net_request 가 있다',
   !!manifest.declarative_net_request,

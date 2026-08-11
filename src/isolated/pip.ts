@@ -39,28 +39,32 @@ function playerVideo(): WebkitVideo | null {
   return videos.reduce((best, v) => (v.clientWidth > best.clientWidth ? v : best))
 }
 
-/**
- * Whether this video can be put in a small window.
- *
- * `webkitSupportsPresentationMode` answers "not yet" before the video has any
- * metadata, and on iOS the player has no metadata until playback starts. Asking
- * once at document_start and believing the answer means the button never
- * appears on the device it was built for. So the *existence* of the entry point
- * is what counts, and whether it works is settled when it is pressed.
- */
-function canPip(video: WebkitVideo): boolean {
-  return (
-    typeof video.webkitSetPresentationMode === 'function' ||
-    typeof video.requestPictureInPicture === 'function' ||
-    // The fullscreen fallback counts. enterPip() ends there when the other two
-    // are missing, and a browser where only this exists is a browser where the
-    // button still takes you somewhere — refusing to draw it would strand the
-    // one case the fallback was written for.
-    typeof video.webkitEnterFullscreen === 'function'
-  )
+/** Say it on the screen. A phone has no console, and this has to be debuggable there. */
+function toast(text: string): void {
+  const el = document.createElement('div')
+  el.textContent = text
+  el.style.cssText = [
+    'position:fixed', 'left:50%', 'bottom:88px', 'transform:translateX(-50%)',
+    'z-index:2147483647', 'max-width:88vw', 'padding:10px 14px',
+    'border-radius:10px', 'background:rgba(24,24,37,.94)', 'color:#fff',
+    'font:600 13px/1.5 -apple-system,system-ui,sans-serif', 'text-align:center',
+    'pointer-events:none',
+  ].join(';')
+  document.documentElement.appendChild(el)
+  setTimeout(() => el.remove(), 4200)
 }
 
 async function enterPip(video: WebkitVideo): Promise<void> {
+  // Which routes exist, said out loud. On the device this is the only way to
+  // tell "no entry point" from "the entry point refused", and those need
+  // opposite fixes.
+  const routes = [
+    typeof video.webkitSetPresentationMode === 'function' ? 'webkit' : null,
+    typeof video.requestPictureInPicture === 'function' ? 'standard' : null,
+    typeof video.webkitEnterFullscreen === 'function' ? 'fullscreen' : null,
+  ].filter(Boolean)
+  toast(`PiP 진입점: ${routes.length ? routes.join(' · ') : '없음'}`)
+
   // WebKit first: on iOS the standard call exists on no version we target.
   //
   // It can also fail without failing. WebKit's own reports have
@@ -73,9 +77,9 @@ async function enterPip(video: WebkitVideo): Promise<void> {
       video.webkitSetPresentationMode('picture-in-picture')
       await new Promise((resolve) => setTimeout(resolve, PRESENTATION_SETTLE_MS))
       if (video.webkitPresentationMode === 'picture-in-picture') return
-      console.warn('[oc-ad-bye-pass] PiP 요청이 조용히 무시되었습니다 — 폴백으로 넘어갑니다')
+      toast(`webkit 이 무응답 (모드: ${video.webkitPresentationMode ?? '알 수 없음'})`)
     } catch (e) {
-      console.warn('[oc-ad-bye-pass] PiP 전환이 거절되었습니다', e)
+      toast(`webkit 거절: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
@@ -84,7 +88,7 @@ async function enterPip(video: WebkitVideo): Promise<void> {
       await video.requestPictureInPicture()
       return
     } catch (e) {
-      console.warn('[oc-ad-bye-pass] PiP 를 열지 못했습니다', e)
+      toast(`표준 API 거절: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
@@ -94,12 +98,13 @@ async function enterPip(video: WebkitVideo): Promise<void> {
   if (typeof video.webkitEnterFullscreen === 'function') {
     try {
       video.webkitEnterFullscreen()
+      toast('전체화면으로 넘어갔습니다 — 거기 PiP 버튼이 있습니다')
       return
     } catch (e) {
-      console.warn('[oc-ad-bye-pass] 전체화면 폴백도 실패했습니다', e)
+      toast(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
-  console.warn('[oc-ad-bye-pass] 이 브라우저에서는 PiP 진입점을 찾지 못했습니다')
+  toast('이 브라우저에서 PiP 진입점을 찾지 못했습니다')
 }
 
 /** Clear the page's opt-out. It is an attribute and a property; both count. */
@@ -130,8 +135,8 @@ function ensureButton(video: WebkitVideo): void {
     'top:8px',
     'right:8px',
     'z-index:2147483000',
-    'width:34px',
-    'height:34px',
+    'width:40px',
+    'height:40px',
     'display:grid',
     'place-items:center',
     'padding:0',
@@ -161,7 +166,11 @@ function sweep(): void {
   const video = playerVideo()
   if (!video) return
   allowPip(video)
-  if (canPip(video)) ensureButton(video)
+  // Drawn whenever there is a video. Gating on a capability check meant no
+  // button at all on the device this was written for — webkitSupportsPresentation
+  // Mode answers "not yet" before the video has metadata — and a button that
+  // reports why it failed beats one that never appears.
+  ensureButton(video)
 }
 
 /** Start offering PiP. Safe to call repeatedly. */

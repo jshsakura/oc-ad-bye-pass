@@ -753,9 +753,6 @@
         재생이 시작될 때 광고가 붙지 않으면 성공입니다.</p>
       <p>피드에서 광고가 사라진 것만으로는 확인이 어렵습니다.<br>
         그쪽은 막는 방식이 달라서 웬만하면 잘 되기 때문입니다.</p>
-      <p><strong>지금 이 버튼은 설치가 확인된 빌드를 받습니다.</strong> 최신 코드에서
-        아이폰 설치가 거절되는 문제를 찾는 중이라, 그동안은 실제로 깔린 것으로 확인된
-        패키지를 내보냅니다. 팝업이 화면 왼쪽에 몰려 보이는 것이 그 빌드의 한계입니다.</p>
       <p><strong>이 버튼은 Orion 전용 파일을 받습니다.</strong> 아래 Chrome용과는 다른 파일이에요.
         Orion은 크롬의 네트워크 차단 기능을 지원하지 않아서, 그 부분을 뺀 가벼운 빌드(276KB)입니다.
         유튜브 차단은 그대로이고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
@@ -767,10 +764,6 @@
         If nothing runs before the video starts, it is working.</p>
       <p>Ads disappearing from the feed does not prove much.<br>
         Those are blocked a different way and almost always go.</p>
-      <p><strong>This button currently serves a build confirmed to install.</strong> Newer
-        code is being refused on iPhone and the cause is being narrowed down; until then this
-        is the package known to go on. Its popup sits squeezed to one side — that is the
-        limitation of that build.</p>
       <p><strong>This button downloads the Orion build</strong> — a different file from the
         Chrome one below. Orion does not implement Chrome's network blocking, so that part
         is left out (276KB). YouTube blocking is unchanged; elsewhere ad requests go out
@@ -1257,7 +1250,7 @@
       // package, truncated download, stale copy picked by mistake — and this is
       // the one thing that tells them apart.
       for (const [id, name] of [
-        ['dl-orion', `oc-ad-bye-pass-orion-safe-${b.version}.zip`],
+        ['dl-orion', `oc-ad-bye-pass-orion-${b.version}.zip`],
         ['dl-chrome', `oc-ad-bye-pass-${b.version}.zip`],
       ]) {
         const a = document.getElementById(id);

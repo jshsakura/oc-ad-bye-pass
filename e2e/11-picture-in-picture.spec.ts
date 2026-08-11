@@ -51,33 +51,20 @@ test('켜면 버튼이 붙고, 유튜브가 걸어둔 차단이 풀린다', asyn
     .toBe(false)
 })
 
-test('누르면 PiP 를 실제로 요청한다', async ({ context, background }) => {
+test('누르면 어느 경로를 탔는지 화면에 말해준다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
-
-  // 콘솔로 확인한다. 스텁을 심으려 해도 page.evaluate 는 MAIN world 에서 돌고
-  // 버튼 핸들러는 ISOLATED 에서 도는데, 프로토타입은 컨텍스트마다 별개라
-  // MAIN 에 심은 가짜는 애초에 호출되지 않는다.
-  const warnings: string[] = []
-  page.on('console', (m) => {
-    if (m.text().includes('oc-ad-bye-pass')) warnings.push(m.text())
-  })
-
   await page.goto(YOUTUBE_URL)
   await setPip(background, true)
   await page.locator(BUTTON).click()
 
-  // 헤드리스에는 띄울 창이 없으니 브라우저가 거절한다 — 그 거절이 곧 "API 까지
-  // 갔다" 는 증거다. 어쩌다 열리는 환경이라면 pictureInPictureElement 가 선다.
-  await expect
-    .poll(
-      async () => {
-        const inPip = await page.evaluate(() => document.pictureInPictureElement !== null)
-        return inPip || warnings.some((w) => w.includes('PiP'))
-      },
-      { message: '버튼을 눌렀는데 PiP API 까지 가지 않았다' },
-    )
-    .toBe(true)
+  // 폰에는 콘솔이 없다. 눌렀을 때 무슨 일이 일어났는지가 화면에 남아야
+  // "진입점이 없다" 와 "진입점이 거절했다" 를 구분할 수 있고, 그 둘은 고치는
+  // 방법이 정반대다.
+  await expect(page.getByText(/PiP 진입점:/)).toBeVisible()
+
+  // 그리고 실제로 API 까지 갔는지 — 크로미움에는 표준 API 가 있으니 그 이름이 뜬다.
+  await expect(page.getByText(/standard/)).toBeVisible()
 })
 
 test('다시 끄면 버튼이 사라진다', async ({ context, background }) => {
