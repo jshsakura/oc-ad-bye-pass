@@ -37,7 +37,23 @@ export interface PageFacts {
   visibilityState: string
   presentationMode: string
   autoPip: string | null
+  inject: string | null
   userAgent: string
+}
+
+/**
+ * How layer 1 got onto the page — the question behind "why did an ad play".
+ *
+ * `차단됨` is the one that matters: the page refused the injected script, so
+ * layer 1 is not there at all and every pre-roll plays. It is invisible any
+ * other way, because the only other place it is reported is a console nobody
+ * can open on a phone.
+ */
+const INJECT_STATES: Record<string, string> = {
+  'not-needed': '필요 없음 — 등록된 스크립트가 먼저 붙었습니다',
+  injected: '주입함 — 아직 로드도 실패도 아닙니다',
+  loaded: '주입해서 로드됨 — 첫 파싱보다 늦었을 수 있습니다',
+  blocked: '주입이 차단됨 — 이 페이지에 1계층이 없습니다',
 }
 
 export interface Report {
@@ -133,6 +149,7 @@ export function format(report: Report): string {
       `페이지: ${page.url}`,
       `보고 시각: ${new Date(page.at).toLocaleTimeString()}`,
       `1계층 설치됨: ${page.layer1 ? '예' : '아니오'}`,
+      `1계층 주입: ${page.inject ? (INJECT_STATES[page.inject] ?? page.inject) : '기록 없음'}`,
       `비디오: ${page.videos}개`,
       `PiP: ${page.pip === 'none' ? '없음' : page.pip}`,
       `전체화면 폴백: ${page.fullscreenFallback ? '있음' : '없음'}`,

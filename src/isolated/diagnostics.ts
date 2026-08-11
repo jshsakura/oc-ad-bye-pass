@@ -18,6 +18,9 @@ const KEY = 'diagnostics'
 /** Written by src/isolated/pip.ts when the user leaves with a video playing. */
 const AUTO_PIP_ATTR = 'data-oc-abp-autopip'
 
+/** Written by src/isolated/injectMain.ts — how layer 1 got here, or why it did not. */
+const INJECT_ATTR = 'data-oc-abp-inject'
+
 export interface PageDiagnostics {
   at: number
   url: string
@@ -30,6 +33,8 @@ export interface PageDiagnostics {
   presentationMode: string
   /** What the automatic hand-over managed last time, or null if it never ran. */
   autoPip: string | null
+  /** Whether the injection fallback was needed, and whether the page allowed it. */
+  inject: string | null
   userAgent: string
 }
 
@@ -56,6 +61,7 @@ export function reportDiagnostics(): void {
     visibilityState: document.visibilityState,
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     autoPip: document.documentElement.getAttribute(AUTO_PIP_ATTR),
+    inject: document.documentElement.getAttribute(INJECT_ATTR),
     userAgent: navigator.userAgent,
   }
   void chrome.storage.local.set({ [KEY]: facts })

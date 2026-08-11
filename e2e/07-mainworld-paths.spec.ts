@@ -136,6 +136,18 @@ test('폴백 경로 — 등록이 없으면 주입으로 1계층을 살린다', 
       .poll(() => layer1Active(page), { message: '주입 폴백이 1계층을 못 살렸다' })
       .toBe(true)
     await expect(page.locator('#masthead-ad')).toBeHidden()
+
+    // 그리고 그 사실이 폰에서 읽힌다. 주입이 페이지 CSP 에 막히면 1계층은
+    // 아예 없고 모든 프리롤이 재생되는데, 그 실패는 지금까지 콘솔에만 남았다 —
+    // 폰에는 콘솔이 없다.
+    await expect
+      .poll(async () =>
+        worker.evaluate(async () => {
+          const got = await chrome.storage.local.get('diagnostics')
+          return (got.diagnostics as { inject?: string } | undefined)?.inject
+        }),
+      )
+      .toBe('loaded')
   } finally {
     await context.close()
   }
