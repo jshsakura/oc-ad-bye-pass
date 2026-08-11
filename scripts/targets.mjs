@@ -1,25 +1,20 @@
 // Build target definitions. vite, esbuild and the manifest generator all read
 // this file.
 //
-// One source tree. Only three things differ per browser, and all three live here:
-//   1. output directory     — dist / dist-safari
-//   2. downlevel target     — Safari got :has() and MV3 service workers in 16.4
-//   3. MAIN world injection — see the comments in manifest.mjs
+// **There is one target.** Chrome, Edge and Orion all install the same package —
+// Orion takes a Chrome extension zip directly, on iOS as well, which is what
+// removed the reason for a second build. A Safari target existed until
+// 2026-08-11 and was dropped whole; see the git history if it needs to come
+// back.
 //
-// Adding a new target (firefox, say) should stay a one-line change here.
+// The indirection is kept because it costs nothing and it is where a second
+// target would go: add an entry here and pass TARGET=<name>.
 
 export const TARGETS = {
   chrome: {
     outDir: 'dist',
     // esbuild downlevel target, kept in step with minimum_chrome_version in the manifest.
     esbuildTarget: 'chrome120',
-  },
-  safari: {
-    outDir: 'dist-safari',
-    // Safari 16.4 is the release that brought MV3 service workers and
-    // world:'MAIN' in scripting.registerContentScripts together, so that is the
-    // floor — iOS 16.4 and up.
-    esbuildTarget: 'safari16.4',
   },
 }
 

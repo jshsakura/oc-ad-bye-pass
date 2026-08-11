@@ -338,6 +338,10 @@
   .note p { font-size: 13.5px; color: var(--subtext0); }
   .note p + p { margin-top: 8px; }
   .note strong { color: var(--text); }
+  .note a, .legal a {
+    color: var(--ink, var(--mauve-ink));
+    text-decoration-thickness: 1px; text-underline-offset: 3px;
+  }
 
   code {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -616,26 +620,19 @@
         재생이 시작될 때 광고가 안 붙으면 성공입니다.</p>
       <p>피드에 뜨던 광고가 사라진 것만으로는 확인이 되지 않아요.<br>
         그쪽은 다른 방식으로 막고 있어서 웬만하면 잘 되거든요.</p>
-      <p><strong>설치 자체가 안 되거나, 재생 광고가 그대로 나온다면</strong> 아래 <strong>폴백 빌드</strong>로 바꿔 끼워 보세요.</p>
-      <p>위 빌드에는 크롬용 네트워크 차단 규칙이 들어 있는데, Orion은 이 기능이 없어서
-        설치를 거절할 수 있어요. 폴백 빌드는 그 부분을 아예 빼고, 유튜브 차단을
-        다른 방법으로 거는 빌드입니다.</p>
+      <p>Orion의 확장 지원은 아직 베타예요. 설치가 거절되거나 이상하게 동작하면
+        <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">이슈</a>로 알려주세요.</p>
     </div>
     <div class="note" lang="en">
       <p><strong>To check that it works, play a video.</strong><br>
         If nothing runs before the video starts, it is working.</p>
       <p>Ads disappearing from the feed does not prove much.<br>
         Those are blocked a different way and almost always go.</p>
-      <p><strong>If the install is refused, or pre-roll ads still play</strong>, swap in the <strong>fallback build</strong> below.</p>
-      <p>The build above carries Chrome's network blocking rules. Orion has no such
-        feature and may refuse the package because of them. The fallback build
-        leaves that part out and blocks YouTube another way.</p>
+      <p>Extension support in Orion is still in beta. If the install is refused, or
+        something behaves strangely, tell me in an
+        <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">issue</a>.</p>
     </div>
 
-    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-fallback.zip">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="m16 8-6 6-2 4 6-2 4-6-2-2Z"/></svg>
-      FALLBACK BUILD
-    </a>
   </div>
 
   <!-- ── Chrome ──────────────────────────────────────── -->

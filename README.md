@@ -1,5 +1,7 @@
 # OC Ad Bye-Pass
 
+### → **[설치 안내 · 다운로드 (jshsakura.github.io/oc-ad-bye-pass)](https://jshsakura.github.io/oc-ad-bye-pass/)**
+
 광고 차단 확장 (Manifest V3). **Chrome · Edge 와 Orion(아이폰 포함)이 같은 zip 하나를 쓴다.**
 
 유튜브를 특별히 잘 막는다. 범용 차단기들이 유튜브에서 고전하는 이유는 유튜브 광고가
@@ -76,11 +78,8 @@ Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 �
 3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
 4. `youtube.com` 권한 허용
 
-설치가 거절되면 `oc-ad-bye-pass-fallback.zip` 을 쓴다. Orion 은
-`declarativeNetRequest` 를 구현하지 않았고, 폴백 빌드는 그 키를 뺀 것이다 — 유튜브
-차단은 그대로고 다른 사이트의 **요청 차단**만 빠진다 (요소 숨김은 남는다).
-
-Safari 확장으로 감싸는 경로는 아래 "Safari / iOS" 절에 남아 있지만, **더는 쓰지 않는다.**
+Orion 의 확장 지원은 아직 베타다. 무엇이 되고 무엇이 안 되는지는 아래
+"Orion 에서 달라지는 것" 절에 적어뒀다.
 
 업데이트는 두 갈래다.
 
@@ -197,97 +196,53 @@ MutationObserver 는 CSS 로 못 하는 것만 맡는다: 오버레이 닫기 �
 따라 태그가 갈린다. 안 막히는 게 있으면 아래 "필터 리스트" 절의 순서대로 추가하면
 재설치 없이 반영된다.
 
-## Safari / iOS
+## MAIN world 에 어떻게 들어가나
 
-같은 소스에서 두 벌을 뽑는다. 갈리는 것은 셋뿐이고 전부 `scripts/targets.mjs` 에 모여 있다.
+1계층은 **페이지 컨텍스트(MAIN world)**에서 유튜브보다 먼저 돌아야 한다. 들어가는 길이
+둘이고, 둘 다 남겨둔 데에는 각각 이유가 있다.
 
-```bash
-npm run build          # → dist/         (Chrome)
-npm run build:safari   # → dist-safari/  (Safari)
-npm run build:all
-```
-
-### MAIN world 를 어떻게 넣나 — 유일한 진짜 차이
-
-1계층은 **페이지 컨텍스트(MAIN world)**에서 유튜브보다 먼저 돌아야 한다. Chrome 은
-매니페스트의 `"world": "MAIN"` 이 이걸 보장한다. Safari 는 다르다.
-
-> Safari 는 `scripting.registerContentScripts` 의 `world:'MAIN'` 은 16.4 부터 지원하지만,
-> **정적 `content_scripts` 의 `world` 필드는 버전에 따라 조용히 무시한다.**
+| | 무엇 | 왜 |
+|---|---|---|
+| 빠른 길 | 매니페스트의 `"world": "MAIN"` 정적 선언 | Chrome 은 이걸 지킨다. 파서가 유튜브 첫 인라인 스크립트에 닿기 전에 이미 들어가 있다 |
+| 덮는 길 | `background/mainWorld.ts` 의 `registerContentScripts` | **WebKit 계열은 정적 `world` 를 버전에 따라 조용히 무시한다.** Orion 이 그렇다 |
+| 최후 | `isolated/injectMain.ts` 의 `<script src>` 주입 | 등록마저 실패했을 때 |
 
 무시되면 `main.js` 가 ISOLATED 로 실행된다. 이건 "안 도는 것"보다 나쁘다 — 훅이 페이지에
-안 걸린 채로 아무 오류 없이 성공한 척한다. 그래서 Safari 빌드에서는 **매니페스트에서 MAIN
-항목을 아예 뺀다** (`scripts/manifest.mjs`). 대신 두 경로를 둔다.
+안 걸린 채로 아무 오류 없이 성공한 척한다. 그래서 Orion 을 위해 **등록 경로가 항상 돈다.**
 
-| | 무엇 | 언제 |
-|---|---|---|
-| 정상 | `background/mainWorld.ts` 가 `registerContentScripts` 로 등록 | 항상 먼저 시도. 지원 안 하면 **예외가 난다** — 조용히 틀리지 않는다 |
-| 폴백 | `isolated/injectMain.ts` 가 `<script src>` 로 주입 | 위가 실패했을 때 |
+정적 선언만 지우고 등록에만 맡겨보는 것도 해봤는데 더 나빴다. script-inserted 스크립트는
+파서를 못 막아서, 1계층이 유튜브 인라인 스크립트에 밀려 E2E 세 개가 깨졌다. 그래서 둘 다
+남긴다. 겹쳐서 두 번 들어와도 훅은 한 번만 걸린다 (`src/main/index.ts` 의 설치 가드).
 
-폴백은 정상 경로보다 **느리다.** script-inserted 스크립트라 파서를 막지 못해서, 유튜브
-인라인 스크립트가 먼저 돌면 `ytInitialPlayerResponse` 를 놓칠 수 있다 — 첫 재생 광고가
-샐 수 있다는 뜻이다. 2·3계층은 그대로 동작한다. 콘솔에 `MAIN world 등록 실패` 경고가
-보이면 이 경로로 돌고 있는 것이다.
+주입 폴백은 등록보다 **느리다.** 콘솔에 `MAIN world 등록 실패` 경고가 보이면 그 길로
+돌고 있는 것이고, 첫 재생 광고가 샐 수 있다. 2·3계층은 그대로 동작한다.
 
-두 경로가 모두 성공해도 훅은 한 번만 걸린다 (`src/main/index.ts` 의 설치 가드).
-콘텐츠 스크립트 실행 순서는 보장되지 않으므로 중복 주입은 정상 상황이다.
+### 조용히 무너지는 것을 막는다
 
-### 빌드 타깃 분기
-
-브라우저를 런타임에 스니핑하지 않는다. `__IS_SAFARI__` 를 빌드 시점에 리터럴로 치환해서
-안 쓰는 쪽 분기를 번들에서 통째로 지운다.
-
-```ts
-if (!__IS_SAFARI__) return   // Chrome 빌드에서는 이 아래가 전부 사라진다
-```
-
-**이 상수는 분기에 직접 써야 한다.** `export const IS_SAFARI = __IS_SAFARI__` 로 감싸
-import 하면 esbuild 가 모듈 경계를 넘어 인라인하지 못해서 Chrome 번들에 Safari 코드가
-그대로 남는다 (실제로 그렇게 됐다). 자세한 건 `src/shared/target.ts` 주석에 있다.
-
-확인:
+위 셋 중 무엇이 빠져도 **확장은 멀쩡해 보인다.** 그래서 검사가 따로 있다.
 
 ```bash
-npm run build:all
-node scripts/verify-targets.mjs
+npm run build && npm run verify
 ```
 
-`__IS_SAFARI__` 로 지워지는 것은 **Safari 매니페스트 쪽**이다. 등록 경로 자체는 Chrome
-번들에도 남는다 — Orion 이 정적 `world` 를 무시할 때 1계층을 살리는 게 그 코드다.
-무엇이 어느 쪽에 남아야 하는지는 `scripts/verify-targets.mjs` 가 못 박고 있다.
+정적 선언, 번들 안의 등록 코드와 주입 폴백, `web_accessible_resources` 의 `main.js`,
+`scripting` 권한, DNR 키 — 다섯 가지를 못 박는다 (`scripts/verify-build.mjs`).
+E2E `07-mainworld-paths` 는 한 걸음 더 간다: `dist/` 에서 정적 MAIN 선언만 뜯어낸
+사본을 실제 크로미움에 물려서, 등록 경로와 주입 폴백이 **정말로** 1계층을 살리는지 본다.
 
-### Xcode 프로젝트 만들기
+### Safari 는 안 한다
 
-맥이 있으면 `npm run safari:xcode` 한 줄이다. 없으면
-**`.github/workflows/safari.yml`** 이 `macos-latest` 러너에서 같은 일을 한다.
+한때 `dist-safari/` 를 따로 뽑고, Xcode 로 앱을 감싸고, 서명한 IPA 를 홈서버에서
+`itms-services://` 로 내려주는 경로가 있었다. **2026-08-11 에 통째로 지웠다** — Orion 이
+크롬 확장 zip 을 그대로, 아이폰에서도 받기 때문이다. 앱도 서명도 서버도 필요가 없다.
 
-이 워크플로는 두 단계로 나뉜다.
+지운 것: `TARGET=safari` 빌드, `scripts/manifest.mjs` 의 매니페스트 변환,
+`__IS_SAFARI__` 빌드 상수, `safari.yml`, `ota-manifest.mjs`, `altstore-source.mjs`,
+그리고 그 파일들을 내려주던 nginx 스택과 터널 ingress.
 
-| 단계 | 언제 도나 | 무엇을 확인하나 |
-|---|---|---|
-| 변환 검증 | **항상** | Linux CI 가 절대 못 보는 것 — 우리 매니페스트가 실제로 Safari 확장으로 변환되고 빌드가 통과하는가 |
-| 서명·IPA | 서명 secrets 가 있을 때만 | Ad Hoc 서명 → `.ipa` + `manifest.plist` |
-
-secrets 가 없으면 1단계까지만 돌고 **성공으로 끝난다.** 그게 정상이다.
-필요한 secrets 목록은 워크플로 파일 맨 위에 적어뒀다.
-
-### 아이폰 OTA 설치 — 폐기됨
-
-`scripts/ota-manifest.mjs`, `scripts/altstore-source.mjs`, `safari.yml` 의 서명 단계는
-확장을 **앱으로 감싸 아이폰에 얹는** 경로다. IPA 를 HTTPS 로 내려줄 호스트가 필요해서
-홈서버에 nginx 를 띄우고 `adbyepass.opencourse.kr` 을 물려뒀었다.
-
-**2026-08-11 에 접었다.** Orion 이 크롬 확장 zip 을 그대로 받으므로 앱도, 서명도,
-그걸 내려줄 서버도 필요가 없다. 그 호스트는 내렸고 사이트는 GitHub Pages 로 갔다.
-파일은 남겨두지만 아무 것도 이 경로를 타지 않는다.
-
-### 알려진 제약
-
-- **`options_page` 는 iOS 에서 열 통로가 없다.** 데스크톱 Safari 는 열리지만 iOS 는
-  확장 아이콘 → 팝업뿐이다. 옵션에만 있는 설정은 iOS 에서 손댈 수 없다.
-- `optional_host_permissions` 는 Safari 가 인식하지 못해 Safari 빌드에서 뺐다.
-- Safari 16.4 미만은 MV3 서비스 워커가 없어 대상이 아니다.
-- E2E 는 Chromium 만 돈다. Safari 경로는 실기기 확인이 필요하다.
+**남긴 것은 런타임 경로다.** 등록과 주입은 원래 Safari 때문에 만들었지만 지금은 Orion 을
+살리는 코드이고, 위 E2E 가 그대로 지킨다. 다시 필요해지면 `scripts/targets.mjs` 에
+타깃을 하나 더 적는 데서 시작한다.
 
 ## 필터 리스트 — 규칙만 따로 업데이트
 
@@ -354,17 +309,14 @@ MV3 는 원격 코드 실행을 금지하고, 보안상으로도 리스트 저�
 
 ```bash
 npm install
-npm run dev           # vite(팝업/옵션) + esbuild(콘텐츠/백그라운드) watch → dist/
-npm run dev:safari    # 같은 것을 dist-safari/ 로
-npm run build         # 프로덕션 빌드 (Chrome)
-npm run build:safari  # 프로덕션 빌드 (Safari)
-npm run build:all     # 둘 다
-npm run check         # tsc --noEmit
-npm test              # 검증기·프루너 단위 테스트
-npm run test:e2e      # 실제 Chromium 에 확장을 물려 광고 차단 검증
-npm run test:all      # 위 셋 전부
-npm run zip           # dist/ 를 zip 으로
-npm run safari:xcode  # dist-safari/ → Xcode 프로젝트 (macOS 필요)
+npm run dev        # vite(팝업/옵션) + esbuild(콘텐츠/백그라운드) watch → dist/
+npm run build      # 프로덕션 빌드 → dist/
+npm run verify     # 빌드 불변식 검사 (조용히 죽는 것들)
+npm run check      # tsc --noEmit
+npm test           # 검증기·프루너 단위 테스트
+npm run test:e2e   # 실제 Chromium 에 확장을 물려 광고 차단 검증
+npm run test:all   # check → 단위 → 빌드 → verify → E2E
+npm run zip        # dist/ 를 zip 으로 (verify 통과분만)
 ```
 
 `chrome://extensions` 에서 `dist/` 를 한 번만 로드해 두면 `npm run dev` 로 계속 고칠 수 있다
@@ -382,9 +334,9 @@ esbuild 가 단일 IIFE 로 뽑는다 (`scripts/build-content.mjs`).
 ```
 src/
   main/       ← MAIN world. 1계층. chrome.* 못 씀
-  isolated/   ← ISOLATED world. 2·3계층 + 설정 브리지 + 앱 배너 + Safari 주입 폴백
-  background/ ← 서비스 워커. 리스트 갱신, 통계/배지, Safari MAIN world 등록
-  shared/     ← 설정·셀렉터·필터 리스트 검증·빌드 타깃
+  isolated/   ← ISOLATED world. 2·3계층 + 설정 브리지 + 앱 배너 + MAIN 주입 폴백
+  background/ ← 서비스 워커. 리스트 갱신, 통계/배지, MAIN world 런타임 등록
+  shared/     ← 설정·셀렉터·필터 리스트 검증
   popup/ options/ ui/
 scripts/
   targets.mjs    ← 타깃 정의 (출력 경로·다운레벨 타깃). vite/esbuild/manifest 가 전부 읽는다
@@ -498,8 +450,8 @@ storage.sync                       Partial support ← 유일한 구멍
 ```
 
 `registerContentScripts` 가 되는 게 결정적이다. WebKit 계열은 정적 `content_scripts` 의
-`world` 를 못 믿는데, Safari 용으로 만들어 둔 **런타임 등록 경로가 Orion 에도 그대로
-적용된다.** 새로 만들 게 없다.
+`world` 를 못 믿는데, **런타임 등록 경로가 그 구멍을 덮는다** — 크롬 빌드에서도 항상
+돌기 때문에 Orion 을 위해 따로 만들 게 없다.
 
 `storage.sync` 만 Partial 이라 설정을 sync/local **양쪽에** 쓰고 읽을 때 sync 를 우선한다
 (`src/shared/settings.ts`). sync 에만 쓰면 조용히 저장이 안 돼서 사용자 눈에는 설정이
@@ -516,8 +468,7 @@ storage.sync                       Partial support ← 유일한 구멍
 ```
 git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
-       oc-ad-bye-pass.zip            Chrome · Edge · Orion
-       oc-ad-bye-pass-fallback.zip   declarativeNetRequest 를 뺀 빌드
+       oc-ad-bye-pass.zip   Chrome · Edge · Orion — 한 패키지
 ```
 
 사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은
@@ -606,21 +557,24 @@ ad-badge-view-model < … < ytd-in-feed-ad-layout-renderer < ytd-ad-slot-rendere
 가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/youtube.json` 의 해당 항목에
 주석으로 남긴다.
 
-## Safari · Orion 에서 달라지는 것
+## Orion 에서 달라지는 것
 
-**둘 다 `declarativeNetRequest` 를 지원하지 않는다.** Orion 은 API 표의 88개 항목이
-macOS·iOS 모두 미지원이고, Safari 도 마찬가지다. 그래서 이 타깃에서는:
+**Orion 은 `declarativeNetRequest` 를 지원하지 않는다.** Kagi 의 API 표에서 88개 항목이
+macOS·iOS 모두 미지원이다. 같은 패키지를 설치하되 0계층만 죽는다.
 
-| | Chrome / Edge | Safari / Orion |
+| | Chrome / Edge | Orion |
 |---|---|---|
 | 0계층 네트워크 차단 | 동작 | **없음** |
 | 1계층 유튜브 응답 프루닝 | 동작 | 동작 |
 | 2계층 코스메틱 | 동작 | 동작 |
 | 3계층 플레이어 폴백 | 동작 | 동작 |
 
-`scripts/manifest.mjs` 가 Safari 빌드에서 DNR 키와 권한을 빼고, 읽히지도 않을 3.6MB
-룰셋도 같이 지운다 (패키지 3.9MB → 276KB). 유튜브는 그대로 다 막히고, 다른 사이트에서는
-광고 요청이 나가되 광고 자리는 숨겨진다.
+DNR 호출은 전부 API 존재 확인을 거치므로 없는 쪽에서도 조용히 넘어간다. 유튜브는 그대로
+다 막히고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨진다.
+
+**아직 확인되지 않은 것:** Orion 이 `declarativeNetRequest` 를 선언한 패키지를 설치
+자체는 받아주는가. 거절한다면 매니페스트에서 그 키와 3.6MB 룰셋을 빼고 다시 릴리스하면
+된다 — 한 커밋이다.
 
 ## 한계
 

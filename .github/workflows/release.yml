@@ -4,12 +4,7 @@
 # `releases/latest/download/<name>.zip`, so the asset names below are a contract
 # — rename one and every download button on the page 404s.
 #
-#   oc-ad-bye-pass.zip            Chrome · Edge · Orion. Carries the
-#                                 declarativeNetRequest ruleset.
-#   oc-ad-bye-pass-fallback.zip   Same extension without the network layer, for
-#                                 WebKit targets that do not implement
-#                                 declarativeNetRequest and may refuse to
-#                                 install a package that asks for it.
+#   oc-ad-bye-pass.zip   Chrome · Edge · Orion — one package for all three.
 
 name: release
 
@@ -38,30 +33,29 @@ jobs:
       - run: npm run check
       - run: npm test
 
-      - run: npm run build:all
+      - run: npm run build
 
-      # The target split failing quietly is the failure mode this catches:
-      # both builds still install, and only one layer dies.
-      - run: node scripts/verify-targets.mjs
+      # The failure mode this catches: the package still installs and only one
+      # layer is dead, with nothing reported.
+      - run: npm run verify
 
       # 광고가 실제로 막히지 않는 빌드는 내보내지 않는다
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
 
-      # Both manifests carry the tag. The version is what a user reads on the
-      # extensions page to tell whether the thing on their phone is the thing
-      # they just downloaded, so a stale 0.1.0 in there is a real cost.
+      # The version is what a user reads on the extensions page to tell whether
+      # the thing on their phone is the thing they just downloaded, so a stale
+      # 0.1.0 in there is a real cost.
       - name: manifest 버전을 태그와 맞춘다
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           version="${GITHUB_REF_NAME#v}"
           node -e "
             const fs = require('fs');
-            for (const path of ['dist/manifest.json', 'dist-safari/manifest.json']) {
-              const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
-              manifest.version = '$version';
-              fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
-            }
+            const path = 'dist/manifest.json';
+            const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+            manifest.version = '$version';
+            fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
           "
 
       # Chromium writes its compiled ruleset cache into the extension directory
@@ -74,14 +68,13 @@ jobs:
       # then really is the thing the tests ran against.
       - name: 테스트가 남긴 브라우저 캐시 제거
         run: |
-          rm -rf dist/_metadata dist-safari/_metadata
-          ! find dist dist-safari -name '_*' -print | grep . || {
+          rm -rf dist/_metadata
+          ! find dist -name '_*' -print | grep . || {
             echo "::error::예약된 _ 이름이 남아 있다 (위 목록)"; exit 1; }
 
       - name: zip 으로 묶기
         run: |
           (cd dist && zip -qr ../oc-ad-bye-pass.zip .)
-          (cd dist-safari && zip -qr ../oc-ad-bye-pass-fallback.zip .)
           ls -lh ./*.zip
           unzip -l oc-ad-bye-pass.zip
 
@@ -104,10 +97,6 @@ jobs:
             2. `oc-ad-bye-pass.zip` 을 받습니다.
             3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다.
             4. `youtube.com` 권한을 허용합니다.
-
-            설치가 거절되면 `oc-ad-bye-pass-fallback.zip` 을 쓰세요. Orion 은
-            `declarativeNetRequest` 를 구현하지 않았고, 폴백 빌드는 그 부분을 뺀 것입니다.
-            유튜브 차단은 그대로입니다 — 다른 사이트의 광고망 **요청 차단**만 빠집니다.
 
             ## Chrome · Edge
 

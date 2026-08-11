@@ -26,14 +26,6 @@ const options = {
   format: 'iife',
   platform: 'browser',
   target: target.esbuildTarget,
-  // Everything browser-specific is read from one place, src/shared/target.ts.
-  // The boolean is computed here and passed in for the reason described in that
-  // file: it has to be a literal for esbuild to inline it across modules and
-  // drop the dead branch.
-  define: {
-    __TARGET__: JSON.stringify(target.name),
-    __IS_SAFARI__: String(target.name === 'safari'),
-  },
   minify: !watch,
   sourcemap: watch ? 'inline' : false,
   legalComments: 'none',

@@ -6,10 +6,8 @@ import { writeManifest } from './scripts/manifest.mjs'
 
 const target = resolveTarget()
 
-// Overwrites the copied manifest with the target-specific one *after* vite has
-// copied public/manifest.json. Being in closeBundle means it reruns on every
-// watch rebuild too, so a Safari manifest never silently reverts to the Chrome
-// original mid-development.
+// Rewrites the manifest *after* vite has copied public/manifest.json. In
+// closeBundle so it reruns on every watch rebuild too.
 const manifestPlugin = {
   name: 'oc-manifest',
   closeBundle() {
@@ -23,10 +21,6 @@ const manifestPlugin = {
 // ahead of YouTube's scripts, so they cannot be wrapped in an ESM loader.
 export default defineConfig({
   plugins: [react(), manifestPlugin],
-  define: {
-    __TARGET__: JSON.stringify(target.name),
-    __IS_SAFARI__: String(target.name === 'safari'),
-  },
   build: {
     outDir: target.outDir,
     emptyOutDir: true,
