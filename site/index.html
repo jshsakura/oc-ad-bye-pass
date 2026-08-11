@@ -195,9 +195,6 @@
 
   /* Theme switch */
   .theme-toggle {
-    position: fixed;
-    top: calc(env(safe-area-inset-top) + 12px); right: 12px;
-    z-index: 10000;
     font-family: var(--pixel); font-size: 7px; line-height: 1;
     padding: 9px 10px; cursor: pointer;
     background-color: var(--panel);
@@ -399,14 +396,23 @@
   }
   .foot b { color: var(--subtext0); font-weight: 600; }
 
+  .sig {
+    text-align: center; margin-top: 10px;
+    font-family: var(--pixel); font-size: 7px; line-height: 1.8;
+    letter-spacing: 0.08em; color: var(--overlay0);
+  }
+
   .links {
     display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;
     margin-top: 20px;
   }
   .links a {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 9px 14px; border-radius: 10px;
-    font-size: 13px; font-weight: 600; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 15px; border-radius: 10px;
+    /* line-height has to be reset here. The body's 1.75 makes the text box far
+       taller than the glyphs, so centring the box centres the wrong thing and
+       the icon sits high. */
+    font-size: 13px; font-weight: 600; line-height: 1; text-decoration: none;
     color: var(--subtext0);
     background-color: var(--mantle);
     background-image: repeating-linear-gradient(0deg, var(--scanline-soft) 0 1px, transparent 1px 3px);
@@ -414,7 +420,7 @@
     transition: color .12s ease, border-color .12s ease;
   }
   .links a:hover { color: var(--mauve-ink); border-color: var(--mauve); }
-  .links svg { width: 15px; height: 15px; }
+  .links svg { width: 15px; height: 15px; flex: none; display: block; }
 
   /* ── Bilingual ──────────────────────────────────────────────────────────
      Both languages are in the markup and one of them is hidden. A JS string
@@ -563,14 +569,13 @@
   .links a:hover { transform: translateY(-2px); }
   .links a { transition: color .12s ease, border-color .12s ease, transform .16s ease; }
 
-  /* Toggles sit together in the corner. */
+  /* Toggles ride with the page rather than pinning to the corner. Fixed, they
+     sat on top of whatever card was passing underneath. */
   .toggles {
-    position: fixed;
-    top: calc(env(safe-area-inset-top) + 12px); right: 12px;
-    z-index: 10000;
-    display: flex; gap: 6px;
+    display: flex; justify-content: flex-end; gap: 6px;
+    margin-bottom: 22px;
   }
-  .theme-toggle { position: static; top: auto; right: auto; transition: color .12s ease, border-color .12s ease, transform .12s ease; }
+  .theme-toggle { transition: color .12s ease, border-color .12s ease, transform .12s ease; }
   .theme-toggle:active { transform: translateY(2px); }
   .lang-toggle svg { color: var(--teal-ink); }
   .lang-toggle:hover { border-color: var(--teal); }
@@ -597,6 +602,14 @@
 </head>
 <body>
 
+
+<!-- The mark, at wallpaper scale. Decoration only. -->
+<div class="halo" aria-hidden="true">
+  <svg viewBox="0 0 64 64"><path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
+</div>
+
+<div class="wrap">
+
 <div class="toggles">
   <button class="theme-toggle lang-toggle" id="lang-toggle" type="button" aria-label="Language / 언어">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -613,12 +626,6 @@
   </button>
 </div>
 
-<!-- The mark, at wallpaper scale. Decoration only. -->
-<div class="halo" aria-hidden="true">
-  <svg viewBox="0 0 64 64"><path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
-</div>
-
-<div class="wrap">
 
   <div class="hero">
     <div class="mark">
@@ -693,7 +700,7 @@
       <li>Pick the zip you downloaded and allow the <code>youtube.com</code> permission</li>
     </ol>
 
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD ZIP
     </a>
@@ -703,6 +710,9 @@
         재생이 시작될 때 광고가 붙지 않으면 성공입니다.</p>
       <p>피드에서 광고가 사라진 것만으로는 확인이 어렵습니다.<br>
         그쪽은 막는 방식이 달라서 웬만하면 잘 되기 때문입니다.</p>
+      <p><strong>이 버튼은 Orion 전용 파일을 받습니다.</strong> 아래 Chrome용과는 다른 파일이에요.
+        Orion은 크롬의 네트워크 차단 기능을 지원하지 않아서, 그 부분을 뺀 가벼운 빌드(276KB)입니다.
+        유튜브 차단은 그대로이고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
       <p>Orion의 확장 기능은 아직 베타입니다. 설치가 거절되거나 동작이 이상하면
         <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">이슈</a>로 알려 주세요.</p>
     </div>
@@ -711,6 +721,10 @@
         If nothing runs before the video starts, it is working.</p>
       <p>Ads disappearing from the feed does not prove much.<br>
         Those are blocked a different way and almost always go.</p>
+      <p><strong>This button downloads the Orion build</strong> — a different file from the
+        Chrome one below. Orion does not implement Chrome's network blocking, so that part
+        is left out (276KB). YouTube blocking is unchanged; elsewhere ad requests go out
+        but the ad slots are still hidden.</p>
       <p>Extension support in Orion is still in beta. If the install is refused, or
         something behaves strangely, tell me in an
         <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">issue</a>.</p>
@@ -729,13 +743,13 @@
     <p class="lede" lang="en">For the desktop.<br>No web store — you load the unpacked folder yourself.</p>
 
     <ol lang="ko">
-      <li>위에서 받은 <strong>확장 zip 파일</strong>의 압축을 풀어 주세요 <span style="color:var(--overlay0)">(같은 파일입니다)</span></li>
+      <li>아래 버튼으로 <strong>확장 zip 파일</strong>을 받아 압축을 풀어 주세요</li>
       <li>주소창에 <code>chrome://extensions</code> 를 입력해 주세요</li>
       <li>오른쪽 위 <strong>개발자 모드</strong>를 켜 주세요</li>
       <li><strong>압축해제된 확장 프로그램을 로드</strong>를 누르고, 압축을 푼 폴더를 선택해 주세요</li>
     </ol>
     <ol lang="en">
-      <li>Unzip the <strong>extension zip</strong> from above <span style="color:var(--overlay0)">(it is the same file)</span></li>
+      <li>Download the <strong>extension zip</strong> with the button below and unzip it</li>
       <li>Type <code>chrome://extensions</code> in the address bar</li>
       <li>Turn on <strong>Developer mode</strong>, top right</li>
       <li>Click <strong>Load unpacked</strong> and pick the folder you unzipped</li>
@@ -820,13 +834,10 @@
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
       GitHub
     </a>
-    <a href="https://opencourse.kr" target="_blank" rel="noopener noreferrer">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20Z"/></svg>
-      opencourse.kr
-    </a>
   </p>
 
   <p class="foot" id="build"></p>
+  <p class="sig">husband of rebekah</p>
 
 </div>
 
@@ -1119,15 +1130,12 @@
     .then(async (b) => {
       if (!b) return;
       b = { ...b, version: (await latest) ?? b.version };
-      // Two dates, and they mean different things: the rules move on their own
-      // schedule, the site only changes when it is redeployed. Labelling them
-      // separately keeps "last updated" from being a guess.
-      const updated = b.filterUpdatedAt ?? b.builtAt;
+      // One line, versions only. The dates that used to be here — when the rules
+      // last moved, when the page last deployed — answered a question nobody was
+      // asking on a download page.
       const line = {
-        ko: `차단 규칙 <b>v${b.filterVersion}</b> · ${updated} 갱신`
-          + `<br>확장 v${b.version} · 이 페이지 ${b.builtAt} 배포`,
-        en: `Rules <b>v${b.filterVersion}</b> · updated ${updated}`
-          + `<br>Extension v${b.version} · page deployed ${b.builtAt}`,
+        ko: `확장 <b>v${b.version}</b> · 차단 규칙 v${b.filterVersion}`,
+        en: `Extension <b>v${b.version}</b> · rules v${b.filterVersion}`,
       };
       const paint = () => { el.innerHTML = line[document.documentElement.dataset.lang] ?? line.ko; };
       addEventListener('langchange', paint);

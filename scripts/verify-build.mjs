@@ -17,7 +17,7 @@
 // Both firing is fine; the guard in main/index.ts installs the hooks once. What
 // is not fine is neither firing.
 
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 const ROOT = dirname(import.meta.dirname)
@@ -33,6 +33,9 @@ function check(label, ok, detail) {
 }
 
 const manifest = JSON.parse(readFileSync(join(ROOT, 'dist', 'manifest.json'), 'utf8'))
+const orion = existsSync(join(ROOT, 'dist-orion', 'manifest.json'))
+  ? JSON.parse(readFileSync(join(ROOT, 'dist-orion', 'manifest.json'), 'utf8'))
+  : null
 
 // The fast path. Losing this costs the first pre-roll on every YouTube page,
 // and nothing reports it.
@@ -76,6 +79,37 @@ check(
   !!manifest.declarative_net_request,
   '네트워크 차단이 통째로 빠졌다',
 )
+
+// The Orion package. Orion refused the Chrome one with no reason given, and the
+// three keys below are what it is not known to accept — the whole point of that
+// build is that they are absent. Shipping it with any of them back is shipping
+// the thing that failed.
+if (orion) {
+  check(
+    'Orion 패키지에 declarativeNetRequest 가 없다',
+    !orion.declarative_net_request && !(orion.permissions ?? []).includes('declarativeNetRequest'),
+    'Orion 은 이 API 를 구현하지 않았다 (scripts/targets.mjs 의 strip)',
+  )
+  check(
+    'Orion 패키지에 크롬 전용 키가 없다',
+    !orion.minimum_chrome_version && !orion.optional_host_permissions,
+    'WebKit 이 모르는 키다',
+  )
+  check(
+    'Orion 패키지에 3.6MB 룰셋이 따라오지 않았다',
+    !existsSync(join(ROOT, 'dist-orion', 'rules')),
+    '키가 없으면 아무도 안 읽는다 — 순수한 무게일 뿐이다',
+  )
+  check(
+    'Orion 패키지도 1계층 경로를 갖췄다',
+    (orion.content_scripts ?? []).some((cs) => cs.world === 'MAIN') &&
+      (orion.permissions ?? []).includes('scripting') &&
+      (orion.web_accessible_resources ?? []).some((r) => r.resources?.includes('main.js')),
+    '유튜브 차단은 이 타깃에서도 그대로여야 한다',
+  )
+} else {
+  console.log('  · dist-orion 없음 — Orion 검사 건너뜀 (npm run build:all)')
+}
 
 // Not checked here: the `_metadata/` cache Chromium writes into dist/ when the
 // E2E suite loads the extension. This script runs on a fresh build, before that

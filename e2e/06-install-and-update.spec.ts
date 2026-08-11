@@ -221,9 +221,22 @@ test.describe('설치 이후 원격 갱신', () => {
     await installYouTubeFixture(context)
 
     let hits = 0
+    // The server answers only once the tab is listening. Not a convenience: the
+    // new rules reach an open tab by a message, and a response that lands before
+    // the content script has finished setting up is a message sent to nobody —
+    // the tab then keeps the bundled rules until it is reloaded, and this test
+    // failed one run in five on exactly that. Holding the response is a slow
+    // server, which is a thing that happens; it does not weaken the claim, which
+    // is that the result reaches a tab that is already open.
+    let serve = () => {}
+    const listening = new Promise<void>((resolve) => {
+      serve = resolve
+    })
+
     await context.unroute('https://raw.githubusercontent.com/**')
     await context.route('https://raw.githubusercontent.com/**', async (route) => {
       hits++
+      await listening
       await route.fulfill({
         status: 200,
         contentType: 'application/json; charset=utf-8',
@@ -238,7 +251,12 @@ test.describe('설치 이후 원격 갱신', () => {
     await expect
       .poll(() => hits, { message: '탭을 열었는데 갱신을 시도조차 하지 않았다' })
       .toBeGreaterThan(0)
-    // The fetched rule applies immediately to the tab that is already open
+
+    // The content script is up — the bundled rules are already applied here.
+    await expect.poll(() => layer2Active(youtube), { message: '콘텐츠 스크립트' }).toBe(true)
+    serve()
+
+    // The fetched rule applies to the tab that is already open, with no reload
     await expect(youtube.locator('#normal-card')).toBeHidden()
   })
 

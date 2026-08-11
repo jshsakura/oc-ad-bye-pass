@@ -4,7 +4,9 @@
 # `releases/latest/download/<name>.zip`, so the asset names below are a contract
 # — rename one and every download button on the page 404s.
 #
-#   oc-ad-bye-pass.zip   Chrome · Edge · Orion — one package for all three.
+#   oc-ad-bye-pass.zip         Chrome · Edge
+#   oc-ad-bye-pass-orion.zip   Orion (iOS · macOS). No declarativeNetRequest —
+#                              Orion refused the Chrome package outright.
 
 name: release
 
@@ -33,7 +35,7 @@ jobs:
       - run: npm run check
       - run: npm test
 
-      - run: npm run build
+      - run: npm run build:all
 
       # The failure mode this catches: the package still installs and only one
       # layer is dead, with nothing reported.
@@ -52,10 +54,11 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           node -e "
             const fs = require('fs');
-            const path = 'dist/manifest.json';
-            const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
-            manifest.version = '$version';
-            fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
+            for (const path of ['dist/manifest.json', 'dist-orion/manifest.json']) {
+              const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+              manifest.version = '$version';
+              fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
+            }
           "
 
       # Chromium writes its compiled ruleset cache into the extension directory
@@ -68,13 +71,14 @@ jobs:
       # then really is the thing the tests ran against.
       - name: 테스트가 남긴 브라우저 캐시 제거
         run: |
-          rm -rf dist/_metadata
-          ! find dist -name '_*' -print | grep . || {
+          rm -rf dist/_metadata dist-orion/_metadata
+          ! find dist dist-orion -name '_*' -print | grep . || {
             echo "::error::예약된 _ 이름이 남아 있다 (위 목록)"; exit 1; }
 
       - name: zip 으로 묶기
         run: |
           (cd dist && zip -qr ../oc-ad-bye-pass.zip .)
+          (cd dist-orion && zip -qr ../oc-ad-bye-pass-orion.zip .)
           ls -lh ./*.zip
           unzip -l oc-ad-bye-pass.zip
 
@@ -94,9 +98,13 @@ jobs:
             ## 아이폰 · 아이패드 (Orion)
 
             1. App Store 에서 **Orion Browser by Kagi** 를 설치합니다.
-            2. `oc-ad-bye-pass.zip` 을 받습니다.
+            2. **`oc-ad-bye-pass-orion.zip`** 을 받습니다 (Chrome 용과 다른 파일입니다).
             3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다.
             4. `youtube.com` 권한을 허용합니다.
+
+            Orion 은 `declarativeNetRequest` 를 구현하지 않아 Chrome 패키지를 설치조차
+            거절합니다. Orion 빌드는 그 키와 3.6MB 룰셋을 뺀 것이고(276KB), 유튜브 차단은
+            그대로입니다 — 다른 사이트의 광고망 **요청 차단**만 빠집니다.
 
             ## Chrome · Edge
 

@@ -74,12 +74,14 @@ Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 �
 다시 서명할 일도 없다.
 
 1. App Store 에서 **Orion Browser by Kagi** 설치
-2. [Releases](../../releases/latest) 에서 `oc-ad-bye-pass.zip` 을 받는다
+2. [Releases](../../releases/latest) 에서 **`oc-ad-bye-pass-orion.zip`** 을 받는다 (Chrome 용과 다른 파일이다)
 3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
 4. `youtube.com` 권한 허용
 
-Orion 의 확장 지원은 아직 베타다. 무엇이 되고 무엇이 안 되는지는 아래
-"Orion 에서 달라지는 것" 절에 적어뒀다.
+**Orion 은 Chrome 패키지를 설치조차 거절한다.** 실기기에서 확인했다 —
+"Extensions Error. Something went wrong." 한 줄이 전부고 이유는 안 알려준다.
+Orion 빌드는 그것이 받지 못하는 것을 뺀 패키지다 (3.9MB → 276KB). 자세한 건 아래
+"Orion 에서 달라지는 것" 절에 있다.
 
 업데이트는 두 갈래다.
 
@@ -311,6 +313,8 @@ MV3 는 원격 코드 실행을 금지하고, 보안상으로도 리스트 저�
 npm install
 npm run dev        # vite(팝업/옵션) + esbuild(콘텐츠/백그라운드) watch → dist/
 npm run build      # 프로덕션 빌드 → dist/
+npm run build:orion # Orion 패키지 → dist-orion/
+npm run build:all  # 둘 다
 npm run verify     # 빌드 불변식 검사 (조용히 죽는 것들)
 npm run check      # tsc --noEmit
 npm test           # 검증기·프루너 단위 테스트
@@ -468,7 +472,8 @@ storage.sync                       Partial support ← 유일한 구멍
 ```
 git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
-       oc-ad-bye-pass.zip   Chrome · Edge · Orion — 한 패키지
+       oc-ad-bye-pass.zip         Chrome · Edge
+       oc-ad-bye-pass-orion.zip   Orion (아이폰 포함). DNR 을 뺀 276KB
 ```
 
 사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은
@@ -572,9 +577,11 @@ macOS·iOS 모두 미지원이다. 같은 패키지를 설치하되 0계층만 �
 DNR 호출은 전부 API 존재 확인을 거치므로 없는 쪽에서도 조용히 넘어간다. 유튜브는 그대로
 다 막히고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨진다.
 
-**아직 확인되지 않은 것:** Orion 이 `declarativeNetRequest` 를 선언한 패키지를 설치
-자체는 받아주는가. 거절한다면 매니페스트에서 그 키와 3.6MB 룰셋을 빼고 다시 릴리스하면
-된다 — 한 커밋이다.
+**설치 자체를 거절한다.** 2026-08-11 아이폰에서 확인했다. Chrome 패키지를 고르면
+"Extensions Error. Something went wrong." 만 뜨고 이유는 없다. 그래서
+`TARGET=orion` 빌드가 있다 — `scripts/targets.mjs` 의 `strip` 목록이 무엇을 왜 빼는지
+말한다. 어느 항목이 진짜 원인이었는지는 모른다. 셋을 한꺼번에 뺐고, 깔리는 것이
+먼저였다.
 
 ## 한계
 
