@@ -60,7 +60,7 @@ test.describe('로컬 설치', () => {
     })
     try {
       // A service worker starting means the manifest is valid
-      const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+      const worker = await serviceWorker(context)
       expect(worker.url()).toContain('background.js')
 
       await installYouTubeFixture(context)
@@ -117,8 +117,21 @@ async function clickUpdateButton(optionsPage: Page) {
   await optionsPage.getByRole('button', { name: '지금 업데이트' }).click()
 }
 
+/**
+ * The service worker, waited for rather than grabbed.
+ *
+ * `serviceWorkers()[0]` is empty until the worker has actually started, and MV3
+ * workers start on their own schedule. Read directly it is undefined often
+ * enough to fail a run at random — "Cannot read properties of undefined
+ * (reading 'evaluate')", on CI, on a commit that touched nothing but the
+ * website.
+ */
+async function serviceWorker(context: BrowserContext) {
+  return context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+}
+
 async function readCache(context: BrowserContext) {
-  const worker = context.serviceWorkers()[0]
+  const worker = await serviceWorker(context)
   return worker.evaluate(async () => {
     const got = await chrome.storage.local.get('filterCache')
     const cache = got.filterCache as
@@ -131,24 +144,49 @@ async function readCache(context: BrowserContext) {
 }
 
 /**
- * Age the cache.
+ * Wait out the install-time fetch, then clear what it left.
  *
- * The extension fetches once right after installing, so left alone the next
- * attempt runs into the updater's minimum interval and never goes out at all.
- * We cannot wait out the clock, so we wind it back.
+ * `onInstalled` calls `updateFilters(true)` — a forced fetch, every time the
+ * extension loads, which is once per test here. Nothing routes it yet at that
+ * moment, so it goes to the real raw.githubusercontent.com and comes back
+ * whenever it comes back: in the middle of an assertion, after a test has
+ * seeded the cache with version 200, after another has wound `fetchedAt` back
+ * to zero. Both of the flaky failures on this file traced to that one request.
+ *
+ *   "탭을 열었는데 갱신을 시도조차 하지 않았다" — it landed after the wind-back,
+ *   restoring a fresh timestamp, so the 10-minute floor blocked the fetch the
+ *   test was waiting for.
+ *   "expect(200) received 4"                  — it landed after the seed and
+ *   overwrote it with the list that is actually on main.
+ *
+ * So: serve it ourselves, wait for it to land, and delete it. Every test then
+ * starts from an empty cache with nothing in flight.
  */
-async function makeCacheStale(context: BrowserContext) {
-  const worker = context.serviceWorkers()[0]
-  await worker.evaluate(async () => {
-    const got = await chrome.storage.local.get('filterCache')
-    const cache = got.filterCache as { fetchedAt: number } | undefined
-    if (!cache) return // Nothing fetched yet, so the interval check will not bite anyway
-    cache.fetchedAt = 0
-    await chrome.storage.local.set({ filterCache: cache })
-  })
+async function settleInstallFetch(context: BrowserContext) {
+  await serveList(context, () => remoteList({ version: 1 }))
+  const worker = await serviceWorker(context)
+
+  await expect
+    .poll(
+      () =>
+        worker.evaluate(async () => {
+          const got = await chrome.storage.local.get('filterCache')
+          return got.filterCache !== undefined
+        }),
+      { timeout: 15_000, message: '설치 직후 강제 갱신이 끝나지 않았다' },
+    )
+    .toBe(true)
+
+  await worker.evaluate(() => chrome.storage.local.remove('filterCache'))
 }
 
 test.describe('설치 이후 원격 갱신', () => {
+  // Every test in here asserts on cache contents, and every one of them races
+  // the install-time fetch until it is settled.
+  test.beforeEach(async ({ context }) => {
+    await settleInstallFetch(context)
+  })
+
   test('버튼 한 번으로 새 규칙이 받아져 페이지에 반영된다', async ({ context, extensionId }) => {
     await installYouTubeFixture(context)
 
@@ -181,8 +219,6 @@ test.describe('설치 이후 원격 갱신', () => {
 
   test('유튜브 탭을 열면 낡은 규칙을 알아서 받아온다 (주기 알람 없이)', async ({ context }) => {
     await installYouTubeFixture(context)
-    // It may already have fetched once on install; left as-is the minimum interval blocks the next one.
-    await makeCacheStale(context)
 
     let hits = 0
     await context.unroute('https://raw.githubusercontent.com/**')
