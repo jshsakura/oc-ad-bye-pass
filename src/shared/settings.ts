@@ -13,6 +13,7 @@ export const TOGGLE_KEYS = [
   'appPromo',
   'genericAds',
   'backgroundPlay',
+  'pictureInPicture',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -51,6 +52,12 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     key: 'backgroundPlay',
     label: '화면을 나가도 계속 재생',
     hint: '유튜브 모바일 웹은 화면을 벗어나면 멈춥니다',
+    optIn: true,
+  },
+  {
+    key: 'pictureInPicture',
+    label: '화면 속 화면(PiP) 버튼',
+    hint: '유튜브가 막아둔 PiP 를 열 수 있게 버튼을 붙입니다',
     optIn: true,
   },
 ]
@@ -92,6 +99,8 @@ export const DEFAULT_SETTINGS: Settings = {
     // Off by default. It changes what YouTube does rather than what it shows,
     // and that is the user's call to make, not ours.
     backgroundPlay: false,
+    // Adds a control to someone else's interface. Ask first.
+    pictureInPicture: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

@@ -22,6 +22,7 @@ import {
 } from '../shared/settings.ts'
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
+import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
@@ -60,6 +61,7 @@ function detach() {
     clearInterval(sweepTimer)
     sweepTimer = null
   }
+  disablePictureInPicture()
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
     sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune, backgroundPlay: false })
@@ -91,6 +93,10 @@ function recompute(cache: FilterCache | null) {
     // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
     else stopWatchingAppBannerHints()
+
+    // PiP adds a control rather than removing one, so it only runs when asked.
+    if (settings.toggles.pictureInPicture) enablePictureInPicture()
+    else disablePictureInPicture()
   }
 
   sweep()
