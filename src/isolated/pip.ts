@@ -38,6 +38,9 @@ import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
+/** 44px is the smallest target a thumb hits reliably. */
+const BUTTON_SIZE = 44
+
 interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
   webkitSetPresentationMode?: (mode: string) => void
@@ -149,10 +152,43 @@ export function chooseEntry(state: {
   return 'none'
 }
 
+/** Is this video floating right now, by either engine's reckoning? */
+function isFloating(video: WebkitVideo): boolean {
+  return (
+    video.webkitPresentationMode === 'picture-in-picture' ||
+    document.pictureInPictureElement === video
+  )
+}
+
+/**
+ * Put it back in the page.
+ *
+ * The other half of the button, and it was missing: every tap asked for a
+ * window, so once one was open the control did nothing and the only way back was
+ * whatever the system's own window offered. Undoing is the same gesture rule as
+ * doing, so it happens here, synchronously.
+ */
+function leavePip(video: WebkitVideo): void {
+  engagedByUs = false
+  preferFullscreen = false
+  log('탭: 접기')
+  try {
+    if (video.webkitPresentationMode !== undefined && video.webkitSetPresentationMode) {
+      video.webkitSetPresentationMode('inline')
+      return
+    }
+    if (document.pictureInPictureElement === video) void document.exitPictureInPicture()
+  } catch (e) {
+    toast(`접기 거절: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
 /**
  * Everything here runs inside the tap. No awaits before a privileged call.
  */
 function enterPip(video: WebkitVideo): void {
+  if (isFloating(video)) return leavePip(video)
+
   // Right now, not at the last sweep. YouTube puts `disablePictureInPicture`
   // back on the element whenever it rebuilds the player, and WebKit reads it
   // when deciding whether the mode is supported at all — a stale clear is the
@@ -297,8 +333,10 @@ function ensureButton(video: WebkitVideo): void {
   // whatever z-index we ask for — a child cannot climb out of its parent's
   // stacking context. Out here there is nothing above it.
   //
-  // Bottom right, clear of the player's controls and of the mobile navigation
-  // bar. 44px because that is the smallest thing a thumb reliably hits.
+  // Where it sits is decided by place(), against the player's own box. Pinned to
+  // a corner of the viewport it landed in the middle of the recommendations on a
+  // phone — a control belonging to nothing, over content it has nothing to do
+  // with. 44px because that is the smallest thing a thumb reliably hits.
   button.style.cssText = [
     'position:fixed',
     'right:14px',
@@ -334,6 +372,70 @@ function ensureButton(video: WebkitVideo): void {
   // navigation, and a button that vanishes on every tap through the app is
   // worse than one that was never there.
   document.documentElement.appendChild(button)
+  place()
+  for (const [target, event] of placementSignals()) {
+    target.addEventListener(event, place, { passive: true })
+  }
+}
+
+/**
+ * Where the button goes: the player's bottom-right corner, inset.
+ *
+ * The player is what this control acts on, so it sits on the player. When the
+ * player has been scrolled away there is nothing to act on and the button hides
+ * rather than hovering over whatever happened to scroll past.
+ *
+ * Positioned in visual-viewport coordinates. On iOS the layout viewport is not
+ * the visible one — the browser's own bars overlay it — so a `bottom:` offset
+ * lands somewhere that looks arbitrary, which is exactly how it looked.
+ */
+function place(): void {
+  const button = document.getElementById(BUTTON_ID) as HTMLElement | null
+  if (!button) return
+  const player = document.querySelector('#movie_player') ?? playerVideo()
+  const box = player?.getBoundingClientRect()
+  const view = window.visualViewport
+
+  const visibleTop = view?.offsetTop ?? 0
+  const visibleBottom = visibleTop + (view?.height ?? window.innerHeight)
+  const visibleRight = (view?.offsetLeft ?? 0) + (view?.width ?? window.innerWidth)
+
+  if (!box || box.height < 80 || box.bottom < visibleTop + 40 || box.top > visibleBottom - 40) {
+    button.style.display = 'none'
+    return
+  }
+
+  // The label follows the state — the same control does both directions now, and
+  // a button that still says "작은 화면으로" while the window is open is a lie.
+  const video = playerVideo()
+  const floating = video ? isFloating(video) : false
+  const label = floating ? '작은 화면 접기' : '화면 속 화면으로 보기'
+  button.title = label
+  button.setAttribute('aria-label', label)
+  const mark = button.querySelector('rect + rect') as SVGRectElement | null
+  mark?.setAttribute('fill', floating ? '#a6e3a1' : '#fab387')
+
+  const inset = 12
+  const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
+  const left = Math.min(box.right - BUTTON_SIZE - inset, visibleRight - BUTTON_SIZE - inset)
+  button.style.display = 'grid'
+  button.style.top = `${Math.max(visibleTop + inset, top)}px`
+  button.style.left = `${Math.max(inset, left)}px`
+  button.style.right = 'auto'
+  button.style.bottom = 'auto'
+}
+
+/** Everything that can move the player under the button. */
+function placementSignals(): [EventTarget, string][] {
+  const signals: [EventTarget, string][] = [
+    [window, 'scroll'],
+    [window, 'resize'],
+    [window, 'orientationchange'],
+  ]
+  if (window.visualViewport) {
+    signals.push([window.visualViewport, 'resize'], [window.visualViewport, 'scroll'])
+  }
+  return signals
 }
 
 /**
@@ -376,6 +478,7 @@ function sweep(): void {
   // Mode answers "not yet" before the video has metadata — and a button that
   // reports why it failed beats one that never appears.
   ensureButton(video)
+  place()
 }
 
 /** Read back by src/isolated/diagnostics.ts, which has its own copy of the name. */
@@ -612,6 +715,7 @@ export function disablePictureInPicture(): void {
   for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)
   for (const [target, event] of returningSignals()) target.removeEventListener(event, onReturning, true)
   engagedByUs = false
+  for (const [target, event] of placementSignals()) target.removeEventListener(event, place)
   document.documentElement.removeAttribute(AUTO_ATTR)
   document.getElementById(BUTTON_ID)?.remove()
 }

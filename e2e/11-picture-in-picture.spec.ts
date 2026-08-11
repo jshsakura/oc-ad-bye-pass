@@ -135,6 +135,15 @@ test('누르면 진짜로 작은 창이 열린다', async ({ context }) => {
     await page.evaluate(() => document.pictureInPictureElement !== null),
     '열린 작은 창이 곧바로 닫혔다',
   ).toBe(true)
+
+  // 그리고 같은 버튼으로 접힌다. 없을 때 폰에서는 되돌릴 방법이 시스템 창이
+  // 주는 것뿐이었고, 그것을 못 찾으면 영상은 계속 떠 있는다.
+  await page.locator(BUTTON).click()
+  await expect
+    .poll(() => page.evaluate(() => document.pictureInPictureElement !== null), {
+      message: '한 번 더 눌렀는데 작은 창이 그대로다',
+    })
+    .toBe(false)
 })
 
 test('버튼이 플레이어 밖에, 화면에 고정돼 있다', async ({ context, background }) => {
