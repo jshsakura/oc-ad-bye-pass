@@ -56,6 +56,60 @@ test('건너뛸 수 없는 광고는 음소거하고 끝으로 감는다', async
     .toBeGreaterThanOrEqual(AD_DURATION_SECONDS - 0.05)
 })
 
+// 검은 화면의 길이가 이 계층의 품질이다.
+//
+// 폰에서 광고 하나에 몇 초씩 까맣게 있었다. 감기는 한 번만 시도했고, 그 한 번이
+// 안 먹으면(아직 안 받아진 스트림, 플레이어가 되돌린 위치) 광고가 통째로 재생됐다.
+// 속도는 그 사이에도 듣는 절반이다 — 길이를 몰라 감지 못 하는 처음 몇 초가 정확히
+// 문제의 그 구간이다.
+test('건너뛸 수 없는 광고는 빨리 감기까지 올린다', async ({ context }) => {
+  await installYouTubeFixture(context, { skippable: false })
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+
+  await waitForMediaReady(page)
+  await nudge(page)
+
+  await expect
+    .poll(
+      () => page.evaluate(() => document.querySelector<HTMLVideoElement>('#ad-video')!.playbackRate),
+      { message: '광고를 등속으로 재생하고 있다' },
+    )
+    .toBeGreaterThan(1)
+
+  // 그리고 본편에는 남기지 않는다 — 16배속으로 재생되는 영상이 되면 안 된다.
+  await page.evaluate(() => document.getElementById('movie_player')!.classList.remove('ad-showing'))
+  await expect
+    .poll(
+      () => page.evaluate(() => document.querySelector<HTMLVideoElement>('#ad-video')!.playbackRate),
+      { message: '본편이 빨리 감기로 남았다' },
+    )
+    .toBe(1)
+})
+
+test('감긴 위치가 되돌려지면 다시 감는다', async ({ context }) => {
+  await installYouTubeFixture(context, { skippable: false })
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+
+  await waitForMediaReady(page)
+  await nudge(page)
+  await expect
+    .poll(async () => (await videoState(page)).currentTime)
+    .toBeGreaterThanOrEqual(AD_DURATION_SECONDS - 0.1)
+
+  // 플레이어가 위치를 되돌린 상황. 한 번만 감던 시절에는 여기서 포기했고,
+  // 광고는 음소거된 채 끝까지 재생됐다.
+  await page.evaluate(() => {
+    document.querySelector<HTMLVideoElement>('#ad-video')!.currentTime = 0
+  })
+  await nudge(page)
+
+  await expect
+    .poll(async () => (await videoState(page)).currentTime, { message: '되돌려진 뒤 다시 감지 않았다' })
+    .toBeGreaterThanOrEqual(AD_DURATION_SECONDS - 0.1)
+})
+
 test('광고가 끝나면 음소거를 되돌린다', async ({ context }) => {
   await installYouTubeFixture(context, { skippable: false })
   const page = await context.newPage()
