@@ -95,6 +95,12 @@ async function enterPip(video: WebkitVideo, quiet = false): Promise<void> {
 
   // WebKit first: on iOS the standard call exists on no version we target.
   //
+  // Note what "success" means on an iPhone. The call below rarely opens a window
+  // from an inline video; what it reliably does is put the video in fullscreen,
+  // and iOS then moves it to a small window by itself when the app goes away.
+  // The button therefore does the thing that leads to PiP rather than PiP
+  // itself — which is why the message afterwards says so.
+  //
   // It can also fail without failing. WebKit's own reports have
   // webkitSetPresentationMode throwing nothing, firing
   // webkitpresentationmodechanged, and leaving no window on screen. Returning on
@@ -126,7 +132,7 @@ async function enterPip(video: WebkitVideo, quiet = false): Promise<void> {
   if (typeof video.webkitEnterFullscreen === 'function') {
     try {
       video.webkitEnterFullscreen()
-      say('전체화면으로 넘어갔습니다 — 거기 PiP 버튼이 있습니다')
+      say('전체화면으로 넘겼습니다 — 이 상태로 홈으로 나가면 작은 창이 됩니다')
       return
     } catch (e) {
       say(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)
@@ -245,6 +251,16 @@ function attemptSync(video: WebkitVideo): boolean {
   try {
     if (typeof video.webkitSetPresentationMode === 'function') {
       video.webkitSetPresentationMode('picture-in-picture')
+
+      // On iPhone that call is refused for an inline video — measured on the
+      // device: leaving the app while playing inline does nothing, leaving it
+      // while the video is fullscreen puts it in a small window every time.
+      // That is iOS's own automatic PiP, and it only applies to the fullscreen
+      // presentation mode. So if we are not already there, go there: it is the
+      // state from which the system does the rest.
+      if (video.webkitPresentationMode === 'inline') {
+        video.webkitSetPresentationMode('fullscreen')
+      }
       return true
     }
     if (typeof video.requestPictureInPicture === 'function') {

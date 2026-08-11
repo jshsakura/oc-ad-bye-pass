@@ -687,8 +687,9 @@
       <dt>화면을 나가도 계속 재생</dt>
       <dd>유튜브 모바일 웹은 화면을 벗어나면 재생이 멈춥니다. 이 확장을 깔면 계속 재생됩니다.</dd>
       <dt>화면 속 화면(PiP)</dt>
-      <dd>유튜브가 모바일 웹에서 PiP 를 막아 두었습니다. 버튼이 붙고, <strong>홈으로 나가면
-        알아서 작은 창으로 넘어갑니다</strong> — 앱에서 하던 그대로입니다.</dd>
+      <dd>유튜브가 모바일 웹에서 PiP 를 막아 두었습니다. 플레이어에 버튼이 붙습니다.<br>
+        <strong>아이폰에서는 전체화면 상태로 홈에 나가야 작은 창이 됩니다</strong> — iOS 가
+        그렇게만 걸어줍니다. 버튼을 누르면 그 상태로 만들어 주고, 나가면 알아서 넘어갑니다.</dd>
       <dt>계정 없음 · 서버 없음</dt>
       <dd>모든 처리가 브라우저 안에서 끝납니다. 밖으로 나가는 데이터는 없습니다.</dd>
     </dl>
@@ -706,9 +707,9 @@
       <dd>YouTube's mobile web player stops when you leave the screen. With this installed it
         keeps going.</dd>
       <dt>Picture-in-picture</dt>
-      <dd>YouTube opts its mobile player out of picture-in-picture. There is a button, and
-        <strong>leaving for the home screen hands the video to a small window by itself</strong> —
-        the way the app does it.</dd>
+      <dd>YouTube opts its mobile player out of picture-in-picture. A button is added.<br>
+        <strong>On iPhone the video has to be fullscreen when you leave</strong> — that is the
+        only state iOS will float. The button puts it there; leaving does the rest.</dd>
       <dt>No account, no server</dt>
       <dd>All of it happens inside your browser. Nothing is sent anywhere.</dd>
     </dl>
@@ -755,8 +756,13 @@
       <p><strong>이 버튼은 Orion 전용 파일을 받습니다.</strong> 아래 Chrome용과는 다른 파일이에요.
         Orion은 크롬의 네트워크 차단 기능을 지원하지 않아서, 그 부분을 뺀 가벼운 빌드(276KB)입니다.
         유튜브 차단은 그대로이고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
-      <p>Orion의 확장 기능은 아직 베타입니다. 설치가 거절되거나 동작이 이상하면
-        <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">이슈</a>로 알려 주세요.</p>
+      <p><strong>설치가 한 번에 안 되면 그냥 다시 하세요.</strong> Orion 의 확장 설치는 아직
+        베타라 첫 시도가 "Extensions Error / Something went wrong" 으로 튕기는 일이 있습니다.
+        같은 파일로 두 번째에 그대로 깔립니다 — 파일이 잘못된 게 아닙니다.</p>
+      <p>그래도 안 되면 Extensions 에서 기존 것을 <strong>왼쪽으로 밀어 삭제</strong>하고,
+        앱 스위처에서 Orion 을 완전히 닫은 뒤 다시 해 보세요.
+        계속 실패하면 <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">이슈</a>로
+        알려 주세요.</p>
     </div>
     <div class="note" lang="en">
       <p><strong>To check that it works, play a video.</strong><br>
@@ -767,8 +773,12 @@
         Chrome one below. Orion does not implement Chrome's network blocking, so that part
         is left out (276KB). YouTube blocking is unchanged; elsewhere ad requests go out
         but the ad slots are still hidden.</p>
-      <p>Extension support in Orion is still in beta. If the install is refused, or
-        something behaves strangely, tell me in an
+      <p><strong>If the install fails, just do it again.</strong> Extension installation in
+        Orion is still in beta and the first attempt sometimes throws "Extensions Error /
+        Something went wrong". The same file goes on at the second attempt — there is nothing
+        wrong with it.</p>
+      <p>If it still refuses, swipe the old copy away in Extensions, close Orion from the app
+        switcher, and try once more. If it keeps failing, tell me in an
         <a href="https://github.com/jshsakura/oc-ad-bye-pass/issues">issue</a>.</p>
     </div>
 
