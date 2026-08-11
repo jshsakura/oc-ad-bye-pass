@@ -106,6 +106,13 @@ jobs:
           " "$version"
           (cd work/b && zip -qr "../../_site/dl/test/b-old-files-new-version-$version.zip" .)
 
+          # The iPhone button serves this one until the bisect finishes. It is
+          # the only package confirmed to install on the device — v0.4.0's files,
+          # carrying a current version number so it can be told apart. Older code
+          # that installs beats newer code that does not.
+          cp "_site/dl/test/b-old-files-new-version-$version.zip" \
+             "_site/dl/oc-ad-bye-pass-orion-safe-$version.zip"
+
           cp "_site/dl/oc-ad-bye-pass-orion-$version.zip" "_site/dl/test/c-current-$version.zip"
 
           # And the releases in between, for when c is the one that fails. Each
