@@ -1,9 +1,17 @@
 // Picture-in-picture on YouTube's mobile web player — ISOLATED world.
 //
-// The browser supports it; the page opts out. YouTube marks its <video> with
-// `disablePictureInPicture` and ships no control of its own on mobile web, so
-// there is no way in even though everything underneath works. Both halves are
+// The browser supports it; the page ships no control. YouTube marks its <video>
+// with `disablePictureInPicture` and offers no button of its own on mobile web,
+// so there is no way in even though everything underneath works. Both are
 // answered here: clear the opt-out, and put a button where a thumb can reach it.
+//
+// How much the opt-out actually costs depends on the route, which was measured
+// rather than assumed (scripts/safari-pip-probe.mjs, on a macOS runner, 2026-08-11):
+// Safari's `webkitSetPresentationMode` floated a video that still carried the
+// attribute, and `webkitSupportsPresentationMode` answered true while it was set.
+// So on that route the opt-out is not the lock. It is on the standard API, which
+// is the one Chromium takes and where the attribute is honoured — and iOS is not
+// macOS. Clearing costs nothing and covers both, so it stays.
 //
 // This lives in ISOLATED rather than MAIN because it needs nothing from the page
 // context — the DOM is shared, so the video element and its methods are reachable
@@ -245,7 +253,13 @@ async function confirmOrOfferFullscreen(video: WebkitVideo): Promise<void> {
   )
 }
 
-/** Clear the page's opt-out. It is an attribute and a property; both count. */
+/**
+ * Clear the page's opt-out. It is an attribute and a property; both count.
+ *
+ * Load-bearing for `requestPictureInPicture`, which honours it. Measured not to
+ * matter for Safari's `webkitSetPresentationMode` — see the note at the top of
+ * this file — but iOS is not macOS and the call is free.
+ */
 function allowPip(video: WebkitVideo): void {
   if (video.hasAttribute('disablePictureInPicture')) {
     video.removeAttribute('disablePictureInPicture')
