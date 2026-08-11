@@ -64,11 +64,26 @@ jobs:
             }
           "
 
+      # Chromium writes its compiled ruleset cache into the extension directory
+      # it was pointed at, so running the E2E suite leaves a 5MB
+      # `_metadata/generated_indexed_rulesets/` inside dist/. Zipped as-is it
+      # doubled the download and shipped a reserved `_`-prefixed directory that
+      # a packager is entitled to reject — v0.2.0 went out like that.
+      #
+      # Removing it beats reordering the build after the tests: the artifact
+      # then really is the thing the tests ran against.
+      - name: 테스트가 남긴 브라우저 캐시 제거
+        run: |
+          rm -rf dist/_metadata dist-safari/_metadata
+          ! find dist dist-safari -name '_*' -print | grep . || {
+            echo "::error::예약된 _ 이름이 남아 있다 (위 목록)"; exit 1; }
+
       - name: zip 으로 묶기
         run: |
           (cd dist && zip -qr ../oc-ad-bye-pass.zip .)
           (cd dist-safari && zip -qr ../oc-ad-bye-pass-fallback.zip .)
           ls -lh ./*.zip
+          unzip -l oc-ad-bye-pass.zip
 
       - uses: actions/upload-artifact@v4
         with:

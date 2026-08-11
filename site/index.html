@@ -11,11 +11,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path fill='%237e4dc5' d='M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z'/></svg>">
 
-<!-- 페인트 전에 테마를 정한다. 안 하면 다크로 저장해둔 사람에게 흰 화면이 한 번 번쩍인다. -->
+<!-- 페인트 전에 테마와 언어를 정한다. 안 하면 다크로 저장해둔 사람에게 흰 화면이 한 번
+     번쩍이고, 영어 사용자에게는 한국어가 한 프레임 보였다가 바뀐다. -->
 <script>
   (() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark' || saved === 'light') document.documentElement.dataset.theme = saved;
+    const root = document.documentElement;
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark' || theme === 'light') root.dataset.theme = theme;
+
+    const saved = localStorage.getItem('lang');
+    const lang = saved === 'ko' || saved === 'en'
+      ? saved
+      : (navigator.language || '').toLowerCase().startsWith('ko') ? 'ko' : 'en';
+    root.dataset.lang = lang;
+    root.lang = lang;
   })();
 </script>
 
@@ -232,6 +241,40 @@
   .card.orion  { --accent: var(--mauve); --ink: var(--mauve-ink); border-color: var(--mauve); }
   .card.chrome { --accent: var(--blue);  --ink: var(--blue-ink); }
   .card.filter { --accent: var(--green); --ink: var(--green-ink); }
+  .card.what   { --accent: var(--teal);  --ink: var(--teal-ink); }
+
+  /* Feature list. A <dl> because that is what it is — a term and what it means.
+     The accent rule on the left ties each entry to the card's colour. */
+  .feats dt {
+    font-family: var(--pixel); font-size: 8.5px; line-height: 1.6;
+    color: var(--ink);
+    padding-left: 10px; border-left: 3px solid var(--accent);
+  }
+  /* The pixel face has no Hangul, so Korean falls through to Noto — but keeps
+     the pixel font's very wide space, which reads as a typo ("그  외  모든").
+     Korean terms take the body face outright. */
+  :root[data-lang="ko"] .feats dt {
+    font-family: var(--body); font-size: 13px; font-weight: 700; letter-spacing: 0.01em;
+  }
+  .feats dd {
+    margin: 7px 0 16px; padding-left: 13px;
+    color: var(--subtext0); font-size: 14px;
+  }
+  .feats dd:last-child { margin-bottom: 0; }
+  .feats strong { color: var(--text); }
+
+  /* The notice. Deliberately quiet — it is not a warning, it is the small print,
+     and small print that shouts gets skipped like an ad. */
+  .legal {
+    margin-top: 26px; padding: 18px 20px;
+    border: 1px dashed var(--surface1); border-radius: 12px;
+    /* subtext0, not overlay0: at 12.5px on the page ground overlay0 lands near
+       2:1 contrast. Small print still has to be readable. */
+    color: var(--subtext0); font-size: 12.5px; line-height: 1.8;
+  }
+  .legal p + p { margin-top: 10px; }
+  .legal strong { color: var(--text); font-weight: 600; }
+  .legal code { font-size: 11.5px; background-color: transparent; border-color: var(--surface0); }
 
   .card-head {
     display: flex; align-items: center; gap: 10px;
@@ -329,6 +372,127 @@
   .links a:hover { color: var(--mauve-ink); border-color: var(--mauve); }
   .links svg { width: 15px; height: 15px; }
 
+  /* ── Bilingual ──────────────────────────────────────────────────────────
+     Both languages are in the markup and one of them is hidden. A JS string
+     table was the alternative and it loses every <strong>, <code> and <br> in
+     the copy — those are half of what makes the instructions readable.
+
+     The :not([data-lang]) rule is the no-JS floor: Korean shows, English stays
+     hidden, nothing renders twice. */
+  :root[data-lang="en"] [lang="ko"] { display: none; }
+  :root[data-lang="ko"] [lang="en"] { display: none; }
+  :root:not([data-lang]) [lang="en"] { display: none; }
+
+  /* ── Motion ─────────────────────────────────────────────────────────────
+     The page is pretending to be a CRT, so the movement pretends with it:
+     a power-on, a sweep across the logo, a scanline crawl. Everything here is
+     decoration and every rule of it is switched off under
+     prefers-reduced-motion at the bottom of this block. */
+
+  /* Power-on. A CRT does not fade in, it snaps open vertically and settles. */
+  @keyframes power-on {
+    0%   { opacity: 0; transform: scaleY(0.35); filter: brightness(2.2) saturate(0.4); }
+    55%  { opacity: 1; transform: scaleY(1.02); filter: brightness(1.25) saturate(0.9); }
+    100% { opacity: 1; transform: scaleY(1); filter: none; }
+  }
+  .wrap { animation: power-on 560ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+  /* The logo tile: a slow drift, and a highlight that sweeps down it like the
+     beam passing. The sweep is a pseudo-element so the tile keeps its scanlines. */
+  @keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes sweep {
+    0%   { transform: translateY(-120%); opacity: 0; }
+    12%  { opacity: 1; }
+    60%  { opacity: 1; }
+    100% { transform: translateY(320%); opacity: 0; }
+  }
+  .mark {
+    position: relative; overflow: hidden;
+    animation: drift 5.5s ease-in-out infinite;
+  }
+  .mark::after {
+    content: ''; position: absolute; inset-inline: 0; top: 0; height: 34%;
+    background-image: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.30), transparent);
+    animation: sweep 4.2s ease-in-out infinite;
+    animation-delay: 1.2s;
+  }
+  .mark svg { position: relative; z-index: 1; }
+
+  /* Title glitch — a chromatic split, twice, then gone. Runs once on load and
+     again on hover. Not on a loop: a headline that twitches forever is a
+     headline nobody reads. */
+  @keyframes glitch {
+    0%, 100% { text-shadow: none; transform: none; }
+    18% { text-shadow: -2px 0 var(--pink-ink), 2px 0 var(--teal-ink); transform: translateX(1px); }
+    34% { text-shadow: none; transform: none; }
+    52% { text-shadow: 2px 0 var(--peach-ink), -2px 0 var(--blue-ink); transform: translateX(-1px); }
+    68% { text-shadow: none; transform: none; }
+  }
+  h1 { animation: glitch 620ms steps(2, end) 720ms 1 both; }
+  h1:hover { animation: glitch 520ms steps(2, end) 1; }
+
+  /* Cards arrive as they are scrolled to. The stagger is per card, set from JS
+     as --i, so the three of them cascade instead of snapping in together. */
+  .card {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+      opacity 520ms ease,
+      transform 520ms cubic-bezier(0.2, 0.8, 0.3, 1),
+      border-color 160ms ease,
+      box-shadow 220ms ease;
+    transition-delay: calc(var(--i, 0) * 90ms), calc(var(--i, 0) * 90ms), 0s, 0s;
+  }
+  .card.in { opacity: 1; transform: none; }
+  /* Hover lifts the panel off the board and lights its own accent. Pointer-only:
+     on a phone :hover sticks after a tap and the card would stay lit. */
+  @media (hover: hover) {
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 34px var(--vignette), 0 0 0 1px var(--accent), 0 10px 26px -14px var(--accent);
+    }
+  }
+
+  /* The BETA chip reads as a status lamp, so it behaves like one. */
+  @keyframes lamp { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .chip.beta { animation: lamp 2.4s ease-in-out infinite; }
+
+  /* Buttons: a shine crossing on hover, and a real press on click. */
+  .btn { position: relative; overflow: hidden; }
+  .btn::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 45%;
+    left: -60%;
+    background-image: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.30), transparent);
+    transition: left 520ms ease;
+  }
+  .btn:hover::after { left: 115%; }
+  .btn:active { transform: translateY(2px); }
+  .btn svg { transition: transform 220ms ease; }
+  .btn:hover svg { transform: translateY(2px); }
+  .btn-line:hover svg { transform: none; }
+
+  /* Step numbers pop as the card lands. */
+  @keyframes step-in { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .card.in ol li::before { animation: step-in 340ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+  .card.in ol li:nth-child(2)::before { animation-delay: 70ms; }
+  .card.in ol li:nth-child(3)::before { animation-delay: 140ms; }
+  .card.in ol li:nth-child(4)::before { animation-delay: 210ms; }
+
+  .links a:hover { transform: translateY(-2px); }
+  .links a { transition: color .12s ease, border-color .12s ease, transform .16s ease; }
+
+  /* Toggles sit together in the corner. */
+  .toggles {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 12px); right: 12px;
+    z-index: 10000;
+    display: flex; gap: 6px;
+  }
+  .theme-toggle { position: static; top: auto; right: auto; transition: color .12s ease, border-color .12s ease, transform .12s ease; }
+  .theme-toggle:active { transform: translateY(2px); }
+  .lang-toggle svg { color: var(--teal-ink); }
+  .lang-toggle:hover { border-color: var(--teal); }
+
   @media (max-width: 480px) {
     body { padding: 30px 12px calc(40px + env(safe-area-inset-bottom)); }
     .card { padding: 20px 16px; border-radius: 14px; }
@@ -336,16 +500,36 @@
     h2 { font-size: 10px; }
     .theme-toggle { font-size: 6px; padding: 8px 9px; }
   }
+
+  /* One switch for all of it. Cards must still be visible — the reveal is an
+     animation, the content is not. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition-duration: 1ms !important;
+    }
+    .card { opacity: 1; transform: none; }
+    .mark::after { display: none; }
+  }
 </style>
 </head>
 <body>
 
-<button class="theme-toggle" id="theme-toggle" type="button" aria-label="테마 전환">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
-  </svg>
-  <span id="theme-label">AUTO</span>
-</button>
+<div class="toggles">
+  <button class="theme-toggle lang-toggle" id="lang-toggle" type="button" aria-label="Language / 언어">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20Z"/>
+    </svg>
+    <span id="lang-label">KO</span>
+  </button>
+
+  <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Theme / 테마 전환">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+    </svg>
+    <span id="theme-label">AUTO</span>
+  </button>
+</div>
 
 <div class="wrap">
 
@@ -360,6 +544,41 @@
     <p class="quote-by" id="quote-by"></p>
   </div>
 
+  <!-- ── 무엇을 하나 ─────────────────────────────────── -->
+  <div class="card what">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7l9 4 9-4-9-4Z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
+      <h2 lang="ko">무엇을 하나</h2>
+      <h2 lang="en">What it does</h2>
+    </div>
+
+    <dl class="feats" lang="ko">
+      <dt>유튜브</dt>
+      <dd>재생 전·중간에 붙는 광고를 <strong>응답 단계에서 잘라냅니다.</strong> 플레이어가 광고를 아예 받지 않으니 건너뛸 것도 남지 않아요.</dd>
+      <dt>그 외 모든 사이트</dt>
+      <dd>알려진 광고·추적 도메인 요청을 막고, 남은 광고 자리를 숨깁니다.</dd>
+      <dt>사이트별 끄기</dt>
+      <dd>뭔가 깨지면 확장 아이콘을 눌러 <strong>그 사이트만</strong> 끄면 됩니다. 하위 도메인까지 같이 꺼져요.</dd>
+      <dt>규칙 자동 갱신</dt>
+      <dd>차단 규칙은 확장과 따로 관리합니다. 유튜브가 화면을 바꿔도 <strong>재설치 없이</strong> 따라갑니다.</dd>
+      <dt>계정도 서버도 없음</dt>
+      <dd>전부 브라우저 안에서 끝납니다. 어디로도 아무것도 보내지 않아요.</dd>
+    </dl>
+
+    <dl class="feats" lang="en">
+      <dt>On YouTube</dt>
+      <dd>Ads before and during a video are <strong>cut out of the response.</strong> The player never receives them, so there is nothing left to skip.</dd>
+      <dt>Everywhere else</dt>
+      <dd>Requests to known ad and tracking domains are blocked, and the leftover ad slots are hidden.</dd>
+      <dt>Off switch per site</dt>
+      <dd>If a page breaks, click the icon and turn it off <strong>for that site only</strong> — subdomains included.</dd>
+      <dt>Rules update themselves</dt>
+      <dd>The blocking rules live apart from the extension. When YouTube changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
+      <dt>No account, no server</dt>
+      <dd>All of it happens inside your browser. Nothing is sent anywhere.</dd>
+    </dl>
+  </div>
+
   <!-- ── iPhone / iPad ───────────────────────────────── -->
   <div class="card orion">
     <div class="card-head">
@@ -369,14 +588,22 @@
       <h2>iPhone · iPad</h2>
       <span class="chip beta">ORION BETA</span>
     </div>
-    <p class="lede">아이폰에서 확장을 쓸 수 있는 브라우저는 Safari와 Orion, 이렇게 둘뿐이에요.<br>
+    <p class="lede" lang="ko">아이폰에서 확장을 쓸 수 있는 브라우저는 Safari와 Orion, 이렇게 둘뿐이에요.<br>
       Safari는 확장을 앱으로 감싸서 매주 다시 서명해야 하지만, <strong>Orion은 zip만 넣으면 바로 끝나고 기간 만료도 없습니다.</strong></p>
+    <p class="lede" lang="en">Only two browsers on iPhone can run extensions: Safari and Orion.<br>
+      Safari needs the extension wrapped in an app and re-signed every week. <strong>Orion takes the zip as it is, and it never expires.</strong></p>
 
-    <ol>
+    <ol lang="ko">
       <li>App Store에서 <strong>Orion Browser by Kagi</strong>를 설치해 주세요</li>
       <li>아래 버튼으로 <strong>확장 zip</strong>을 내려받으세요</li>
       <li>Orion 우측 하단 <strong>•••</strong> 을 눌러 <strong>Extensions</strong> 로 들어간 뒤 <strong>+</strong> 를 누르세요</li>
       <li>받은 zip을 고르고, <code>youtube.com</code> 권한을 허용해 주세요</li>
+    </ol>
+    <ol lang="en">
+      <li>Install <strong>Orion Browser by Kagi</strong> from the App Store</li>
+      <li>Download the <strong>extension zip</strong> with the button below</li>
+      <li>In Orion, tap <strong>•••</strong> at the bottom right, go to <strong>Extensions</strong>, then tap <strong>+</strong></li>
+      <li>Pick the zip you downloaded and allow the <code>youtube.com</code> permission</li>
     </ol>
 
     <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
@@ -384,7 +611,7 @@
       DOWNLOAD ZIP
     </a>
 
-    <div class="note">
+    <div class="note" lang="ko">
       <p><strong>잘 되는지 확인하려면 영상을 하나 재생해 보세요.</strong><br>
         재생이 시작될 때 광고가 안 붙으면 성공입니다.</p>
       <p>피드에 뜨던 광고가 사라진 것만으로는 확인이 되지 않아요.<br>
@@ -393,6 +620,16 @@
       <p>위 빌드에는 크롬용 네트워크 차단 규칙이 들어 있는데, Orion은 이 기능이 없어서
         설치를 거절할 수 있어요. 폴백 빌드는 그 부분을 아예 빼고, 유튜브 차단을
         다른 방법으로 거는 빌드입니다.</p>
+    </div>
+    <div class="note" lang="en">
+      <p><strong>To check that it works, play a video.</strong><br>
+        If nothing runs before the video starts, it is working.</p>
+      <p>Ads disappearing from the feed does not prove much.<br>
+        Those are blocked a different way and almost always go.</p>
+      <p><strong>If the install is refused, or pre-roll ads still play</strong>, swap in the <strong>fallback build</strong> below.</p>
+      <p>The build above carries Chrome's network blocking rules. Orion has no such
+        feature and may refuse the package because of them. The fallback build
+        leaves that part out and blocks YouTube another way.</p>
     </div>
 
     <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-fallback.zip">
@@ -408,19 +645,31 @@
       <h2>Chrome · Edge</h2>
       <span class="chip">READY</span>
     </div>
-    <p class="lede">데스크톱용입니다.<br>웹스토어를 거치지 않고, 압축을 푼 폴더를 직접 불러와서 씁니다.</p>
+    <p class="lede" lang="ko">데스크톱용입니다.<br>웹스토어를 거치지 않고, 압축을 푼 폴더를 직접 불러와서 씁니다.</p>
+    <p class="lede" lang="en">For the desktop.<br>No web store — you load the unpacked folder yourself.</p>
 
-    <ol>
+    <ol lang="ko">
       <li>위에서 받은 <strong>확장 zip</strong>의 압축을 풀어 주세요 <span style="color:var(--overlay0)">(같은 파일입니다)</span></li>
       <li>주소창에 <code>chrome://extensions</code> 를 입력하세요</li>
       <li>우측 상단의 <strong>개발자 모드</strong>를 켜 주세요</li>
       <li><strong>압축해제된 확장 프로그램을 로드</strong>를 누르고, 압축을 푼 폴더를 고르세요</li>
     </ol>
+    <ol lang="en">
+      <li>Unzip the <strong>extension zip</strong> from above <span style="color:var(--overlay0)">(it is the same file)</span></li>
+      <li>Type <code>chrome://extensions</code> in the address bar</li>
+      <li>Turn on <strong>Developer mode</strong>, top right</li>
+      <li>Click <strong>Load unpacked</strong> and pick the folder you unzipped</li>
+    </ol>
 
-    <div class="note">
+    <div class="note" lang="ko">
       <p><strong>압축을 푼 폴더는 그대로 두셔야 합니다.</strong></p>
       <p>크롬이 이 폴더를 계속 들여다보면서 확장을 돌리기 때문에, 폴더를 지우거나 다른 곳으로 옮기면 확장이 바로 멈춰요.</p>
       <p>그래서 다운로드 폴더는 피하시는 게 좋습니다.<br>나중에 정리하다가 실수로 지우기 쉬운 자리라서요.</p>
+    </div>
+    <div class="note" lang="en">
+      <p><strong>Leave the unzipped folder where it is.</strong></p>
+      <p>Chrome keeps reading that folder to run the extension. Delete it or move it and the extension stops immediately.</p>
+      <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
     <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
@@ -435,16 +684,56 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></svg>
       <h2>Filter List</h2>
     </div>
-    <p class="lede">차단 규칙은 확장 코드와 따로 관리합니다.<br>
+    <p class="lede" lang="ko">차단 규칙은 확장 코드와 따로 관리합니다.<br>
       유튜브를 열 때 확장이 알아서 최신 규칙을 확인하니까, 규칙이 바뀌어도 다시 설치하실 필요가 없어요.</p>
-    <div class="note">
+    <p class="lede" lang="en">The blocking rules are kept apart from the extension code.<br>
+      The extension checks for new ones whenever you open YouTube, so a rule change never means reinstalling.</p>
+    <div class="note" lang="ko">
       <p>확장 옵션의 <strong>리스트 주소</strong>에 아래 주소를 넣으시면, GitHub 대신 여기에서 규칙을 받아갑니다.</p>
+      <p><code>https://jshsakura.github.io/oc-ad-bye-pass/filters/youtube.json</code></p>
+    </div>
+    <div class="note" lang="en">
+      <p>Put this address in the extension's <strong>list URL</strong> option and it will fetch the rules from here instead of GitHub.</p>
       <p><code>https://jshsakura.github.io/oc-ad-bye-pass/filters/youtube.json</code></p>
     </div>
     <a class="btn btn-line" href="filters/youtube.json">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
       VIEW LIST
     </a>
+  </div>
+
+  <!-- ── 고지 ────────────────────────────────────────
+       상표는 지시적으로만 쓰고, 하는 일과 안 하는 일을 분명히 적는다. 차단 목록
+       출처와 라이선스도 여기에 드러낸다 — ads.meta.json 에만 적혀 있으면 아무도
+       못 본다. -->
+  <div class="legal" lang="ko">
+    <p><strong>개인이 만든 오픈소스 프로젝트</strong>입니다 (GPLv3).
+      YouTube · Google · Chrome · Kagi Orion 은 각 소유자의 상표이며,
+      이 프로젝트는 그 어느 곳과도 제휴·후원 관계가 없습니다.</p>
+    <p>하는 일은 <strong>내 브라우저가 보내는 요청을 내 기기에서 거르고, 이미 받은
+      페이지에서 광고 요소를 숨기는 것</strong>뿐입니다. 서비스의 서버나 보호 장치를
+      건드리지 않고, 유료 기능을 열어주지도 않으며, 어떤 콘텐츠도 내려받거나
+      다시 배포하지 않습니다.</p>
+    <p>네트워크 차단 목록은 공개 리스트<br>(AdGuard DNS filter · EasyList · EasyPrivacy)에서
+      만들며 각 라이선스(GPL-3.0 / CC BY-SA 3.0)를 따릅니다. 출처와 건수는
+      확장 안 <code>rules/ads.meta.json</code> 에 그대로 기록됩니다.</p>
+    <p>보증은 없습니다. 쓰다 생기는 일은 쓰는 사람 책임입니다.</p>
+  </div>
+
+  <div class="legal" lang="en">
+    <p>An <strong>open-source project by one person</strong> (GPLv3).
+      YouTube, Google, Chrome and Kagi Orion are trademarks of their respective
+      owners; this project is not affiliated with, endorsed by, or sponsored by
+      any of them.</p>
+    <p>What it does is <strong>filter the requests your own browser makes, on your
+      own device, and hide ad elements in pages you already received</strong>.
+      It does not touch anyone's servers or protection measures, does not unlock
+      paid features, and neither downloads nor redistributes any content.</p>
+    <p>The network blocklist is built from public lists<br>(AdGuard DNS filter ·
+      EasyList · EasyPrivacy) under their licences (GPL-3.0 / CC BY-SA 3.0).
+      Sources and counts are recorded verbatim in <code>rules/ads.meta.json</code>
+      inside the extension.</p>
+    <p>No warranty. Use it at your own risk.</p>
   </div>
 
   <p class="links">
@@ -545,9 +834,9 @@
     ['신에게는 아직 열두 척의 배가 남아 있습니다', '李舜臣'],
     ['고요함으로 몸을 닦고 검소함으로 덕을 기른다', '諸葛亮 · 誡子書'],
     ['담박하지 않으면 뜻을 밝힐 수 없다', '諸葛亮 · 誡子書'],
-    ['천 일의 연습을 단이라 하고 만 일의 연습을 련이라 한다', '宮本武蔵 · 五輪書'],
-    ['상대의 박자를 알고 내 박자로 바꾼다', '宮本武蔵 · 五輪書'],
-    ['무엇에도 집착하지 않는다', '宮本武蔵 · 独行道'],
+    ['천 일의 연습을 단이라 하고 만 일의 연습을 련이라 한다', '宮本武藏 · 五輪書'],
+    ['상대의 박자를 알고 내 박자로 바꾼다', '宮本武藏 · 五輪書'],
+    ['무엇에도 집착하지 않는다', '宮本武藏 · 獨行道'],
     ['전쟁은 다른 수단으로 이어지는 정치다', '클라우제비츠 · 전쟁론'],
     ['전쟁에서 모든 것은 단순하다. 그 단순한 것이 어렵다', '클라우제비츠 · 전쟁론'],
     ['방어는 더 강한 형태의 전투다', '클라우제비츠 · 전쟁론'],
@@ -557,6 +846,78 @@
     ['고정된 요새는 인간의 어리석음을 보여주는 기념비다', '패튼'],
     ['길을 찾아내거나, 길을 만들 것이다', '한니발'],
   ];
+
+  // The same lines in English, index for index. Two arrays rather than one array
+  // of pairs because the Korean list came first and this keeps its diff empty —
+  // and because a mismatch in length is then a one-line assertion, below.
+  const QUOTES_EN = [
+    ['Know the enemy and know yourself, and you need not fear a hundred battles', 'Sun Tzu · Attack by Stratagem'],
+    ['To subdue the enemy without fighting is the height of skill', 'Sun Tzu · Attack by Stratagem'],
+    ['The best strategy is to attack the enemy’s plans', 'Sun Tzu · Attack by Stratagem'],
+    ['To win a hundred battles is not the highest excellence', 'Sun Tzu · Attack by Stratagem'],
+    ['The victorious army wins first and fights afterwards', 'Sun Tzu · Tactical Dispositions'],
+    ['One skilled in defence hides in the deepest recesses of the earth', 'Sun Tzu · Tactical Dispositions'],
+    ['If you cannot win, defend; if you can win, attack', 'Sun Tzu · Tactical Dispositions'],
+    ['Make yourself unbeatable, then wait for the enemy’s opening', 'Sun Tzu · Tactical Dispositions'],
+    ['All warfare is based on deception', 'Sun Tzu · Laying Plans'],
+    ['Attack where he is unprepared; appear where you are not expected', 'Sun Tzu · Laying Plans'],
+    ['The side that counts more wins; the side that counts less loses', 'Sun Tzu · Laying Plans'],
+    ['War is a matter of vital importance; it cannot be left unexamined', 'Sun Tzu · Laying Plans'],
+    ['Military formation should take shape like water', 'Sun Tzu · Weak Points and Strong'],
+    ['Draw the enemy in; never be drawn in by him', 'Sun Tzu · Weak Points and Strong'],
+    ['Whoever reaches the field first awaits the enemy at his ease', 'Sun Tzu · Weak Points and Strong'],
+    ['Strike at what is empty and it cannot be blocked', 'Sun Tzu · Weak Points and Strong'],
+    ['Victory can be created', 'Sun Tzu · Weak Points and Strong'],
+    ['Keep yourself formless and force the enemy to take shape', 'Sun Tzu · Weak Points and Strong'],
+    ['There are only the direct and the indirect, yet their variations are endless', 'Sun Tzu · Energy'],
+    ['Riding momentum, one moves men as one rolls logs and stones', 'Sun Tzu · Energy'],
+    ['The skilled seek victory in momentum, not in blaming their men', 'Sun Tzu · Energy'],
+    ['Turn the roundabout road into the straight one', 'Sun Tzu · Maneuvering'],
+    ['Take away the enemy’s spirit and his commander’s resolve', 'Sun Tzu · Maneuvering'],
+    ['Swift as the wind, still as the forest', 'Sun Tzu · Maneuvering'],
+    ['Speed is the essence of war', 'Sun Tzu · The Nine Situations'],
+    ['Thrown onto ground where death is certain, men live', 'Sun Tzu · The Nine Situations'],
+    ['Know the ground and you will win', 'Sun Tzu · Terrain'],
+    ['Care for your soldiers, but keep your orders strict', 'Sun Tzu · Terrain'],
+    ['I have heard of clumsy haste, never of clever delay', 'Sun Tzu · Waging War'],
+    ['One cartload taken from the enemy is worth twenty of your own', 'Sun Tzu · Waging War'],
+    ['Until the house is in order, one cannot march out to fight', 'Wu Qi · Planning for the State'],
+    ['Create something from nothing', 'Thirty-Six Stratagems'],
+    ['Make a sound in the east, strike in the west', 'Thirty-Six Stratagems'],
+    ['Sit still and wait for the exhausted enemy', 'Thirty-Six Stratagems'],
+    ['Kill with a borrowed knife', 'Thirty-Six Stratagems'],
+    ['Besiege Wei to rescue Zhao', 'Thirty-Six Stratagems'],
+    ['Lure him onto the roof, then take away the ladder', 'Thirty-Six Stratagems'],
+    ['Retreat is itself a stratagem', 'Thirty-Six Stratagems'],
+    ['He who seeks death shall live; he who seeks life shall die', 'Yi Sun-sin'],
+    ['Your servant still has twelve ships', 'Yi Sun-sin'],
+    ['Cultivate yourself in stillness, your virtue in frugality', 'Zhuge Liang · Letter to His Son'],
+    ['Without simplicity of heart, no purpose is ever made clear', 'Zhuge Liang · Letter to His Son'],
+    ['A thousand days of practice is training; ten thousand is mastery', 'Miyamoto Musashi · The Book of Five Rings'],
+    ['Know your opponent’s rhythm, then impose your own', 'Miyamoto Musashi · The Book of Five Rings'],
+    ['Do not cling to anything', 'Miyamoto Musashi · Dokkōdō'],
+    ['War is the continuation of politics by other means', 'Clausewitz · On War'],
+    ['In war everything is simple, and the simple is difficult', 'Clausewitz · On War'],
+    ['Defence is the stronger form of combat', 'Clausewitz · On War'],
+    ['No plan survives contact with the enemy', 'Moltke'],
+    ['Never interrupt your enemy when he is making a mistake', 'Napoleon'],
+    ['A good plan now beats a perfect plan next week', 'Patton'],
+    ['Fixed fortifications are monuments to the stupidity of man', 'Patton'],
+    ['We will either find a way, or make one', 'Hannibal'],
+  ];
+
+  // Index for index, or the English reader gets someone else's attribution.
+  if (QUOTES_EN.length !== QUOTES.length) {
+    console.warn('quote lists differ in length', QUOTES.length, QUOTES_EN.length);
+  }
+
+  const LISTS = { ko: QUOTES, en: QUOTES_EN };
+  const pick = (n) => (LISTS[document.documentElement.dataset.lang] ?? QUOTES)[n] ?? QUOTES[n];
+
+  // Bumped when the language changes, so a sentence being typed in Korean is
+  // abandoned mid-word rather than finishing after the page has gone English.
+  let gen = 0;
+  addEventListener('langchange', () => { gen++; });
 
   // 매번 같은 순서면 자주 오는 사람에게 금방 티가 난다. 한 바퀴 돌 때마다 섞는다.
   const order = QUOTES.map((_, n) => n);
@@ -575,15 +936,21 @@
 
   // 움직임을 줄여달라고 한 사람에게는 타이핑 없이 문장만 바꿔준다
   if (still) {
-    const show = () => {
-      const [q, src] = QUOTES[order[i]];
+    let current = order[i];
+    const paint = () => {
+      const [q, src] = pick(current);
       text.textContent = q;
       by.textContent = src;
+    };
+    const next = () => {
       i = (i + 1) % QUOTES.length;
       if (i === 0) shuffle();
+      current = order[i];
+      paint();
     };
-    show();
-    setInterval(show, 6000);
+    paint();
+    setInterval(next, 6000);
+    addEventListener('langchange', paint);
     return;
   }
 
@@ -591,39 +958,117 @@
 
   async function run() {
     for (;;) {
-      const [q, src] = QUOTES[order[i]];
+      const mine = gen;
+      const [q, src] = pick(order[i]);
+      // English sentences run longer, and a line that takes four seconds to
+      // type reads as a page that has hung. Same wall-clock either way.
+      const speed = q.length > 34 ? 30 : 58;
       by.textContent = '';
       for (let n = 1; n <= q.length; n++) {
+        if (gen !== mine) break;
         text.textContent = q.slice(0, n);
-        await sleep(58);
+        await sleep(speed);
       }
-      by.textContent = src;
-      await sleep(2900);
+      if (gen === mine) {
+        by.textContent = src;
+        await sleep(2900);
+      }
       // 지우는 동안에도 출처는 남겨둔다. 다음 문장을 치기 시작할 때 비운다.
-      for (let n = q.length; n >= 0; n--) {
+      for (let n = text.textContent.length; n >= 0; n--) {
         text.textContent = q.slice(0, n);
-        await sleep(24);
+        await sleep(gen === mine ? 24 : 8);
       }
       await sleep(320);
-      i = (i + 1) % QUOTES.length;
-      if (i === 0) shuffle();
+      // A language switch retypes the same line in the other language instead
+      // of skipping it — the point of the switch is to read what was there.
+      if (gen === mine) {
+        i = (i + 1) % QUOTES.length;
+        if (i === 0) shuffle();
+      }
     }
   }
   run();
 })();
 
-fetch('build.json', { cache: 'no-store' })
-  .then((r) => (r.ok ? r.json() : null))
-  .then((b) => {
-    if (!b) return;
-    // Two dates, and they mean different things: the rules move on their own
-    // schedule, the site only changes when it is redeployed. Labelling them
-    // separately keeps "last updated" from being a guess.
-    document.getElementById('build').innerHTML =
-      `차단 규칙 <b>v${b.filterVersion}</b> · ${b.filterUpdatedAt ?? b.builtAt} 갱신` +
-      `<br>확장 v${b.version} · 이 페이지 ${b.builtAt} 배포`;
-  })
-  .catch(() => {});
+// ── 언어 ── KO ↔ EN. 표시는 CSS 가 하고 여기서는 상태만 바꾼다.
+// 처음 오는 사람의 기본값은 브라우저 언어다 (<head> 의 선반영 스크립트).
+(() => {
+  const root = document.documentElement;
+  const label = document.getElementById('lang-label');
+  const desc = document.querySelector('meta[name="description"]');
+  const DESC = {
+    ko: '유튜브 광고 차단 확장 — Orion(아이폰) · Chrome',
+    en: 'An ad blocker that cuts YouTube ads — Orion (iPhone) · Chrome',
+  };
+
+  // announce=false on the first call. The quote typer listens for langchange and
+  // restarts the line it is typing; firing it at load would abort the very first
+  // sentence one character in.
+  function apply(announce) {
+    const lang = root.dataset.lang;
+    label.textContent = lang.toUpperCase();
+    root.lang = lang;
+    if (desc) desc.content = DESC[lang] ?? DESC.ko;
+    if (announce) dispatchEvent(new Event('langchange'));
+  }
+
+  document.getElementById('lang-toggle').addEventListener('click', () => {
+    root.dataset.lang = root.dataset.lang === 'ko' ? 'en' : 'ko';
+    localStorage.setItem('lang', root.dataset.lang);
+    apply(true);
+  });
+
+  apply(false);
+})();
+
+// ── 카드 등장 ──
+// 스크롤에 닿는 순간 한 장씩 올라온다. --i 로 계단을 준다.
+(() => {
+  const cards = [...document.querySelectorAll('.card')];
+  cards.forEach((card, n) => card.style.setProperty('--i', n % 3));
+
+  // IntersectionObserver 가 없으면 애니메이션 없이 그냥 보여준다.
+  // 안 보이는 페이지보다 안 움직이는 페이지가 낫다.
+  if (!('IntersectionObserver' in window)) {
+    cards.forEach((card) => card.classList.add('in'));
+    return;
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add('in');
+      io.unobserve(entry.target);   // 한 번 올라온 카드는 다시 건드리지 않는다
+    }
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  cards.forEach((card) => io.observe(card));
+})();
+
+// ── 푸터 ──
+(() => {
+  const el = document.getElementById('build');
+
+  fetch('build.json', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((b) => {
+      if (!b) return;
+      // Two dates, and they mean different things: the rules move on their own
+      // schedule, the site only changes when it is redeployed. Labelling them
+      // separately keeps "last updated" from being a guess.
+      const updated = b.filterUpdatedAt ?? b.builtAt;
+      const line = {
+        ko: `차단 규칙 <b>v${b.filterVersion}</b> · ${updated} 갱신`
+          + `<br>확장 v${b.version} · 이 페이지 ${b.builtAt} 배포`,
+        en: `Rules <b>v${b.filterVersion}</b> · updated ${updated}`
+          + `<br>Extension v${b.version} · page deployed ${b.builtAt}`,
+      };
+      const paint = () => { el.innerHTML = line[document.documentElement.dataset.lang] ?? line.ko; };
+      addEventListener('langchange', paint);
+      paint();
+    })
+    .catch(() => {});
+})();
 </script>
 </body>
 </html>
