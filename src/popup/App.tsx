@@ -18,6 +18,7 @@ import {
   siteKindFor,
 } from '../shared/sites.ts'
 import { Switch } from '../ui/Switch.tsx'
+import { collect, format, type Report } from './diagnose.ts'
 import { formatCount } from '../ui/format.ts'
 
 /**
@@ -53,6 +54,8 @@ export function App() {
   const [host, setHost] = useState<string | null>(null)
   const [tabReady, setTabReady] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [report, setReport] = useState<Report | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     void loadSettings().then(setSettings)
@@ -182,7 +185,32 @@ export function App() {
           {showAll ? '이 사이트 항목만' : '전체 항목 보기'}
         </button>
         <button onClick={() => void openSettings()}>규칙·고급 설정</button>
+        <button
+          onClick={() => {
+            setCopied(false)
+            void collect().then(setReport)
+          }}
+        >
+          진단
+        </button>
       </div>
+
+      {report && (
+        <div className="diag">
+          <pre>{format(report)}</pre>
+          <button
+            onClick={() => {
+              // The point of the panel is getting this text to someone else.
+              void navigator.clipboard
+                .writeText(format(report))
+                .then(() => setCopied(true))
+                .catch(() => setCopied(false))
+            }}
+          >
+            {copied ? '복사했습니다' : '복사'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

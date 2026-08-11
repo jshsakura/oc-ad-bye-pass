@@ -45,6 +45,24 @@ a {
   border-style: dashed;
 }
 
+/* The diagnostics panel. Monospaced and selectable — it exists to be copied out
+   of, and on a phone that means it has to survive a long-press as well as the
+   button. */
+.diag {
+  border-top: 1px solid var(--line);
+  padding: 12px 16px 14px;
+}
+
+.diag pre {
+  margin: 0 0 10px;
+  font: 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--fg-muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .popup {
   /* 320px is the panel a desktop browser hangs off its toolbar button. On a
      phone the popup is a full-width sheet, so it has to give — pinned at 320 it

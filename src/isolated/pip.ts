@@ -21,6 +21,8 @@ const BUTTON_ID = 'oc-abp-pip'
 interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
   webkitSetPresentationMode?: (mode: string) => void
+  /** iOS only. Its native player carries a PiP control of its own. */
+  webkitEnterFullscreen?: () => void
 }
 
 let observer: MutationObserver | null = null
@@ -32,26 +34,54 @@ function playerVideo(): WebkitVideo | null {
   return videos.reduce((best, v) => (v.clientWidth > best.clientWidth ? v : best))
 }
 
+/**
+ * Whether this video can be put in a small window.
+ *
+ * `webkitSupportsPresentationMode` answers "not yet" before the video has any
+ * metadata, and on iOS the player has no metadata until playback starts. Asking
+ * once at document_start and believing the answer means the button never
+ * appears on the device it was built for. So the *existence* of the entry point
+ * is what counts, and whether it works is settled when it is pressed.
+ */
 function canPip(video: WebkitVideo): boolean {
-  if (typeof video.webkitSupportsPresentationMode === 'function') {
-    return video.webkitSupportsPresentationMode('picture-in-picture')
-  }
-  return typeof video.requestPictureInPicture === 'function'
+  return (
+    typeof video.webkitSetPresentationMode === 'function' ||
+    typeof video.requestPictureInPicture === 'function'
+  )
 }
 
 async function enterPip(video: WebkitVideo): Promise<void> {
-  try {
-    // WebKit first: on iOS the standard call exists on no version we target.
-    if (typeof video.webkitSetPresentationMode === 'function') {
+  // WebKit first: on iOS the standard call exists on no version we target.
+  if (typeof video.webkitSetPresentationMode === 'function') {
+    try {
       video.webkitSetPresentationMode('picture-in-picture')
       return
+    } catch (e) {
+      console.warn('[oc-ad-bye-pass] PiP 전환이 거절되었습니다', e)
     }
-    await video.requestPictureInPicture()
-  } catch (e) {
-    // Refused — no user gesture, already in PiP, or the page vetoed it. Saying so
-    // beats a button that does nothing when pressed.
-    console.warn('[oc-ad-bye-pass] PiP 를 열지 못했습니다', e)
   }
+
+  if (typeof video.requestPictureInPicture === 'function') {
+    try {
+      await video.requestPictureInPicture()
+      return
+    } catch (e) {
+      console.warn('[oc-ad-bye-pass] PiP 를 열지 못했습니다', e)
+    }
+  }
+
+  // Neither worked. On iOS the system's own fullscreen player carries a PiP
+  // control, so handing the video to it is one tap from where the user was
+  // trying to get. Doing nothing at all is the only worse option.
+  if (typeof video.webkitEnterFullscreen === 'function') {
+    try {
+      video.webkitEnterFullscreen()
+      return
+    } catch (e) {
+      console.warn('[oc-ad-bye-pass] 전체화면 폴백도 실패했습니다', e)
+    }
+  }
+  console.warn('[oc-ad-bye-pass] 이 브라우저에서는 PiP 진입점을 찾지 못했습니다')
 }
 
 /** Clear the page's opt-out. It is an attribute and a property; both count. */
