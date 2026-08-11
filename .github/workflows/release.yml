@@ -1,3 +1,16 @@
+# Builds the zips people install and attaches them to the GitHub release.
+#
+# **The release is the distribution.** The site (GitHub Pages) links to
+# `releases/latest/download/<name>.zip`, so the asset names below are a contract
+# — rename one and every download button on the page 404s.
+#
+#   oc-ad-bye-pass.zip            Chrome · Edge · Orion. Carries the
+#                                 declarativeNetRequest ruleset.
+#   oc-ad-bye-pass-fallback.zip   Same extension without the network layer, for
+#                                 WebKit targets that do not implement
+#                                 declarativeNetRequest and may refuse to
+#                                 install a package that asks for it.
+
 name: release
 
 on:
@@ -25,26 +38,37 @@ jobs:
       - run: npm run check
       - run: npm test
 
-      - run: npm run build
+      - run: npm run build:all
+
+      # The target split failing quietly is the failure mode this catches:
+      # both builds still install, and only one layer dies.
+      - run: node scripts/verify-targets.mjs
 
       # 광고가 실제로 막히지 않는 빌드는 내보내지 않는다
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
 
+      # Both manifests carry the tag. The version is what a user reads on the
+      # extensions page to tell whether the thing on their phone is the thing
+      # they just downloaded, so a stale 0.1.0 in there is a real cost.
       - name: manifest 버전을 태그와 맞춘다
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           version="${GITHUB_REF_NAME#v}"
           node -e "
             const fs = require('fs');
-            const path = 'dist/manifest.json';
-            const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
-            manifest.version = '$version';
-            fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
+            for (const path of ['dist/manifest.json', 'dist-safari/manifest.json']) {
+              const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+              manifest.version = '$version';
+              fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
+            }
           "
 
       - name: zip 으로 묶기
-        run: cd dist && zip -qr "../oc-ad-bye-pass-${GITHUB_REF_NAME:-dev}.zip" .
+        run: |
+          (cd dist && zip -qr ../oc-ad-bye-pass.zip .)
+          (cd dist-safari && zip -qr ../oc-ad-bye-pass-fallback.zip .)
+          ls -lh ./*.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -57,13 +81,27 @@ jobs:
         with:
           files: '*.zip'
           body: |
-            ## 설치
+            설치 안내: https://jshsakura.github.io/oc-ad-bye-pass/
 
-            1. 아래 zip 을 받아 압축을 풉니다.
-            2. Chrome 에서 `chrome://extensions` 를 엽니다.
+            ## 아이폰 · 아이패드 (Orion)
+
+            1. App Store 에서 **Orion Browser by Kagi** 를 설치합니다.
+            2. `oc-ad-bye-pass.zip` 을 받습니다.
+            3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다.
+            4. `youtube.com` 권한을 허용합니다.
+
+            설치가 거절되면 `oc-ad-bye-pass-fallback.zip` 을 쓰세요. Orion 은
+            `declarativeNetRequest` 를 구현하지 않았고, 폴백 빌드는 그 부분을 뺀 것입니다.
+            유튜브 차단은 그대로입니다 — 다른 사이트의 광고망 **요청 차단**만 빠집니다.
+
+            ## Chrome · Edge
+
+            1. `oc-ad-bye-pass.zip` 을 받아 압축을 풉니다.
+            2. `chrome://extensions` 를 엽니다.
             3. 우측 상단 **개발자 모드**를 켭니다.
             4. **압축해제된 확장 프로그램을 로드**를 눌러 압축 푼 폴더를 선택합니다.
 
+            **압축 푼 폴더는 지우거나 옮기지 마세요** — 크롬이 그 폴더를 계속 참조합니다.
             이미 설치돼 있다면 같은 폴더에 덮어쓰고 `chrome://extensions` 에서 새로고침하세요.
 
             > 차단 규칙만 바뀐 경우에는 재설치가 필요 없습니다 — 확장이 6시간마다

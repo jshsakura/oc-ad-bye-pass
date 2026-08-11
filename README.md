@@ -1,6 +1,6 @@
 # OC Ad Bye-Pass
 
-광고 차단 확장 (Manifest V3). **Chrome 과 Safari(iOS 포함)를 같은 소스로 빌드한다.**
+광고 차단 확장 (Manifest V3). **Chrome · Edge 와 Orion(아이폰 포함)이 같은 zip 하나를 쓴다.**
 
 유튜브를 특별히 잘 막는다. 범용 차단기들이 유튜브에서 고전하는 이유는 유튜브 광고가
 광고망이 아니라 **본문과 같은 응답에 실려 오기 때문**인데, 여기서는 그 응답을 직접
@@ -50,7 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scrip
 2. 우측 상단 **개발자 모드** 켜기
 3. **압축해제된 확장 프로그램을 로드** → 위에서 찍어준 폴더 선택
 
-명령어를 쓰기 싫으면 [사이트](https://adbyepass.opencourse.kr)나
+명령어를 쓰기 싫으면 [사이트](https://jshsakura.github.io/oc-ad-bye-pass/)나
 [Releases](../../releases) 에서 zip 을 받아 직접 풀어도 된다. 단 **푼 폴더를 지우면
 확장이 죽는다** — 크롬이 그 폴더를 계속 참조한다. 다운로드 폴더에 풀지 말 것.
 
@@ -65,9 +65,22 @@ curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scrip
 코드가 바뀌었을 때는 **같은 명령을 다시 돌리고** `chrome://extensions` 에서 새로고침만
 누르면 된다. 경로가 그대로라 다시 로드할 필요가 없다.
 
-### Safari (macOS · iOS)
+### 아이폰 · 아이패드 (Orion)
 
-Safari 확장은 **앱으로 감싸야** 배포된다. 아래 "Safari / iOS" 절 참조.
+**아이폰에서 확장이 되는 브라우저는 Safari 와 [Orion](https://browser.kagi.com/) 둘뿐이고,
+Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 감쌀 필요도, 7일마다
+다시 서명할 일도 없다.
+
+1. App Store 에서 **Orion Browser by Kagi** 설치
+2. [Releases](../../releases/latest) 에서 `oc-ad-bye-pass.zip` 을 받는다
+3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
+4. `youtube.com` 권한 허용
+
+설치가 거절되면 `oc-ad-bye-pass-fallback.zip` 을 쓴다. Orion 은
+`declarativeNetRequest` 를 구현하지 않았고, 폴백 빌드는 그 키를 뺀 것이다 — 유튜브
+차단은 그대로고 다른 사이트의 **요청 차단**만 빠진다 (요소 숨김은 남는다).
+
+Safari 확장으로 감싸는 경로는 아래 "Safari / iOS" 절에 남아 있지만, **더는 쓰지 않는다.**
 
 업데이트는 두 갈래다.
 
@@ -236,8 +249,12 @@ import 하면 esbuild 가 모듈 경계를 넘어 인라인하지 못해서 Chro
 
 ```bash
 npm run build:all
-grep -c registerContentScripts dist/background.js   # 0 이어야 한다
+node scripts/verify-targets.mjs
 ```
+
+`__IS_SAFARI__` 로 지워지는 것은 **Safari 매니페스트 쪽**이다. 등록 경로 자체는 Chrome
+번들에도 남는다 — Orion 이 정적 `world` 를 무시할 때 1계층을 살리는 게 그 코드다.
+무엇이 어느 쪽에 남아야 하는지는 `scripts/verify-targets.mjs` 가 못 박고 있다.
 
 ### Xcode 프로젝트 만들기
 
@@ -254,41 +271,15 @@ grep -c registerContentScripts dist/background.js   # 0 이어야 한다
 secrets 가 없으면 1단계까지만 돌고 **성공으로 끝난다.** 그게 정상이다.
 필요한 secrets 목록은 워크플로 파일 맨 위에 적어뒀다.
 
-### 아이폰에 설치하기 — `adbyepass.opencourse.kr`
+### 아이폰 OTA 설치 — 폐기됨
 
-**iOS 는 확장을 웹에서 못 깐다.** 확장을 담은 앱을 깔아야 하고, 그 앱을 웹에서
-설치하는 유일한 길이 `itms-services://` OTA 다. OTA 는 HTTPS 를 요구한다 — 그
-종단이 [adbyepass.opencourse.kr](https://adbyepass.opencourse.kr) 이다.
+`scripts/ota-manifest.mjs`, `scripts/altstore-source.mjs`, `safari.yml` 의 서명 단계는
+확장을 **앱으로 감싸 아이폰에 얹는** 경로다. IPA 를 HTTPS 로 내려줄 호스트가 필요해서
+홈서버에 nginx 를 띄우고 `adbyepass.opencourse.kr` 을 물려뒀었다.
 
-```
-GitHub Actions (macos)          홈서버
-  dist-safari/                    /srv/compose/adbyepass     nginx :30130
-    → Xcode 변환                  ← deploy.sh 가 산출물 복사
-    → Ad Hoc 서명 → .ipa                    │
-    → artifact                     cloudflared 터널
-                                            │
-                              https://adbyepass.opencourse.kr
-                                   /ota/manifest.plist  ← 아이폰 사파리가 여는 것
-                                   /ota/*.ipa
-                                   /filters/youtube.json
-                                   /dl/*.zip
-```
-
-배포는 서버에서:
-
-```bash
-/srv/compose/adbyepass/deploy.sh     # 빌드 → 사이트로 복사
-gh run download -n safari-ios -D .   # IPA 를 받아왔다면 ota/ 에 풀고 다시 deploy.sh
-```
-
-**이 호스트에는 Cloudflare Access 를 걸면 안 된다.** OTA 설치는 Safari 가 아니라
-iOS 시스템이 받아가서 Access 쿠키를 안 들고 간다. 걸어두면 안내 페이지는 열리는데
-설치만 조용히 실패한다. 그래서 공개이고, 올라가는 것도 전부 공개해도 되는 것뿐이다
-(필터 리스트는 이미 GitHub 에 공개돼 있고, Ad Hoc IPA 는 등록된 UDID 에서만 실행된다).
-
-`manifest.plist` 는 `scripts/ota-manifest.mjs` 가 만든다. iOS 는 이게 틀리면
-"앱을 설치할 수 없습니다" 한 줄만 보여주고 이유를 안 알려주므로, 까다로운 조건 셋을
-그 파일 주석에 적어뒀다 (HTTPS · Content-Type · bundle-identifier 일치).
+**2026-08-11 에 접었다.** Orion 이 크롬 확장 zip 을 그대로 받으므로 앱도, 서명도,
+그걸 내려줄 서버도 필요가 없다. 그 호스트는 내렸고 사이트는 GitHub Pages 로 갔다.
+파일은 남겨두지만 아무 것도 이 경로를 타지 않는다.
 
 ### 알려진 제약
 
@@ -516,6 +507,32 @@ storage.sync                       Partial support ← 유일한 구멍
 
 지원 표를 못 받으면(네트워크·시트 이동) 검사는 실패가 아니라 건너뛴다 — 남의 인프라에
 우리 CI 를 묶어두지 않는다.
+
+## 배포 — 릴리스가 정본이다
+
+**사람들이 받는 것은 GitHub 릴리스에 붙은 zip 하나뿐이다.** 서버도, 손으로 돌리는
+배포 스크립트도 없다.
+
+```
+git tag v0.2.0 && git push --tags
+   → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
+       oc-ad-bye-pass.zip            Chrome · Edge · Orion
+       oc-ad-bye-pass-fallback.zip   declarativeNetRequest 를 뺀 빌드
+   → pages.yml     릴리스가 게시되면 사이트 푸터의 버전을 새 태그로 갱신
+```
+
+| 어디 | 무엇 |
+|---|---|
+| [Releases](../../releases/latest) | zip 정본. `releases/latest/download/<이름>.zip` 은 항상 최신으로 넘어간다 |
+| [사이트](https://jshsakura.github.io/oc-ad-bye-pass/) (`site/`) | 설치 안내. 다운로드 버튼은 위 주소를 가리킬 뿐 파일을 들고 있지 않다 |
+| `filters/youtube.json` | 규칙. 릴리스와 무관하게 갱신되고 확장이 알아서 받아간다 |
+
+**에셋 이름은 계약이다.** 사이트 버튼도 `install.sh`/`install.ps1` 도 그 이름을 박아
+쓴다. 바꾸면 전부 404 가 되고, 아무도 오류를 못 본다 — 그냥 다운로드가 안 될 뿐이다.
+
+이전에는 홈서버 nginx(`adbyepass.opencourse.kr`)에 `deploy.sh` 로 손수 복사했다.
+그러면 **커밋과 사이트가 맞는 게 우연**이라, 배포를 잊으면 옛 빌드가 조용히 계속
+나갔다. 그래서 릴리스 기반으로 옮겼다.
 
 ## 라이선스와 출처
 

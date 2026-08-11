@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # OC Ad Bye-Pass — macOS / Linux 설치 스크립트
 #
-#   curl -fsSL https://adbyepass.opencourse.kr/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash
 #
 # 하는 일: 최신 zip 을 받아 **고정된 위치**에 풀고, 크롬에 붙여넣을 경로를 찍어준다.
 #
@@ -13,8 +13,10 @@
 
 set -euo pipefail
 
-SITE="${OCABP_SITE:-https://adbyepass.opencourse.kr}"
-ZIP_URL="${OCABP_ZIP:-$SITE/dl/oc-ad-bye-pass.zip}"
+# The GitHub release is the distribution. `latest/download/<asset>` always
+# redirects to the newest release, so this URL never has to change — which is
+# also why the asset name in .github/workflows/release.yml must not.
+ZIP_URL="${OCABP_ZIP:-https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip}"
 
 case "$(uname -s)" in
   Darwin) DEFAULT_DIR="$HOME/Library/Application Support/OcAdByePass" ;;

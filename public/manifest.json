@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OC Ad Bye-Pass",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "광고 차단기. 유튜브는 응답 단계에서 광고를 막고, 다른 사이트는 광고망 요청을 차단합니다.",
   "minimum_chrome_version": "120",
   "icons": {

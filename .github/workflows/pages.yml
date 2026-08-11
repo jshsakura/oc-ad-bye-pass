@@ -1,0 +1,89 @@
+# Publishes site/ to GitHub Pages — https://jshsakura.github.io/oc-ad-bye-pass/
+#
+# The page is static and holds no build output. Its download buttons point at
+# `releases/latest/download/...`, so a new release changes what people get
+# without this workflow running at all.
+#
+# It still runs on `release: published`, for one reason: the footer names the
+# version, and a footer that says 0.2.0 while the button hands out 0.3.0 is
+# worse than no footer.
+#
+# What gets published:
+#   site/**              the page and its fonts
+#   filters/youtube.json so the list has a URL here too (the extension's default
+#                        is raw.githubusercontent.com; this is the alternative
+#                        offered on the page)
+#   build.json           footer data, generated below
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'filters/**'
+      - '.github/workflows/pages.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race. Do not cancel one in flight — a half-published
+# site is worse than a slightly late one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p _site/filters
+          cp -R site/. _site/
+          cp filters/youtube.json _site/filters/youtube.json
+
+          # The footer must name the release the buttons actually serve, not the
+          # working tree. Before the first release there is none — fall back to
+          # package.json rather than failing the deploy.
+          version=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
+          version=${version#v}
+          [ -n "$version" ] || version=$(node -p "require('./package.json').version")
+          echo "version = $version"
+
+          node -e '
+            const fs = require("fs");
+            const list = JSON.parse(fs.readFileSync("filters/youtube.json", "utf8"));
+            const pad = (n) => String(n).padStart(2, "0");
+            const d = new Date();
+            const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            fs.writeFileSync("_site/build.json", JSON.stringify({
+              version: process.argv[1],
+              filterVersion: list.version,
+              filterUpdatedAt: list.updatedAt || today,
+              builtAt: today,
+            }, null, 2) + "\n");
+          ' "$version"
+          cat _site/build.json
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

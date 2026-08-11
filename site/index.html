@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="유튜브 전용 광고 차단 확장 — Orion(iOS) · Chrome">
+<title>Ad Bye-Pass</title>
+<link rel="preload" href="fonts/zen-tokyo-zoo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path fill='%237e4dc5' d='M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z'/></svg>">
+
+<!-- 페인트 전에 테마를 정한다. 안 하면 다크로 저장해둔 사람에게 흰 화면이 한 번 번쩍인다. -->
+<script>
+  (() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') document.documentElement.dataset.theme = saved;
+  })();
+</script>
+
+<style>
+  /* Title face — Zen Tokyo Zoo (SIL OFL), fetched from Google and served by us.
+     Two files at 27KB total; cheap for one fewer external request. The
+     unicode-range is Google's verbatim, so only Latin picks this up and Hangul
+     falls through to the body font. */
+  @font-face {
+    font-family: 'Zen Tokyo Zoo';
+    font-style: normal; font-weight: 400; font-display: swap;
+    src: url('fonts/zen-tokyo-zoo-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Zen Tokyo Zoo';
+    font-style: normal; font-weight: 400; font-display: swap;
+    src: url('fonts/zen-tokyo-zoo-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
+  /* Catppuccin — Latte for light, Mocha for dark.
+     Gradients are never used to blend colour. repeating-linear-gradient draws
+     scanlines and radial-gradient draws the shadow-mask dots; both come out flat.
+     Depth is solid colour plus inset shadow, nothing else.
+
+     Three theme states — AUTO (follows the system) / LIGHT / DARK. Latte is the
+     base palette and Mocha overrides it in two places: when the system is dark
+     and the user has not pinned LIGHT, and when the user pinned DARK. */
+  :root {
+    --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+    --surface0: #ccd0da; --surface1: #bcc0cc;
+    --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85; --overlay0: #9ca0b0;
+
+    /* Purple is Orion's, not Catppuccin's. Everything else stays Catppuccin, but
+       taken from the deep end of each hue so white lettering sits on it safely. */
+    --pink: #b8519b; --mauve: #7e4dc5; --lavender: #6f56c9;
+    --red: #c8394f; --peach: #c96a1f; --yellow: #b8871f;
+    --green: #2f8f5a; --teal: #17827c; --blue: #3273d4;
+
+    --panel: #ffffff;
+    --on-accent: #ffffff;
+    /* On a light ground a fill colour also works as text. */
+    --mauve-ink: var(--mauve); --blue-ink: var(--blue); --green-ink: var(--green);
+    --peach-ink: var(--peach); --yellow-ink: var(--yellow); --pink-ink: var(--pink);
+    --teal-ink: var(--teal);
+
+    --dot: rgba(126, 77, 197, 0.14);
+    --scanline: rgba(76, 79, 105, 0.06);
+    --scanline-soft: rgba(76, 79, 105, 0.03);
+    --scanline-btn: rgba(0, 0, 0, 0.10);
+    --vignette: rgba(76, 79, 105, 0.05);
+
+    --accent: var(--mauve);
+    --font-title: 'Zen Tokyo Zoo', 'Press Start 2P', monospace;
+    --pixel: 'Press Start 2P', 'Noto Sans KR', monospace;
+    --body: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --base: #1e1e2e; --mantle: #181825; --crust: #11111b;
+      --surface0: #313244; --surface1: #45475a;
+      --text: #cdd6f4; --subtext1: #bac2de; --subtext0: #a6adc8; --overlay0: #6c7086;
+
+/* Same deep fills as light. Mocha's pastels washed the whole page out.
+         Panels sit on mantle instead of base so the surface stays dark. */
+      --pink: #b8519b; --mauve: #7e4dc5; --lavender: #9d6ee0;
+      --red: #c8394f; --peach: #c96a1f; --yellow: #b8871f;
+      --green: #2f8f5a; --teal: #17827c; --blue: #3273d4;
+
+      --panel: #181825;
+      --on-accent: #ffffff;
+      /* Against a dark ground those deep fills are unreadable as text, so ink takes
+         the light Catppuccin values. That is why fill and ink are separate tokens. */
+      --mauve-ink: #b18aee; --blue-ink: #89b4fa; --green-ink: #a6e3a1;
+      --peach-ink: #fab387; --yellow-ink: #f9e2af; --pink-ink: #f5c2e7;
+      --teal-ink: #94e2d5;
+
+      --dot: rgba(157, 110, 224, 0.20);
+      --scanline: rgba(0, 0, 0, 0.13);
+      --scanline-soft: rgba(0, 0, 0, 0.09);
+      --scanline-btn: rgba(0, 0, 0, 0.12);
+      --vignette: rgba(0, 0, 0, 0.40);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --base: #1e1e2e; --mantle: #181825; --crust: #11111b;
+    --surface0: #313244; --surface1: #45475a;
+    --text: #cdd6f4; --subtext1: #bac2de; --subtext0: #a6adc8; --overlay0: #6c7086;
+
+/* Same deep fills as light. Mocha's pastels washed the whole page out.
+       Panels sit on mantle instead of base so the surface stays dark. */
+    --pink: #b8519b; --mauve: #7e4dc5; --lavender: #9d6ee0;
+    --red: #c8394f; --peach: #c96a1f; --yellow: #b8871f;
+    --green: #2f8f5a; --teal: #17827c; --blue: #3273d4;
+
+    --panel: #181825;
+    --on-accent: #ffffff;
+    /* Against a dark ground those deep fills are unreadable as text, so ink takes
+       the light Catppuccin values. That is why fill and ink are separate tokens. */
+    --mauve-ink: #b18aee; --blue-ink: #89b4fa; --green-ink: #a6e3a1;
+    --peach-ink: #fab387; --yellow-ink: #f9e2af; --pink-ink: #f5c2e7;
+    --teal-ink: #94e2d5;
+
+    --dot: rgba(157, 110, 224, 0.20);
+    --scanline: rgba(0, 0, 0, 0.13);
+    --scanline-soft: rgba(0, 0, 0, 0.09);
+    --scanline-btn: rgba(0, 0, 0, 0.12);
+    --vignette: rgba(0, 0, 0, 0.40);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    background-color: var(--crust);
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--dot) 1.4px, transparent 0),
+      repeating-linear-gradient(0deg, var(--scanline) 0 1px, transparent 1px 3px);
+    background-size: 20px 20px, auto;
+    background-attachment: fixed, fixed;
+  }
+
+  body {
+    font-family: var(--body);
+    color: var(--text);
+    min-height: 100vh; min-height: 100dvh;
+    padding: 44px 18px calc(56px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    line-height: 1.75;
+  }
+
+  /* Scanlines live in the background layer only. An earlier body::before covered
+     the whole viewport, which ran the lines across the glyphs and made body text
+     hard to read. Behind the text the texture still shows and the glyphs render
+     at full contrast. */
+
+  .wrap { width: 100%; max-width: 620px; margin-inline: auto; position: relative; }
+
+  /* Theme switch */
+  .theme-toggle {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 12px); right: 12px;
+    z-index: 10000;
+    font-family: var(--pixel); font-size: 7px; line-height: 1;
+    padding: 9px 10px; cursor: pointer;
+    background-color: var(--panel);
+    background-image: repeating-linear-gradient(0deg, var(--scanline-soft) 0 1px, transparent 1px 3px);
+    color: var(--subtext0);
+    border: 1px solid var(--surface0);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--lavender); }
+  .theme-toggle svg { width: 11px; height: 11px; color: var(--yellow-ink); }
+
+  /* Header */
+  .hero { text-align: center; margin-bottom: 34px; }
+  .mark {
+    width: 76px; height: 76px; margin: 0 auto 20px;
+    background-color: var(--mauve);
+    background-image: repeating-linear-gradient(0deg, var(--scanline-btn) 0 1px, transparent 1px 3px);
+    border: 2px solid var(--lavender);
+    display: grid; place-items: center;
+  }
+  .mark svg { width: 40px; height: 40px; color: var(--on-accent); }
+  h1 {
+    font-family: var(--font-title);
+    font-size: 34px; line-height: 1.25; letter-spacing: 0.02em;
+    margin-bottom: 16px; color: var(--text);
+  }
+  h1 .t1 { color: var(--peach-ink); }
+  h1 .t2 { color: var(--mauve-ink); }
+
+  /* The quote types out here. The min-height matters — lines differ in length,
+     so without it everything below jumps every time the sentence changes. */
+  .quote {
+    max-width: 460px; margin: 0 auto 10px;
+    min-height: 3.4em;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quote p { color: var(--text); font-size: 15.5px; line-height: 1.7; }
+  .cursor {
+    display: inline-block; width: 0.55em; margin-left: 1px;
+    color: var(--teal-ink);
+    animation: blink 1.06s steps(1, end) infinite;
+  }
+  @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+  .quote-by {
+    font-family: var(--body); font-size: 15px; font-weight: 500; line-height: 1.6;
+    letter-spacing: 0.06em; color: var(--peach-ink);
+    min-height: 1.7em; margin-bottom: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; opacity: 1; } }
+
+  /* Cards are CRT panels. Each one carries its own accent so the page is not one
+     flat wash of purple — Orion mauve, Chrome blue, filters green. Everything
+     inside a card (icon, step numbers, buttons, the note's left rule) reads
+     --accent, so a card's colour is a single line to change. */
+  .card {
+    --accent: var(--mauve);
+    --ink: var(--mauve-ink);
+    background-color: var(--panel);
+    background-image: repeating-linear-gradient(0deg, var(--scanline-soft) 0 1px, transparent 1px 3px);
+    border: 1px solid var(--surface0);
+    border-radius: 16px;
+    padding: 26px 22px;
+    margin-bottom: 16px;
+    box-shadow: inset 0 0 34px var(--vignette);
+  }
+  .card.orion  { --accent: var(--mauve); --ink: var(--mauve-ink); border-color: var(--mauve); }
+  .card.chrome { --accent: var(--blue);  --ink: var(--blue-ink); }
+  .card.filter { --accent: var(--green); --ink: var(--green-ink); }
+
+  .card-head {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 12px; margin-bottom: 16px;
+    border-bottom: 1px solid var(--surface0);
+  }
+  .card-head svg { width: 20px; height: 20px; flex: none; color: var(--ink); }
+  h2 { font-family: var(--pixel); font-size: 11px; line-height: 1.6; color: var(--text); }
+  .chip {
+    margin-left: auto; font-family: var(--pixel); font-size: 7px; line-height: 1;
+    padding: 6px 8px; border-radius: 6px; white-space: nowrap;
+    background-color: var(--mantle); border: 1px solid var(--surface1); color: var(--green-ink);
+  }
+  .chip.beta { color: var(--yellow-ink); }
+  .lede { color: var(--subtext0); font-size: 14.5px; margin-bottom: 20px; }
+
+  /* Steps */
+  ol { list-style: none; counter-reset: s; }
+  ol li {
+    position: relative; padding-left: 38px; margin-bottom: 14px;
+    color: var(--subtext0); font-size: 14.5px;
+  }
+  ol li:last-child { margin-bottom: 0; }
+  ol li strong { color: var(--text); font-weight: 700; }
+  ol li::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 0; top: 3px; width: 24px; height: 24px;
+    display: grid; place-items: center;
+    font-family: var(--pixel); font-size: 8px;
+    color: var(--on-accent); background-color: var(--accent);
+  }
+
+  /* Buttons are physical keys. The scanline sits in the background layer, so the
+     lettering on top stays crisp. */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 14px 16px; margin-top: 16px;
+    font-family: var(--pixel); font-size: 9px; line-height: 1.6;
+    text-decoration: none; border: 2px solid var(--accent); border-radius: 10px;
+    background-color: var(--accent);
+    background-image: repeating-linear-gradient(0deg, var(--scanline-btn) 0 1px, transparent 1px 3px);
+    color: var(--on-accent);
+    transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .btn svg { width: 15px; height: 15px; }
+  .btn:hover { background-color: var(--lavender); border-color: var(--lavender); }
+  .btn-line {
+    background-color: var(--mantle); color: var(--text); border-color: var(--surface1);
+  }
+  .btn-line:hover { background-color: var(--mantle); border-color: var(--accent); color: var(--ink); }
+  .btn + .btn { margin-top: 9px; }
+
+  .note {
+    background-color: var(--mantle);
+    background-image: repeating-linear-gradient(0deg, var(--scanline-soft) 0 1px, transparent 1px 3px);
+    border: 1px solid var(--surface1);
+    border-radius: 12px;
+    padding: 15px 17px; margin-top: 18px;
+    box-shadow: inset 0 0 20px var(--vignette);
+  }
+  .note p { font-size: 13.5px; color: var(--subtext0); }
+  .note p + p { margin-top: 8px; }
+  .note strong { color: var(--text); }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px; padding: 2px 6px;
+    background-color: var(--surface0); color: var(--pink-ink);
+    border: 1px solid var(--surface1);
+    overflow-wrap: anywhere;
+  }
+
+  /* Body font, not the pixel one: the pixel face has no Hangul, so Korean fell
+     back to 8px and was effectively unreadable. */
+  .foot {
+    text-align: center; margin-top: 30px;
+    font-size: 12.5px; line-height: 1.9; color: var(--overlay0);
+  }
+  .foot b { color: var(--subtext0); font-weight: 600; }
+
+  .links {
+    display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;
+    margin-top: 20px;
+  }
+  .links a {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 14px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    color: var(--subtext0);
+    background-color: var(--mantle);
+    background-image: repeating-linear-gradient(0deg, var(--scanline-soft) 0 1px, transparent 1px 3px);
+    border: 1px solid var(--surface1);
+    transition: color .12s ease, border-color .12s ease;
+  }
+  .links a:hover { color: var(--mauve-ink); border-color: var(--mauve); }
+  .links svg { width: 15px; height: 15px; }
+
+  @media (max-width: 480px) {
+    body { padding: 30px 12px calc(40px + env(safe-area-inset-bottom)); }
+    .card { padding: 20px 16px; border-radius: 14px; }
+    h1 { font-size: 25px; }
+    h2 { font-size: 10px; }
+    .theme-toggle { font-size: 6px; padding: 8px 9px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="theme-toggle" type="button" aria-label="테마 전환">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+  </svg>
+  <span id="theme-label">AUTO</span>
+</button>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="mark">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path fill="#fff" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/>
+      </svg>
+    </div>
+    <h1><span class="t1">AD</span> <span class="t2">BYE-PASS</span></h1>
+    <div class="quote"><p><span id="quote-text"></span><span class="cursor" aria-hidden="true">▌</span></p></div>
+    <p class="quote-by" id="quote-by"></p>
+  </div>
+
+  <!-- ── iPhone / iPad ───────────────────────────────── -->
+  <div class="card orion">
+    <div class="card-head">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/>
+      </svg>
+      <h2>iPhone · iPad</h2>
+      <span class="chip beta">ORION BETA</span>
+    </div>
+    <p class="lede">아이폰에서 확장을 쓸 수 있는 브라우저는 Safari와 Orion, 이렇게 둘뿐이에요.<br>
+      Safari는 확장을 앱으로 감싸서 매주 다시 서명해야 하지만, <strong>Orion은 zip만 넣으면 바로 끝나고 기간 만료도 없습니다.</strong></p>
+
+    <ol>
+      <li>App Store에서 <strong>Orion Browser by Kagi</strong>를 설치해 주세요</li>
+      <li>아래 버튼으로 <strong>확장 zip</strong>을 내려받으세요</li>
+      <li>Orion 우측 하단 <strong>•••</strong> 을 눌러 <strong>Extensions</strong> 로 들어간 뒤 <strong>+</strong> 를 누르세요</li>
+      <li>받은 zip을 고르고, <code>youtube.com</code> 권한을 허용해 주세요</li>
+    </ol>
+
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      DOWNLOAD ZIP
+    </a>
+
+    <div class="note">
+      <p><strong>잘 되는지 확인하려면 영상을 하나 재생해 보세요.</strong><br>
+        재생이 시작될 때 광고가 안 붙으면 성공입니다.</p>
+      <p>피드에 뜨던 광고가 사라진 것만으로는 확인이 되지 않아요.<br>
+        그쪽은 다른 방식으로 막고 있어서 웬만하면 잘 되거든요.</p>
+      <p><strong>설치 자체가 안 되거나, 재생 광고가 그대로 나온다면</strong> 아래 <strong>폴백 빌드</strong>로 바꿔 끼워 보세요.</p>
+      <p>위 빌드에는 크롬용 네트워크 차단 규칙이 들어 있는데, Orion은 이 기능이 없어서
+        설치를 거절할 수 있어요. 폴백 빌드는 그 부분을 아예 빼고, 유튜브 차단을
+        다른 방법으로 거는 빌드입니다.</p>
+    </div>
+
+    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-fallback.zip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="m16 8-6 6-2 4 6-2 4-6-2-2Z"/></svg>
+      FALLBACK BUILD
+    </a>
+  </div>
+
+  <!-- ── Chrome ──────────────────────────────────────── -->
+  <div class="card chrome">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 8h9.5M8.5 14 3.8 6.2M15.5 14l-4.7 7.8"/></svg>
+      <h2>Chrome · Edge</h2>
+      <span class="chip">READY</span>
+    </div>
+    <p class="lede">데스크톱용입니다.<br>웹스토어를 거치지 않고, 압축을 푼 폴더를 직접 불러와서 씁니다.</p>
+
+    <ol>
+      <li>위에서 받은 <strong>확장 zip</strong>의 압축을 풀어 주세요 <span style="color:var(--overlay0)">(같은 파일입니다)</span></li>
+      <li>주소창에 <code>chrome://extensions</code> 를 입력하세요</li>
+      <li>우측 상단의 <strong>개발자 모드</strong>를 켜 주세요</li>
+      <li><strong>압축해제된 확장 프로그램을 로드</strong>를 누르고, 압축을 푼 폴더를 고르세요</li>
+    </ol>
+
+    <div class="note">
+      <p><strong>압축을 푼 폴더는 그대로 두셔야 합니다.</strong></p>
+      <p>크롬이 이 폴더를 계속 들여다보면서 확장을 돌리기 때문에, 폴더를 지우거나 다른 곳으로 옮기면 확장이 바로 멈춰요.</p>
+      <p>그래서 다운로드 폴더는 피하시는 게 좋습니다.<br>나중에 정리하다가 실수로 지우기 쉬운 자리라서요.</p>
+    </div>
+
+    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      DOWNLOAD ZIP
+    </a>
+  </div>
+
+  <!-- ── 필터 리스트 ─────────────────────────────────── -->
+  <div class="card filter">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></svg>
+      <h2>Filter List</h2>
+    </div>
+    <p class="lede">차단 규칙은 확장 코드와 따로 관리합니다.<br>
+      유튜브를 열 때 확장이 알아서 최신 규칙을 확인하니까, 규칙이 바뀌어도 다시 설치하실 필요가 없어요.</p>
+    <div class="note">
+      <p>확장 옵션의 <strong>리스트 주소</strong>에 아래 주소를 넣으시면, GitHub 대신 여기에서 규칙을 받아갑니다.</p>
+      <p><code>https://jshsakura.github.io/oc-ad-bye-pass/filters/youtube.json</code></p>
+    </div>
+    <a class="btn btn-line" href="filters/youtube.json">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      VIEW LIST
+    </a>
+  </div>
+
+  <p class="links">
+    <a href="https://github.com/jshsakura/oc-ad-bye-pass" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+      GitHub
+    </a>
+    <a href="https://opencourse.kr" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20Z"/></svg>
+      opencourse.kr
+    </a>
+  </p>
+
+  <p class="foot" id="build"></p>
+
+</div>
+
+<script>
+// ── 테마 ── AUTO → LIGHT → DARK 순환.
+// AUTO 는 data-theme 를 아예 지워서 prefers-color-scheme 에 맡긴다.
+(() => {
+  const ORDER = ['auto', 'light', 'dark'];
+  const root = document.documentElement;
+  const label = document.getElementById('theme-label');
+  const meta = document.createElement('meta');
+  meta.name = 'theme-color';
+  document.head.appendChild(meta);
+
+  let mode = localStorage.getItem('theme');
+  if (!ORDER.includes(mode)) mode = 'auto';
+
+  function apply() {
+    if (mode === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = mode;
+    label.textContent = mode.toUpperCase();
+    // 주소창 색을 실제 배경색에 맞춘다 (아이폰 상단이 튀지 않게)
+    meta.content = getComputedStyle(root).backgroundColor;
+  }
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    mode = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
+    if (mode === 'auto') localStorage.removeItem('theme');
+    else localStorage.setItem('theme', mode);
+    apply();
+  });
+
+  // AUTO 상태에서 시스템 설정이 바뀌면 따라간다
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (mode === 'auto') apply();
+  });
+
+  apply();
+})();
+
+// ── 명언 타이핑 ──
+// 광고 차단은 결국 상대의 수를 읽고 먼저 자리를 잡는 일이라, 병법이 잘 붙는다.
+(() => {
+  const QUOTES = [
+    ['적을 알고 나를 알면 백 번 싸워도 위태롭지 않다', '孫子 · 謀攻'],
+    ['싸우지 않고 적을 굴복시키는 것이 최상이다', '孫子 · 謀攻'],
+    ['최상의 병법은 적의 계략을 치는 것이다', '孫子 · 謀攻'],
+    ['백 번 싸워 백 번 이기는 것이 최선은 아니다', '孫子 · 謀攻'],
+    ['이기는 군대는 먼저 이겨놓고 나서 싸운다', '孫子 · 軍形'],
+    ['잘 지키는 자는 그 형태를 드러내지 않는다', '孫子 · 軍形'],
+    ['이길 수 없으면 지키고, 이길 수 있으면 친다', '孫子 · 軍形'],
+    ['먼저 질 수 없게 해놓고 적이 질 틈을 기다린다', '孫子 · 軍形'],
+    ['전쟁은 속임수다', '孫子 · 始計'],
+    ['대비 없는 곳을 치고, 뜻하지 않은 때에 나아간다', '孫子 · 始計'],
+    ['셈이 많은 쪽이 이기고 셈이 적은 쪽이 진다', '孫子 · 始計'],
+    ['전쟁은 나라의 큰일이니 살피지 않을 수 없다', '孫子 · 始計'],
+    ['병력의 형태는 물과 같아야 한다', '孫子 · 虛實'],
+    ['적을 끌어들이되 적에게 끌려가지 않는다', '孫子 · 虛實'],
+    ['먼저 전장에 이른 군대는 편안히 적을 기다린다', '孫子 · 虛實'],
+    ['빈 곳을 치면 막을 수 없다', '孫子 · 虛實'],
+    ['승리는 만들어낼 수 있다', '孫子 · 虛實'],
+    ['나는 드러나지 않고 적은 드러나게 한다', '孫子 · 虛實'],
+    ['기와 정, 둘뿐이나 그 변화는 다함이 없다', '孫子 · 兵勢'],
+    ['세를 타면 사람 싸우게 하기를 나무와 돌 굴리듯 한다', '孫子 · 兵勢'],
+    ['잘 싸우는 자는 세에서 구하고 사람을 탓하지 않는다', '孫子 · 兵勢'],
+    ['우회하는 길을 곧은 길로 만든다', '孫子 · 軍爭'],
+    ['적의 기를 빼앗고 장수의 마음을 빼앗는다', '孫子 · 軍爭'],
+    ['빠르기는 바람 같고 고요하기는 숲 같다', '孫子 · 軍爭'],
+    ['전쟁의 본질은 속도에 있다', '孫子 · 九地'],
+    ['죽을 땅에 던져진 뒤에야 살아난다', '孫子 · 九地'],
+    ['지형을 알고 싸우면 이긴다', '孫子 · 地形'],
+    ['병사를 아끼되 명령은 엄히 한다', '孫子 · 地形'],
+    ['졸속은 들었어도 교묘하게 오래 끄는 것은 못 보았다', '孫子 · 作戰'],
+    ['적의 것을 먹는 것이 내 것 스무 배에 맞먹는다', '孫子 · 作戰'],
+    ['안이 다스려지지 않으면 밖으로 나가 싸울 수 없다', '吳子 · 圖國'],
+    ['없는 데서 있는 것을 만들어낸다', '三十六計 · 無中生有'],
+    ['소리는 동쪽에서 내고 공격은 서쪽으로 한다', '三十六計 · 聲東擊西'],
+    ['가만히 앉아 지친 적을 기다린다', '三十六計 · 以逸待勞'],
+    ['남의 칼을 빌려 벤다', '三十六計 · 借刀殺人'],
+    ['위나라를 포위해 조나라를 구한다', '三十六計 · 圍魏救趙'],
+    ['올려보낸 뒤 사다리를 치운다', '三十六計 · 上屋抽梯'],
+    ['물러나는 것도 하나의 계책이다', '三十六計 · 走爲上'],
+    ['죽고자 하면 살고, 살고자 하면 죽는다', '李舜臣'],
+    ['신에게는 아직 열두 척의 배가 남아 있습니다', '李舜臣'],
+    ['고요함으로 몸을 닦고 검소함으로 덕을 기른다', '諸葛亮 · 誡子書'],
+    ['담박하지 않으면 뜻을 밝힐 수 없다', '諸葛亮 · 誡子書'],
+    ['천 일의 연습을 단이라 하고 만 일의 연습을 련이라 한다', '宮本武蔵 · 五輪書'],
+    ['상대의 박자를 알고 내 박자로 바꾼다', '宮本武蔵 · 五輪書'],
+    ['무엇에도 집착하지 않는다', '宮本武蔵 · 独行道'],
+    ['전쟁은 다른 수단으로 이어지는 정치다', '클라우제비츠 · 전쟁론'],
+    ['전쟁에서 모든 것은 단순하다. 그 단순한 것이 어렵다', '클라우제비츠 · 전쟁론'],
+    ['방어는 더 강한 형태의 전투다', '클라우제비츠 · 전쟁론'],
+    ['어떤 계획도 적과 마주치는 순간을 넘기지 못한다', '몰트케'],
+    ['적이 실수하는 중이라면 방해하지 마라', '나폴레옹'],
+    ['좋은 계획을 지금 하는 것이 완벽한 계획을 다음 주에 하는 것보다 낫다', '패튼'],
+    ['고정된 요새는 인간의 어리석음을 보여주는 기념비다', '패튼'],
+    ['길을 찾아내거나, 길을 만들 것이다', '한니발'],
+  ];
+
+  // 매번 같은 순서면 자주 오는 사람에게 금방 티가 난다. 한 바퀴 돌 때마다 섞는다.
+  const order = QUOTES.map((_, n) => n);
+  function shuffle() {
+    for (let n = order.length - 1; n > 0; n--) {
+      const m = Math.floor(Math.random() * (n + 1));
+      [order[n], order[m]] = [order[m], order[n]];
+    }
+  }
+  shuffle();
+
+  const text = document.getElementById('quote-text');
+  const by = document.getElementById('quote-by');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i = 0;
+
+  // 움직임을 줄여달라고 한 사람에게는 타이핑 없이 문장만 바꿔준다
+  if (still) {
+    const show = () => {
+      const [q, src] = QUOTES[order[i]];
+      text.textContent = q;
+      by.textContent = src;
+      i = (i + 1) % QUOTES.length;
+      if (i === 0) shuffle();
+    };
+    show();
+    setInterval(show, 6000);
+    return;
+  }
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function run() {
+    for (;;) {
+      const [q, src] = QUOTES[order[i]];
+      by.textContent = '';
+      for (let n = 1; n <= q.length; n++) {
+        text.textContent = q.slice(0, n);
+        await sleep(58);
+      }
+      by.textContent = src;
+      await sleep(2900);
+      // 지우는 동안에도 출처는 남겨둔다. 다음 문장을 치기 시작할 때 비운다.
+      for (let n = q.length; n >= 0; n--) {
+        text.textContent = q.slice(0, n);
+        await sleep(24);
+      }
+      await sleep(320);
+      i = (i + 1) % QUOTES.length;
+      if (i === 0) shuffle();
+    }
+  }
+  run();
+})();
+
+fetch('build.json', { cache: 'no-store' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((b) => {
+    if (!b) return;
+    // Two dates, and they mean different things: the rules move on their own
+    // schedule, the site only changes when it is redeployed. Labelling them
+    // separately keeps "last updated" from being a guess.
+    document.getElementById('build').innerHTML =
+      `차단 규칙 <b>v${b.filterVersion}</b> · ${b.filterUpdatedAt ?? b.builtAt} 갱신` +
+      `<br>확장 v${b.version} · 이 페이지 ${b.builtAt} 배포`;
+  })
+  .catch(() => {});
+</script>
+</body>
+</html>

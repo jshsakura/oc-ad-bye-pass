@@ -1,6 +1,6 @@
 # OC Ad Bye-Pass — Windows 설치 스크립트
 #
-#   irm https://adbyepass.opencourse.kr/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex
 #
 # 하는 일: 최신 zip 을 받아 **고정된 위치**에 풀고, 크롬에 붙여넣을 경로를 찍어준다.
 # 폴더도 탐색기로 열어준다 — 경로를 손으로 옮겨 적을 필요가 없다.
@@ -13,8 +13,8 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Site   = if ($env:OCABP_SITE) { $env:OCABP_SITE } else { 'https://adbyepass.opencourse.kr' }
-$ZipUrl = if ($env:OCABP_ZIP)  { $env:OCABP_ZIP }  else { "$Site/dl/oc-ad-bye-pass.zip" }
+# The GitHub release is the distribution — see the comment in install.sh.
+$ZipUrl = if ($env:OCABP_ZIP)  { $env:OCABP_ZIP }  else { 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass.zip' }
 $Target = if ($env:OCABP_DIR)  { $env:OCABP_DIR }  else { Join-Path $env:LOCALAPPDATA 'OcAdByePass' }
 
 $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ocabp-" + [System.Guid]::NewGuid().ToString('N'))
