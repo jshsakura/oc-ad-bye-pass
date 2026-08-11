@@ -14,6 +14,7 @@ export const TOGGLE_KEYS = [
   'genericAds',
   'backgroundPlay',
   'pictureInPicture',
+  'leaveFloating',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -54,6 +55,15 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // visibility changes that. What this does defeat is the page pausing
     // itself, which is what happens on a tab switch, on desktop and on Android.
     hint: '페이지가 스스로 멈추는 것을 막습니다 (아이폰에서 홈으로 나갈 때는 PiP 쪽)',
+  },
+  {
+    key: 'leaveFloating',
+    label: '나갈 때 작은 창으로',
+    // The honest description of a workaround. Nothing can float a video at the
+    // moment the app goes away — WebKit wants a user gesture and there is none
+    // then — but iOS floats a *fullscreen* video by itself. So the fullscreen is
+    // arranged earlier, on a tap the user was making anyway.
+    hint: '플레이어를 한 번 누르면 전체화면으로 넘겨 둡니다 (iOS 설정의 "자동으로 PiP 시작" 필요)',
   },
   {
     key: 'pictureInPicture',
@@ -107,6 +117,9 @@ export const DEFAULT_SETTINGS: Settings = {
     // does both is the one with the ads in it.
     backgroundPlay: true,
     pictureInPicture: true,
+    // Off by default: it changes how a video is watched, not what is shown, and
+    // the person who wants it is the person who will turn it on.
+    leaveFloating: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

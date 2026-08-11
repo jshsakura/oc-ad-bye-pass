@@ -765,6 +765,111 @@ function resumeAfterRestore(video: WebkitVideo): void {
   setTimeout(tick, 120)
 }
 
+// --- Arming for the moment there is no gesture ------------------------------
+//
+// Nothing can float a video as the app goes away: WebKit needs user activation
+// for both picture-in-picture and fullscreen, and a visibilitychange handler has
+// none. Measured, argued, and not going to change.
+//
+// What iOS does do by itself is float a video that is *already fullscreen* when
+// you leave. That needs no gesture at the leaving moment — the gesture is spent
+// earlier, on a tap the user was making anyway.
+//
+// So this listens for the tap that starts the watching, in the capture phase so
+// YouTube's own handlers cannot swallow it, and spends it on fullscreen. From
+// there the system does the part we cannot.
+
+let armed = false
+let armedVideo: WebkitVideo | null = null
+
+/**
+ * Should this tap be spent on fullscreen?
+ *
+ * Its own function because it is the whole of the feature's judgement and none
+ * of it can be exercised in a browser here: the call it guards is
+ * webkit-prefixed, so Chromium never reaches it, and a stub cannot be planted
+ * from a test page — expandos on a DOM element do not cross into the extension's
+ * world. tests/auto-pip.test.ts covers it instead.
+ */
+export function shouldArm(state: {
+  armed: boolean
+  hasApi: boolean
+  paused: boolean
+  ended: boolean
+  mode: string | undefined
+}): boolean {
+  if (state.armed) return false
+  if (!state.hasApi) return false
+  // A paused player means the tap was meant to start playback. Throwing someone
+  // into fullscreen for that is the extension taking over their tap.
+  if (state.paused || state.ended) return false
+  // Already out of the inline box, by their doing or ours — nothing to arrange.
+  if (state.mode !== undefined && state.mode !== 'inline') return false
+  return true
+}
+
+function onPlayerTap(event: Event): void {
+  const target = event.target
+  // Our own button has its own job; a tap on it is not an arming tap.
+  if (target instanceof Element && target.closest(`#${BUTTON_ID}`)) return
+
+  const video = playerVideo()
+  if (!video) return
+  if (video !== armedVideo) {
+    armed = false
+    armedVideo = video
+  }
+  if (
+    !shouldArm({
+      armed,
+      hasApi: typeof video.webkitSetPresentationMode === 'function',
+      paused: video.paused,
+      ended: video.ended,
+      mode: video.webkitPresentationMode,
+    })
+  ) {
+    // Out of the inline box already counts as arranged — do not keep asking.
+    if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') armed = true
+    return
+  }
+
+  armed = true
+  engagedByUs = true
+  engagedAt = Date.now()
+  try {
+    // shouldArm has already established this exists; TypeScript cannot see that
+    // across the call, and a second check here would read as doubt about it.
+    video.webkitSetPresentationMode?.('fullscreen')
+    log('나갈 준비: 전체화면으로 넘김')
+    toast('전체화면으로 넘겼습니다 — 이대로 나가시면 작은 창이 됩니다')
+  } catch (e) {
+    armed = false
+    log(`나갈 준비 실패: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
+/** Tap-ish events, in capture, because YouTube stops some of its own. */
+function armingSignals(): [EventTarget, string][] {
+  return [
+    [document, 'pointerup'],
+    [document, 'touchend'],
+    [document, 'click'],
+  ]
+}
+
+export function enableLeaveFloating(): void {
+  for (const [target, event] of armingSignals()) {
+    target.removeEventListener(event, onPlayerTap, true)
+    target.addEventListener(event, onPlayerTap, true)
+  }
+}
+
+export function disableLeaveFloating(): void {
+  for (const [target, event] of armingSignals()) target.removeEventListener(event, onPlayerTap, true)
+  armed = false
+  armedVideo = null
+}
+
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(): void {
   sweep()

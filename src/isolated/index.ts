@@ -24,7 +24,12 @@ import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { reportDiagnostics } from './diagnostics.ts'
 import { bindMediaSession, unbindMediaSession } from './mediaSession.ts'
-import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
+import {
+  disableLeaveFloating,
+  disablePictureInPicture,
+  enableLeaveFloating,
+  enablePictureInPicture,
+} from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
@@ -100,6 +105,10 @@ function recompute(cache: FilterCache | null) {
     // PiP adds a control rather than removing one, so it only runs when asked.
     if (settings.toggles.pictureInPicture) enablePictureInPicture()
     else disablePictureInPicture()
+
+    // Spends a tap the user is making anyway on the state iOS floats from.
+    if (settings.toggles.leaveFloating) enableLeaveFloating()
+    else disableLeaveFloating()
 
     // The transport controls are the way back once iOS has stopped the page.
     // Bound under the same setting as background playback, since that is the
