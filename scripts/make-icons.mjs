@@ -71,6 +71,7 @@ function encodePng(width, height, rgba) {
 const TILE = [126, 77, 197] // #7e4dc5 — mauve, the site's accent
 const SHIELD = [24, 24, 37] // #181825 — the site's panel colour
 const PEACH = [250, 179, 135] // #fab387
+const WHITE = [255, 255, 255]
 
 /** Signed distance to a rounded square centred on the tile. Negative inside. */
 function roundedSquare(x, y, half, radius) {
@@ -125,15 +126,20 @@ function sample(x, y, size) {
   // The shield's centre of mass sits above its point, so the spark is placed
   // there rather than at the middle of the tile — centred on the tile it looks
   // like it is sliding out of the bottom.
-  const CENTRE = 0.46
+  const CENTRE = 0.45
 
   // At 16px three tones inside sixteen pixels is one too many, and the shield's
   // taper is two pixels wide. That size keeps the spark alone: it is the part
   // that has to be recognisable in a toolbar.
-  if (size <= 16) return inSpark(x, y, 0.5, 0.42, 0.62) ? PEACH : TILE
+  if (size <= 16) return inSpark(x, y, 0.5, 0.42, 0.58) ? PEACH : TILE
 
-  if (!inShield(x, y, 0.14, 0.88, 0.33)) return TILE
-  return inSpark(x, y, CENTRE, 0.19, 0.62) ? PEACH : SHIELD
+  if (!inShield(x, y, 0.155, 0.87, 0.29)) return TILE
+  if (!inSpark(x, y, CENTRE, 0.215, 0.55)) return SHIELD
+  // A white core inside the peach, which is what the reference render had and
+  // what stops the spark reading as a flat blob at 128. Two tones inside one
+  // small shape is exactly what 16px cannot hold, which is why that size takes
+  // the branch above.
+  return inSpark(x, y, CENTRE, 0.115, 0.55) ? WHITE : PEACH
 }
 
 function render(size) {
