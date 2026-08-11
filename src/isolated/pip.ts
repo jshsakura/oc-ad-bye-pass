@@ -46,7 +46,12 @@ function playerVideo(): WebkitVideo | null {
 function canPip(video: WebkitVideo): boolean {
   return (
     typeof video.webkitSetPresentationMode === 'function' ||
-    typeof video.requestPictureInPicture === 'function'
+    typeof video.requestPictureInPicture === 'function' ||
+    // The fullscreen fallback counts. enterPip() ends there when the other two
+    // are missing, and a browser where only this exists is a browser where the
+    // button still takes you somewhere — refusing to draw it would strand the
+    // one case the fallback was written for.
+    typeof video.webkitEnterFullscreen === 'function'
   )
 }
 

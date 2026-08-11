@@ -15,6 +15,8 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test as base, webkit } from '@playwright/test'
+import { buildStylesheet, resolveRules } from '../src/shared/filterlist.ts'
+import { DEFAULT_SETTINGS } from '../src/shared/settings.ts'
 
 const test = base.extend<{ wk: import('@playwright/test').Page }>({
   wk: async ({}, use) => {
@@ -191,4 +193,54 @@ test('사이트가 WebKit 에서 오류 없이 뜨고, 브라우저 언어를 �
     await browser.close()
     server.close()
   }
+})
+
+test('2계층 스타일시트가 WebKit 에서 실제로 광고를 숨긴다', async ({ wk }) => {
+  // Orion 에는 네트워크 차단이 없다. 그래서 유튜브 밖에서 광고를 가리는 일은
+  // 전부 이 스타일시트 한 장에 달려 있고, 그 셀렉터들은 :has() 같은 최신 문법을
+  // 쓴다 — 크로미움이 이해한다고 WebKit 이 이해한다는 보장이 없다. 하나라도
+  // 버려지면 그 규칙만 조용히 죽는다.
+  const css = buildStylesheet(resolveRules(null, []), DEFAULT_SETTINGS.toggles, 'youtube')
+  expect(css, '스타일시트가 비어 있다').not.toBe('')
+
+  const result = await wk.evaluate((sheet) => {
+    document.body.innerHTML = `
+      <ytd-display-ad-renderer id="ad-card">광고</ytd-display-ad-renderer>
+      <ytd-rich-item-renderer id="normal-card">평범한 영상</ytd-rich-item-renderer>
+      <div id="masthead-ad">배너</div>
+      <ytd-reel-video-renderer id="shorts-ad"><ytd-ad-slot-renderer></ytd-ad-slot-renderer></ytd-reel-video-renderer>
+      <ytd-reel-video-renderer id="shorts-normal"><span>쇼츠</span></ytd-reel-video-renderer>`
+
+    const style = document.createElement('style')
+    style.textContent = sheet
+    document.head.appendChild(style)
+
+    // 브라우저가 버린 규칙은 cssRules 에 들어오지 않는다. 몇 개나 살아남았는지
+    // 세어 두면, 문법을 못 알아들어 통째로 사라지는 경우를 잡을 수 있다.
+    const total = sheet.split('\n').length
+    const parsed = (style.sheet as CSSStyleSheet).cssRules.length
+
+    const hidden = (id: string) => getComputedStyle(document.getElementById(id)!).display === 'none'
+    return {
+      total,
+      parsed,
+      adCard: hidden('ad-card'),
+      masthead: hidden('masthead-ad'),
+      shortsAd: hidden('shorts-ad'),
+      normalCard: hidden('normal-card'),
+      shortsNormal: hidden('shorts-normal'),
+    }
+  }, css)
+
+  // 문법을 못 알아들어 버려진 규칙이 있는지 — 몇 개가 사라졌는지 그대로 드러난다.
+  expect(result.parsed, `규칙 ${result.total}개 중 ${result.parsed}개만 남았다`).toBe(result.total)
+
+  expect(result.adCard, '광고 카드가 그대로 보인다').toBe(true)
+  expect(result.masthead, '상단 배너가 그대로 보인다').toBe(true)
+  // :has() 짜리 — WebKit 16.4 부터다. 여기서 깨지면 Shorts 광고가 샌다.
+  expect(result.shortsAd, ':has() 규칙이 먹지 않았다 — Shorts 광고가 샌다').toBe(true)
+
+  // 그리고 멀쩡한 것을 지우지 않아야 한다. 피드가 통째로 사라지는 실패가 여기다.
+  expect(result.normalCard, '평범한 카드까지 숨겼다').toBe(false)
+  expect(result.shortsNormal, '광고 없는 Shorts 까지 숨겼다').toBe(false)
 })
