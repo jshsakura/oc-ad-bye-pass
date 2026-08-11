@@ -41,12 +41,30 @@ const PRESENTATION_SETTLE_MS = 900
 let observer: MutationObserver | null = null
 
 /**
+ * Whether the current fullscreen/PiP was our doing.
+ *
+ * It decides whether coming back should undo it. Someone who went fullscreen
+ * themselves, left, and came back expects to still be in fullscreen — pulling
+ * them out would be the extension overruling them.
+ */
+let engagedByUs = false
+
+/**
  * Everything that can mean "the user is leaving". They overlap on purpose.
  *
  * A function rather than a constant because this module is imported by a unit
  * test in node, where `document` does not exist — and a module that cannot be
  * imported outside a browser cannot have its logic tested outside one.
  */
+function returningSignals(): [EventTarget, string][] {
+  return [
+    [document, 'visibilitychange'],
+    [window, 'pageshow'],
+    [window, 'focus'],
+    [document, 'resume'],
+  ]
+}
+
 function leavingSignals(): [EventTarget, string][] {
   return [
     [document, 'visibilitychange'],
@@ -226,6 +244,18 @@ function sweep(): void {
 
 const AUTO_ATTR = 'data-oc-abp-autopip'
 
+export function shouldRestoreInline(state: {
+  visible: boolean
+  engagedByUs: boolean
+  mode: string | undefined
+}): boolean {
+  // Only on the way back, only what we started, and only if it is still in the
+  // mode we put it in.
+  if (!state.visible) return false
+  if (!state.engagedByUs) return false
+  return state.mode === 'fullscreen' || state.mode === 'picture-in-picture'
+}
+
 export function shouldAutoPip(state: {
   hidden: boolean
   video: { paused: boolean; ended: boolean } | null
@@ -261,12 +291,14 @@ function attemptSync(video: WebkitVideo): boolean {
       if (video.webkitPresentationMode === 'inline') {
         video.webkitSetPresentationMode('fullscreen')
       }
+      engagedByUs = true
       return true
     }
     if (typeof video.requestPictureInPicture === 'function') {
       // Fires the request now; its promise settles later, which is fine — the
       // browser has already been told.
       void video.requestPictureInPicture().catch(() => {})
+      engagedByUs = true
       return true
     }
   } catch {
@@ -320,14 +352,44 @@ function onLeaving(): void {
   }, 350)
 }
 
+/**
+ * Put it back the way it was.
+ *
+ * Coming back from the home screen with the video in a floating window, or
+ * still fullscreen because iOS never floated it, the natural thing is the page
+ * as you left it. So the video goes back inline — but only if we are the ones
+ * who moved it.
+ */
+function onReturning(): void {
+  const video = playerVideo()
+  if (!video) return
+  if (!shouldRestoreInline({
+    visible: !document.hidden,
+    engagedByUs,
+    mode: video.webkitPresentationMode,
+  })) {
+    return
+  }
+  engagedByUs = false
+  try {
+    video.webkitSetPresentationMode?.('inline')
+  } catch {
+    // Refused — leave it where it is rather than fight the browser for it.
+  }
+}
+
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(): void {
   sweep()
   for (const [target, event] of leavingSignals()) {
-    target.removeEventListener(event, onLeaving)
+    target.removeEventListener(event, onLeaving, true)
     // Capture phase: the page's own handlers can call stopPropagation, and on
     // YouTube some of them do.
     target.addEventListener(event, onLeaving, true)
+  }
+  for (const [target, event] of returningSignals()) {
+    target.removeEventListener(event, onReturning, true)
+    target.addEventListener(event, onReturning, true)
   }
   if (observer) return
   // YouTube replaces the player wholesale on navigation, taking the button with
@@ -349,6 +411,8 @@ export function disablePictureInPicture(): void {
   observer?.disconnect()
   observer = null
   for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)
+  for (const [target, event] of returningSignals()) target.removeEventListener(event, onReturning, true)
+  engagedByUs = false
   document.documentElement.removeAttribute(AUTO_ATTR)
   document.getElementById(BUTTON_ID)?.remove()
 }

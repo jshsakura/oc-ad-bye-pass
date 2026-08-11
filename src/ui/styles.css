@@ -30,6 +30,10 @@
 
 body {
   margin: 0;
+  /* The width a desktop popup opens at — a popup has no window to fill, so its
+     document decides. On a phone this is under the sheet's width and does
+     nothing. */
+  min-width: 320px;
   background: var(--bg);
   color: var(--fg);
   font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif;
@@ -64,12 +68,13 @@ a {
 }
 
 .popup {
-  /* No fixed width. 320px is the panel a desktop browser hangs off its toolbar
-     button, and a phone's popup is a full-width sheet — pinned at 320 it leaves
-     a strip of empty sheet down one side, which is what it did.
-     min-width drives the size in Chrome, where the popup is sized by its
-     content; on the sheet the block simply fills it. */
-  min-width: 320px;
+  /* Fluid. The panel takes whatever it is given and centres itself past a
+     comfortable reading width.
+     What sets "whatever it is given" differs by browser: a desktop popup is
+     sized by its document, so body's min-width below decides it there; a phone
+     opens the popup as a full-width sheet, and the sheet decides. Neither needs
+     a number here. */
+  width: 100%;
   max-width: 560px;
   margin-inline: auto;
 }

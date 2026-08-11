@@ -33,3 +33,30 @@ test('멈춰 있는 영상은 넘기지 않는다', () => {
 test('끝난 영상도 넘기지 않는다', () => {
   assert.equal(shouldAutoPip({ hidden: true, video: { paused: false, ended: true } }), false)
 })
+
+// 돌아왔을 때 되돌릴지 — 나갈 때만큼이나 조심할 곳이다. 사용자가 스스로 전체화면으로
+// 본 것을 확장이 멋대로 접으면 그건 기능이 아니라 훼방이다.
+import { shouldRestoreInline } from '../src/isolated/pip.ts'
+
+test('우리가 넘긴 것만 되돌린다', () => {
+  assert.equal(
+    shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'picture-in-picture' }),
+    true,
+  )
+  assert.equal(shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'fullscreen' }), true)
+})
+
+test('사용자가 직접 전체화면으로 본 것은 건드리지 않는다', () => {
+  assert.equal(shouldRestoreInline({ visible: true, engagedByUs: false, mode: 'fullscreen' }), false)
+})
+
+test('아직 안 돌아왔으면 되돌리지 않는다', () => {
+  assert.equal(
+    shouldRestoreInline({ visible: false, engagedByUs: true, mode: 'picture-in-picture' }),
+    false,
+  )
+})
+
+test('이미 인라인이면 할 일이 없다', () => {
+  assert.equal(shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'inline' }), false)
+})
