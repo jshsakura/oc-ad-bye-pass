@@ -236,9 +236,13 @@
   /* The quote types out here. The min-height matters — lines differ in length,
      so without it everything below jumps every time the sentence changes. */
   .quote {
-    max-width: 460px; margin: 0 auto 10px;
+    max-width: 460px; margin: 0 auto 4px;
     min-height: 3.4em;
-    display: flex; align-items: center; justify-content: center;
+    /* Two lines' worth of height, reserved so the page does not jump when the
+       sentence changes. Bottom-aligned, not centred: a one-line quote otherwise
+       floats in the middle of that box and leaves a gap between it and the name
+       it belongs to. The slack goes above instead, where the hero has room. */
+    display: flex; align-items: flex-end; justify-content: center;
   }
   .quote p { color: var(--text); font-size: 15.5px; line-height: 1.7; }
   .cursor {
