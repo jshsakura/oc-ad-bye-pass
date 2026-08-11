@@ -22,6 +22,7 @@ import {
 } from '../shared/settings.ts'
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
+import { enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
@@ -90,6 +91,8 @@ function recompute(cache: FilterCache | null) {
     // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
     else stopWatchingAppBannerHints()
+
+    enablePictureInPicture()
   }
 
   sweep()
