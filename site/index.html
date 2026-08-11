@@ -99,6 +99,7 @@
     --scanline-soft: rgba(76, 79, 105, 0.03);
     --scanline-btn: rgba(0, 0, 0, 0.10);
     --vignette: rgba(76, 79, 105, 0.05);
+    --band: rgba(126, 77, 197, 0.055);
 
     --accent: var(--mauve);
     --font-title: 'Zen Tokyo Zoo', 'Press Start 2P', monospace;
@@ -131,6 +132,8 @@
       --scanline-soft: rgba(0, 0, 0, 0.09);
       --scanline-btn: rgba(0, 0, 0, 0.12);
       --vignette: rgba(0, 0, 0, 0.40);
+      --band: rgba(157, 110, 224, 0.075);
+      --halo: 0.10;
     }
   }
 
@@ -158,6 +161,8 @@
     --scanline-soft: rgba(0, 0, 0, 0.09);
     --scanline-btn: rgba(0, 0, 0, 0.12);
     --vignette: rgba(0, 0, 0, 0.40);
+    --band: rgba(157, 110, 224, 0.075);
+    --halo: 0.10;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -206,14 +211,20 @@
 
   /* Header */
   .hero { text-align: center; margin-bottom: 34px; }
+  /* Same shape as the favicon and the share card: a white app-icon tile with the
+     mark inside. It used to be a purple tile with a white mark — the inverse of
+     both — so the three pictures of this project disagreed. */
   .mark {
     width: 76px; height: 76px; margin: 0 auto 20px;
-    background-color: var(--mauve);
-    background-image: repeating-linear-gradient(0deg, var(--scanline-btn) 0 1px, transparent 1px 3px);
-    border: 2px solid var(--lavender);
+    border-radius: 18px;
+    /* No scanlines on this one. An app icon is a flat surface, and the texture
+       over white read as a printing fault. */
+    background-color: #fff;
+    border: none;
+    box-shadow: 0 14px 34px -14px var(--mauve);
     display: grid; place-items: center;
   }
-  .mark svg { width: 40px; height: 40px; color: var(--on-accent); }
+  .mark svg { width: 44px; height: 44px; color: var(--mauve); }
   h1 {
     font-family: var(--font-title);
     font-size: 34px; line-height: 1.25; letter-spacing: 0.02em;
@@ -460,19 +471,18 @@
   h1 { animation: glitch 620ms steps(2, end) 720ms 1 both; }
   h1:hover { animation: glitch 520ms steps(2, end) 1; }
 
-  /* Cards arrive as they are scrolled to. The stagger is per card, set from JS
-     as --i, so the three of them cascade instead of snapping in together. */
-  .card {
-    opacity: 0;
-    transform: translateY(22px);
-    transition:
-      opacity 520ms ease,
-      transform 520ms cubic-bezier(0.2, 0.8, 0.3, 1),
-      border-color 160ms ease,
-      box-shadow 220ms ease;
-    transition-delay: calc(var(--i, 0) * 90ms), calc(var(--i, 0) * 90ms), 0s, 0s;
-  }
-  .card.in { opacity: 1; transform: none; }
+  /* Cards are simply there. A scroll reveal was tried and removed: on a page
+     this short most of it is visible at once, so the effect was a blank panel
+     that filled in a beat late — it read as the page still loading. The motion
+     that stayed is in the background, where nothing waits on it. */
+  .card { transition: border-color 160ms ease, box-shadow 220ms ease; }
+
+  /* The scanline texture crawls across the panels themselves. One 3px period per
+     loop, so there is no seam. This is the layer you actually notice on a phone:
+     the cards cover the background, so the background alone cannot carry it. */
+  @keyframes crawl { to { background-position: 0 -3px; } }
+  .card, .note, .theme-toggle, .links a { animation: crawl 7s linear infinite; }
+  .btn { animation: crawl 5s linear infinite; }
   /* Hover lifts the panel off the board and lights its own accent. Pointer-only:
      on a phone :hover sticks after a tap and the card would stay lit. */
   @media (hover: hover) {
@@ -500,12 +510,51 @@
   .btn:hover svg { transform: translateY(2px); }
   .btn-line:hover svg { transform: none; }
 
-  /* Step numbers pop as the card lands. */
-  @keyframes step-in { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .card.in ol li::before { animation: step-in 340ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
-  .card.in ol li:nth-child(2)::before { animation-delay: 70ms; }
-  .card.in ol li:nth-child(3)::before { animation-delay: 140ms; }
-  .card.in ol li:nth-child(4)::before { animation-delay: 210ms; }
+  /* ── The background is what moves ────────────────────────────────────────
+     Three layers, none of which the reader has to wait for, all of them cheap:
+     only background-position, transform and opacity are animated. */
+
+  /* 1. The dot grid drifts diagonally and the scanlines crawl upward, each by
+        exactly one tile (20px and 3px), so both loops are seamless. The scanline
+        crawl is the one that reads as a live signal rather than a picture. */
+  @keyframes texture { to { background-position: 20px 20px, 0 -3px; } }
+  html { animation: texture 9s linear infinite; }
+
+  /* 2. A refresh band crosses the screen, the way a CRT photographs. Fixed, so
+        it sweeps the viewport rather than the document, and faint enough that
+        text under it stays at full contrast. */
+  @keyframes band { from { transform: translateY(-40vh); } to { transform: translateY(140vh); } }
+  body::after {
+    /* Over the content, not behind it. Behind, the cards cover the whole width
+       on a phone and the band is never seen. A real CRT band passes across
+       whatever is on the screen anyway. */
+    content: ''; position: fixed; left: 0; right: 0; top: 0; height: 34vh;
+    pointer-events: none; z-index: 5;
+    background-image: linear-gradient(180deg, transparent, var(--band), transparent);
+    animation: band 11s linear infinite;
+  }
+
+  /* 3. The mark itself, enormous and behind everything, turning about once a
+        minute and a half. It is the same picture as the share card, which is
+        the point — the identity is one shape, at two sizes. Drifting particles
+        were tried here first and looked like someone else's screensaver. */
+  .halo {
+    position: fixed; z-index: 0; pointer-events: none;
+    right: -22vw; top: 50%;
+    width: 78vw; max-width: 720px; aspect-ratio: 1;
+    color: var(--mauve);
+    opacity: var(--halo, 0.07);
+    transform-origin: 50% 50%;
+    animation: turn 96s linear infinite;
+    will-change: transform;
+  }
+  .halo svg { width: 100%; height: 100%; display: block; }
+  @keyframes turn {
+    from { transform: translateY(-50%) rotate(0deg); }
+    to   { transform: translateY(-50%) rotate(360deg); }
+  }
+
+  .wrap { z-index: 1; }
 
   .links a:hover { transform: translateY(-2px); }
   .links a { transition: color .12s ease, border-color .12s ease, transform .16s ease; }
@@ -537,8 +586,8 @@
       animation: none !important;
       transition-duration: 1ms !important;
     }
-    .card { opacity: 1; transform: none; }
-    .mark::after { display: none; }
+    .mark::after, body::after { display: none; }
+    /* The mark stays — it is part of the picture, it just stops turning. */
   }
 </style>
 </head>
@@ -560,12 +609,17 @@
   </button>
 </div>
 
+<!-- The mark, at wallpaper scale. Decoration only. -->
+<div class="halo" aria-hidden="true">
+  <svg viewBox="0 0 64 64"><path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
+</div>
+
 <div class="wrap">
 
   <div class="hero">
     <div class="mark">
       <svg viewBox="0 0 64 64" aria-hidden="true">
-        <path fill="#fff" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/>
+        <path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/>
       </svg>
     </div>
     <h1><span class="t1">AD</span> <span class="t2">BYE-PASS</span></h1>
@@ -1040,30 +1094,6 @@
   });
 
   apply(false);
-})();
-
-// ── 카드 등장 ──
-// 스크롤에 닿는 순간 한 장씩 올라온다. --i 로 계단을 준다.
-(() => {
-  const cards = [...document.querySelectorAll('.card')];
-  cards.forEach((card, n) => card.style.setProperty('--i', n % 3));
-
-  // IntersectionObserver 가 없으면 애니메이션 없이 그냥 보여준다.
-  // 안 보이는 페이지보다 안 움직이는 페이지가 낫다.
-  if (!('IntersectionObserver' in window)) {
-    cards.forEach((card) => card.classList.add('in'));
-    return;
-  }
-
-  const io = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      entry.target.classList.add('in');
-      io.unobserve(entry.target);   // 한 번 올라온 카드는 다시 건드리지 않는다
-    }
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-  cards.forEach((card) => io.observe(card));
 })();
 
 // ── 푸터 ──
