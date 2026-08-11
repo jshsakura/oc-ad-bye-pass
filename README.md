@@ -583,6 +583,22 @@ ad-badge-view-model < … < ytd-in-feed-ad-layout-renderer < ytd-ad-slot-rendere
 가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/youtube.json` 의 해당 항목에
 주석으로 남긴다.
 
+## Safari · Orion 에서 달라지는 것
+
+**둘 다 `declarativeNetRequest` 를 지원하지 않는다.** Orion 은 API 표의 88개 항목이
+macOS·iOS 모두 미지원이고, Safari 도 마찬가지다. 그래서 이 타깃에서는:
+
+| | Chrome / Edge | Safari / Orion |
+|---|---|---|
+| 0계층 네트워크 차단 | 동작 | **없음** |
+| 1계층 유튜브 응답 프루닝 | 동작 | 동작 |
+| 2계층 코스메틱 | 동작 | 동작 |
+| 3계층 플레이어 폴백 | 동작 | 동작 |
+
+`scripts/manifest.mjs` 가 Safari 빌드에서 DNR 키와 권한을 빼고, 읽히지도 않을 3.6MB
+룰셋도 같이 지운다 (패키지 3.9MB → 276KB). 유튜브는 그대로 다 막히고, 다른 사이트에서는
+광고 요청이 나가되 광고 자리는 숨겨진다.
+
 ## 한계
 
 - **서버가 스트림에 광고를 이어붙이는 경우**(server-side stitching)는 응답 프루닝으로

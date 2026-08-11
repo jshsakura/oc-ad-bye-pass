@@ -19,7 +19,7 @@
 // Called from vite's closeBundle hook (vite.config.ts). Order matters: this has
 // to overwrite public/manifest.json *after* vite has copied it.
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { resolveTarget } from './targets.mjs'
 
@@ -38,6 +38,18 @@ function toSafari(manifest) {
   m.permissions = [...(m.permissions ?? [])]
   if (!m.permissions.includes('scripting')) m.permissions.push('scripting')
 
+  // Neither Safari nor Orion implements declarativeNetRequest — the Orion API
+  // table lists all 88 entries as unsupported on both macOS and iOS. Shipping
+  // the key anyway earns warnings at best and a rejection at worst, and the
+  // 3.6MB ruleset would ride along doing nothing.
+  //
+  // The consequence is real and worth stating: on these targets there is no
+  // network-level blocking. Layers 1-3 still cover YouTube, and the generic
+  // cosmetic rules still hide ad slots elsewhere, but requests to ad networks
+  // do go out.
+  delete m.declarative_net_request
+  m.permissions = m.permissions.filter((p) => p !== 'declarativeNetRequest')
+
   m.web_accessible_resources = [{ resources: ['main.js'], matches: YOUTUBE_MATCHES }]
 
   return m
@@ -47,6 +59,13 @@ function toSafari(manifest) {
 export function writeManifest(target) {
   const base = JSON.parse(readFileSync(join(ROOT, 'public', 'manifest.json'), 'utf8'))
   const out = target.name === 'safari' ? toSafari(base) : base
+
+  // vite copies public/ wholesale, so the 3.6MB blocklist lands in the Safari
+  // build as well. Without the DNR key nothing reads it — it would just make
+  // the package four times larger for no reason.
+  if (target.name === 'safari') {
+    rmSync(join(target.outDir, 'rules'), { recursive: true, force: true })
+  }
   const path = join(ROOT, target.outDir, 'manifest.json')
   writeFileSync(path, `${JSON.stringify(out, null, 2)}\n`)
   return path
