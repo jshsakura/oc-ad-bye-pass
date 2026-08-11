@@ -32,7 +32,10 @@ const PAGE = `<!doctype html><meta charset="utf-8">
 <body style="margin:0;background:#111">
 <video id="v" playsinline muted loop autoplay disablePictureInPicture
   src="/tiny.mp4" style="width:320px;height:180px"></video>
+<video id="ctrl" playsinline muted loop autoplay disablePictureInPicture
+  src="/tiny.mp4" style="width:320px;height:180px"></video>
 <button id="tap" style="width:200px;height:60px;font-size:20px">tap</button>
+<button id="tapctrl" style="width:200px;height:60px;font-size:20px">tap control</button>
 <script>
   const video = document.getElementById('v')
   window.__result = { clicked: false }
@@ -51,6 +54,20 @@ const PAGE = `<!doctype html><meta charset="utf-8">
       threw = String(e)
     }
     window.__result = { clicked: true, supported, threw }
+  })
+
+  // 대조군 — opt-out 을 그대로 둔 채로 부른다. 우리가 걷어내는 일이 실제로
+  // 필요한 것인지, 아니면 사파리가 이 API 에서는 그 표시를 아예 안 보는지.
+  const control = document.getElementById('ctrl')
+  window.__control = { clicked: false }
+  document.getElementById('tapctrl').addEventListener('click', () => {
+    let threw = null
+    try {
+      control.webkitSetPresentationMode('picture-in-picture')
+    } catch (e) {
+      threw = String(e)
+    }
+    window.__control = { clicked: true, threw, optOut: control.disablePictureInPicture }
   })
 </script>
 </body>`
@@ -115,6 +132,26 @@ try {
     args: [],
   })
   console.log('탭 후:', JSON.stringify(after))
+
+  // 대조군을 눌러보기 전에 우리 창을 닫는다 — 한 번에 하나만 뜬다.
+  await call('POST', at('/execute/sync'), {
+    script: 'document.getElementById("v").webkitSetPresentationMode("inline"); return null',
+    args: [],
+  })
+  await new Promise((resolve) => setTimeout(resolve, 800))
+  const controlButton = await call('POST', at('/element'), {
+    using: 'css selector',
+    value: '#tapctrl',
+  })
+  await call('POST', at(`/element/${Object.values(controlButton)[0]}/click`), {})
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+  const control = await call('POST', at('/execute/sync'), {
+    script:
+      'const c = document.getElementById("ctrl");' +
+      'return { result: window.__control, mode: c.webkitPresentationMode }',
+    args: [],
+  })
+  console.log('대조군(opt-out 유지):', JSON.stringify(control))
 
   if (after.mode === 'picture-in-picture') {
     console.log('\n✅ 사파리에서 webkitSetPresentationMode 가 실제로 작은 창을 열었다')

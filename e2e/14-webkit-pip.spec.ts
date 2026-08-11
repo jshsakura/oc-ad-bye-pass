@@ -91,27 +91,36 @@ const PAGE = () => `
 </script>
 </body>`
 
-/** Skip where the engine has no such API — that is Linux, and it is not a failure. */
-async function hasWebkitPip(page: import('@playwright/test').Page): Promise<boolean> {
-  return page.evaluate(
-    () =>
-      typeof (document.getElementById('v') as HTMLVideoElement & Record<string, unknown>)
-        .webkitSetPresentationMode === 'function',
-  )
-}
-
-test('opt-out 을 걷어내면 WebKit 이 이 영상을 띄울 수 있다고 답한다', async ({ wk }) => {
-  test.skip(!(await hasWebkitPip(wk)), '이 WebKit 에는 webkit PiP API 가 없다')
-
-  // 걷어내기 전에는 거절이어야 한다 — 아니라면 유튜브의 opt-out 이 애초에
-  // 문제가 아니었다는 뜻이고, 이 기능의 전제가 틀린 것이다.
-  const before = await wk.evaluate(() => {
+/**
+ * Is there anything behind the API on this build?
+ *
+ * Measured, and the reason these tests skip rather than fail: Playwright's WebKit
+ * — Linux and macOS, headless and headed — carries every one of these functions
+ * and answers `false` for a video real Safari answers `true` for. The surface is
+ * there and the presentation-mode machinery is not, so nothing here can be
+ * learned from a red run.
+ *
+ * Real Safari is driven instead, by scripts/safari-pip-probe.mjs, from the same
+ * workflow. That is where this question gets its answer: measured 2026-08-11,
+ * webkitSetPresentationMode moved a YouTube-shaped video to picture-in-picture.
+ */
+async function pipMachineryPresent(page: import('@playwright/test').Page): Promise<boolean> {
+  return page.evaluate(() => {
     const v = document.getElementById('v') as HTMLVideoElement & {
-      webkitSupportsPresentationMode: (m: string) => boolean
+      webkitSupportsPresentationMode?: (m: string) => boolean
+      disablePictureInPicture: boolean
     }
+    if (typeof v.webkitSupportsPresentationMode !== 'function') return false
+    v.removeAttribute('disablePictureInPicture')
+    v.disablePictureInPicture = false
     return v.webkitSupportsPresentationMode('picture-in-picture')
   })
-  expect(before, 'disablePictureInPicture 가 걸린 채로도 지원한다고 답한다').toBe(false)
+}
+
+const NO_MACHINERY = '이 WebKit 빌드에는 표시 모드 기계가 없다 — scripts/safari-pip-probe.mjs 참조'
+
+test('opt-out 을 걷어내면 WebKit 이 이 영상을 띄울 수 있다고 답한다', async ({ wk }) => {
+  test.skip(!(await pipMachineryPresent(wk)), NO_MACHINERY)
 
   const after = await wk.evaluate(() => {
     const v = document.getElementById('v') as HTMLVideoElement & {
@@ -126,7 +135,7 @@ test('opt-out 을 걷어내면 WebKit 이 이 영상을 띄울 수 있다고 답
 })
 
 test('진짜 탭에서 webkit 경로를 부르면 표시 모드가 바뀐다', async ({ wk }) => {
-  test.skip(!(await hasWebkitPip(wk)), '이 WebKit 에는 webkit PiP API 가 없다')
+  test.skip(!(await pipMachineryPresent(wk)), NO_MACHINERY)
 
   await wk.locator('#tap').click()
 

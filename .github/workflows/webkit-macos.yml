@@ -65,7 +65,6 @@ jobs:
       # 러너에는 진짜 사파리가 있고, 그쪽에는 그 기계가 있다.
       - name: 사파리에서 진짜로 열리나
         if: always()
-        continue-on-error: true
         run: |
           sudo safaridriver --enable
           safaridriver -p 4444 &
