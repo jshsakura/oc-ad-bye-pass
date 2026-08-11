@@ -40,6 +40,22 @@ const PRESENTATION_SETTLE_MS = 900
 
 let observer: MutationObserver | null = null
 
+/**
+ * Everything that can mean "the user is leaving". They overlap on purpose.
+ *
+ * A function rather than a constant because this module is imported by a unit
+ * test in node, where `document` does not exist — and a module that cannot be
+ * imported outside a browser cannot have its logic tested outside one.
+ */
+function leavingSignals(): [EventTarget, string][] {
+  return [
+    [document, 'visibilitychange'],
+    [window, 'pagehide'],
+    [window, 'blur'],
+    [document, 'freeze'],
+  ]
+}
+
 /** The video actually being watched — the largest one that has loaded metadata. */
 function playerVideo(): WebkitVideo | null {
   const videos = [...document.querySelectorAll<WebkitVideo>('video')]
@@ -204,14 +220,6 @@ function sweep(): void {
 
 const AUTO_ATTR = 'data-oc-abp-autopip'
 
-/**
- * Hand the video over when the tab goes away.
- *
- * Quiet, deliberately: nobody is looking at the screen at that moment, and a
- * toast that fires as you leave would be waiting for you when you come back.
- * The attribute is left behind so the behaviour is observable — from a test, and
- * from the diagnostics panel.
- */
 export function shouldAutoPip(state: {
   hidden: boolean
   video: { paused: boolean; ended: boolean } | null
@@ -224,19 +232,87 @@ export function shouldAutoPip(state: {
   return !state.video.paused && !state.video.ended
 }
 
-async function onHidden(): Promise<void> {
+/**
+ * The synchronous attempt, made from inside the event handler.
+ *
+ * iOS stops running the page the moment the app goes to the background. Not
+ * "slows"; stops. Anything after an `await` in a visibilitychange handler may
+ * simply never run, so the call that matters has to happen on the same tick as
+ * the event, before any promise, any timer, any lookup that can be deferred.
+ * This is the whole reason automatic PiP is a separate path from the button.
+ */
+function attemptSync(video: WebkitVideo): boolean {
+  try {
+    if (typeof video.webkitSetPresentationMode === 'function') {
+      video.webkitSetPresentationMode('picture-in-picture')
+      return true
+    }
+    if (typeof video.requestPictureInPicture === 'function') {
+      // Fires the request now; its promise settles later, which is fine — the
+      // browser has already been told.
+      void video.requestPictureInPicture().catch(() => {})
+      return true
+    }
+  } catch {
+    // Refused. The retry below gets another go if the page is still running.
+  }
+  return false
+}
+
+/**
+ * Hand the video over when the tab goes away.
+ *
+ * Four signals, not one. visibilitychange is the documented route and the one
+ * that fires on a tab switch; pagehide and blur arrive in cases where it does
+ * not, and freeze is what iOS sends when it is about to stop the page
+ * altogether. They overlap, and overlapping is the point — the cost of a second
+ * attempt is nothing, and the cost of missing the only signal that fired is the
+ * feature.
+ */
+function onLeaving(): void {
   const video = playerVideo()
   if (!shouldAutoPip({ hidden: document.hidden, video })) return
   if (!video) return
+
   document.documentElement.setAttribute(AUTO_ATTR, 'tried')
-  await enterPip(video, true)
+  const started = attemptSync(video)
+
+  // WebKit can accept the call, fire its event, and open nothing. If the page is
+  // still running — a tab switch rather than a trip to the home screen — these
+  // get another go. If it is not running, nothing here happens and the
+  // synchronous attempt above was the only shot, which is why it comes first.
+  let tries = 0
+  const retry = setInterval(() => {
+    tries += 1
+    if (video.webkitPresentationMode === 'picture-in-picture' || tries > 4) {
+      clearInterval(retry)
+      return
+    }
+    if (!document.hidden) {
+      clearInterval(retry)
+      return
+    }
+    if (!attemptSync(video) && !started && typeof video.webkitEnterFullscreen === 'function') {
+      // Last resort: the system's own fullscreen player carries a PiP control.
+      try {
+        video.webkitEnterFullscreen()
+      } catch {
+        /* nothing left to try */
+      }
+      clearInterval(retry)
+    }
+  }, 350)
 }
 
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(): void {
   sweep()
-  document.removeEventListener('visibilitychange', onHidden)
-  document.addEventListener('visibilitychange', onHidden)
+  for (const [target, event] of leavingSignals()) {
+    target.removeEventListener(event, onLeaving)
+    // Capture phase: the page's own handlers can call stopPropagation, and on
+    // YouTube some of them do.
+    target.addEventListener(event, onLeaving, true)
+  }
   if (observer) return
   // YouTube replaces the player wholesale on navigation, taking the button with
   // it, so this watches rather than running once.
@@ -256,7 +332,7 @@ export function enablePictureInPicture(): void {
 export function disablePictureInPicture(): void {
   observer?.disconnect()
   observer = null
-  document.removeEventListener('visibilitychange', onHidden)
+  for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)
   document.documentElement.removeAttribute(AUTO_ATTR)
   document.getElementById(BUTTON_ID)?.remove()
 }
