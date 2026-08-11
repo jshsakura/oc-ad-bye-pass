@@ -156,9 +156,17 @@ export function App() {
               <span className="label">{meta.label}</span>
               <span className="hint">{meta.hint}</span>
             </span>
-            <span className="layer" title={`${meta.layer}계층`}>
-              L{meta.layer}
-            </span>
+            {meta.layer ? (
+              <span className="layer" title={`${meta.layer}계층`}>
+                L{meta.layer}
+              </span>
+            ) : (
+              // Not a blocking layer — background playback changes what YouTube
+              // does, not what it shows. A layer badge there would be a lie.
+              <span className="layer opt" title="기본 꺼짐 — 직접 켜는 항목">
+                OPT
+              </span>
+            )}
             <Switch
               label={meta.label}
               checked={settings.toggles[meta.key]}

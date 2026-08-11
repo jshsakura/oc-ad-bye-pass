@@ -12,6 +12,7 @@ export const TOGGLE_KEYS = [
   'antiAdblockNag',
   'appPromo',
   'genericAds',
+  'backgroundPlay',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -20,8 +21,13 @@ export interface ToggleMeta {
   key: ToggleKey
   label: string
   hint: string
-  /** 1 = response pruning, 2 = component filter, 3 = player fallback. */
-  layer: 1 | 2 | 3
+  /**
+   * 1 = response pruning, 2 = component filter, 3 = player fallback.
+   * Absent for what is not a blocking layer at all.
+   */
+  layer?: 1 | 2 | 3
+  /** Off unless asked for. Used for anything that changes what YouTube does. */
+  optIn?: boolean
 }
 
 /** Named after the ReVanced patches (video-ads, hide-general-ads, …). */
@@ -40,6 +46,12 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     label: '다른 사이트 광고 숨김',
     hint: '유튜브 밖에서도 광고 자리를 숨깁니다',
     layer: 2,
+  },
+  {
+    key: 'backgroundPlay',
+    label: '화면을 나가도 계속 재생',
+    hint: '유튜브 모바일 웹은 화면을 벗어나면 멈춥니다',
+    optIn: true,
   },
 ]
 
@@ -77,6 +89,9 @@ export const DEFAULT_SETTINGS: Settings = {
     antiAdblockNag: true,
     appPromo: true,
     genericAds: true,
+    // Off by default. It changes what YouTube does rather than what it shows,
+    // and that is the user's call to make, not ours.
+    backgroundPlay: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

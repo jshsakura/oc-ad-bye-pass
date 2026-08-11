@@ -65,10 +65,10 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
   .top { display: flex; align-items: center; gap: 30px; margin-bottom: 40px; }
   .mark {
     width: 116px; height: 116px; border-radius: 26px; flex: none;
-    background: #fff; display: grid; place-items: center;
+    overflow: hidden; display: grid; place-items: center;
     box-shadow: 0 18px 50px -18px rgba(126, 77, 197, 0.9);
   }
-  .mark svg { width: 76px; height: 76px; }
+  .mark svg { width: 100%; height: 100%; display: block; }
 
   h1 { font-family: 'Zen Tokyo Zoo', monospace; font-size: 76px; line-height: 1; letter-spacing: 0.02em; }
   h1 .a { color: var(--peach-ink); }
@@ -91,7 +91,7 @@ const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
   <div class="card">
     <div class="top">
       <div class="mark">
-        <svg viewBox="0 0 64 64"><path fill="#7e4dc5" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
+        <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#181825"/><rect x="14.1" y="14.1" width="35.8" height="35.8" rx="2.6" fill="#fab387"/><path fill="#ffffff" transform="translate(2 2) scale(0.938)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
       </div>
       <h1><span class="a">AD</span> <span class="b">BYE-PASS</span></h1>
     </div>

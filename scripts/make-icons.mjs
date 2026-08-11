@@ -1,6 +1,19 @@
 // Generates public/icons/icon{16,48,128}.png.
 // Encodes RGBA PNGs directly using nothing but zlib — no image library.
-// Design: a YouTube-red circle crossed by a white diagonal (a "blocked" sign).
+//
+// Design: the mark cutting through an ad slot. A dark tile, a peach square
+// standing for the slot, and a white four-pointed spark over it whose points
+// run past the square's edges.
+//
+// It is drawn as geometry rather than traced from the reference render, because
+// the icon has to survive being 16 pixels wide in a toolbar and a downscaled
+// illustration does not.
+//
+// Two earlier designs and why they are gone. A YouTube-red "blocked" sign
+// matched nothing else the project owns and named YouTube back when this was
+// YouTube-only. A white tile with a purple spark on it turned out to be Kagi
+// Orion's own icon — poor manners in a package that sits in Orion's extension
+// list, under a notice saying we are not affiliated with them.
 
 import { deflateSync } from 'node:zlib'
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -55,25 +68,47 @@ function encodePng(width, height, rgba) {
   ])
 }
 
-/** Distance from a point to a line segment — used to give the slash its width. */
-function distToSegment(px, py, ax, ay, bx, by) {
-  const dx = bx - ax
-  const dy = by - ay
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+const TILE = [24, 24, 37] // #181825 — the site's panel colour
+const PEACH = [250, 179, 135] // #fab387 — the ad slot being cut
+const WHITE = [255, 255, 255]
+
+/** Signed distance to a rounded square centred on the tile. Negative inside. */
+function roundedSquare(x, y, half, radius) {
+  const qx = Math.abs(x - 0.5) - (half - radius)
+  const qy = Math.abs(y - 0.5) - (half - radius)
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - radius
 }
 
-const RED = [230, 33, 23]
-const WHITE = [255, 255, 255]
+/**
+ * The four-pointed spark, as a superellipse: |x|^p + |y|^p <= 1 with p below 1
+ * puts the points on the axes and bows the sides inward. No path data needed.
+ */
+function inSpark(x, y, half, power) {
+  const nx = Math.abs(x - 0.5) / half
+  const ny = Math.abs(y - 0.5) / half
+  return nx ** power + ny ** power <= 1
+}
 
 /**
  * Colour at unit coordinates (0..1), or null for transparent.
- * The shape is deliberately minimal so it survives at 16px — a YouTube-red
- * circle with a white diagonal.
+ *
+ * Full bleed: browsers shrink this into their own chrome, and a tile that
+ * arrives with margin already built in ends up a speck. The spark is drawn
+ * slightly larger at 16px, where a faithful scale is four unreadable pixels.
  */
-function sample(x, y) {
-  if (Math.hypot(x - 0.5, y - 0.5) > 0.47) return null
-  return distToSegment(x, y, 0.21, 0.21, 0.79, 0.79) < 0.075 ? WHITE : RED
+function sample(x, y, size) {
+  if (roundedSquare(x, y, 0.5, 0.22) > 0) return null
+
+  // At 16px the slot and the spark overlap into porridge — three tones inside
+  // sixteen pixels is one too many. That size keeps the spark alone, which is
+  // the part that has to be recognisable in a toolbar; the slot is what the
+  // icon means, and there is room for meaning at 48 and above.
+  if (size <= 16) return inSpark(x, y, 0.42, 0.62) ? WHITE : TILE
+
+  if (inSpark(x, y, 0.44, 0.62)) return WHITE
+  // The slot sits behind the spark, and the spark's points break out of it.
+  if (roundedSquare(x, y, 0.28, 0.04) <= 0) return PEACH
+  return TILE
 }
 
 function render(size) {
@@ -86,7 +121,7 @@ function render(size) {
       let a = 0
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
-          const c = sample((x + (sx + 0.5) / SS) / size, (y + (sy + 0.5) / SS) / size)
+          const c = sample((x + (sx + 0.5) / SS) / size, (y + (sy + 0.5) / SS) / size, size)
           if (c) {
             r += c[0]
             g += c[1]

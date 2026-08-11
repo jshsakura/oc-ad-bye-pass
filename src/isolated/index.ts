@@ -62,7 +62,7 @@ function detach() {
   }
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
-    sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune })
+    sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune, backgroundPlay: false })
   }
 }
 
@@ -86,6 +86,7 @@ function recompute(cache: FilterCache | null) {
       enabled: true,
       videoAds: settings.toggles.videoAds,
       prunePaths: rules.prune,
+      backgroundPlay: settings.toggles.backgroundPlay,
     })
     // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)

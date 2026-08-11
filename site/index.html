@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-<!-- App-icon shaped favicon: a white rounded square with the mark inside, the
-     way Orion's own icon sits on a home screen. A bare purple glyph on a dark
-     tab strip lost its silhouette entirely. -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23ffffff'/><g transform='translate(10.5 10.5) scale(0.672)'><path fill='%237e4dc5' d='M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z'/></g></svg>">
+<!-- The project's icon: the spark cutting through an ad slot. It was a white
+     tile with a purple spark until that turned out to be Kagi Orion's own
+     icon — which this extension has no business wearing. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23181825'/><rect x='14.1' y='14.1' width='35.8' height='35.8' rx='2.6' fill='%23fab387'/><path fill='%23ffffff' transform='translate(2 2) scale(0.938)' d='M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z'/></svg>">">
 <link rel="apple-touch-icon" href="icon-180.png">
 
 <!-- Link preview. Crawlers do not run the language switch, so this is the
@@ -208,20 +208,17 @@
 
   /* Header */
   .hero { text-align: center; margin-bottom: 34px; }
-  /* Same shape as the favicon and the share card: a white app-icon tile with the
-     mark inside. It used to be a purple tile with a white mark — the inverse of
-     both — so the three pictures of this project disagreed. */
+  /* The icon itself, at hero size — tile included, so the favicon, the toolbar
+     icon, the share card and this are one drawing rather than four that agree
+     by hand. */
   .mark {
     width: 76px; height: 76px; margin: 0 auto 20px;
     border-radius: 18px;
-    /* No scanlines on this one. An app icon is a flat surface, and the texture
-       over white read as a printing fault. */
-    background-color: #fff;
     border: none;
     box-shadow: 0 14px 34px -14px var(--mauve);
     display: grid; place-items: center;
   }
-  .mark svg { width: 44px; height: 44px; color: var(--mauve); }
+  .mark svg { width: 100%; height: 100%; }
   h1 {
     font-family: var(--font-title);
     font-size: 34px; line-height: 1.25; letter-spacing: 0.02em;
@@ -629,9 +626,7 @@
 
   <div class="hero">
     <div class="mark">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <path fill="currentColor" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/>
-      </svg>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#181825"/><rect x="14.1" y="14.1" width="35.8" height="35.8" rx="2.6" fill="#fab387"/><path fill="#ffffff" transform="translate(2 2) scale(0.938)" d="M32 2c2 16 12 26 28 30-16 4-26 14-28 30-2-16-12-26-28-30C20 28 30 18 32 2Z"/></svg>
     </div>
     <h1><span class="t1">AD</span> <span class="t2">BYE-PASS</span></h1>
     <div class="quote"><p><span id="quote-text"></span><span class="cursor" aria-hidden="true">▌</span></p></div>
@@ -655,6 +650,9 @@
       <dd>화면이 깨지는 사이트가 있으면 확장 아이콘을 눌러 <strong>그 사이트만</strong> 끄실 수 있습니다. 하위 도메인도 함께 꺼집니다.</dd>
       <dt>규칙 자동 갱신</dt>
       <dd>차단 규칙은 확장과 따로 관리합니다. 유튜브가 화면을 바꿔도 <strong>다시 설치하실 필요가 없습니다.</strong></dd>
+      <dt>화면을 나가도 계속 재생 <span style="color:var(--overlay0);font-weight:400">· 직접 켜는 항목</span></dt>
+      <dd>유튜브 모바일 웹은 화면을 벗어나면 재생이 멈춥니다. 이 항목을 켜면 계속 재생됩니다.
+        기본값은 꺼짐입니다 — 광고를 가리는 일과는 성격이 달라서, 켜는 것은 쓰는 분이 정하시는 게 맞습니다.</dd>
       <dt>계정 없음 · 서버 없음</dt>
       <dd>모든 처리가 브라우저 안에서 끝납니다. 밖으로 나가는 데이터는 없습니다.</dd>
     </dl>
@@ -668,6 +666,10 @@
       <dd>If a page breaks, click the icon and turn it off <strong>for that site only</strong> — subdomains included.</dd>
       <dt>Rules update themselves</dt>
       <dd>The blocking rules live apart from the extension. When YouTube changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
+      <dt>Keep playing off-screen <span style="color:var(--overlay0);font-weight:400">· opt-in</span></dt>
+      <dd>YouTube's mobile web player stops when you leave the screen. Turn this on and it
+        keeps going. Off by default — it changes what YouTube does rather than what it shows,
+        so it is yours to ask for.</dd>
       <dt>No account, no server</dt>
       <dd>All of it happens inside your browser. Nothing is sent anywhere.</dd>
     </dl>

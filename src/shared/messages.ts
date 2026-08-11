@@ -21,6 +21,8 @@ export interface MainConfig {
   enabled: boolean
   videoAds: boolean
   prunePaths: string[]
+  /** Keep the page believing it is visible, so the player does not pause. */
+  backgroundPlay: boolean
 }
 
 export interface ConfigMessage {
