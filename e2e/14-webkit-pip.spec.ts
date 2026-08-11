@@ -20,14 +20,30 @@
 // It answers the half that is answerable: whether the call we make is the call
 // that works.
 
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { expect, test as base, webkit } from '@playwright/test'
 import { chooseEntry } from '../src/isolated/pip.ts'
+
+/**
+ * A real file, not a canvas stream.
+ *
+ * Measured on macOS WebKit: with a MediaStream in `srcObject`,
+ * webkitSupportsPresentationMode answers `false` however the opt-out is set —
+ * WebKit will not float a stream. That refusal is indistinguishable from the one
+ * being investigated, so the fixture is two seconds of H.264 instead.
+ */
+const TINY_MP4 = readFileSync(path.resolve(import.meta.dirname, 'assets', 'tiny.mp4')).toString(
+  'base64',
+)
 
 const test = base.extend<{ wk: import('@playwright/test').Page }>({
   wk: async ({}, use) => {
     const browser = await webkit.launch()
     const page = await browser.newPage()
-    await page.setContent(PAGE)
+    await page.setContent(PAGE())
+    // 메타데이터가 오기 전에는 WebKit 이 표시 모드를 지원하지 않는다고 답한다.
+    await page.waitForFunction(() => (document.getElementById('v') as HTMLVideoElement).readyState >= 2)
     await use(page)
     await browser.close()
   },
@@ -41,25 +57,18 @@ const test = base.extend<{ wk: import('@playwright/test').Page }>({
  * exists to open, and a test on a video without it would prove nothing about
  * YouTube.
  *
- * A canvas stream supplies a real video track — an element with no track is
- * refused outright, and that refusal looks exactly like the one being measured.
+ * The source is a real H.264 file: an element with no track, or one fed a
+ * MediaStream, is refused outright, and that refusal looks exactly like the one
+ * being measured.
  */
-const PAGE = `
+const PAGE = () => `
 <!doctype html><meta charset="utf-8">
 <body style="margin:0;background:#111">
-<video id="v" playsinline muted disablePictureInPicture style="width:320px;height:180px"></video>
+<video id="v" playsinline muted loop autoplay disablePictureInPicture
+  src="data:video/mp4;base64,${TINY_MP4}" style="width:320px;height:180px"></video>
 <button id="tap" style="width:120px;height:44px">tap</button>
 <script>
   const video = document.getElementById('v')
-  const canvas = document.createElement('canvas')
-  canvas.width = 320
-  canvas.height = 180
-  const ctx = canvas.getContext('2d')
-  setInterval(() => {
-    ctx.fillStyle = '#89b4fa'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-  }, 100)
-  video.srcObject = canvas.captureStream(30)
   video.play()
   window.__result = null
   document.getElementById('tap').addEventListener('click', () => {
