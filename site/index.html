@@ -324,6 +324,43 @@
 
   /* The notice. Deliberately quiet — it is not a warning, it is the small print,
      and small print that shouts gets skipped like an ad. */
+  /* A command you are meant to run, not read: one line, no wrapping, and a
+     button that puts it on the clipboard. Long-pressing to select a wrapped
+     line on a phone is how people end up running half of it. */
+  .cmd {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 'os os' 'code copy';
+    gap: 8px 10px;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px 10px 10px 12px;
+    border-radius: 10px;
+    background-color: var(--crust);
+    border: 1px solid var(--surface0);
+  }
+  .cmd + .cmd { margin-top: 8px; }
+  .cmd-os {
+    grid-area: os;
+    font-family: var(--pixel); font-size: 7px; line-height: 1.6;
+    color: var(--ink); letter-spacing: 0.04em;
+  }
+  .cmd code {
+    grid-area: code;
+    overflow-x: auto; white-space: nowrap;
+    padding: 0; border: none; background: none;
+    color: var(--text); font-size: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cmd .copy {
+    grid-area: copy;
+    font-family: var(--pixel); font-size: 7px; line-height: 1;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    color: var(--on-accent); background-color: var(--accent);
+    border: none; white-space: nowrap;
+  }
+  .cmd .copy.done { background-color: var(--green); }
+
   .legal {
     margin-top: 26px; padding: 18px 20px;
     border: 1px dashed var(--surface1); border-radius: 12px;
@@ -813,10 +850,17 @@
     <div class="note" lang="ko">
       <p><strong>명령 한 줄로 받아서 풀 수도 있습니다.</strong> 고정된 위치에 풀고, 크롬에
         붙여넣을 경로를 찍어줍니다. 업데이트도 같은 명령을 다시 돌리면 됩니다.</p>
-      <p>Windows (PowerShell)<br>
-        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code></p>
-      <p>macOS · Linux<br>
-        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code></p>
+      <div class="cmd">
+        <span class="cmd-os">Windows · PowerShell</span>
+        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code>
+        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+      </div>
+      <div class="cmd">
+        <span class="cmd-os">macOS · Linux</span>
+        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code>
+        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+      </div>
+
     </div>
 
     <div class="note" lang="ko">
@@ -827,10 +871,17 @@
     <div class="note" lang="en">
       <p><strong>Or take it in one line.</strong> It unpacks to a fixed location and prints the
         path to paste into Chrome. Run the same command again to update.</p>
-      <p>Windows (PowerShell)<br>
-        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code></p>
-      <p>macOS · Linux<br>
-        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code></p>
+      <div class="cmd">
+        <span class="cmd-os">Windows · PowerShell</span>
+        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code>
+        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+      </div>
+      <div class="cmd">
+        <span class="cmd-os">macOS · Linux</span>
+        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code>
+        <button type="button" class="copy" aria-label="명령 복사">복사</button>
+      </div>
+
     </div>
 
     <div class="note" lang="en">
@@ -1248,6 +1299,38 @@
   });
 
   apply(false);
+})();
+
+// ── 명령 복사 ──
+// 클립보드가 막힌 환경(비보안 컨텍스트 등)에서는 대신 전체를 선택해 준다.
+// 아무 일도 안 일어나는 버튼보다 낫다.
+(() => {
+  for (const button of document.querySelectorAll('.cmd .copy')) {
+    button.addEventListener('click', () => {
+      const code = button.parentElement.querySelector('code');
+      const text = code.textContent.trim();
+      const done = () => {
+        button.textContent = '복사됨';
+        button.classList.add('done');
+        setTimeout(() => {
+          button.textContent = '복사';
+          button.classList.remove('done');
+        }, 1600);
+      };
+      const select = () => {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const selection = getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(select);
+      } else {
+        select();
+      }
+    });
+  }
 })();
 
 // ── 푸터 ──
