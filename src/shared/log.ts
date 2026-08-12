@@ -3,17 +3,38 @@
 // There is no console on an iPhone, and the moment that matters is the one where
 // the app goes away — iOS stops running the page within a frame of it, so a
 // storage write started then never flushes and a message posted then is never
-// delivered. What does survive is an attribute on the document element: written
-// synchronously, still there when the page comes back.
+// delivered. What does survive is a synchronous write.
 //
-// So this is a ring buffer kept in the DOM. Both worlds can write to it — MAIN
-// and ISOLATED share the document — and the popup reads it out of the page's
-// last diagnostics report. Small on purpose: it is a tail, not a history.
+// Two of them, because one document is not enough.
+//
+//   the attribute   written at document_start, before anything else exists, and
+//                   readable by both worlds since they share the document
+//   localStorage    the same lines, and they outlive the document
+//
+// The second was added on 2026-08-12 after a departure went unrecorded three
+// releases running. The attribute dies with its document and only reaches
+// chrome.storage when reportDiagnostics happens to run; leaving an iPhone and
+// coming back routinely replaces the document, so every line written on the way
+// out — the whole question — was gone before anything could fold it in. The log
+// showed a page starting, then a page starting again, and nothing in between,
+// which reads as "the handler never ran" and was nothing of the kind.
+//
+// localStorage is the page's, not the extension's, so it is read-modify-written
+// on every line: MAIN and ISOLATED both write here and neither may clobber the
+// other. That costs a synchronous read per line, which is affordable because
+// lines are few — a departure is a handful — and because runs of the same line
+// are collapsed rather than written.
 
 const ATTR = 'data-oc-abp-log'
 
+/** The page's own storage, shared by both worlds, outliving the document. */
+const STORE_KEY = 'oc-abp-log'
+
 /** Enough to hold a leave and a return. Older lines fall off the front. */
 const MAX_CHARS = 1800
+
+/** The durable copy holds more, since it spans documents. */
+const STORE_MAX_CHARS = 8000
 
 function stamp(): string {
   const now = new Date()
@@ -22,10 +43,20 @@ function stamp(): string {
   ).padStart(3, '0')}`
 }
 
+function tail(previous: string, line: string, limit: number): string {
+  const next = previous ? `${previous}\n${line}` : line
+  return next.length > limit ? next.slice(next.length - limit) : next
+}
+
 function append(root: Element, text: string): void {
-  const previous = root.getAttribute(ATTR) ?? ''
-  const next = previous ? `${previous}\n${stamp()} ${text}` : `${stamp()} ${text}`
-  root.setAttribute(ATTR, next.length > MAX_CHARS ? next.slice(next.length - MAX_CHARS) : next)
+  const line = `${stamp()} ${text}`
+  root.setAttribute(ATTR, tail(root.getAttribute(ATTR) ?? '', line, MAX_CHARS))
+  try {
+    localStorage.setItem(STORE_KEY, tail(localStorage.getItem(STORE_KEY) ?? '', line, STORE_MAX_CHARS))
+  } catch {
+    // Private mode, a storage quota, a page that has disabled it. The attribute
+    // is still there and still answers for this document.
+  }
 }
 
 /**
@@ -69,7 +100,19 @@ export function log(line: string): void {
   }
 }
 
+/**
+ * The tail, preferring the copy that spans documents.
+ *
+ * The attribute only ever holds this document's lines, and the interesting ones
+ * were written by the last one.
+ */
 export function readLog(): string | null {
+  try {
+    const stored = localStorage.getItem(STORE_KEY)
+    if (stored) return stored
+  } catch {
+    // Fall through to the attribute.
+  }
   try {
     return document.documentElement?.getAttribute(ATTR) ?? null
   } catch {

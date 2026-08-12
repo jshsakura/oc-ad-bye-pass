@@ -66,3 +66,26 @@ test('서로 다른 줄은 그대로 남는다 — 접는 것은 연속된 같�
   log('가')
   assert.equal(lines().length, 3)
 })
+
+// 문서가 바뀌어도 남는가.
+//
+// 어트리뷰트는 자기 문서와 함께 죽고, chrome.storage 로 접히는 것은
+// reportDiagnostics 가 돌 때뿐이다. 아이폰에서 나갔다 돌아오면 문서가 바뀌는 일이
+// 흔하고, 그래서 나가면서 쓴 줄이 세 번의 릴리스 동안 한 줄도 남지 않았다.
+// 로그는 "페이지 시작 · 페이지 시작" 만 보여줬고 그것이 "핸들러가 안 돌았다" 로 읽혔다.
+test('페이지가 바뀌어도 앞 문서의 줄이 남는다', () => {
+  const store = new Map<string, string>()
+  ;(globalThis as unknown as { localStorage: unknown }).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      store.set(k, v)
+    },
+  }
+
+  log('나가는 손짓: 위로 22px')
+  // 새 문서 — 어트리뷰트는 빈 것으로 시작한다.
+  attributes.clear()
+  assert.ok(readLog()?.includes('나가는 손짓'), '문서가 바뀌면서 기록이 사라졌다')
+
+  delete (globalThis as unknown as { localStorage?: unknown }).localStorage
+})

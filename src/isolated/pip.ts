@@ -569,7 +569,11 @@ function sweep(): void {
    * Once, on the first video to appear. Reporting on every sweep would write to
    * storage on every mutation YouTube makes, which is most of them.
    */
-  if (!reportedWithVideo) {
+  // Metadata, not merely an element. `webkitSupportsPresentationMode` answers
+  // "no" for a video it knows nothing about yet, and a panel that reports
+  // `PiP 지원: 아니오` about a video that supports it perfectly well sends the
+  // reader after a problem that is not there — it did, one release ago.
+  if (!reportedWithVideo && video.readyState >= 1) {
     reportedWithVideo = true
     reportDiagnostics()
   }

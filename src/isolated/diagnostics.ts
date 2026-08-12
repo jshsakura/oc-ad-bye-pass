@@ -75,8 +75,25 @@ interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
 }
 
+/**
+ * The video the reader is asking about.
+ *
+ * `querySelector('video')` returns whichever element comes first in the document,
+ * and on YouTube that can be an empty one held in reserve — so the panel answered
+ * `PiP 지원: 아니오` and `표시 모드: inline` about a video nobody was watching.
+ * The same ordering by liveness that src/isolated/pip.ts picks by, kept separate
+ * because this module is loaded by the injection path before that one exists.
+ */
+function reportedVideo(): WebkitVideo | null {
+  const videos = [...document.querySelectorAll<WebkitVideo>('video')]
+  if (videos.length === 0) return null
+  const score = (v: WebkitVideo) =>
+    (!v.paused && !v.ended ? 4 : 0) + (v.currentTime > 0 ? 2 : 0) + (v.readyState >= 1 ? 1 : 0)
+  return videos.reduce((best, v) => (score(v) > score(best) ? v : best))
+}
+
 export function reportDiagnostics(): void {
-  const video = document.querySelector<WebkitVideo>('video')
+  const video = reportedVideo()
   const facts: PageDiagnostics = {
     at: Date.now(),
     url: location.href,
