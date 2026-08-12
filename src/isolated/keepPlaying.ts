@@ -18,33 +18,25 @@
 
 import { log } from '../shared/log.ts'
 import { isFloatingAway } from './pip.ts'
-import { markUserPause, pausedByUser, sinceLeaving } from './intent.ts'
+import { markUserPause, pausedByUser } from './intent.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
 
-/**
- * How long after leaving this may still act.
+/*
+ * No window around the departure.
  *
- * It used to have no bound at all: the test was whether the page was hidden,
- * which stays true for as long as the user is away, so it went on putting
- * playback back every few seconds indefinitely —
+ * One was added and it switched background playback off ten seconds after
+ * leaving, which is the feature. The engine does not stop the media once as the
+ * app goes away — it keeps stopping it, every few seconds, for as long as the page
+ * is in the background, and putting it back each time is what background playback
+ * is on this platform.
  *
- *   00:04.500 엔진이 세움 → 00:05.434 되살림     (departure + 15s)
- *   00:12.306 엔진이 세움 → 00:13.198 되살림     (+23s)
- *   00:24.179 엔진이 세움 → 00:25.135 되살림     (+35s)
- *
- * Nothing about that is about going away any more; it is a loop that outlasts
- * whatever it was for and beats anyone pressing anything. What this is for is the
- * one stop WebKit makes as the app goes to the background, and that arrives with
- * the departure.
- *
- * The cost is stated plainly: if the hand-over to a floating window did not
- * happen, the sound stops a few seconds after leaving instead of being dragged
- * along. Carrying it by force was the wrong shape — leaving is the moment to act
- * on, and everything outside it was a trick.
+ * What that window was really for was making a person's pause stick, and that is
+ * answered by knowing whose pause it was rather than by when it arrived: the
+ * media-session marker above, and the backstop below for when the marker is not
+ * there.
  */
-const LEAVING_WINDOW_MS = 10_000
 
 /** Retries, spaced. A pause can land again as the browser finishes hiding the tab. */
 const RETRIES = [120, 400, 1200]
@@ -108,11 +100,6 @@ function onPause(): void {
   if (!document.hidden) return
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
-  // Belonging to the departure, or not ours to touch.
-  if (sinceLeaving() > LEAVING_WINDOW_MS) {
-    log('배경재생: 나간 순간과 무관한 멈춤 — 손 안 댄다')
-    return
-  }
 
 
   log('배경재생: 엔진이 세움 — 되살리기 시도')
