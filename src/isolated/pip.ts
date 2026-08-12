@@ -989,7 +989,27 @@ function userIsHere(): boolean {
   }
 }
 
+/**
+ * Standing guard against this function calling itself.
+ *
+ * Clearing the state before announcing is what breaks the cycle; this is what
+ * stops the next one being a live bug instead of a caught one. Anything that
+ * dispatches an event from in here can come back through one of four signals,
+ * and re-entering is never the right answer.
+ */
+let returning = false
+
 function onReturning(): void {
+  if (returning) return
+  returning = true
+  try {
+    handleReturn()
+  } finally {
+    returning = false
+  }
+}
+
+function handleReturn(): void {
   /*
    * One rule, one direction: the user is here, so the video belongs here.
    *
@@ -1028,14 +1048,28 @@ function onReturning(): void {
     )
   }
 
-  // One announcement, so the page draws itself again — the swallow eats the real
-  // one and a player that never hears it leaves the frame blank.
-  document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
-
+  /*
+   * Everything cleared before the announcement, because the announcement comes
+   * back here.
+   *
+   * RETURNED_EVENT makes backgroundPlay dispatch a visibilitychange so the player
+   * redraws, and visibilitychange is one of this function's own signals — so the
+   * announcement re-enters here, finds `wentAway` still standing, and announces
+   * again. On the device that ran until the ring buffer was full: dozens of
+   * `삼킴` / `나감` pairs inside a single millisecond, which flushed every line
+   * before them and took the evidence with it.
+   *
+   * The loop was always here. It only became reachable when ordinary departures
+   * started raising `wentAway` too, which until then only a home swipe did.
+   */
   handedOver = false
   retried = false
   wentAway = false
   modeBeforeLeaving = null
+
+  // One announcement, so the page draws itself again — the swallow eats the real
+  // one and a player that never hears it leaves the frame blank.
+  document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
 
   if (video && video.webkitPresentationMode === 'picture-in-picture') {
     const wasPlaying = !video.paused && !video.ended
