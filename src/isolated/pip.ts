@@ -157,9 +157,28 @@ let preferFullscreen = false
  * what is knowable at that instant — because after the first `await` the tap is
  * over and nothing privileged can be issued at all.
  *
- * `supported === false` is WebKit saying this video cannot be floated; asking
- * anyway wastes the one gesture the user gave us, so it goes straight to the
- * route that ends in a floating window on iOS by another road.
+ * **On iOS the answer is fullscreen, and that is not a consolation prize.**
+ *
+ * What people mean by "like the app" is that leaving floats the video without
+ * being asked. No web page can do that: WebKit grants a floating window only
+ * inside a live user activation, and a departure has none — a day of releases
+ * established that by measurement, every automatic call taken and silently
+ * ignored. But iOS does it *itself* for a video in native fullscreen, with
+ * Settings › General › Picture in Picture › Start PiP Automatically on. Confirmed
+ * on the device: fullscreen, leave, and the window is there.
+ *
+ * So the tap that used to open a window now puts the video in fullscreen, and
+ * leaving is automatic from then on. One tap either way, and the difference is
+ * everything — a window opened on tap floats over the page you are still looking
+ * at, while fullscreen is how you were going to watch it anyway. Nothing of ours
+ * runs at the moment of leaving, which is the moment nothing of ours has ever
+ * worked.
+ *
+ * The native player carries its own picture-in-picture control, so the immediate
+ * window is still one tap away for anyone who wants it now.
+ *
+ * `supported === false` is WebKit saying this video cannot be floated at all;
+ * asking anyway wastes the one gesture the user gave us.
  */
 export function chooseEntry(state: {
   preferFullscreen: boolean
@@ -167,12 +186,30 @@ export function chooseEntry(state: {
   webkit: boolean
   standard: boolean
   fullscreen: boolean
+  /** iOS hands a fullscreen video over by itself. Nothing else does. */
+  autoPipFromFullscreen?: boolean
 }): 'webkit' | 'standard' | 'fullscreen' | 'none' {
+  if (state.autoPipFromFullscreen && state.fullscreen) return 'fullscreen'
   const wantPip = !state.preferFullscreen && state.supported !== false
   if (wantPip && state.webkit) return 'webkit'
   if (wantPip && state.standard) return 'standard'
   if (state.fullscreen) return 'fullscreen'
   return 'none'
+}
+
+/**
+ * Is this the platform that floats a fullscreen video on its own?
+ *
+ * iOS, and only iOS. macOS Safari has the same prefixed API and does not do it,
+ * so the presence of `webkitEnterFullscreen` is not the test — a touch screen
+ * alongside it is as close as the platform lets us get.
+ */
+function handsOverFromFullscreen(video: WebkitVideo): boolean {
+  return (
+    typeof video.webkitEnterFullscreen === 'function' &&
+    typeof video.webkitSetPresentationMode === 'function' &&
+    (navigator.maxTouchPoints ?? 0) > 0
+  )
 }
 
 /** Is this video floating right now, by either engine's reckoning? */
@@ -247,6 +284,7 @@ function enterPip(video: WebkitVideo): void {
     webkit: typeof video.webkitSetPresentationMode === 'function',
     standard: typeof video.requestPictureInPicture === 'function',
     fullscreen: typeof video.webkitEnterFullscreen === 'function',
+    autoPipFromFullscreen: handsOverFromFullscreen(video),
   })
 
   log(`탭: 경로=${route}`)
@@ -277,10 +315,7 @@ function enterPip(video: WebkitVideo): void {
     try {
       video.webkitEnterFullscreen()
       preferFullscreen = false
-      toast(
-        '전체화면으로 넘겼습니다 — 이 상태로 홈으로 나가면 작은 창이 됩니다 ' +
-          '(설정 → 일반 → 그림 속 그림이 켜져 있어야 합니다)',
-      )
+      toast('이대로 홈으로 나가면 작은 창이 됩니다')
       return
     } catch (e) {
       toast(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)

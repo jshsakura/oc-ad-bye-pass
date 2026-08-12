@@ -65,7 +65,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Music is named because the difference is deliberate and would otherwise read
     // as the feature failing there. A floating black rectangle following you around
     // is not what anyone wants from a song.
-    hint: '나가기 전에 PiP 버튼을 누르면 그 창이 앱 밖에서도 남습니다 · 뮤직은 소리만 이어집니다',
+    hint: '아이폰은 전체화면으로 보다 나가면 iOS 가 작은 창으로 넘겨줍니다 · 뮤직은 소리만 이어집니다',
   },
   {
     key: 'pipButton',
@@ -73,7 +73,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Separate because it is a different kind of thing: this one puts a control
     // on someone else's player. Wanting to leave with the video is not the same
     // as wanting a button, and it was a mistake to charge one for the other.
-    hint: '아이폰에서 작은 창을 여는 유일한 방법입니다 — 나가기 전에 한 번 누르세요',
+    hint: '아이폰에서는 전체화면으로 넘깁니다 — 그 상태로 나가면 작은 창이 됩니다',
   },
 ]
 
