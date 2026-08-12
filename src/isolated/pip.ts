@@ -297,6 +297,8 @@ function enterPip(video: WebkitVideo): void {
  * window is already open, or something else moved the video meanwhile.
  */
 function retryFloat(video: WebkitVideo, why: string): void {
+  if (retried) return
+  retried = true
   if (!document.hidden) return
   if (video.paused) return
   if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') return
@@ -683,6 +685,9 @@ function isMusic(): boolean {
 /** One hand-over per departure, however many signals announce it. */
 let handedOver = false
 
+/** And one re-request: the play promise and the `playing` event both arrive. */
+let retried = false
+
 /**
  * Floated on the way out before the page was actually hidden.
  *
@@ -693,6 +698,33 @@ let handedOver = false
  * page turns out to still be there.
  */
 let floatedEarly = false
+
+/**
+ * Did a departure actually happen?
+ *
+ * Opening the floating window makes the page look like it has just been come back
+ * to — focus lands, visibility settles — and the restore path took that at face
+ * value and put the video straight back inline, 58ms after floating it. Measured on
+ * the device, and it is the whole of why leaving "did not work" while the log said
+ * the window had opened.
+ *
+ * So coming back has to be the end of a going away, and the going away has to have
+ * been real: the page hidden, or the early float still standing after its check.
+ */
+let wentAway = false
+
+/** Long enough for the window to have opened and the page to have settled. */
+const RETURN_GRACE_MS = 1400
+
+/**
+ * Where the video was when we left it.
+ *
+ * Coming back it can be at zero with nothing buffered — the element has been reset
+ * under us, which the stall watch caught on the device: readyState 1, time 0.00,
+ * playing nothing. Pressing play on that plays the video from the start, which is
+ * worse than not resuming at all. So the position goes with us.
+ */
+let leftAt = 0
 
 /**
  * Where the video was before we moved it, so coming back can put it there.
@@ -866,8 +898,10 @@ function onLeaving(event: Event): void {
     }
   }
 
+  leftAt = video.currentTime
   const attempt = attemptSync(video)
   handedOver = true
+  wentAway = true
   // The mode read here is the one from before the call — WebKit updates it
   // later — so it says what we were leaving from, not what came of it. What came
   // of it is answered on the way back, by onReturning.
@@ -915,8 +949,16 @@ function onLeaving(event: Event): void {
  * who moved it.
  */
 function onReturning(): void {
+  // Opening the window looks like coming back. It is not: nothing has been left
+  // yet, and this handler undoing the float it was told about is what made leaving
+  // appear not to work at all.
+  if (!wentAway) return
+  if (Date.now() - engagedAt < RETURN_GRACE_MS) return
+
   handedOver = false
+  retried = false
   floatedEarly = false
+  wentAway = false
   log(`돌아옴: 모드=${playerVideo()?.webkitPresentationMode ?? '?'}`)
   const video = playerVideo()
   if (!video) return
@@ -973,6 +1015,17 @@ function onReturning(): void {
  * loop that fights the player is worse than a video that stays paused.
  */
 function resumeAfterRestore(video: WebkitVideo): void {
+  // Put it back where it was first. A reset element plays from the beginning, and
+  // a video that restarts is a worse answer than one that stays paused.
+  if (leftAt > 2 && video.currentTime < 1 && Number.isFinite(video.duration)) {
+    try {
+      video.currentTime = leftAt
+      log(`복귀: 위치 되돌림 ${Math.round(leftAt)}초`)
+    } catch {
+      // The element may not be seekable yet; playing from where it is beats
+      // fighting it.
+    }
+  }
   let tries = 0
   const tick = () => {
     tries += 1
@@ -1050,8 +1103,10 @@ function onTouchMove(event: Event): void {
   if (document.pictureInPictureElement === video) return
 
   allowPip(video)
+  leftAt = video.currentTime
   const attempt = attemptSync(video)
   handedOver = true
+  wentAway = true
   record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
   setTimeout(() => {
     log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
@@ -1094,8 +1149,10 @@ function floatEarly(): void {
   if (document.pictureInPictureElement === video) return
 
   allowPip(video)
+  leftAt = video.currentTime
   const attempt = attemptSync(video)
   floatedEarly = true
+  wentAway = true
   record('blur', `${attempt}:from-inline`)
 
   setTimeout(() => {
