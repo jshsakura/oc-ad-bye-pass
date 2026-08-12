@@ -32,7 +32,7 @@
 // one and is what Chrome implements; WebKit has its own
 // `webkitSetPresentationMode`, and on iPhone that is the only one there is.
 
-import { LEAVING_EVENT } from '../shared/messages.ts'
+import { HOLD_ATTR, LEAVING_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
 
@@ -181,6 +181,9 @@ function isFloating(video: WebkitVideo): boolean {
  * doing, so it happens here, synchronously.
  */
 function leavePip(video: WebkitVideo): void {
+  // Theirs now — the hold exists to protect a departure, not to trap a video.
+  holdInline(false)
+  floatingAway = false
   engagedByUs = false
   preferFullscreen = false
   log('탭: 접기')
@@ -517,6 +520,7 @@ function guardPresentation(video: WebkitVideo): void {
     if (refloats >= REFLOAT_LIMIT) {
       log('작은 창: 다시 열기 포기 (세 번 밀려남)')
       floatingAway = false
+      holdInline(false)
       return
     }
     refloats += 1
@@ -767,6 +771,21 @@ const REFLOAT_LIMIT = 3
 let refloats = 0
 
 /**
+ * Raise or lower the sign the page's world reads.
+ *
+ * While it is up, src/main/holdPresentation.ts refuses the page's own attempts to
+ * put the video back inline. Reopening the window after the fact works and is kept
+ * as the backstop, but not being dragged out in the first place is better than
+ * being dragged out three times.
+ */
+function holdInline(on: boolean): void {
+  const root = document.documentElement
+  if (!root) return
+  if (on) root.setAttribute(HOLD_ATTR, '1')
+  else root.removeAttribute(HOLD_ATTR)
+}
+
+/**
  * Where the video was before we moved it, so coming back can put it there.
  *
  * Inline is not the only right answer. Someone watching fullscreen who leaves
@@ -948,6 +967,7 @@ function onLeaving(event: Event): void {
   handedOver = true
   wentAway = true
   floatingAway = true
+  holdInline(true)
   // The mode read here is the one from before the call — WebKit updates it
   // later — so it says what we were leaving from, not what came of it. What came
   // of it is answered on the way back, by onReturning.
@@ -1006,6 +1026,7 @@ function onReturning(): void {
   wentAway = false
   floatingAway = false
   refloats = 0
+  holdInline(false)
   log(`돌아옴: 모드=${playerVideo()?.webkitPresentationMode ?? '?'}`)
   const video = playerVideo()
   if (!video) return
@@ -1159,6 +1180,7 @@ function onTouchMove(event: Event): void {
   handedOver = true
   wentAway = true
   floatingAway = true
+  holdInline(true)
   record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
   setTimeout(() => {
     log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)

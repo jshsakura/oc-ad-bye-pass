@@ -20,6 +20,7 @@
 
 import { NS, isBridgeMessage, type MainConfig } from '../shared/messages.ts'
 import { setBackgroundPlay } from './backgroundPlay.ts'
+import { holdPresentation } from './holdPresentation.ts'
 import { BUNDLED_PRUNE } from '../shared/selectors.ts'
 import { pruneAdFields } from './prune.ts'
 
@@ -172,6 +173,7 @@ export function installHooks() {
   installToStringGuard()
   installJsonParseHook()
   installResponseJsonHook()
+  holdPresentation()
   guardGlobal('ytInitialPlayerResponse')
   guardGlobal('ytInitialData')
   listenForConfig()
