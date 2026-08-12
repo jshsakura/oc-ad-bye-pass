@@ -1330,10 +1330,24 @@ function resumeAfterRestore(video: WebkitVideo): void {
 // edge, travel upwards, and travel further up than sideways — page scrolling does
 // not begin down there, and a horizontal swipe is a different intention.
 
-/** How close to the bottom edge a press has to start to be the way out. */
-const HOME_EDGE = 28
+/**
+ * How close to the bottom edge a press has to start to be the way out.
+ *
+ * Widened, because this is no longer a nicety — it is the mechanism. Apple's own
+ * answer on this is that picture-in-picture may only begin in response to user
+ * interaction and never programmatically, and WebKit enforces it by granting the
+ * window only inside a live user activation. A call from a visibility handler
+ * reports success, fires the change event, and presents nothing; that is the
+ * "모드는 PiP 인데 창이 없다" exactly, and it is why the same code worked whenever a
+ * tap happened to be a second or two old.
+ *
+ * The swipe up from the bottom is the gesture that leaves, and its touch reaches
+ * the page before the system takes it. It is the one moment that can ask and be
+ * granted.
+ */
+const HOME_EDGE = 60
 /** How far up it has to travel before it counts. */
-const HOME_TRAVEL = 24
+const HOME_TRAVEL = 16
 
 let swipeFrom: { x: number; y: number } | null = null
 
@@ -1368,11 +1382,29 @@ function onTouchMove(event: Event): void {
 
   const video = playerVideo()
   if (!video) return
-  // Nothing to carry away if it was not playing, and nothing to do if it is
-  // already out of the page.
+  // Nothing to carry away if it was not playing.
   if (video.paused || video.ended) return
-  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') return
   if (document.pictureInPictureElement === video) return
+
+  /*
+   * A mode that says picture-in-picture with no window on screen is a state this
+   * API can get stuck in — the call reports success whether or not anything is
+   * presented, so a refused attempt leaves the property claiming a window that
+   * does not exist, and the next attempt is skipped as unnecessary. Putting it
+   * back inline first is the only reset the prefixed API offers.
+   */
+  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') {
+    if (userIsHere()) {
+      log(`나가는 손짓: 모드가 ${video.webkitPresentationMode} 인데 화면엔 없음 — 되돌리고 다시`)
+      try {
+        video.webkitSetPresentationMode?.('inline')
+      } catch {
+        return
+      }
+    } else {
+      return
+    }
+  }
 
   allowPip(video)
   leftAt = video.currentTime

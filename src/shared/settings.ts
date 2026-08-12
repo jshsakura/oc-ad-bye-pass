@@ -65,7 +65,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Music is named because the difference is deliberate and would otherwise read
     // as the feature failing there. A floating black rectangle following you around
     // is not what anyone wants from a song.
-    hint: '앱을 나갈 때 작은 창으로 넘깁니다 · 뮤직은 소리만 이어집니다 (아이폰은 설정 → 일반 → 그림 속 그림도 켜야 합니다)',
+    hint: '아래에서 위로 쓸어 나가면 작은 창이 됩니다 · 뮤직은 소리만 이어집니다 (아이폰은 설정 → 일반 → 그림 속 그림도 켜야 합니다)',
   },
   {
     key: 'pipButton',
