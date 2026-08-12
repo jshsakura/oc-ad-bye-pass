@@ -199,7 +199,6 @@ function leavePip(video: WebkitVideo): void {
  * Everything here runs inside the tap. No awaits before a privileged call.
  */
 function enterPip(video: WebkitVideo): void {
-  handledByUser = Date.now()
   if (isFloating(video)) return leavePip(video)
 
   // Right now, not at the last sweep. YouTube puts `disablePictureInPicture`
@@ -709,17 +708,6 @@ let handedOver = false
 let retried = false
 
 /**
- * Floated on the way out before the page was actually hidden.
- *
- * Because that is the one instant when it can work: `blur` arrives while the video
- * is still playing, and WebKit will not float a video it has already paused —
- * which by `visibilitychange` it has. The cost is that `blur` also fires for things
- * that are not leaving, like reaching for the address bar, so it is undone if the
- * page turns out to still be there.
- */
-let floatedEarly = false
-
-/**
  * Did a departure actually happen?
  *
  * Opening the floating window makes the page look like it has just been come back
@@ -746,17 +734,6 @@ const RETURN_GRACE_MS = 1400
  */
 let leftAt = 0
 
-/**
- * When the user last acted on this themselves.
- *
- * The early float undoes itself if the page turns out not to have gone anywhere,
- * and on the device that undo closed a window the user had opened by hand three
- * milliseconds later: the tap that presses the button also blurs the document, so
- * we floated, they floated, and then our timer took both away.
- *
- * Nothing we started gets taken back if they have touched it since.
- */
-let handledByUser = 0
 
 /**
  * Floated for this departure, and still expecting to be floating.
@@ -893,15 +870,20 @@ function onLeaving(event: Event): void {
   if (isMusic()) return
   const signal = event.type
 
-  // The moment before the engine stops it.
+  // `blur` is not leaving.
   //
-  // Every other signal arrives too late by one tick: iOS pauses the media as the
-  // app goes away, and a paused video is one WebKit refuses to float. `blur` comes
-  // first, while it is still playing — so that is where the window is asked for.
-  if (signal === 'blur' && !document.hidden) {
-    floatEarly()
-    return
-  }
+  // It was used as one, on the reasoning that it arrives before the engine stops
+  // the media and a stopped video cannot be floated. It does — and it also arrives
+  // when the popup opens, when the address bar is tapped, and when our own button
+  // is pressed. On the device that meant pressing 진단 floated the video, and the
+  // undo that was meant to cover it took the user's own window away three
+  // milliseconds after they opened it.
+  //
+  // None of it was needed. The departure path asks for playback back and then for
+  // the window, and that is measured working from the hidden signal:
+  //
+  //   17:38.916  나감 oc-ad-bye-pass:leaving → called:from-inline
+  //   17:39.017  모드 → picture-in-picture
 
   const video = playerVideo()
   if (!video) return record(signal, 'skip:no-video')
@@ -1011,7 +993,6 @@ function onReturning(): void {
 
   handedOver = false
   retried = false
-  floatedEarly = false
   wentAway = false
   floatingAway = false
   refloats = 0
@@ -1193,59 +1174,6 @@ function swipeSignals(): [EventTarget, string][] {
 // The leaving path asks for picture-in-picture directly, which is the same call the
 // button makes. When that call is refused there is no clever way around it, and a
 // wrong answer delivered smoothly is still a wrong answer.
-
-/**
- * Ask now, while it is still playing, and take it back if they did not leave.
- *
- * Reaching for the address bar blurs the page too. Floating for that would be the
- * extension throwing a window over someone who never went anywhere, so the page is
- * given a moment to prove it is really gone — if it is still visible and focused
- * shortly after, the video goes back where it was and nothing was announced.
- */
-function floatEarly(): void {
-  const video = playerVideo()
-  if (!video) return
-  if (video.paused || video.ended) return
-  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') return
-  if (document.pictureInPictureElement === video) return
-
-  allowPip(video)
-  leftAt = video.currentTime
-  const attempt = attemptSync(video)
-  floatedEarly = true
-  wentAway = true
-  floatingAway = true
-  record('blur', `${attempt}:from-inline`)
-
-  const floatedAt = Date.now()
-  setTimeout(() => {
-    if (!floatedEarly) return
-    const gone = document.hidden || !document.hasFocus()
-    const theirs = handledByUser > floatedAt
-    log(
-      `나가는 길: 확인 — ${gone ? '정말 나감' : '안 나갔음'}` +
-        `${theirs ? ', 사용자가 손댐 — 그대로 둠' : gone ? '' : ', 되돌림'}` +
-        ` (숨김=${document.hidden} 포커스=${document.hasFocus()} 모드=${video.webkitPresentationMode ?? '?'})`,
-    )
-    if (gone) return
-    // Theirs now. Taking back a window somebody opened on purpose is worse than
-    // leaving one open that nobody asked for.
-    if (theirs) {
-      floatedEarly = false
-      return
-    }
-    floatedEarly = false
-    engagedByUs = false
-    const wasPlaying = !video.paused && !video.ended
-    try {
-      video.webkitSetPresentationMode?.('inline')
-    } catch {
-      // Leave it rather than fight the player for it.
-    }
-    // Putting it back inline stops it, and it was playing a second ago.
-    if (wasPlaying) resumeAfterRestore(video)
-  }, 1600)
-}
 
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false
