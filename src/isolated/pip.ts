@@ -493,9 +493,6 @@ function placementSignals(): [EventTarget, string][] {
  * Only while ours: the user closing the window themselves has to work, and it
  * arrives as the same event.
  */
-/** How long YouTube gets held off after a change we asked for. */
-const GUARD_MS = 1500
-
 /** When we last asked for a presentation change, so the guard can expire. */
 let engagedAt = 0
 
@@ -531,17 +528,18 @@ function guardPresentation(video: WebkitVideo): void {
         engagedByUs = false
         return
       }
-      // Only for as long as the change we made is settling.
+      // Nothing is swallowed any more.
       //
-      // It used to hold for the whole time the window was open, and the player
-      // is a state machine fed by these events: kept blind to a mode it is
-      // living in, it can come back to a video it thinks is still elsewhere —
-      // spinner on screen, audio playing, which is what the phone showed. The
-      // window closing is the case worth defending, and that is over in a
-      // moment; after that YouTube is better off knowing.
-      if (Date.now() - engagedAt > GUARD_MS) return
-      log(`표시 모드 이벤트 삼킴 (모드=${video.webkitPresentationMode ?? '?'})`)
-      event.stopPropagation()
+      // Hiding these from the player was meant to stop it dragging the video back
+      // inline, and it cost more than it saved: the player is a state machine fed
+      // by these events, and kept blind to where the video actually is it leaves
+      // its own placeholder on screen — "This video is playing in picture in
+      // picture", over a page the user has already come back to — and comes back
+      // to a video it believes is elsewhere.
+      //
+      // Being dragged back is handled where it happens now, by opening the window
+      // again, so the player can be told the truth.
+      void event
     },
     true,
   )
@@ -721,8 +719,15 @@ let retried = false
  */
 let wentAway = false
 
-/** Long enough for the window to have opened and the page to have settled. */
-const RETURN_GRACE_MS = 1400
+/**
+ * Just long enough for the window's own events to land.
+ *
+ * It was 1.4 seconds, which is also how long YouTube's "playing in picture in
+ * picture" card sat on screen after coming back before the video returned to it.
+ * What proves a departure is having been hidden, which `wentAway` already records;
+ * this only keeps the opening of the window from reading as a return.
+ */
+const RETURN_GRACE_MS = 250
 
 /**
  * Where the video was when we left it.
