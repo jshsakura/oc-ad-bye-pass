@@ -176,8 +176,9 @@ test('버튼이 플레이어 밖에, 화면에 고정돼 있다', async ({ conte
   expect(where?.insidePlayer, '플레이어 안에 있으면 탭을 뺏긴다').toBe(false)
   expect(where?.parent).toBe('HTML')
   expect(where?.position).toBe('fixed')
-  // 44px — 엄지가 확실히 닿는 최소 크기
-  expect(where?.size?.[0]).toBeGreaterThanOrEqual(44)
+  // 아이콘에 맞춘 크기다. 44px 짜리 판때기는 남의 플레이어 위에서 판때기로 보였다.
+  expect(where?.size?.[0]).toBeGreaterThanOrEqual(28)
+  expect(where?.size?.[0], '아이콘보다 한참 큰 판때기가 됐다').toBeLessThanOrEqual(36)
 })
 
 test('다시 끄면 버튼이 사라진다', async ({ context, background }) => {
@@ -230,12 +231,14 @@ test('배경 재생을 켜도 나가는 신호가 PiP 까지 온다', async ({ c
     if (pageSaw) throw new Error('페이지가 visibilitychange 를 봤다 — 배경 재생이 안 걸렸다')
   })
 
+  // 기록 쪽을 본다. 숨겨지지 않은 상태의 신호는 패널의 헤드라인을 차지하지 않게
+  // 됐지만(그 자리는 실제로 나갔던 마지막 순간의 것이어야 한다), 도착했다는 사실은
+  // 남는다 — 그리고 이 시험이 지키려는 것이 바로 그 도착이다.
   await expect
-    .poll(
-      () => page.evaluate(() => document.documentElement.getAttribute('data-oc-abp-autopip')),
-      { message: '나가는 신호가 PiP 핸들러까지 오지 않았다' },
-    )
-    .toContain('leaving')
+    .poll(() => page.evaluate(() => document.documentElement.getAttribute('data-oc-abp-log')), {
+      message: '나가는 신호가 PiP 핸들러까지 오지 않았다',
+    })
+    .toContain('oc-ad-bye-pass:leaving')
 })
 
 // 나갈 때 작은 창으로 — 여기서는 못 돌린다.

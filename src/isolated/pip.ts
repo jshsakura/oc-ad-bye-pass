@@ -38,8 +38,15 @@ import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
-/** 44px is the smallest target a thumb hits reliably. */
-const BUTTON_SIZE = 44
+/**
+ * Sized to the icon rather than to a guideline.
+ *
+ * It was 44 — the usual smallest-tappable-target figure — and on the phone that
+ * read as a slab with a small picture floating in the middle of it. This is the
+ * icon plus a hairline of padding, which is what a control sitting on somebody
+ * else's player should look like.
+ */
+const BUTTON_SIZE = 32
 
 interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
@@ -343,14 +350,14 @@ function ensureButton(video: WebkitVideo): void {
     'right:14px',
     'bottom:104px',
     'z-index:2147483647',
-    'width:44px',
-    'height:44px',
+    `width:${BUTTON_SIZE}px`,
+    `height:${BUTTON_SIZE}px`,
     'display:grid',
     'place-items:center',
     'padding:0',
     'margin:0',
     'border:none',
-    'border-radius:12px',
+    'border-radius:9px',
     'background:rgba(24,24,37,.86)',
     'box-shadow:0 6px 20px -6px rgba(0,0,0,.6)',
     'cursor:pointer',
@@ -712,7 +719,14 @@ function onLeaving(event: Event): void {
 
   const video = playerVideo()
   if (!video) return record(signal, 'skip:no-video')
-  if (!document.hidden) return record(signal, 'skip:not-hidden')
+  if (!document.hidden) {
+    // Not a departure at all. Coming back fires visibilitychange too, and
+    // background playback re-announces that one as well, so letting it write the
+    // panel's headline meant the last thing shown was always a return —
+    // `skip:not-hidden` over a hand-over that had just worked.
+    log(`나감 ${signal} → 아직 안 숨겨짐 (기록 안 함)`)
+    return
+  }
 
   // Paused is the normal state here rather than a reason to stop: the engine
   // stops the media before the page is told anything. Whose pause it was decides
