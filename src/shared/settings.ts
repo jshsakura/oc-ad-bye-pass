@@ -65,7 +65,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Music is named because the difference is deliberate and would otherwise read
     // as the feature failing there. A floating black rectangle following you around
     // is not what anyone wants from a song.
-    hint: '아래에서 위로 쓸어 나가면 작은 창이 됩니다 · 뮤직은 소리만 이어집니다 (아이폰은 설정 → 일반 → 그림 속 그림도 켜야 합니다)',
+    hint: '나가기 전에 PiP 버튼을 누르면 그 창이 앱 밖에서도 남습니다 · 뮤직은 소리만 이어집니다',
   },
   {
     key: 'pipButton',
@@ -73,7 +73,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Separate because it is a different kind of thing: this one puts a control
     // on someone else's player. Wanting to leave with the video is not the same
     // as wanting a button, and it was a mistake to charge one for the other.
-    hint: '플레이어 위에 작은 창 버튼을 답니다',
+    hint: '아이폰에서 작은 창을 여는 유일한 방법입니다 — 나가기 전에 한 번 누르세요',
   },
 ]
 
@@ -119,8 +119,20 @@ export const DEFAULT_SETTINGS: Settings = {
     // this on a phone, and picture-in-picture is the only mechanism iOS gives a
     // web page for it.
     pictureInPicture: true,
-    // Off. It is the one thing here that adds something to the screen.
-    pipButton: false,
+    /*
+     * On, because it is the only thing that works.
+     *
+     * It was off as the one control that adds something to somebody's screen,
+     * and that was right while leaving the app was expected to float the video by
+     * itself. It does not and cannot: WebKit grants a floating window only inside
+     * a live user activation, and a departure has none — measured on the device
+     * across a day of releases, every automatic call taken and silently ignored.
+     *
+     * A real tap works, every time, and the window survives leaving the app. So
+     * the button is not an extra: it is the feature. Off by default meant the
+     * only working way in was hidden behind a setting nobody had reason to find.
+     */
+    pipButton: true,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

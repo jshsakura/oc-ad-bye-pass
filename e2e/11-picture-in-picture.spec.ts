@@ -30,25 +30,31 @@ async function setPip(background: import('@playwright/test').Worker, on: boolean
   }, on)
 }
 
-test('기본값에서는 버튼을 얹지 않는다 — 동작은 켜져 있어도', async ({ context }) => {
+// 기본으로 붙는다.
+//
+// 남의 플레이어에 컨트롤을 다는 일이라 오래 꺼둔 채였고, 나갈 때 알아서 작은 창이
+// 된다는 전제에서는 그게 맞았다. 그 전제가 틀렸다 — WebKit 은 살아있는 사용자
+// 제스처 안에서만 창을 열어주고 나가는 순간에는 그것이 없다. 실기기에서 하루치
+// 릴리스로 확인한 결과, 자동 호출은 전부 조용히 무시됐고 진짜 탭은 매번 열렸다.
+// 그러면 이 버튼은 부가물이 아니라 기능 그 자체다.
+test('기본으로 버튼이 붙는다 — 아이폰에서 작은 창을 여는 유일한 길이다', async ({ context }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
-  // 나갈 때 이어보는 것은 기본이다. 남의 플레이어에 컨트롤을 다는 것은 아니다.
-  await expect(page.locator(BUTTON)).toHaveCount(0)
+  await expect(page.locator(BUTTON)).toBeVisible()
 })
 
-test('켜면 나타나고, 다시 끄면 사라진다', async ({ context, background }) => {
+test('끄면 사라지고, 다시 켜면 돌아온다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
-  await expect(page.locator(BUTTON)).toHaveCount(0)
-
-  await setPip(background, true)
   await expect(page.locator(BUTTON)).toBeVisible()
 
   await setPip(background, false)
   await expect(page.locator(BUTTON)).toHaveCount(0)
+
+  await setPip(background, true)
+  await expect(page.locator(BUTTON)).toBeVisible()
 })
 
 test('켜면 버튼이 붙고, 유튜브가 걸어둔 차단이 풀린다', async ({ context, background }) => {
