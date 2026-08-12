@@ -25,6 +25,17 @@ const KEY = 'diagnostics'
  */
 const YOUTUBE_KEY = 'diagnosticsYoutube'
 
+/**
+ * The log, kept across pages.
+ *
+ * It lives in a DOM attribute so it can be written while the page is being
+ * suspended, and a DOM attribute dies with the page — so every navigation started
+ * the story again, which is why opening the panel after a video had loaded showed
+ * one line. The tail is folded into storage on every report instead.
+ */
+const LOG_KEY = 'diagnosticsLog'
+const LOG_KEEP = 6000
+
 /** Written by src/isolated/pip.ts when the user leaves with a video playing. */
 const AUTO_PIP_ATTR = 'data-oc-abp-autopip'
 
@@ -64,25 +75,8 @@ interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
 }
 
-/**
- * The video the reader is asking about.
- *
- * `querySelector('video')` returns whichever element comes first in the document,
- * and on YouTube that can be an empty one held in reserve — so the panel answered
- * `PiP 지원: 아니오` and `표시 모드: inline` about a video nobody was watching.
- * The same ordering by liveness that src/isolated/pip.ts picks by, kept separate
- * because this module is loaded by the injection path before that one exists.
- */
-function reportedVideo(): WebkitVideo | null {
-  const videos = [...document.querySelectorAll<WebkitVideo>('video')]
-  if (videos.length === 0) return null
-  const score = (v: WebkitVideo) =>
-    (!v.paused && !v.ended ? 4 : 0) + (v.currentTime > 0 ? 2 : 0) + (v.readyState >= 1 ? 1 : 0)
-  return videos.reduce((best, v) => (score(v) > score(best) ? v : best))
-}
-
 export function reportDiagnostics(): void {
-  const video = reportedVideo()
+  const video = document.querySelector<WebkitVideo>('video')
   const facts: PageDiagnostics = {
     at: Date.now(),
     url: location.href,
@@ -110,8 +104,34 @@ export function reportDiagnostics(): void {
   if (location.hostname.endsWith('youtube.com')) {
     void chrome.storage.local.set({ [YOUTUBE_KEY]: facts })
   }
+  void mergeLog(facts.log)
 
   if (!facts.layer1) watchForLayer1()
+}
+
+/**
+ * Fold this page's tail into the running one.
+ *
+ * Lines are matched rather than counted: the same report is written several times
+ * per page, and appending each time would keep the same lines over and over. What
+ * is new is whatever comes after the last line already stored.
+ */
+async function mergeLog(tail: string | null): Promise<void> {
+  if (!tail) return
+  try {
+    const got = await chrome.storage.local.get(LOG_KEY)
+    const stored = typeof got[LOG_KEY] === 'string' ? (got[LOG_KEY] as string) : ''
+    const lines = tail.split('\n')
+    const known = new Set(stored.split('\n'))
+    const fresh = lines.filter((line) => line && !known.has(line))
+    if (fresh.length === 0) return
+    const merged = stored ? `${stored}\n${fresh.join('\n')}` : fresh.join('\n')
+    await chrome.storage.local.set({
+      [LOG_KEY]: merged.length > LOG_KEEP ? merged.slice(merged.length - LOG_KEEP) : merged,
+    })
+  } catch {
+    // The panel still has this page's own tail; a merged history is a bonus.
+  }
 }
 
 let waitingForLayer1: MutationObserver | null = null

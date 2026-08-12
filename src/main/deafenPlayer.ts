@@ -21,27 +21,7 @@ import { log } from '../shared/log.ts'
 /** Only this one, and only on videos. A blanket refusal would break the page. */
 const DEAFENED = 'webkitpresentationmodechanged'
 
-/**
- * Set by the other world while a window it opened is still meant to be up.
- *
- * An attribute rather than a message, because the two worlds share the document
- * and nothing else reliably — and because it has to be readable synchronously,
- * inside a call this is deciding whether to pass on.
- */
-
-/*
- * What used to be here: a wrapper on `webkitSetPresentationMode` that logged every
- * call and, for a few releases, refused the page's `inline`.
- *
- * The refusal broke playback outright and was removed. The wrapper that only
- * logged was kept for one more release and is removed too — playback stayed
- * broken, and a prototype of the page's own video element replaced for the sake
- * of a log line is not a thing to leave in while that is unexplained. What it was
- * there to learn is not worth a page that will not play.
- */
-
 export function deafenPlayer(): void {
-
   const proto = EventTarget.prototype
   const native = proto.addEventListener
   if (typeof native !== 'function') return

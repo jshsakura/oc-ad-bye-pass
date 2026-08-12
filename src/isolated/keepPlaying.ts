@@ -23,45 +23,27 @@ import { markUserPause, pausedByUser } from './intent.ts'
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
 
-/*
- * No window around the departure.
- *
- * One was added and it switched background playback off ten seconds after
- * leaving, which is the feature. The engine does not stop the media once as the
- * app goes away — it keeps stopping it, every few seconds, for as long as the page
- * is in the background, and putting it back each time is what background playback
- * is on this platform.
- *
- * What that window was really for was making a person's pause stick, and that is
- * answered by knowing whose pause it was rather than by when it arrived: the
- * media-session marker above, and the backstop below for when the marker is not
- * there.
- */
-
 /** Retries, spaced. A pause can land again as the browser finishes hiding the tab. */
 const RETRIES = [120, 400, 1200]
 
-let watched: HTMLVideoElement | null = null
-let lastPlayingAt = 0
-let enabled = false
-
 /**
- * When we last put it back, and how many times that was undone straight away.
+ * When we last put playback back, and how many times that was undone at once.
  *
- * The backstop for everything above, and the one that needs no cooperation from
- * anybody. Telling the engine's pause from a person's depends on our
- * media-session handler still being the registered one, and it can be replaced
- * without notice — so when the inference is wrong, this is what notices.
- *
- * A person who pauses, sees it start again, and pauses again has said it twice.
- * Nothing here gets a third turn: reported from the phone as "재생이 멈추질 않아",
- * which is the extension and the user pressing the same button at each other.
+ * The backstop, and the one that needs no cooperation. Telling the engine's pause
+ * from a person's depends on our media-session handler still being the registered
+ * one, and YouTube installs its own whenever its player reinitialises — so when
+ * the inference is wrong, this is what notices. A person who pauses, sees it
+ * start again, and pauses again has said it twice; nothing here gets a third turn.
  */
 let resumedAt = 0
 let fought = 0
 
-/** How soon after our resume a pause counts as an answer to it. */
+/** How soon after our resume a pause reads as an answer to it rather than the engine. */
 const FIGHT_WINDOW_MS = 2500
+
+let watched: HTMLVideoElement | null = null
+let lastPlayingAt = 0
+let enabled = false
 
 function onPlaying(): void {
   lastPlayingAt = Date.now()
@@ -81,13 +63,15 @@ function onPause(): void {
   // the only signal that separates them.
   //
   // Except on the lock screen, where the two look identical and the answer is the
-  // opposite one: the transport controls work *because* the page is hidden, so
-  // the most deliberate pause a person can make arrived here looking exactly like
-  // the engine's. It was resumed every time. Intent is asked for first now.
+  // opposite one: the transport controls work *because* the page is hidden, so the
+  // most deliberate pause a person can make arrives here looking exactly like the
+  // engine's. It was resumed every time. Intent is asked for first now.
   if (pausedByUser()) {
     log('배경재생: 사용자가 멈춤 — 그대로 둔다')
     return
   }
+  if (!document.hidden) return
+  if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
   // Undone straight after we put it back. Once is the engine being stubborn;
   // twice is somebody answering us.
@@ -97,10 +81,6 @@ function onPause(): void {
     markUserPause()
     return
   }
-  if (!document.hidden) return
-  if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
-
-
 
   log('배경재생: 엔진이 세움 — 되살리기 시도')
   let attempt = 0

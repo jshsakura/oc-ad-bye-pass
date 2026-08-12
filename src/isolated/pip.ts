@@ -66,26 +66,7 @@ interface WebkitVideo extends HTMLVideoElement {
 /** How long to wait before deciding webkitSetPresentationMode did nothing. */
 const PRESENTATION_SETTLE_MS = 900
 
-/**
- * Is there a live user activation right now?
- *
- * Kept after the paths that were built around it were deleted, because it is the
- * only thing that distinguishes a call that could have worked from one that never
- * could — and on this browser the answer turned out not to matter, which is a
- * fact worth continuing to record rather than assume.
- *
- * `?` means the browser has no such API, which is itself worth knowing.
- */
-function activation(): string {
-  const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
-  if (!ua) return '?'
-  return ua.isActive ? '활성' : '만료'
-}
-
 let observer: MutationObserver | null = null
-
-/** Whether the panel has ever been told about a page that had a player in it. */
-let reportedWithVideo = false
 
 
 /**
@@ -217,7 +198,7 @@ function leavePip(video: WebkitVideo): void {
   log('탭: 접기')
   try {
     if (video.webkitPresentationMode !== undefined && video.webkitSetPresentationMode) {
-      setMode(video, 'inline')
+      video.webkitSetPresentationMode('inline')
       return
     }
     if (document.pictureInPictureElement === video) void document.exitPictureInPicture()
@@ -271,7 +252,7 @@ function enterPip(video: WebkitVideo): void {
   log(`탭: 경로=${route}`)
   if (route === 'webkit' && typeof video.webkitSetPresentationMode === 'function') {
     try {
-      setMode(video, 'picture-in-picture')
+      video.webkitSetPresentationMode('picture-in-picture')
       void confirmOrOfferFullscreen(video)
       return
     } catch (e) {
@@ -495,15 +476,6 @@ function placementSignals(): [EventTarget, string][] {
  * arrives as the same event.
  */
 
-/** Ask for a presentation mode. Never throws. */
-function setMode(video: WebkitVideo, mode: string): void {
-  try {
-    video.webkitSetPresentationMode?.(mode)
-  } catch {
-    // The caller has already written down what it was trying to do.
-  }
-}
-
 function guardPresentation(video: WebkitVideo): void {
   if (video.dataset.ocAbpGuarded === '1') return
   video.dataset.ocAbpGuarded = '1'
@@ -582,28 +554,6 @@ function sweep(): void {
    */
   const video = playerVideo()
   if (!video) return
-
-  /*
-   * Say it again now there is something to say.
-   *
-   * The report is written when the filters are applied, which on YouTube is
-   * before the player exists — so the panel answered "비디오 0개 · PiP 없음 · 표시
-   * 모드 inline" for the rest of the page's life, describing a moment half a
-   * second after navigation rather than anything the reader was asking about. It
-   * reads as a broken extension and it is a stale snapshot.
-   *
-   * Once, on the first video to appear. Reporting on every sweep would write to
-   * storage on every mutation YouTube makes, which is most of them.
-   */
-  // Metadata, not merely an element. `webkitSupportsPresentationMode` answers
-  // "no" for a video it knows nothing about yet, and a panel that reports
-  // `PiP 지원: 아니오` about a video that supports it perfectly well sends the
-  // reader after a problem that is not there — it did, one release ago.
-  if (!reportedWithVideo && video.readyState >= 1) {
-    reportedWithVideo = true
-    reportDiagnostics()
-  }
-
   allowPip(video)
   guardPresentation(video)
   watchPlayback(video)
@@ -656,7 +606,7 @@ function attemptSync(video: WebkitVideo): Attempt {
       // when the request was accepted. This used to read it anyway and
       // "escalate" to fullscreen on `inline`, which meant a granted PiP was
       // immediately overridden by a fullscreen request.
-      setMode(video, 'picture-in-picture')
+      video.webkitSetPresentationMode('picture-in-picture')
       return 'called'
     }
     if (typeof video.requestPictureInPicture === 'function') {
@@ -825,19 +775,12 @@ function keepFloatingAlive(video: WebkitVideo): void {
   video.dataset.ocAbpFloatWatch = '1'
   video.addEventListener('pause', () => {
     if (!floatingAway || video.ended) return
-    /*
-     * And the window has to actually be there.
-     *
-     * A flag is a belief; this is the fact. Left to the flag alone, a departure
-     * that raised the hold and never lowered it turned every pause the user
-     * pressed into a video that started itself again — reported from the phone,
-     * and the second time this file has overruled a person on the strength of
-     * something it merely believed.
-     */
+    // And the window has to actually be there — a flag is a belief, this is the
+    // fact. A hold left standing turned every pause the user pressed into a video
+    // that started itself again.
     if (!isFloating(video)) return
     // And they may still have meant it. A window closing because its video was
-    // paused is a cost; restarting a video somebody deliberately stopped is worse,
-    // and the lock screen is where both of those arrive by the same door.
+    // paused is a cost; restarting a video somebody deliberately stopped is worse.
     if (pausedByUser()) return
     log('작은 창: 멈춰서 다시 재생')
     void video.play().catch((e: unknown) => {
@@ -903,35 +846,12 @@ export function shouldResumeOnLeave(state: {
  *                     the real one, so it also arrives under our own name.
  *   pagehide          not swallowed, and hidden by the time it lands
  *   blur              fires before the page is hidden, so the guard below turns
- *                     it away — and onBlurWhileArmed picks it up instead, which
- *                     is where the only call that can be granted is made.
+ *                     it away. Kept for the record it leaves, not for the work
+ *                     it does — ungating it would float a window when someone
+ *                     merely tapped the address bar.
  *   freeze            does not exist in WebKit. Harmless on Chromium, inert on
  *                     the phone this was written for.
  */
-/*
- * What used to be here: a call made from `blur`, on the theory that it is the
- * last moment holding a live user activation.
- *
- * The theory was sound and the platform did not need it. Orion grants the window
- * with the activation long expired — measured, repeatedly:
- *
- *   59:29.388 나감 blur → called:from-inline:활성화=만료
- *   59:29.389 모드 바뀜 → picture-in-picture
- *
- * So the extra path bought nothing, and it cost: blur fires for the address bar,
- * for a share sheet, for anything at all, and each one floated a window in front
- * of somebody who had not gone anywhere. Then the restore closed it two seconds
- * later, so what the user saw was the video jumping out of the page and back for
- * no reason they could name.
- *
- *   59:22.492 나감 blur-armed → called:...:활성화=활성
- *   59:22.503 모드 바뀜 → picture-in-picture
- *   59:25.070 돌아옴: 작은 창을 페이지로 되돌림
- *
- * onLeaving takes blur already, gated on the page actually being hidden, which is
- * the same signal without the guessing.
- */
-
 function onLeaving(event: Event): void {
   if (handedOver) return
   if (isMusic()) return
@@ -943,29 +863,6 @@ function onLeaving(event: Event): void {
     log(`나감 ${signal} → 아직 안 숨겨짐 (기록 안 함)`)
     return
   }
-
-  /*
-   * A departure happened, whatever comes of it.
-   *
-   * This was set only on the home-swipe path, and everything that undoes a
-   * departure lives behind it in onReturning — so an ordinary leave (lock screen,
-   * app switcher, a swipe this file failed to recognise) latched `handedOver`
-   * true and never lowered it. From then on the guard at the top of this function
-   * turned away every further departure for the life of the page: the free shot
-   * that works when a tap is still warm was gone after the first miss.
-   *
-   * It also took the diagnostics with it. The only report written after a
-   * departure is the one at the end of onReturning, so the log of what happened
-   * while the app was away never reached storage, and the panel kept answering
-   * with a snapshot from before the video existed. The instrument was disabled by
-   * the fault it was there to find.
-   *
-   * Safe here and nowhere earlier: the page is genuinely hidden at this line. A
-   * floating window makes iOS call the page visible, so this cannot be raised by
-   * our own window opening.
-   */
-  wentAway = true
-
   if (modeBeforeLeaving === null) modeBeforeLeaving = video.webkitPresentationMode ?? 'inline'
 
   // Paused is the normal state here: the engine stops the media before the page
@@ -1004,12 +901,8 @@ function onLeaving(event: Event): void {
     video.addEventListener('playing', () => askAgain(video), { once: true })
   }
 
-  // The activation goes in the record because it is the difference between a call
-  // that could have worked and one that never could, and the two are otherwise
-  // indistinguishable afterwards — WebKit reports success either way.
-  const gesture = activation()
   const attempt = attemptSync(video)
-  record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
+  record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
 }
 
 /**
@@ -1056,27 +949,7 @@ function userIsHere(): boolean {
   }
 }
 
-/**
- * Standing guard against this function calling itself.
- *
- * Clearing the state before announcing is what breaks the cycle; this is what
- * stops the next one being a live bug instead of a caught one. Anything that
- * dispatches an event from in here can come back through one of four signals,
- * and re-entering is never the right answer.
- */
-let returning = false
-
 function onReturning(): void {
-  if (returning) return
-  returning = true
-  try {
-    handleReturn()
-  } finally {
-    returning = false
-  }
-}
-
-function handleReturn(): void {
   /*
    * One rule, one direction: the user is here, so the video belongs here.
    *
@@ -1088,21 +961,6 @@ function handleReturn(): void {
    * page visible, so only focus can answer this.
    */
   if (!userIsHere()) return
-
-  /*
-   * Flush before deciding anything, and unconditionally.
-   *
-   * The log lives in a DOM attribute because that is the only thing that survives
-   * the page being suspended, and it reaches storage only through a report. With
-   * the only report sitting after the `wentAway` test below, a departure that did
-   * not restore was a departure nobody could read afterwards — including the one
-   * that would have shown why it did not restore.
-   */
-  reportDiagnostics()
-
-  // Before anything else on the way back: the user is here, so the page may have
-  // its video back whenever it likes.
-
   if (!wentAway) return
 
   const video = floatedVideo ?? playerVideo()
@@ -1118,34 +976,20 @@ function handleReturn(): void {
     )
   }
 
-  /*
-   * Everything cleared before the announcement, because the announcement comes
-   * back here.
-   *
-   * RETURNED_EVENT makes backgroundPlay dispatch a visibilitychange so the player
-   * redraws, and visibilitychange is one of this function's own signals — so the
-   * announcement re-enters here, finds `wentAway` still standing, and announces
-   * again. On the device that ran until the ring buffer was full: dozens of
-   * `삼킴` / `나감` pairs inside a single millisecond, which flushed every line
-   * before them and took the evidence with it.
-   *
-   * The loop was always here. It only became reachable when ordinary departures
-   * started raising `wentAway` too, which until then only a home swipe did.
-   */
+  // One announcement, so the page draws itself again — the swallow eats the real
+  // one and a player that never hears it leaves the frame blank.
+  document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
+
   handedOver = false
   retried = false
   wentAway = false
   modeBeforeLeaving = null
 
-  // One announcement, so the page draws itself again — the swallow eats the real
-  // one and a player that never hears it leaves the frame blank.
-  document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
-
   if (video && video.webkitPresentationMode === 'picture-in-picture') {
     const wasPlaying = !video.paused && !video.ended
     log('돌아옴: 작은 창을 페이지로 되돌림')
     try {
-      setMode(video, 'inline')
+      video.webkitSetPresentationMode?.('inline')
     } catch {
       // Leave it where it is rather than fight the browser for it.
     }
@@ -1222,21 +1066,120 @@ function resumeAfterRestore(video: WebkitVideo): void {
   setTimeout(tick, 120)
 }
 
-// --- What used to be the way out --------------------------------------------
+// --- Catching the way out ----------------------------------------------------
 //
-// A touch watcher looked for the swipe up from the bottom edge, on the theory
-// that it is the one gesture that reaches the page before the system takes it and
-// therefore the one moment a window could be asked for and granted.
+// The button works because a tap carries user activation. Leaving does not — and
+// the last thing a person does before leaving is a gesture: the swipe up from the
+// bottom edge that goes home. That touch reaches the page before the system takes
+// it, which makes it the one moment before the app goes away that can ask for a
+// window and be granted it.
 //
-// Both halves turned out to be unnecessary and untrue here. Unnecessary, because
-// this browser grants the window without an activation at all. Untrue, because
-// the page never sees that touch: the census counted every touch for a whole
-// session and the closest any of them came to the bottom of the page was 477px.
-// The bottom of the screen belongs to the browser's own toolbar, and a swipe that
-// starts there starts outside the document.
+// So the swipe is watched for, and the request is made inside the handler, on the
+// same tick, exactly as the button does it. Nothing is simulated and no gesture is
+// taken from anyone: it is the user's own way out, used for the thing they asked
+// for when they switched this on.
 //
-// So the listeners are gone, and with them the only reason this file had to read
-// touches at all.
+// Narrow on purpose. The press has to start within a thumb's width of the bottom
+// edge, travel upwards, and travel further up than sideways — page scrolling does
+// not begin down there, and a horizontal swipe is a different intention.
+
+/**
+ * How close to the bottom edge a press has to start to be the way out.
+ *
+ * Widened, because this is no longer a nicety — it is the mechanism. Apple's own
+ * answer on this is that picture-in-picture may only begin in response to user
+ * interaction and never programmatically, and WebKit enforces it by granting the
+ * window only inside a live user activation. A call from a visibility handler
+ * reports success, fires the change event, and presents nothing; that is the
+ * "모드는 PiP 인데 창이 없다" exactly, and it is why the same code worked whenever a
+ * tap happened to be a second or two old.
+ *
+ * The swipe up from the bottom is the gesture that leaves, and its touch reaches
+ * the page before the system takes it. It is the one moment that can ask and be
+ * granted.
+ */
+const HOME_EDGE = 60
+/** How far up it has to travel before it counts. */
+const HOME_TRAVEL = 16
+
+let swipeFrom: { x: number; y: number } | null = null
+
+export function isHomeSwipe(state: {
+  fromBottom: number
+  up: number
+  sideways: number
+}): boolean {
+  if (state.fromBottom > HOME_EDGE) return false
+  if (state.up < HOME_TRAVEL) return false
+  return state.up > state.sideways
+}
+
+function onTouchStart(event: Event): void {
+  if (!(event instanceof TouchEvent)) return
+  const touch = event.changedTouches[0]
+  if (!touch) return
+  swipeFrom =
+    window.innerHeight - touch.clientY <= HOME_EDGE
+      ? { x: touch.clientX, y: touch.clientY }
+      : null
+}
+
+function onTouchMove(event: Event): void {
+  if (!swipeFrom || !(event instanceof TouchEvent)) return
+  const touch = event.changedTouches[0]
+  if (!touch) return
+  const up = swipeFrom.y - touch.clientY
+  const sideways = Math.abs(touch.clientX - swipeFrom.x)
+  if (!isHomeSwipe({ fromBottom: window.innerHeight - swipeFrom.y, up, sideways })) return
+  swipeFrom = null
+
+  const video = playerVideo()
+  if (!video) return
+  // Nothing to carry away if it was not playing.
+  if (video.paused || video.ended) return
+  if (document.pictureInPictureElement === video) return
+
+  /*
+   * A mode that says picture-in-picture with no window on screen is a state this
+   * API can get stuck in — the call reports success whether or not anything is
+   * presented, so a refused attempt leaves the property claiming a window that
+   * does not exist, and the next attempt is skipped as unnecessary. Putting it
+   * back inline first is the only reset the prefixed API offers.
+   */
+  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') {
+    if (userIsHere()) {
+      log(`나가는 손짓: 모드가 ${video.webkitPresentationMode} 인데 화면엔 없음 — 되돌리고 다시`)
+      try {
+        video.webkitSetPresentationMode?.('inline')
+      } catch {
+        return
+      }
+    } else {
+      return
+    }
+  }
+
+  allowPip(video)
+  leftAt = video.currentTime
+  const attempt = attemptSync(video)
+  handedOver = true
+  wentAway = true
+  floatingAway = attempt === 'called'
+  floatedVideo = attempt === 'called' ? video : null
+  // Only when something was actually taken. Raised on a refused call it stayed up
+  // with no window behind it and nothing on the way to lower it.
+  record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
+  setTimeout(() => {
+    log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
+  }, 700)
+}
+
+function swipeSignals(): [EventTarget, string][] {
+  return [
+    [document, 'touchstart'],
+    [document, 'touchmove'],
+  ]
+}
 
 // --- What used to be here ---------------------------------------------------
 //
@@ -1254,10 +1197,18 @@ function resumeAfterRestore(video: WebkitVideo): void {
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false
 
-
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
+  for (const [target, event] of swipeSignals()) {
+    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
+    // Passive: this never prevents the gesture. Taking the user's way out away
+    // from them would be a far worse bug than not floating a video.
+    target.addEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, {
+      capture: true,
+      passive: true,
+    })
+  }
   if (!wantButton) document.getElementById(BUTTON_ID)?.remove()
   sweep()
   for (const [target, event] of leavingSignals()) {
@@ -1295,6 +1246,10 @@ export function disablePictureInPicture(): void {
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
   floatingAway = false
+  for (const [target, event] of swipeSignals()) {
+    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
+  }
+  swipeFrom = null
   observer?.disconnect()
   observer = null
   for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)

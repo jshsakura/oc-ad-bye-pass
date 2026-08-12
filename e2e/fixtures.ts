@@ -81,15 +81,11 @@ export const test = base.extend<ExtensionFixtures>({
     /*
      * Wait for the install to finish, not merely for the worker to exist.
      *
-     * onInstalled seeds the default settings asynchronously and the worker is
-     * live well before that write lands. Every spec that pokes chrome.storage
-     * reads `settings` and patches it, so arriving early does not fail where the
-     * mistake is — it reads undefined and throws "Cannot read properties of
-     * undefined (reading 'toggles')" from inside a helper, on a different test
-     * each run, on CI and not on a developer's machine.
-     *
-     * Handing back an extension that has finished installing is what this
-     * fixture was always promising.
+     * onInstalled seeds the default settings asynchronously and the worker is live
+     * well before that write lands. Every spec that pokes chrome.storage reads
+     * `settings` and patches it, so arriving early does not fail where the mistake
+     * is — it throws "Cannot read properties of undefined" from inside a helper, on
+     * a different test each run, on CI and not on a developer's machine.
      */
     await worker.evaluate(async () => {
       for (let attempt = 0; attempt < 100; attempt += 1) {
