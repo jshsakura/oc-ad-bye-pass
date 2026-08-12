@@ -67,6 +67,9 @@ const PRESENTATION_SETTLE_MS = 900
 
 let observer: MutationObserver | null = null
 
+/** Whether the panel has ever been told about a page that had a player in it. */
+let reportedWithVideo = false
+
 
 /**
  * Everything that can mean "the user is leaving". They overlap on purpose.
@@ -553,6 +556,24 @@ function sweep(): void {
    */
   const video = playerVideo()
   if (!video) return
+
+  /*
+   * Say it again now there is something to say.
+   *
+   * The report is written when the filters are applied, which on YouTube is
+   * before the player exists — so the panel answered "비디오 0개 · PiP 없음 · 표시
+   * 모드 inline" for the rest of the page's life, describing a moment half a
+   * second after navigation rather than anything the reader was asking about. It
+   * reads as a broken extension and it is a stale snapshot.
+   *
+   * Once, on the first video to appear. Reporting on every sweep would write to
+   * storage on every mutation YouTube makes, which is most of them.
+   */
+  if (!reportedWithVideo) {
+    reportedWithVideo = true
+    reportDiagnostics()
+  }
+
   allowPip(video)
   guardPresentation(video)
   watchPlayback(video)
@@ -855,6 +876,29 @@ function onLeaving(event: Event): void {
     log(`나감 ${signal} → 아직 안 숨겨짐 (기록 안 함)`)
     return
   }
+
+  /*
+   * A departure happened, whatever comes of it.
+   *
+   * This was set only on the home-swipe path, and everything that undoes a
+   * departure lives behind it in onReturning — so an ordinary leave (lock screen,
+   * app switcher, a swipe this file failed to recognise) latched `handedOver`
+   * true and never lowered it. From then on the guard at the top of this function
+   * turned away every further departure for the life of the page: the free shot
+   * that works when a tap is still warm was gone after the first miss.
+   *
+   * It also took the diagnostics with it. The only report written after a
+   * departure is the one at the end of onReturning, so the log of what happened
+   * while the app was away never reached storage, and the panel kept answering
+   * with a snapshot from before the video existed. The instrument was disabled by
+   * the fault it was there to find.
+   *
+   * Safe here and nowhere earlier: the page is genuinely hidden at this line. A
+   * floating window makes iOS call the page visible, so this cannot be raised by
+   * our own window opening.
+   */
+  wentAway = true
+
   if (modeBeforeLeaving === null) modeBeforeLeaving = video.webkitPresentationMode ?? 'inline'
 
   // Paused is the normal state here: the engine stops the media before the page
@@ -893,8 +937,12 @@ function onLeaving(event: Event): void {
     video.addEventListener('playing', () => askAgain(video), { once: true })
   }
 
+  // The activation goes in the record because it is the difference between a call
+  // that could have worked and one that never could, and the two are otherwise
+  // indistinguishable afterwards — WebKit reports success either way.
+  const gesture = activation()
   const attempt = attemptSync(video)
-  record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
+  record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
 }
 
 /**
@@ -953,6 +1001,18 @@ function onReturning(): void {
    * page visible, so only focus can answer this.
    */
   if (!userIsHere()) return
+
+  /*
+   * Flush before deciding anything, and unconditionally.
+   *
+   * The log lives in a DOM attribute because that is the only thing that survives
+   * the page being suspended, and it reaches storage only through a report. With
+   * the only report sitting after the `wentAway` test below, a departure that did
+   * not restore was a departure nobody could read afterwards — including the one
+   * that would have shown why it did not restore.
+   */
+  reportDiagnostics()
+
   if (!wentAway) return
 
   const video = floatedVideo ?? playerVideo()
@@ -1106,14 +1166,73 @@ export function isHomeSwipe(state: {
   return state.up > state.sideways
 }
 
+/**
+ * The bottom of what a thumb can actually reach, in the coordinates touches
+ * arrive in.
+ *
+ * Not `window.innerHeight`. On iOS the layout viewport is not the visible one —
+ * the browser's own bars overlay it — so `innerHeight` runs on underneath the
+ * bottom bar, and the lowest point of the page anyone can press still measures a
+ * bar's height away from it. That is 50 to 90 px against a HOME_EDGE of 60: the
+ * test passed or failed depending on whether the bar happened to be expanded,
+ * which is one more reason the same swipe worked some of the time.
+ *
+ * place() has always measured this correctly, for exactly this reason. The swipe
+ * was left on the wrong ruler.
+ */
+function visibleBottom(): number {
+  const view = window.visualViewport
+  if (!view) return window.innerHeight
+  return view.offsetTop + view.height
+}
+
+/**
+ * Is a user activation live at this instant?
+ *
+ * The single thing that decides whether a request for a window is granted, and
+ * until Safari 17 there was no way to ask — which is why every answer about it so
+ * far has been inferred from whether a window appeared. Recorded, not acted on:
+ * which of these moments carries an activation is the question the last
+ * twenty-three releases guessed at, and one reading from the device settles it.
+ *
+ * `?` means the browser has no such API, which is itself worth knowing.
+ */
+function activation(): string {
+  const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
+  if (!ua) return '?'
+  return ua.isActive ? '활성' : '만료'
+}
+
+/** So the probe below cannot fill the ring buffer that holds the departure. */
+let lastProbeAt = 0
+
 function onTouchStart(event: Event): void {
   if (!(event instanceof TouchEvent)) return
   const touch = event.changedTouches[0]
   if (!touch) return
-  swipeFrom =
-    window.innerHeight - touch.clientY <= HOME_EDGE
-      ? { x: touch.clientX, y: touch.clientY }
-      : null
+  const fromBottom = visibleBottom() - touch.clientY
+  swipeFrom = fromBottom <= HOME_EDGE ? { x: touch.clientX, y: touch.clientY } : null
+
+  // Near misses are the evidence. If the swipe is never recognised, the reason is
+  // either that the press lands further from the edge than HOME_EDGE allows or
+  // that the page never sees it at all, and only one of those leaves a line here.
+  // Both rulers, so the gap between them is readable rather than argued about.
+  const now = Date.now()
+  if (fromBottom < 160 && now - lastProbeAt > 900) {
+    lastProbeAt = now
+    log(
+      `터치 시작: 아래에서 ${Math.round(fromBottom)}px (구식자 ${Math.round(
+        window.innerHeight - touch.clientY,
+      )}px) 활성화=${activation()} ${swipeFrom ? '후보' : '무시'}`,
+    )
+  }
+}
+
+/** How the gesture ended, and only when it was a candidate. */
+function onTouchDone(event: Event): void {
+  if (!swipeFrom) return
+  swipeFrom = null
+  log(`터치 끝: ${event.type} 활성화=${activation()}`)
 }
 
 function onTouchMove(event: Event): void {
@@ -1122,8 +1241,9 @@ function onTouchMove(event: Event): void {
   if (!touch) return
   const up = swipeFrom.y - touch.clientY
   const sideways = Math.abs(touch.clientX - swipeFrom.x)
-  if (!isHomeSwipe({ fromBottom: window.innerHeight - swipeFrom.y, up, sideways })) return
+  if (!isHomeSwipe({ fromBottom: visibleBottom() - swipeFrom.y, up, sideways })) return
   swipeFrom = null
+  log(`나가는 손짓: 위로 ${Math.round(up)}px 활성화=${activation()}`)
 
   const video = playerVideo()
   if (!video) return
@@ -1153,6 +1273,7 @@ function onTouchMove(event: Event): void {
 
   allowPip(video)
   leftAt = video.currentTime
+  const gesture = activation()
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
@@ -1160,16 +1281,28 @@ function onTouchMove(event: Event): void {
   floatedVideo = attempt === 'called' ? video : null
   // Only when something was actually taken. Raised on a refused call it stayed up
   // with no window behind it and nothing on the way to lower it.
-  record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
+  record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
   setTimeout(() => {
     log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
   }, 700)
 }
 
-function swipeSignals(): [EventTarget, string][] {
+/**
+ * Handlers travel with their events.
+ *
+ * They used to be picked back out with `event === 'touchstart' ? … : …`, which
+ * silently binds everything that is not touchstart to the move handler — fine for
+ * two events and wrong the moment there is a third.
+ */
+function swipeSignals(): [EventTarget, string, EventListener][] {
   return [
-    [document, 'touchstart'],
-    [document, 'touchmove'],
+    [document, 'touchstart', onTouchStart],
+    [document, 'touchmove', onTouchMove],
+    // Not for the work they do — for what they say. A home swipe that the system
+    // takes ends in touchcancel, not touchend, and which of the two arrives
+    // decides whether there is any moment left to ask in.
+    [document, 'touchend', onTouchDone],
+    [document, 'touchcancel', onTouchDone],
   ]
 }
 
@@ -1192,14 +1325,11 @@ let wantButton = false
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
-  for (const [target, event] of swipeSignals()) {
-    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
+  for (const [target, event, handler] of swipeSignals()) {
+    target.removeEventListener(event, handler, true)
     // Passive: this never prevents the gesture. Taking the user's way out away
     // from them would be a far worse bug than not floating a video.
-    target.addEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, {
-      capture: true,
-      passive: true,
-    })
+    target.addEventListener(event, handler, { capture: true, passive: true })
   }
   if (!wantButton) document.getElementById(BUTTON_ID)?.remove()
   sweep()
@@ -1238,8 +1368,8 @@ export function disablePictureInPicture(): void {
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
   floatingAway = false
-  for (const [target, event] of swipeSignals()) {
-    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
+  for (const [target, event, handler] of swipeSignals()) {
+    target.removeEventListener(event, handler, true)
   }
   swipeFrom = null
   observer?.disconnect()
