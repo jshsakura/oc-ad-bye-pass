@@ -402,7 +402,10 @@ function ensureButton(video: WebkitVideo): void {
   ].join(';')
   button.innerHTML =
     `<span style="display:grid;place-items:center;width:${CHIP_SIZE}px;height:${CHIP_SIZE}px;` +
-    'border-radius:9px;background:rgba(24,24,37,.86);box-shadow:0 6px 20px -6px rgba(0,0,0,.6)">' +
+    // See-through: it sits on top of what someone is watching, so it should take
+    // as little of it as it can and still be findable.
+    'border-radius:9px;background:rgba(24,24,37,.42);' +
+    'border:1px solid rgba(255,255,255,.16);box-shadow:0 4px 14px -6px rgba(0,0,0,.5)">' +
     '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>' +
@@ -462,9 +465,12 @@ function place(): void {
   const mark = button.querySelector('rect + rect') as SVGRectElement | null
   mark?.setAttribute('fill', floating ? '#a6e3a1' : '#fab387')
 
+  // Tighter into the corner across than down: the player's own controls run along
+  // the bottom, and the right edge is the one place nothing else wants.
   const inset = 12
+  const insetX = 4
   const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
-  const left = Math.min(box.right - BUTTON_SIZE - inset, visibleRight - BUTTON_SIZE - inset)
+  const left = Math.min(box.right - BUTTON_SIZE - insetX, visibleRight - BUTTON_SIZE - insetX)
   button.style.display = 'grid'
   button.style.top = `${Math.max(visibleTop + inset, top)}px`
   button.style.left = `${Math.max(inset, left)}px`

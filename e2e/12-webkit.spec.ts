@@ -184,7 +184,14 @@ test('사이트가 WebKit 에서 오류 없이 뜨고, 브라우저 언어를 �
       })
 
       await page.goto(`http://127.0.0.1:${port}/`)
-      await page.waitForTimeout(900)
+      // Waited for rather than slept through. 900ms was enough on this desk and
+      // not on a CI runner, where it failed the release rather than the page.
+      await page.waitForFunction(() => !!document.documentElement.dataset.lang, null, {
+        timeout: 15_000,
+      })
+      await page.waitForFunction(() => (document.getElementById('build')?.textContent ?? '') !== '', null, {
+        timeout: 15_000,
+      })
 
       const seen = await page.evaluate(() => {
         const shown = (el: Element) => el.getClientRects().length > 0
