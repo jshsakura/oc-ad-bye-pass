@@ -20,6 +20,8 @@
 // does that on this platform. This is the fallback for when PiP was not
 // entered — one press instead of unlocking, finding the tab, and pressing play.
 
+import { clearUserPause, markUserPause } from './intent.ts'
+
 interface WebkitVideo extends HTMLVideoElement {
   webkitPresentationMode?: string
   // disableRemotePlayback is already on HTMLVideoElement — YouTube sets it, and
@@ -103,10 +105,15 @@ export function bindMediaSession(): void {
   }
 
   safely('play', () => {
+    clearUserPause()
     void video.play().catch(() => {})
     session.playbackState = 'playing'
   })
   safely('pause', () => {
+    // The one place in this extension that is *told* a person pressed something.
+    // Everywhere else has to infer it, and the lock screen is where inferring it
+    // from `document.hidden` gets it exactly backwards.
+    markUserPause()
     video.pause()
     session.playbackState = 'paused'
   })
@@ -114,6 +121,8 @@ export function bindMediaSession(): void {
   // Keep the state honest, so the button on the lock screen shows the right
   // symbol and iOS does not decide the session is stale.
   const sync = () => {
+    // Playing again, however it happened — the pause is spent.
+    if (!video.paused) clearUserPause()
     session.playbackState = video.paused ? 'paused' : 'playing'
     // Re-applied here too: YouTube can set the property directly, and a
     // property assignment leaves no attribute for the observer above to see.

@@ -35,6 +35,7 @@
 import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
+import { pausedByUser } from './intent.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -811,6 +812,10 @@ function keepFloatingAlive(video: WebkitVideo): void {
      * something it merely believed.
      */
     if (!isFloating(video)) return
+    // And they may still have meant it. A window closing because its video was
+    // paused is a cost; restarting a video somebody deliberately stopped is worse,
+    // and the lock screen is where both of those arrive by the same door.
+    if (pausedByUser()) return
     log('작은 창: 멈춰서 다시 재생')
     void video.play().catch((e: unknown) => {
       log(`작은 창: 재생 거절 — ${e instanceof Error ? e.message : String(e)}`)

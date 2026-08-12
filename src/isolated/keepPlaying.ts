@@ -18,6 +18,7 @@
 
 import { log } from '../shared/log.ts'
 import { isFloatingAway } from './pip.ts'
+import { pausedByUser } from './intent.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
@@ -45,6 +46,15 @@ function onPause(): void {
   // Whose pause was it? The engine's arrives with the page already hidden.
   // Someone pressing pause while watching is not to be overruled, and this is
   // the only signal that separates them.
+  //
+  // Except on the lock screen, where the two look identical and the answer is the
+  // opposite one: the transport controls work *because* the page is hidden, so
+  // the most deliberate pause a person can make arrived here looking exactly like
+  // the engine's. It was resumed every time. Intent is asked for first now.
+  if (pausedByUser()) {
+    log('배경재생: 사용자가 멈춤 — 그대로 둔다')
+    return
+  }
   if (!document.hidden) return
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
