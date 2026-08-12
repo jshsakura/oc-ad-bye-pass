@@ -30,6 +30,42 @@ const DEAFENED = 'webkitpresentationmodechanged'
  */
 const HOLD_ATTR = 'data-oc-abp-hold'
 
+/** Set by the other world around a presentation call of its own. */
+const OURS_ATTR = 'data-oc-abp-ours'
+
+/**
+ * The same event, subscribed to the other way.
+ *
+ * `addEventListener` is not the only way onto an event. Assigning
+ * `video.onwebkitpresentationmodechanged` registers a handler that never touches
+ * the method being refused below, so a page that uses the property is listening
+ * exactly as before while the log says the registration was blocked. Which is
+ * what the log has been saying, next to a window that keeps being pulled down.
+ */
+const DEAFENED_PROP = 'onwebkitpresentationmodechanged'
+
+function deafenProperty(): void {
+  const proto = (
+    window as unknown as { HTMLVideoElement?: { prototype: object } }
+  ).HTMLVideoElement?.prototype
+  if (!proto) return
+  try {
+    Object.defineProperty(proto, DEAFENED_PROP, {
+      configurable: true,
+      get: () => null,
+      set: () => {
+        if (refusedProp === 0) log('플레이어의 표시 모드 감시를 막았습니다 (속성)')
+        refusedProp += 1
+      },
+    })
+  } catch {
+    // A frozen prototype, or an engine that will not have it redefined. The
+    // addEventListener route below is still covered.
+  }
+}
+
+let refusedProp = 0
+
 /**
  * Refuse the page's request to put the video back in the page.
  *
@@ -60,7 +96,14 @@ function holdPresentation(): void {
   if (typeof native !== 'function') return
 
   proto.webkitSetPresentationMode = function (this: HTMLVideoElement, mode: string) {
-    if (mode === 'inline' && document.documentElement?.hasAttribute(HOLD_ATTR)) {
+    const root = document.documentElement
+    // Whose call this is. The other world tags its own, so an untagged call is
+    // the page's — and which of the two asks for `inline` five seconds into a
+    // departure is the question this whole file exists to answer.
+    const ours = root?.getAttribute(OURS_ATTR) === mode
+    log(`표시모드 요청: ${mode} (${ours ? '우리' : '페이지'})`)
+
+    if (!ours && mode === 'inline' && root?.hasAttribute(HOLD_ATTR)) {
       log('페이지가 작은 창을 접으려 함 — 거절')
       return
     }
@@ -70,6 +113,7 @@ function holdPresentation(): void {
 
 export function deafenPlayer(): void {
   holdPresentation()
+  deafenProperty()
 
   const proto = EventTarget.prototype
   const native = proto.addEventListener

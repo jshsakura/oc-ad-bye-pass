@@ -36,6 +36,7 @@ import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
 import { markLeaving, pausedByUser } from './intent.ts'
+import { startAwayRecord, stop as stopAwayRecord } from './away.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -218,7 +219,7 @@ function leavePip(video: WebkitVideo): void {
   log('탭: 접기')
   try {
     if (video.webkitPresentationMode !== undefined && video.webkitSetPresentationMode) {
-      video.webkitSetPresentationMode('inline')
+      setMode(video, 'inline')
       return
     }
     if (document.pictureInPictureElement === video) void document.exitPictureInPicture()
@@ -272,7 +273,7 @@ function enterPip(video: WebkitVideo): void {
   log(`탭: 경로=${route}`)
   if (route === 'webkit' && typeof video.webkitSetPresentationMode === 'function') {
     try {
-      video.webkitSetPresentationMode('picture-in-picture')
+      setMode(video, 'picture-in-picture')
       void confirmOrOfferFullscreen(video)
       return
     } catch (e) {
@@ -500,6 +501,27 @@ function placementSignals(): [EventTarget, string][] {
 const HOLD_ATTR = 'data-oc-abp-hold'
 
 /**
+ * Set for the duration of a presentation call we make ourselves.
+ *
+ * The tracer in the other world sees every call and could not say whose it was,
+ * which is the whole question when a window goes away with nobody admitting to
+ * it. Set and cleared synchronously around the call, so anything the tracer sees
+ * without it came from the page.
+ */
+const OURS_ATTR = 'data-oc-abp-ours'
+
+/** Make a presentation call under our own name. Never throws. */
+function setMode(video: WebkitVideo, mode: string): void {
+  const root = document.documentElement
+  root?.setAttribute(OURS_ATTR, mode)
+  try {
+    video.webkitSetPresentationMode?.(mode)
+  } finally {
+    root?.removeAttribute(OURS_ATTR)
+  }
+}
+
+/**
  * Ours is up — the page may not put it away.
  *
  * Raised only by the mode actually changing, lowered by the mode changing back,
@@ -668,7 +690,7 @@ function attemptSync(video: WebkitVideo): Attempt {
       // when the request was accepted. This used to read it anyway and
       // "escalate" to fullscreen on `inline`, which meant a granted PiP was
       // immediately overridden by a fullscreen request.
-      video.webkitSetPresentationMode('picture-in-picture')
+      setMode(video, 'picture-in-picture')
       return 'called'
     }
     if (typeof video.requestPictureInPicture === 'function') {
@@ -1023,6 +1045,9 @@ function onLeaving(event: Event): void {
   const gesture = activation()
   const attempt = attemptSync(video)
   record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
+  // From here until the user is back, a line a second. This is the stretch every
+  // previous release had to reconstruct from its two edges.
+  startAwayRecord(video)
 }
 
 /**
@@ -1116,6 +1141,7 @@ function handleReturn(): void {
   // Before anything else on the way back: the user is here, so the page may have
   // its video back whenever it likes.
   holdInline(false)
+  stopAwayRecord('돌아옴')
 
   if (!wentAway) return
 
@@ -1159,7 +1185,7 @@ function handleReturn(): void {
     const wasPlaying = !video.paused && !video.ended
     log('돌아옴: 작은 창을 페이지로 되돌림')
     try {
-      video.webkitSetPresentationMode?.('inline')
+      setMode(video, 'inline')
     } catch {
       // Leave it where it is rather than fight the browser for it.
     }
@@ -1306,6 +1332,7 @@ export function isFloatingAway(): boolean {
 }
 
 export function disablePictureInPicture(): void {
+  stopAwayRecord()
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
   holdInline(false)
