@@ -36,11 +36,17 @@ const MAX_CHARS = 1800
 /** The durable copy holds more, since it spans documents. */
 const STORE_MAX_CHARS = 8000
 
+/**
+ * Hours included. Minutes alone made two lines an hour apart look adjacent, and
+ * the tail spans whatever the phone did between one look and the next.
+ */
 function stamp(): string {
   const now = new Date()
-  return `${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(
+  const pad = (n: number, width = 2) => String(n).padStart(width, '0')
+  return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(
     now.getMilliseconds(),
-  ).padStart(3, '0')}`
+    3,
+  )}`
 }
 
 function tail(previous: string, line: string, limit: number): string {

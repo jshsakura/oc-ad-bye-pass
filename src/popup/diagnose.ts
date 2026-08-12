@@ -87,18 +87,30 @@ async function extensionFacts(): Promise<ExtensionFacts> {
 
 export async function collect(): Promise<Report> {
   const extension = await extensionFacts()
-  const got = await chrome.storage.local.get(['diagnostics', 'diagnosticsYoutube', 'diagnosticsLog'])
+  const got = await chrome.storage.local.get(['diagnostics', 'diagnosticsYoutube'])
   const any = (got.diagnostics as PageFacts | undefined) ?? null
   const youtube = (got.diagnosticsYoutube as PageFacts | undefined) ?? null
 
   // YouTube's report wins unless something else has reported more recently — a
   // blank tab loading last used to wipe the answer to the question being asked.
   const page = youtube && (!any || any.at <= youtube.at || !isYoutube(any)) ? youtube : any
-  const history = typeof got.diagnosticsLog === 'string' ? (got.diagnosticsLog as string) : null
 
   return {
     extension,
-    page: page ? { ...page, log: history ?? page.log } : null,
+    /*
+     * The page's own tail, in order.
+     *
+     * There used to be a second copy folded into chrome.storage on every report,
+     * because the DOM attribute the log lived in died with its document and that
+     * was the only way anything survived a navigation. It was merged by matching
+     * lines rather than by time, so it accumulated forever and printed in an order
+     * that was neither — a reader was handed forty minutes of stale lines from
+     * three versions ago, interleaved, above the twenty that mattered.
+     *
+     * The log spans documents by itself now (localStorage, written synchronously),
+     * so the copy is gone and this is simply what the device wrote, as it wrote it.
+     */
+    page,
     pageError: page ? null : '아직 어떤 페이지도 보고하지 않았습니다 (탭을 한 번 새로고침해 보세요)',
   }
 }
