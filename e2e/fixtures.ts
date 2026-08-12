@@ -77,6 +77,29 @@ export const test = base.extend<ExtensionFixtures>({
 
   background: async ({ context }, use) => {
     const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
+
+    /*
+     * Wait for the install to finish, not merely for the worker to exist.
+     *
+     * onInstalled seeds the default settings asynchronously and the worker is
+     * live well before that write lands. Every spec that pokes chrome.storage
+     * reads `settings` and patches it, so arriving early does not fail where the
+     * mistake is — it reads undefined and throws "Cannot read properties of
+     * undefined (reading 'toggles')" from inside a helper, on a different test
+     * each run, on CI and not on a developer's machine.
+     *
+     * Handing back an extension that has finished installing is what this
+     * fixture was always promising.
+     */
+    await worker.evaluate(async () => {
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        const got = await chrome.storage.local.get('settings')
+        if (got.settings) return
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+      throw new Error('기본 설정이 저장되지 않았습니다 — 설치가 끝나지 않았습니다')
+    })
+
     await use(worker)
   },
 
