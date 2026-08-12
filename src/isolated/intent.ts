@@ -40,3 +40,26 @@ export function clearUserPause(): void {
 export function pausedByUser(): boolean {
   return userPaused
 }
+
+/**
+ * When the user last actually left.
+ *
+ * Everything this extension does about leaving belongs to the moment of leaving.
+ * The resumer did not: it asked only whether the page was hidden, which is true
+ * for as long as the user is away, so it went on putting playback back every few
+ * seconds forever — thirty-five seconds after a departure, in the device log,
+ * long past anything to do with going away. Whatever a person did in that time,
+ * it won.
+ *
+ * So the window is bounded and this is what bounds it.
+ */
+let leftAt = 0
+
+export function markLeaving(): void {
+  leftAt = Date.now()
+}
+
+/** Milliseconds since the departure, or Infinity if there has not been one. */
+export function sinceLeaving(): number {
+  return leftAt === 0 ? Infinity : Date.now() - leftAt
+}

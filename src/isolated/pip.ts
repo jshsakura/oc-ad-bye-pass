@@ -35,7 +35,7 @@
 import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
-import { pausedByUser } from './intent.ts'
+import { markLeaving, pausedByUser } from './intent.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -977,6 +977,7 @@ function onLeaving(event: Event): void {
    * our own window opening.
    */
   wentAway = true
+  markLeaving()
 
   if (modeBeforeLeaving === null) modeBeforeLeaving = video.webkitPresentationMode ?? 'inline'
 
