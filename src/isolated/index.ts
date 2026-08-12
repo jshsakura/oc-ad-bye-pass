@@ -190,6 +190,17 @@ function sweep() {
   if (settings.toggles.antiAdblockNag) acted += dismissAdblockNag()
   if (settings.toggles.playerFallback) acted += handleAdState()
   keepPlayingSweep()
+  /*
+   * Re-asserted here, not only when settings change.
+   *
+   * There is one media-session registration per action for the whole page and the
+   * last caller owns it; YouTube registers its own whenever its player
+   * reinitialises. bindMediaSession was made safe to call repeatedly for exactly
+   * this and then was still only called from recompute, so ours was replaced
+   * within seconds of any navigation and never put back — and ours is the only
+   * place this extension is ever told that a person pressed pause.
+   */
+  if (settings.toggles.backgroundPlay) bindMediaSession()
   if (acted) bumpStats({ skipped: acted })
 }
 

@@ -18,7 +18,7 @@
 
 import { log } from '../shared/log.ts'
 import { isFloatingAway } from './pip.ts'
-import { pausedByUser } from './intent.ts'
+import { markUserPause, pausedByUser } from './intent.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
@@ -46,6 +46,24 @@ let watched: HTMLVideoElement | null = null
 let lastPlayingAt = 0
 let enabled = false
 
+/**
+ * When we last put it back, and how many times that was undone straight away.
+ *
+ * The backstop for everything above, and the one that needs no cooperation from
+ * anybody. Telling the engine's pause from a person's depends on our
+ * media-session handler still being the registered one, and it can be replaced
+ * without notice — so when the inference is wrong, this is what notices.
+ *
+ * A person who pauses, sees it start again, and pauses again has said it twice.
+ * Nothing here gets a third turn: reported from the phone as "재생이 멈추질 않아",
+ * which is the extension and the user pressing the same button at each other.
+ */
+let resumedAt = 0
+let fought = 0
+
+/** How soon after our resume a pause counts as an answer to it. */
+const FIGHT_WINDOW_MS = 2500
+
 function onPlaying(): void {
   lastPlayingAt = Date.now()
 }
@@ -71,6 +89,15 @@ function onPause(): void {
     log('배경재생: 사용자가 멈춤 — 그대로 둔다')
     return
   }
+
+  // Undone straight after we put it back. Once is the engine being stubborn;
+  // twice is somebody answering us.
+  fought = Date.now() - resumedAt < FIGHT_WINDOW_MS ? fought + 1 : 0
+  if (fought >= 2) {
+    log('배경재생: 계속 멈춘다 — 사용자 뜻으로 보고 그만둔다')
+    markUserPause()
+    return
+  }
   if (!document.hidden) return
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
@@ -81,6 +108,7 @@ function onPause(): void {
     if (!enabled || video !== watched) return
     if (!document.hidden) return
     if (!video.paused) {
+      resumedAt = Date.now()
       log(`배경재생: 되살림 (시도 ${attempt})`)
       return
     }
@@ -88,6 +116,7 @@ function onPause(): void {
     video
       .play()
       .then(() => {
+        resumedAt = Date.now()
         log(`배경재생: 되살림 (시도 ${attempt})`)
       })
       .catch((e: unknown) => {
