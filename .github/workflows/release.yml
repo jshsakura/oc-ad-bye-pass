@@ -92,7 +92,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: '*.zip'
+          # 아직 공개 프로젝트가 아니다. 모든 릴리스는 실험적이고, GitHub 이
+          # "Latest" 로 승격해 지나가던 사람에게 완성품처럼 보이게 두지 않는다.
+          prerelease: true
+          name: '실험적 ${{ github.ref_name }}'
           body: |
+            > **실험적 빌드입니다.** 아직 공개 프로젝트가 아니며, 이 버전이 동작한다는
+            > 보장이 없습니다. 되돌릴 이전 버전을 함께 받아두는 편이 좋습니다.
+
             설치 안내: https://jshsakura.github.io/oc-ad-bye-pass/
 
             ## 아이폰 · 아이패드 (Orion)
