@@ -1235,7 +1235,32 @@ function onReturning(): void {
  * land after the mode has finished changing — and no more than two, because a
  * loop that fights the player is worse than a video that stays paused.
  */
+/**
+ * Make it draw a frame again.
+ *
+ * Coming back from the small window the video can play with nothing on screen —
+ * audio running, picture black. The element is fine and its compositing is not:
+ * nothing has asked it for a frame since the presentation changed. A seek of a
+ * thousandth of a second is the smallest thing that forces one, and the style
+ * touch either side of it makes the compositor rebuild the layer it dropped.
+ */
+function nudgeFrame(video: WebkitVideo): void {
+  try {
+    video.style.transform = 'translateZ(0)'
+    if (video.readyState >= 2 && Number.isFinite(video.duration)) {
+      video.currentTime = Math.min(video.duration - 0.05, video.currentTime + 0.001)
+    }
+    requestAnimationFrame(() => {
+      video.style.transform = ''
+      log('복귀: 화면 한 장 다시 그리기')
+    })
+  } catch {
+    // A black frame is better than an exception in somebody's player.
+  }
+}
+
 function resumeAfterRestore(video: WebkitVideo): void {
+  nudgeFrame(video)
   // Put it back where it was first. A reset element plays from the beginning, and
   // a video that restarts is a worse answer than one that stays paused.
   if (leftAt > 2 && video.currentTime < 1 && Number.isFinite(video.duration)) {
