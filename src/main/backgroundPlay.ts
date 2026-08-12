@@ -22,7 +22,7 @@
 // or a server. It is the same thing a desktop browser does by simply having
 // tabs.
 
-import { LEAVING_EVENT } from '../shared/messages.ts'
+import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 
 const state = { on: false }
@@ -49,6 +49,20 @@ const state = { on: false }
 let installed = false
 
 /**
+ * Set while the return is being announced, so the swallow lets that one by.
+ *
+ * The swallow takes every visibilitychange, both directions, and the coming-back
+ * one is the page's cue to draw itself again — YouTube never heard it, so it left
+ * the player unrendered until something else happened to nudge it. That is the
+ * black rectangle on every return that plain YouTube does not have.
+ *
+ * It cannot simply be let through: the page is being told it is visible the whole
+ * time, so "which direction is this" is not a question the page's own state can
+ * answer. The other world knows, because it can see the truth, and says so.
+ */
+let passingThrough = false
+
+/**
  * Swallow the event before the page's own handler sees it — and tell our own
  * side, which was being swallowed with it.
  *
@@ -60,6 +74,8 @@ let installed = false
  */
 function swallow(event: Event): void {
   if (!state.on) return
+
+  if (passingThrough) return
   event.stopImmediatePropagation()
   log('배경재생: visibilitychange 삼킴 → 우리 쪽으로 다시 알림')
   document.dispatchEvent(new CustomEvent(LEAVING_EVENT))
@@ -93,6 +109,17 @@ function install(): void {
   // a handler on either one is enough to pause the video.
   window.addEventListener('visibilitychange', swallow, true)
   document.addEventListener('visibilitychange', swallow, true)
+
+  // The other world tells us the user is actually back; the page is told the same,
+  // once, and draws itself.
+  document.addEventListener(RETURNED_EVENT, () => {
+    passingThrough = true
+    try {
+      document.dispatchEvent(new Event('visibilitychange'))
+    } finally {
+      passingThrough = false
+    }
+  })
 
   installed = true
 }

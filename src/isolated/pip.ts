@@ -32,7 +32,7 @@
 // one and is what Chrome implements; WebKit has its own
 // `webkitSetPresentationMode`, and on iPhone that is the only one there is.
 
-import { HOLD_ATTR, LEAVING_EVENT } from '../shared/messages.ts'
+import { HOLD_ATTR, LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
 
@@ -659,7 +659,7 @@ function sweep(): void {
    * This runs on every sweep and costs an attribute read. Somebody is looking at
    * the page and nothing of ours is away: there is nothing to hold.
    */
-  if (!floatingAway && !document.hidden) holdInline(false)
+  if (!floatingAway && userIsHere()) holdInline(false)
 
   const video = playerVideo()
   if (!video) return
@@ -1131,10 +1131,36 @@ function onLeaving(event: Event): void {
  * as you left it. So the video goes back inline — but only if we are the ones
  * who moved it.
  */
+/**
+ * Is the user actually here?
+ *
+ * Not `document.hidden`: with a floating window open iOS counts the page as
+ * visible, so the window opening announces itself as a return — and the restore
+ * that follows closed the window two seconds after opening it, every time, which
+ * is what "자동 전환이 안 된다" looked like from the outside while the log said it
+ * had worked.
+ *
+ * Focus is the one that knows. A page in an app that is in the background does
+ * not have it, whatever it believes about being visible.
+ */
+function userIsHere(): boolean {
+  try {
+    return !document.hidden && document.hasFocus()
+  } catch {
+    return !document.hidden
+  }
+}
+
 function onReturning(): void {
   // Stamped before every guard, because the mode-change handler needs it whether
   // or not this particular signal turns out to be a return worth acting on.
-  if (!document.hidden) returnedAt = Date.now()
+  if (userIsHere()) {
+    if (returnedAt === 0 || Date.now() - returnedAt > 400) {
+      // Once per return, not once per signal: four of them arrive together.
+      document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
+    }
+    returnedAt = Date.now()
+  }
 
   // Opening the window looks like coming back. It is not: nothing has been left
   // yet, and this handler undoing the float it was told about is what made leaving
@@ -1193,7 +1219,7 @@ function onReturning(): void {
    * somebody was looking at, which is the "PiP 에서 복귀 시 인라인으로 안 간다" of
    * it. Whoever opened it, they are here now and it belongs here.
    */
-  if (!document.hidden && video.webkitPresentationMode === 'picture-in-picture') {
+  if (userIsHere() && video.webkitPresentationMode === 'picture-in-picture') {
     const wasPlaying = !video.paused && !video.ended
     log('돌아옴: 작은 창을 페이지로 되돌림')
     try {

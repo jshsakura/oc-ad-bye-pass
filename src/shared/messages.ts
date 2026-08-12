@@ -43,6 +43,17 @@ export const LEAVING_EVENT = 'oc-ad-bye-pass:leaving'
  */
 export const HOLD_ATTR = 'data-oc-abp-hold'
 
+/**
+ * "The user is really back", passed from ISOLATED to MAIN.
+ *
+ * Background playback swallows every visibilitychange, in both directions, and the
+ * coming-back one is what tells a page to draw itself again. Which direction an
+ * event is going cannot be read from the page's own state — it is being told it is
+ * visible the whole time — so the world that can see the truth says so, and the
+ * swallow lets that one announcement by.
+ */
+export const RETURNED_EVENT = 'oc-ad-bye-pass:returned'
+
 /** The minimum the MAIN world actually needs to know. */
 export interface MainConfig {
   enabled: boolean
