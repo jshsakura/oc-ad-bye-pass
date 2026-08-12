@@ -33,8 +33,6 @@ const STORE_KEY = 'oc-abp-log'
 /** Enough to hold a leave and a return. Older lines fall off the front. */
 const MAX_CHARS = 1800
 
-/** The durable copy holds more, since it spans documents. */
-const STORE_MAX_CHARS = 8000
 
 /**
  * Hours included. Minutes alone made two lines an hour apart look adjacent, and
@@ -54,15 +52,21 @@ function tail(previous: string, line: string, limit: number): string {
   return next.length > limit ? next.slice(next.length - limit) : next
 }
 
+/*
+ * The page's own localStorage is not written to any more.
+ *
+ * It was, so the tail could outlive a document — leaving an iPhone and coming
+ * back routinely replaces the document, and the lines written on the way out died
+ * with it. It bought a readable record and it put a synchronous write into the
+ * page's storage on every line, on a page whose player is the thing being
+ * debugged. Playback stopped working somewhere in the same handful of releases
+ * and this is one of three things touching the page that arrived with them.
+ *
+ * Reading still looks at both, so a tail written by an older build is not thrown
+ * away.
+ */
 function append(root: Element, text: string): void {
-  const line = `${stamp()} ${text}`
-  root.setAttribute(ATTR, tail(root.getAttribute(ATTR) ?? '', line, MAX_CHARS))
-  try {
-    localStorage.setItem(STORE_KEY, tail(localStorage.getItem(STORE_KEY) ?? '', line, STORE_MAX_CHARS))
-  } catch {
-    // Private mode, a storage quota, a page that has disabled it. The attribute
-    // is still there and still answers for this document.
-  }
+  root.setAttribute(ATTR, tail(root.getAttribute(ATTR) ?? '', `${stamp()} ${text}`, MAX_CHARS))
 }
 
 /**

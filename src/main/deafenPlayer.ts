@@ -29,48 +29,18 @@ const DEAFENED = 'webkitpresentationmodechanged'
  * inside a call this is deciding whether to pass on.
  */
 
-/** Set by the other world around a presentation call of its own. */
-const OURS_ATTR = 'data-oc-abp-ours'
-
-/**
- * Watch the presentation calls. Refuse none of them.
+/*
+ * What used to be here: a wrapper on `webkitSetPresentationMode` that logged every
+ * call and, for a few releases, refused the page's `inline`.
  *
- * Refusing the page's `inline` was tried here and it broke playback outright —
- * `readyState=0 network=2 시간=0.0 버퍼=0`, a player with nothing loaded and
- * nothing drawn. YouTube's player cannot be told no about its own video: denied
- * the state change it asked for, its state machine and the element disagree
- * forever after, and it stops rendering. The repository's own notes said as much
- * about the first attempt at this, in as many words, and it was reintroduced
- * anyway.
- *
- * What is left changes nothing and still answers the question. Every call is
- * logged with the mode and with whose call it is, so the thing that asks for
- * `inline` five seconds into a departure names itself. Knowing that is worth a log
- * line; acting on it cost the video.
+ * The refusal broke playback outright and was removed. The wrapper that only
+ * logged was kept for one more release and is removed too — playback stayed
+ * broken, and a prototype of the page's own video element replaced for the sake
+ * of a log line is not a thing to leave in while that is unexplained. What it was
+ * there to learn is not worth a page that will not play.
  */
-function tracePresentation(): void {
-  const proto = (
-    window as unknown as {
-      HTMLVideoElement?: { prototype: Record<string, unknown> }
-    }
-  ).HTMLVideoElement?.prototype
-  if (!proto) return
-  const native = proto.webkitSetPresentationMode
-  if (typeof native !== 'function') return
-
-  proto.webkitSetPresentationMode = function (this: HTMLVideoElement, mode: string) {
-    const root = document.documentElement
-    // Whose call this is. The other world tags its own, so an untagged call is
-    // the page's — and which of the two asks for `inline` five seconds into a
-    // departure is the question this whole file exists to answer.
-    const ours = root?.getAttribute(OURS_ATTR) === mode
-    log(`표시모드 요청: ${mode} (${ours ? '우리' : '페이지'})`)
-    return (native as (this: HTMLVideoElement, mode: string) => unknown).call(this, mode)
-  }
-}
 
 export function deafenPlayer(): void {
-  tracePresentation()
 
   const proto = EventTarget.prototype
   const native = proto.addEventListener

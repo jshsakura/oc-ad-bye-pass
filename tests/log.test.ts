@@ -67,36 +67,13 @@ test('서로 다른 줄은 그대로 남는다 — 접는 것은 연속된 같�
   assert.equal(lines().length, 3)
 })
 
-// 문서가 바뀌어도 남는가.
+// 읽기는 두 벌을 합친다 — 쓰기는 이제 한 벌뿐이어도.
 //
-// 어트리뷰트는 자기 문서와 함께 죽고, chrome.storage 로 접히는 것은
-// reportDiagnostics 가 돌 때뿐이다. 아이폰에서 나갔다 돌아오면 문서가 바뀌는 일이
-// 흔하고, 그래서 나가면서 쓴 줄이 세 번의 릴리스 동안 한 줄도 남지 않았다.
-// 로그는 "페이지 시작 · 페이지 시작" 만 보여줬고 그것이 "핸들러가 안 돌았다" 로 읽혔다.
-test('페이지가 바뀌어도 앞 문서의 줄이 남는다', () => {
-  const store = new Map<string, string>()
-  ;(globalThis as unknown as { localStorage: unknown }).localStorage = {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => {
-      store.set(k, v)
-    },
-  }
-
-  log('나가는 손짓: 위로 22px')
-  // 새 문서 — 어트리뷰트는 빈 것으로 시작한다.
-  attributes.clear()
-  assert.ok(readLog()?.includes('나가는 손짓'), '문서가 바뀌면서 기록이 사라졌다')
-
-  delete (globalThis as unknown as { localStorage?: unknown }).localStorage
-})
-
-// 두 벌을 합칠 때 무엇을 지우고 무엇을 남기는가.
-//
-// 두 세계가 같은 줄을 각자 쓸 수 있으니 겹치는 것은 접어야 하고, 같은 밀리초에
-// 똑같은 줄이 두 번 나오는 것은 실제로 일어나는 일이라 남겨야 한다. 그리고
-// localStorage 가 세계별로 갈라져 있으면 한쪽만 읽어서는 절반밖에 못 본다 —
-// 그게 "로그가 뭐 남는 게 없다" 로 보였다.
-test('두 벌이 겹치면 접고, 한쪽에만 있는 줄은 살린다', () => {
+// 페이지의 localStorage 에 매 줄 쓰는 것은 그만뒀다(플레이어가 죽었고, 그 무렵
+// 페이지를 건드리기 시작한 것 중 하나가 이것이었다). 읽는 쪽은 그대로 둔다 —
+// 옛 빌드가 남긴 꼬리를 버릴 이유가 없고, 겹치는 줄은 접고 한쪽에만 있는 줄은
+// 살려야 한다.
+test('옛 빌드가 남긴 기록도 같이 읽고, 겹치는 줄은 한 번만 나온다', () => {
   const store = new Map<string, string>()
   ;(globalThis as unknown as { localStorage: unknown }).localStorage = {
     getItem: (k: string) => store.get(k) ?? null,
@@ -107,16 +84,15 @@ test('두 벌이 겹치면 접고, 한쪽에만 있는 줄은 살린다', () => 
 
   log('앞 시험 정리')
   attributes.clear()
-  store.clear()
 
-  // 양쪽에 다 쓰인 줄 하나, 어트리뷰트에만 남은 줄 하나.
   log('둘 다 본 줄')
-  const both = store.get('oc-abp-log') ?? ''
-  attributes.set('data-oc-abp-log', `${both}\n${both.slice(0, 12)} 어트리뷰트에만`)
+  const written = attributes.get('data-oc-abp-log') ?? ''
+  // 옛 빌드가 남겨둔 것: 같은 줄 하나와, 그 빌드에만 있던 줄 하나.
+  store.set('oc-abp-log', `${written}\n${written.slice(0, 12)} 옛 빌드에만`)
 
   const merged = (readLog() ?? '').split('\n').filter(Boolean)
   assert.equal(merged.filter((l) => l.includes('둘 다 본 줄')).length, 1, '겹친 줄이 두 번 나왔다')
-  assert.equal(merged.filter((l) => l.includes('어트리뷰트에만')).length, 1, '한쪽 줄이 사라졌다')
+  assert.equal(merged.filter((l) => l.includes('옛 빌드에만')).length, 1, '옛 기록이 사라졌다')
 
   delete (globalThis as unknown as { localStorage?: unknown }).localStorage
 })

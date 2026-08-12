@@ -36,7 +36,6 @@ import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
 import { pausedByUser } from './intent.ts'
-import { startAwayRecord, stop as stopAwayRecord } from './away.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -496,24 +495,12 @@ function placementSignals(): [EventTarget, string][] {
  * arrives as the same event.
  */
 
-/**
- * Set for the duration of a presentation call we make ourselves.
- *
- * The tracer in the other world sees every call and could not say whose it was,
- * which is the whole question when a window goes away with nobody admitting to
- * it. Set and cleared synchronously around the call, so anything the tracer sees
- * without it came from the page.
- */
-const OURS_ATTR = 'data-oc-abp-ours'
-
-/** Make a presentation call under our own name. Never throws. */
+/** Ask for a presentation mode. Never throws. */
 function setMode(video: WebkitVideo, mode: string): void {
-  const root = document.documentElement
-  root?.setAttribute(OURS_ATTR, mode)
   try {
     video.webkitSetPresentationMode?.(mode)
-  } finally {
-    root?.removeAttribute(OURS_ATTR)
+  } catch {
+    // The caller has already written down what it was trying to do.
   }
 }
 
@@ -1023,9 +1010,6 @@ function onLeaving(event: Event): void {
   const gesture = activation()
   const attempt = attemptSync(video)
   record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
-  // From here until the user is back, a line a second. This is the stretch every
-  // previous release had to reconstruct from its two edges.
-  startAwayRecord(video)
 }
 
 /**
@@ -1118,7 +1102,6 @@ function handleReturn(): void {
 
   // Before anything else on the way back: the user is here, so the page may have
   // its video back whenever it likes.
-  stopAwayRecord('돌아옴')
 
   if (!wentAway) return
 
@@ -1309,7 +1292,6 @@ export function isFloatingAway(): boolean {
 }
 
 export function disablePictureInPicture(): void {
-  stopAwayRecord()
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
   floatingAway = false

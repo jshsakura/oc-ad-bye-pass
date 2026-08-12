@@ -27,7 +27,6 @@ import { reportDiagnostics } from './diagnostics.ts'
 import { disableKeepPlaying, enableKeepPlaying, keepPlayingSweep } from './keepPlaying.ts'
 import { bindMediaSession, unbindMediaSession } from './mediaSession.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
-import { startCensus, stopCensus } from './census.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
@@ -67,7 +66,6 @@ function detach() {
     sweepTimer = null
   }
   disablePictureInPicture()
-  stopCensus()
   unbindMediaSession()
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
@@ -108,12 +106,6 @@ function recompute(cache: FilterCache | null) {
     // wanting to leave with the video is not the same as wanting a button.
     if (settings.toggles.pictureInPicture) enablePictureInPicture({ button: settings.toggles.pipButton })
     else disablePictureInPicture()
-
-    // Counts what the browser delivers, and writes the totals down while the page
-    // is in front. Everything else about leaving is measured at the moment of
-    // leaving, which is the one moment nothing survives.
-    if (settings.toggles.pictureInPicture) startCensus()
-    else stopCensus()
 
     // The transport controls are the way back once iOS has stopped the page.
     // Bound under the same setting as background playback, since that is the
