@@ -67,32 +67,31 @@ test('서로 다른 줄은 그대로 남는다 — 접는 것은 연속된 같�
   assert.equal(lines().length, 3)
 })
 
-// 읽기는 두 벌을 합친다 — 쓰기는 이제 한 벌뿐이어도.
+// 옛 빌드가 페이지 저장소에 남긴 꼬리는 읽지 않고 지운다.
 //
-// 페이지의 localStorage 에 매 줄 쓰는 것은 그만뒀다(플레이어가 죽었고, 그 무렵
-// 페이지를 건드리기 시작한 것 중 하나가 이것이었다). 읽는 쪽은 그대로 둔다 —
-// 옛 빌드가 남긴 꼬리를 버릴 이유가 없고, 겹치는 줄은 접고 한쪽에만 있는 줄은
-// 살려야 한다.
-test('옛 빌드가 남긴 기록도 같이 읽고, 겹치는 줄은 한 번만 나온다', () => {
-  const store = new Map<string, string>()
+// 페이지의 localStorage 에 매 줄 쓰던 것은 플레이어가 죽으면서 되돌렸는데, 읽기만
+// 남겨뒀더니 어제 상태로 굳은 한 시간치가 모든 덤프에 계속 따라왔다. 정작 봐야 할
+// 스무 줄 위에서.
+test('옛 저장소는 한 번 지우고 다시 읽지 않는다', () => {
+  const store = new Map<string, string>([['oc-abp-log', '00:00:00.000 어제 것']])
   ;(globalThis as unknown as { localStorage: unknown }).localStorage = {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => {
       store.set(k, v)
     },
+    removeItem: (k: string) => {
+      store.delete(k)
+    },
   }
 
-  log('앞 시험 정리')
   attributes.clear()
+  log('오늘 것')
 
-  log('둘 다 본 줄')
-  const written = attributes.get('data-oc-abp-log') ?? ''
-  // 옛 빌드가 남겨둔 것: 같은 줄 하나와, 그 빌드에만 있던 줄 하나.
-  store.set('oc-abp-log', `${written}\n${written.slice(0, 12)} 옛 빌드에만`)
-
-  const merged = (readLog() ?? '').split('\n').filter(Boolean)
-  assert.equal(merged.filter((l) => l.includes('둘 다 본 줄')).length, 1, '겹친 줄이 두 번 나왔다')
-  assert.equal(merged.filter((l) => l.includes('옛 빌드에만')).length, 1, '옛 기록이 사라졌다')
+  // 지우기는 이 모듈이 처음 쓰일 때 한 번만 일어나므로 여기서는 확인할 수 없다.
+  // 사용자에게 보이는 성질은 이것이다: 옛 줄은 더 이상 읽히지 않는다.
+  const written = readLog() ?? ''
+  assert.ok(written.includes('오늘 것'))
+  assert.ok(!written.includes('어제 것'), '옛 줄이 아직 읽힌다')
 
   delete (globalThis as unknown as { localStorage?: unknown }).localStorage
 })

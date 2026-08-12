@@ -27,8 +27,19 @@
 
 const ATTR = 'data-oc-abp-log'
 
-/** The page's own storage, shared by both worlds, outliving the document. */
-const STORE_KEY = 'oc-abp-log'
+/**
+ * A tail an older build left in the page's storage.
+ *
+ * Written to until 2026-08-12 and never again — the writes were removed when the
+ * player stopped loading and everything this extension had started doing to the
+ * page went back. Reading it was kept so an existing tail was not thrown away,
+ * and that turned out to mean every dump since carries the same frozen hour of
+ * lines from builds nobody is asking about, above the twenty that matter.
+ *
+ * So it is cleared, once, and not read again. One removeItem is not what the
+ * per-line writes were.
+ */
+const LEGACY_STORE_KEY = 'oc-abp-log'
 
 /** Enough to hold a leave and a return. Older lines fall off the front. */
 const MAX_CHARS = 1800
@@ -65,7 +76,20 @@ function tail(previous: string, line: string, limit: number): string {
  * Reading still looks at both, so a tail written by an older build is not thrown
  * away.
  */
+let clearedLegacy = false
+
+function clearLegacy(): void {
+  if (clearedLegacy) return
+  clearedLegacy = true
+  try {
+    localStorage.removeItem(LEGACY_STORE_KEY)
+  } catch {
+    // Nothing to clean up, or nowhere to clean it up in.
+  }
+}
+
 function append(root: Element, text: string): void {
+  clearLegacy()
   root.setAttribute(ATTR, tail(root.getAttribute(ATTR) ?? '', `${stamp()} ${text}`, MAX_CHARS))
 }
 
@@ -111,48 +135,14 @@ export function log(line: string): void {
 }
 
 /**
- * Both copies, merged and in order.
+ * This document's lines, as written.
  *
- * It used to prefer localStorage and fall back to the attribute only when the
- * first threw. That assumed the two hold the same lines, and there is no
- * guarantee they do: the extension's world and the page's may not reach the same
- * storage on every browser, and a partitioned or refused localStorage is a silent
- * one — it returns a short answer rather than an error, and a short answer wins
- * over a full attribute. The panel then reports almost nothing while the record
- * is sitting right there.
- *
- * So neither is trusted over the other. Lines carry a full timestamp, which makes
- * merging them exact rather than a guess.
+ * There was a merge here across two stores while the second one existed. It does
+ * not, and a merge with something frozen yesterday reads worse than nothing.
  */
 export function readLog(): string | null {
-  const store = lines(readStore())
-  const attribute = lines(readAttribute())
-  if (store.length === 0 && attribute.length === 0) return null
-
-  /*
-   * Merged as multisets, not as sets.
-   *
-   * The two copies overlap wherever both worlds could write, so a plain union
-   * would print everything twice — and a plain de-duplication would delete the
-   * second of two identical lines written inside one millisecond, which is a real
-   * thing this log does. Taking the larger count of each line keeps the overlap
-   * collapsed and the genuine repeats intact.
-   */
-  const merged = [...store]
-  const room = tally(store)
-  for (const line of attribute) {
-    const left = (room.get(line) ?? 0) - 1
-    room.set(line, left)
-    if (left < 0) merged.push(line)
-  }
-
-  // By timestamp only, and stably. Sorting whole lines puts them in alphabetical
-  // order within a millisecond, which scrambles exactly the bursts worth reading.
-  return merged
-    .map((line, index) => ({ line, index }))
-    .sort((a, b) => a.line.slice(0, 12).localeCompare(b.line.slice(0, 12)) || a.index - b.index)
-    .map((entry) => entry.line)
-    .join('\n')
+  const written = lines(readAttribute())
+  return written.length === 0 ? null : written.join('\n')
 }
 
 /**
@@ -171,20 +161,6 @@ const STAMPED = /^\d{2}:\d{2}:\d{2}\.\d{3} /
 
 function lines(text: string): string[] {
   return text.split('\n').filter((line) => STAMPED.test(line))
-}
-
-function tally(list: string[]): Map<string, number> {
-  const counts = new Map<string, number>()
-  for (const line of list) counts.set(line, (counts.get(line) ?? 0) + 1)
-  return counts
-}
-
-function readStore(): string {
-  try {
-    return localStorage.getItem(STORE_KEY) ?? ''
-  } catch {
-    return ''
-  }
 }
 
 function readAttribute(): string {
