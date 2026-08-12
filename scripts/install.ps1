@@ -13,8 +13,27 @@
 
 $ErrorActionPreference = 'Stop'
 
-# The GitHub release is the distribution — see the comment in install.sh.
-$ZipUrl = if ($env:OCABP_ZIP)  { $env:OCABP_ZIP }  else { 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-desktop.zip' }
+# The GitHub release is the distribution — see the comment in install.sh, including
+# why this goes through the API instead of `latest/download/<asset>`.
+$Asset = 'oc-ad-bye-pass-desktop.zip'
+$Api   = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases?per_page=1'
+
+function Resolve-ZipUrl {
+  try {
+    $releases = Invoke-RestMethod -Uri $Api -Headers @{ 'User-Agent' = 'oc-ad-bye-pass-installer' }
+    return ($releases | Select-Object -First 1).assets |
+      Where-Object { $_.name -eq $Asset } |
+      Select-Object -First 1 -ExpandProperty browser_download_url
+  } catch {
+    return $null
+  }
+}
+
+$ZipUrl = if ($env:OCABP_ZIP) { $env:OCABP_ZIP } else { Resolve-ZipUrl }
+if (-not $ZipUrl) {
+  Write-Error '릴리스를 찾지 못했습니다. OCABP_ZIP 에 zip 주소를 직접 넣어 다시 실행하세요.'
+  exit 1
+}
 $Target = if ($env:OCABP_DIR)  { $env:OCABP_DIR }  else { Join-Path $env:LOCALAPPDATA 'OcAdByePass' }
 
 $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("ocabp-" + [System.Guid]::NewGuid().ToString('N'))

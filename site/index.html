@@ -1380,7 +1380,11 @@
 // API 를 못 부르면 build.json 의 값으로 물러난다.
 (() => {
   const el = document.getElementById('build');
-  const RELEASE = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases/latest';
+  // The list, newest first — not `/releases/latest`, which skips prereleases and
+  // therefore skips every release this project has. While nothing here is
+  // finished enough to publish, `latest` is a 404 and the buttons that pointed at
+  // it handed out nothing at all.
+  const RELEASE = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases?per_page=1';
 
   // The release is what the buttons hand out, so the release is what the page
   // reports. Building the packages here as well only created a second answer to
@@ -1391,6 +1395,7 @@
   // button spent several releases saying 87KB about a 92KB file.
   const latest = fetch(RELEASE)
     .then((r) => (r.ok ? r.json() : null))
+    .then((list) => (Array.isArray(list) ? (list[0] ?? null) : list))
     .catch(() => null);
 
   /** Bytes as the download button says them. */
@@ -1422,15 +1427,20 @@
       // lands in Files can be checked against it — every install failure looks
       // identical on the device, and knowing which build you picked is the one
       // thing that separates them.
-      const base = 'https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download';
+      // Straight at the asset the API named, because the short form
+      // (`releases/latest/download/...`) resolves through `latest` and there is
+      // no `latest` while every release is a prerelease. The static href in the
+      // markup stays as the fallback for a page that could not reach the API —
+      // it is wrong in the same way the whole short form is, and it is better
+      // than a button with no address at all.
       for (const [id, name] of [
         ['dl-orion', 'oc-ad-bye-pass-orion.zip'],
         ['dl-chrome', 'oc-ad-bye-pass-desktop.zip'],
       ]) {
         const a = document.getElementById(id);
         if (!a) continue;
-        a.href = `${base}/${name}`;
         const asset = release?.assets?.find((x) => x.name === name);
+        if (asset?.browser_download_url) a.href = asset.browser_download_url;
         const size = asset ? humanSize(asset.size) : (a.dataset.size ?? '');
         const what = a.querySelector('.what');
         if (what) what.textContent = [name, `v${b.version}`, size].filter(Boolean).join(' · ');

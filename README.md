@@ -74,7 +74,7 @@ Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 �
 다시 서명할 일도 없다.
 
 1. App Store 에서 **Orion Browser by Kagi** 설치
-2. [Releases](../../releases/latest) 에서 **`oc-ad-bye-pass-orion.zip`** 을 받는다 (Chrome 용과 다른 파일이다)
+2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-orion.zip`** 을 받는다 (Chrome 용과 다른 파일이다)
 3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
 4. `youtube.com` 권한 허용
 

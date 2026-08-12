@@ -13,10 +13,28 @@
 
 set -euo pipefail
 
-# The GitHub release is the distribution. `latest/download/<asset>` always
-# redirects to the newest release, so this URL never has to change — which is
-# also why the asset name in .github/workflows/release.yml must not.
-ZIP_URL="${OCABP_ZIP:-https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-desktop.zip}"
+# The GitHub release is the distribution, and the asset name in
+# .github/workflows/release.yml is a contract because of this.
+#
+# Resolved through the API rather than through `latest/download/<asset>`. That
+# short form goes via `latest`, which skips prereleases — and every release here
+# is one while the project is unfinished, so the short form is a 404. The list
+# endpoint answers with the newest release whatever it is marked as.
+ASSET='oc-ad-bye-pass-desktop.zip'
+API='https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases?per_page=1'
+
+resolve_zip() {
+  curl -fsSL "$API" 2>/dev/null |
+    tr ',' '\n' |
+    grep -o "https://[^\"]*/${ASSET}" |
+    head -n 1
+}
+
+ZIP_URL="${OCABP_ZIP:-$(resolve_zip)}"
+if [ -z "$ZIP_URL" ]; then
+  echo "릴리스를 찾지 못했습니다. OCABP_ZIP 에 zip 주소를 직접 넣어 다시 실행하세요." >&2
+  exit 1
+fi
 
 case "$(uname -s)" in
   Darwin) DEFAULT_DIR="$HOME/Library/Application Support/OcAdByePass" ;;
