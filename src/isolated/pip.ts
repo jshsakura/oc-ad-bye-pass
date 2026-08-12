@@ -510,6 +510,17 @@ function guardPresentation(video: WebkitVideo): void {
       `모드 바뀜 → ${video.webkitPresentationMode ?? '?'}` +
         ` (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)} 우리것=${engagedByUs})`,
     )
+    if (video.webkitPresentationMode !== 'inline') return
+    if (!floatingAway || !document.hidden) return
+    if (video.paused || video.ended) return
+    if (refloats >= REFLOAT_LIMIT) {
+      log('작은 창: 다시 열기 포기 (세 번 밀려남)')
+      floatingAway = false
+      return
+    }
+    refloats += 1
+    log(`작은 창: 밀려나서 다시 엶 (${refloats}회)`)
+    attemptSync(video)
   })
   video.addEventListener(
     'webkitpresentationmodechanged',
@@ -748,6 +759,27 @@ let leftAt = 0
 let handledByUser = 0
 
 /**
+ * Floated for this departure, and still expecting to be floating.
+ *
+ * The guard against YouTube pulling the video back inline expires after a moment,
+ * because holding it open indefinitely left the player believing the video was
+ * somewhere it was not. But the pull can come later than that — measured on the
+ * device at four and a half seconds, still playing, page still away:
+ *
+ *   17:39.017  모드 → picture-in-picture
+ *   17:44.093  모드 바뀜 → inline (재생=true 시간=8.5)
+ *
+ * Nobody asked for that. The user is not looking at the page, so it is not theirs,
+ * and it is not ours. So instead of holding the door shut, the window is opened
+ * again — which is also what happens if the pull was the player rebuilding itself.
+ */
+let floatingAway = false
+
+/** Enough goes to survive a rebuild, few enough to stop if it is not working. */
+const REFLOAT_LIMIT = 3
+let refloats = 0
+
+/**
  * Where the video was before we moved it, so coming back can put it there.
  *
  * Inline is not the only right answer. Someone watching fullscreen who leaves
@@ -923,6 +955,7 @@ function onLeaving(event: Event): void {
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
+  floatingAway = true
   // The mode read here is the one from before the call — WebKit updates it
   // later — so it says what we were leaving from, not what came of it. What came
   // of it is answered on the way back, by onReturning.
@@ -980,6 +1013,8 @@ function onReturning(): void {
   retried = false
   floatedEarly = false
   wentAway = false
+  floatingAway = false
+  refloats = 0
   log(`돌아옴: 모드=${playerVideo()?.webkitPresentationMode ?? '?'}`)
   const video = playerVideo()
   if (!video) return
@@ -1132,6 +1167,7 @@ function onTouchMove(event: Event): void {
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
+  floatingAway = true
   record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
   setTimeout(() => {
     log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
@@ -1178,6 +1214,7 @@ function floatEarly(): void {
   const attempt = attemptSync(video)
   floatedEarly = true
   wentAway = true
+  floatingAway = true
   record('blur', `${attempt}:from-inline`)
 
   const floatedAt = Date.now()
