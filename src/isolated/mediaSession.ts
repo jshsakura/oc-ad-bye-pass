@@ -32,6 +32,24 @@ let bound: WebkitVideo | null = null
 let remoteWatcher: MutationObserver | null = null
 
 /**
+ * Re-registering the handlers, on a timer of its own.
+ *
+ * There is one registration per action for the whole page and the last caller
+ * owns it. YouTube registers its own whenever its player reinitialises, which
+ * takes ours away without a word — and ours is the only place this extension is
+ * ever *told* that a person pressed pause. Without it the lock-screen pause is
+ * back to being inferred from `document.hidden`, which says the opposite of the
+ * truth there, and the video starts itself again.
+ *
+ * Its own interval rather than the DOM sweep: the sweep runs on every animation
+ * frame YouTube gives it work in, and calling setActionHandler at that rate
+ * rebuilds the session faster than iOS will answer for it — the play button on
+ * the lock screen then does nothing at all.
+ */
+let reassert: ReturnType<typeof setInterval> | null = null
+const REASSERT_MS = 2000
+
+/**
  * Put the video back in the system's Now Playing.
  *
  * disableRemotePlayback reads like an AirPlay switch and is more than that:
@@ -79,6 +97,12 @@ export function bindMediaSession(): void {
   if (!video || video === bound) return
   bound = video
 
+  if (reassert === null) {
+    reassert = setInterval(() => {
+      if (bound && bound.isConnected) setHandlers(bound)
+    }, REASSERT_MS)
+  }
+
   allowRemotePlayback(video)
   watchRemotePlayback(video)
 
@@ -94,6 +118,30 @@ export function bindMediaSession(): void {
   } catch {
     // MediaMetadata is missing on some engines; the handlers below still help.
   }
+
+  setHandlers(video)
+
+  // Keep the state honest, so the button on the lock screen shows the right
+  // symbol and iOS does not decide the session is stale.
+  const sync = () => {
+    // Playing again, however it happened — whatever they meant by pausing is spent.
+    if (!video.paused) clearUserPause()
+    session.playbackState = video.paused ? 'paused' : 'playing'
+    // Re-applied here too: YouTube can set the property directly, and a
+    // property assignment leaves no attribute for the observer above to see.
+    allowRemotePlayback(video)
+  }
+  video.addEventListener('play', sync)
+  video.addEventListener('pause', sync)
+  sync()
+}
+
+/**
+ * Point the four transport actions at this video. Safe to call repeatedly.
+ */
+function setHandlers(video: WebkitVideo): void {
+  const session = navigator.mediaSession
+  if (!session?.setActionHandler) return
 
   const safely = (action: MediaSessionAction, handler: () => void) => {
     try {
@@ -118,19 +166,6 @@ export function bindMediaSession(): void {
     session.playbackState = 'paused'
   })
 
-  // Keep the state honest, so the button on the lock screen shows the right
-  // symbol and iOS does not decide the session is stale.
-  const sync = () => {
-    // Playing again, however it happened — whatever they meant by pausing is spent.
-    if (!video.paused) clearUserPause()
-    session.playbackState = video.paused ? 'paused' : 'playing'
-    // Re-applied here too: YouTube can set the property directly, and a
-    // property assignment leaves no attribute for the observer above to see.
-    allowRemotePlayback(video)
-  }
-  video.addEventListener('play', sync)
-  video.addEventListener('pause', sync)
-  sync()
   safely('seekbackward', () => {
     video.currentTime = Math.max(0, video.currentTime - 10)
   })
@@ -140,6 +175,8 @@ export function bindMediaSession(): void {
 }
 
 export function unbindMediaSession(): void {
+  if (reassert !== null) clearInterval(reassert)
+  reassert = null
   bound = null
   remoteWatcher?.disconnect()
   remoteWatcher = null

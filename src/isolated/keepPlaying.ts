@@ -38,8 +38,14 @@ const RETRIES = [120, 400, 1200]
 let resumedAt = 0
 let fought = 0
 
-/** How soon after our resume a pause reads as an answer to it rather than the engine. */
-const FIGHT_WINDOW_MS = 2500
+/**
+ * How soon after our resume a pause reads as an answer to it rather than the engine.
+ *
+ * The engine's own pauses come around every five to eight seconds while the page
+ * is in the background, so anything inside this window arrived while playback was
+ * still going and somebody stopped it.
+ */
+const FIGHT_WINDOW_MS = 3500
 
 let watched: HTMLVideoElement | null = null
 let lastPlayingAt = 0
@@ -73,10 +79,20 @@ function onPause(): void {
   if (!document.hidden) return
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
-  // Undone straight after we put it back. Once is the engine being stubborn;
-  // twice is somebody answering us.
+  /*
+   * Undone straight after we put it back.
+   *
+   * The first pause of a departure is the engine's and is what this whole file
+   * exists to undo. A second one, landing while the video we just restarted was
+   * still playing, is a person pressing the button again because the first press
+   * did not take — reported as "중지시 무한 자동재생".
+   *
+   * It used to need three: the counter only rises inside the window, and the
+   * first press is normally outside it, so the give-up landed on the third press.
+   * Two is what a person means by pressing it twice.
+   */
   fought = Date.now() - resumedAt < FIGHT_WINDOW_MS ? fought + 1 : 0
-  if (fought >= 2) {
+  if (fought >= 1) {
     log('배경재생: 계속 멈춘다 — 사용자 뜻으로 보고 그만둔다')
     markUserPause()
     return
