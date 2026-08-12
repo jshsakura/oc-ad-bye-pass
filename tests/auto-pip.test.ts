@@ -111,45 +111,6 @@ test('아무 진입점도 없으면 없다고 한다', () => {
   )
 })
 
-// 나갈 때 작은 창으로 — 제스처가 없는 순간을 위해 미리 전체화면으로 넘겨두는 쪽.
-//
-// 앱을 나가는 순간에는 아무것도 못 부른다. 대신 iOS 는 전체화면인 영상을 나갈 때
-// 스스로 띄운다. 그래서 사용자가 어차피 하는 탭 하나를 거기에 쓴다 — 어느 탭을
-// 쓸지가 이 함수이고, 잘못 고르면 남의 탭을 빼앗는 기능이 된다.
-import { shouldArm } from '../src/isolated/pip.ts'
-
-const iphone = { armed: false, hasApi: true, paused: false, ended: false, mode: 'inline' }
-
-test('재생 중인 인라인 영상을 누르면 미리 넘긴다', () => {
-  assert.equal(shouldArm(iphone), true)
-})
-
-test('멈춰 있으면 그 탭은 재생하려는 탭이다', () => {
-  // 재생을 누른 사람을 전체화면에 던져놓는 것은 탭을 빼앗는 것이다.
-  assert.equal(shouldArm({ ...iphone, paused: true }), false)
-})
-
-test('끝난 영상은 넘길 것이 없다', () => {
-  assert.equal(shouldArm({ ...iphone, ended: true }), false)
-})
-
-test('이미 전체화면이면 다시 하지 않는다', () => {
-  assert.equal(shouldArm({ ...iphone, mode: 'fullscreen' }), false)
-})
-
-test('이미 작은 창이면 손대지 않는다', () => {
-  assert.equal(shouldArm({ ...iphone, mode: 'picture-in-picture' }), false)
-})
-
-test('한 번 걸어뒀으면 매 탭마다 반복하지 않는다', () => {
-  assert.equal(shouldArm({ ...iphone, armed: true }), false)
-})
-
-test('webkit 진입점이 없는 브라우저에서는 아무 일도 하지 않는다', () => {
-  // 크로미움·안드로이드에서 남의 탭에 전체화면을 걸 이유가 없다.
-  assert.equal(shouldArm({ ...iphone, hasApi: false, mode: undefined }), false)
-})
-
 // 나가는 순간의 멈춤은 누구 것인가.
 //
 // 기기 로그가 알려준 사실: 나가는 신호가 도착할 때 영상은 이미 멈춰 있다. WebKit 이

@@ -540,7 +540,27 @@
     animation: sweep 4.2s ease-in-out infinite;
     animation-delay: 1.2s;
   }
-  .mark svg { position: relative; z-index: 1; }
+  .mark svg {
+    position: relative; z-index: 1;
+    /* A hairline of chromatic split, the same idea as the title's glitch but held
+       still. Sub-pixel on purpose: at 76px anything you can measure reads as a
+       printing error rather than as a tube. */
+    filter:
+      drop-shadow(0.6px 0 rgba(243, 139, 168, 0.34))
+      drop-shadow(-0.6px 0 rgba(137, 180, 250, 0.34));
+  }
+
+  /* The tube, quietly.
+     Lines and a corner falloff, nothing else: a shadow mask at this size turns to
+     mush, and the sweep above already carries the glass. Above the drawing, below
+     nothing — it is the surface the mark is being seen through. */
+  .mark::before {
+    content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    border-radius: inherit;
+    background-image: repeating-linear-gradient(
+      180deg, rgba(0, 0, 0, 0.11) 0 1px, transparent 1px 3px);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.22);
+  }
 
   /* Title glitch — a chromatic split, twice, then gone. Runs once on load and
      again on hover. Not on a loop: a headline that twitches forever is a
