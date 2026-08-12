@@ -29,6 +29,21 @@ interface WebkitVideo extends HTMLVideoElement {
 }
 
 let bound: WebkitVideo | null = null
+
+/**
+ * When the handlers were last re-set, and how rarely that may happen.
+ *
+ * They are re-asserted from the sweep, and the sweep runs on every animation
+ * frame YouTube gives it work in — so this was calling setActionHandler on all
+ * four actions dozens of times a second. A session torn down and rebuilt that
+ * fast is a session iOS stops answering for, which is the play button on the lock
+ * screen doing nothing at all.
+ *
+ * Once every couple of seconds is far more often than YouTube reinstalls its own,
+ * which is what the re-assertion is for.
+ */
+let assertedAt = 0
+const REASSERT_MS = 2000
 let remoteWatcher: MutationObserver | null = null
 
 /**
@@ -78,6 +93,9 @@ export function bindMediaSession(): void {
   const video = largestVideo()
   if (!video) return
   const isNew = video !== bound
+  const now = Date.now()
+  if (!isNew && now - assertedAt < REASSERT_MS) return
+  assertedAt = now
   bound = video
 
   if (isNew) {
@@ -158,6 +176,7 @@ export function bindMediaSession(): void {
 
 export function unbindMediaSession(): void {
   bound = null
+  assertedAt = 0
   remoteWatcher?.disconnect()
   remoteWatcher = null
   if (navigator.mediaSession) navigator.mediaSession.metadata = null
