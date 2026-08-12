@@ -17,6 +17,7 @@
 // because it is the same promise that setting already makes.
 
 import { log } from '../shared/log.ts'
+import { isFloatingAway } from './pip.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
@@ -35,6 +36,11 @@ function onPlaying(): void {
 function onPause(): void {
   if (!enabled || !watched) return
   const video = watched
+
+  // One resumer at a time. While a departure is in flight picture-in-picture owns
+  // the element — two `play()` promises on one video make the earlier one reject
+  // with AbortError, which was then logged as a refusal that never happened.
+  if (isFloatingAway()) return
 
   // Whose pause was it? The engine's arrives with the page already hidden.
   // Someone pressing pause while watching is not to be overruled, and this is

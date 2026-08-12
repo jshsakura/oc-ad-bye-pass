@@ -504,57 +504,88 @@ let engagedAt = 0
 function guardPresentation(video: WebkitVideo): void {
   if (video.dataset.ocAbpGuarded === '1') return
   video.dataset.ocAbpGuarded = '1'
-  // Every change, whoever caused it. Without this the log shows what we asked for
-  // and never what became of it, and the two turned out to differ.
-  video.addEventListener('webkitpresentationmodechanged', () => {
-    log(
-      `모드 바뀜 → ${video.webkitPresentationMode ?? '?'}` +
-        ` (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)} 우리것=${engagedByUs})`,
-    )
-    if (video.webkitPresentationMode !== 'inline') return
-    // Reopening is the backstop for a pull that got through anyway — the swallow
-    // above stops the player hearing about it, but it can still act on something
-    // else. Not gated on `document.hidden`: with a window open iOS counts the page
-    // as visible, so requiring hidden here meant this never qualified.
-    if (!floatingAway) return
-    if (video.paused || video.ended) return
-    if (refloats >= REFLOAT_LIMIT) {
-      log('작은 창: 다시 열기 포기 (세 번 밀려남)')
-      floatingAway = false
-      holdInline(false)
-      return
-    }
-    refloats += 1
-    log(`작은 창: 밀려나서 다시 엶 (${refloats}회)`)
-    attemptSync(video)
-  })
+
+  // One listener, one decision, in the capture phase.
+  //
+  // It was two on the same element, and they cancelled each other: the first
+  // re-engaged us by reopening the window, the second un-engaged us in the same
+  // dispatch, and after any reopen we could never put the video back in the page
+  // ourselves. Everything about a presentation change is decided here now.
   video.addEventListener(
     'webkitpresentationmodechanged',
     (event) => {
-      if (!engagedByUs) return
-      if (video.webkitPresentationMode === 'inline') {
-        // It came back inline on its own — that is either the user or YouTube,
-        // and either way the window is gone, so stop guarding.
-        engagedByUs = false
+      const mode = video.webkitPresentationMode ?? '?'
+      const sinceReturn = Date.now() - returnedAt
+      log(
+        `모드 바뀜 → ${mode} (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)}` +
+          ` 우리것=${engagedByUs} 떠남=${floatingAway} 복귀후=${sinceReturn}ms)`,
+      )
+
+      if (mode === 'inline') {
+        /*
+         * Two things arrive here as the same event with the same payload: the user
+         * coming back to the page, and the player dragging the video out from
+         * under them while they are away. The only thing that separates them is
+         * whether a returning signal has just landed.
+         *
+         * Without that distinction the answer was to reopen the window — three
+         * times, at the better part of a second each, which is exactly the three
+         * seconds of YouTube's "playing in picture in picture" card sitting over a
+         * page somebody was already looking at.
+         */
+        if (sinceReturn < RETURN_WINDOW_MS || !floatingAway) {
+          if (floatingAway) log('작은 창: 복귀 직후 — 다시 열지 않고 페이지로 돌려줌')
+          floatingAway = false
+          refloats = 0
+          engagedByUs = false
+          holdInline(false)
+          return
+        }
+
+        // A window the user closed from the system UI stops playback; one the player
+        // pulled does not. It is the only discriminator there is from in here.
+        if (video.paused || video.ended) {
+          log('작은 창: 멈춘 채 닫힘 — 사용자가 닫은 것으로 본다')
+          floatingAway = false
+          engagedByUs = false
+          holdInline(false)
+          return
+        }
+
+        if (refloats >= REFLOAT_LIMIT) {
+          log('작은 창: 다시 열기 포기 (세 번 밀려남)')
+          floatingAway = false
+          holdInline(false)
+          return
+        }
+
+        refloats += 1
+        log(`작은 창: 밀려나서 다시 엶 (${refloats}회)`)
+        // The departure's own clock, not this reopen's. Refreshing it here slid the
+        // return grace forward on every attempt and locked the return out.
+        const departedAt = engagedAt
+        attemptSync(video)
+        engagedAt = departedAt
+        holdInline(true)
         return
       }
-      // Swallowed while away, and only while away.
-      //
-      // This is the seam. YouTube cancels picture-in-picture by reacting to this
-      // event, not by any call we can wrap — the same finding, with the same
-      // capture-phase fix, is what the iOS Shortcuts trick for forcing YouTube PiP
-      // has used for years, and Firefox ships an intervention against the same
-      // behaviour on its own path.
-      //
-      // Both extremes were wrong. Holding it for a fixed moment after our own call
-      // missed the pull, which the device measured at five seconds; letting
-      // everything through meant the pull always won. What is right is the span of
-      // the departure: while the user is away the player has no business moving the
-      // video, and the moment they are back it needs to know everything, or it
-      // leaves its "playing in picture in picture" card over a page they are
-      // already looking at.
+
+      /*
+       * Floating, or fullscreen. This is the seam: YouTube cancels
+       * picture-in-picture by reacting to this event, not through any call that
+       * can be wrapped — the same finding, with the same capture-phase fix, is
+       * what the iOS Shortcuts trick for forcing YouTube PiP has used for years,
+       * and Firefox ships an intervention against the same behaviour on its own
+       * path.
+       *
+       * Both previous extremes were wrong. Holding it for a fixed moment after our
+       * own call missed the pull, measured on the device at five seconds; letting
+       * everything through meant the pull always won. It is held for the span of
+       * the departure and released the moment the user is back, which is also what
+       * lets the player put its own player back instead of leaving its card up.
+       */
       if (!floatingAway) return
-      log(`표시 모드 이벤트 삼킴 (모드=${video.webkitPresentationMode ?? '?'})`)
+      log(`표시 모드 이벤트 삼킴 (모드=${mode})`)
       event.stopImmediatePropagation()
     },
     true,
@@ -744,6 +775,18 @@ let wentAway = false
  * What proves a departure is having been hidden, which `wentAway` already records;
  * this only keeps the opening of the window from reading as a return.
  */
+/**
+ * When a returning signal last arrived.
+ *
+ * The event that means "the user is back in the page" and the event that means
+ * "the player dragged the video out" are the same event with the same payload,
+ * and this is the only thing that tells them apart.
+ */
+let returnedAt = 0
+
+/** How recently a return has to have been for an inline transition to be one. */
+const RETURN_WINDOW_MS = 1500
+
 const RETURN_GRACE_MS = 250
 
 /**
@@ -1047,22 +1090,20 @@ function onLeaving(event: Event): void {
  * who moved it.
  */
 function onReturning(): void {
-  // Released first, before any judgement about whether this is really a return:
-  // holding the player off while somebody is looking at the page can only delay
-  // the video coming back into it, and that delay is the seconds they see. The
-  // swallow goes with it — from here on the player is told everything, which is
-  // what makes it put its own player back instead of leaving its card up.
-  if (!document.hidden) {
-    holdInline(false)
-    floatingAway = false
-    refloats = 0
-  }
+  // Stamped before every guard, because the mode-change handler needs it whether
+  // or not this particular signal turns out to be a return worth acting on.
+  if (!document.hidden) returnedAt = Date.now()
 
   // Opening the window looks like coming back. It is not: nothing has been left
   // yet, and this handler undoing the float it was told about is what made leaving
   // appear not to work at all.
   if (!wentAway) return
-  if (Date.now() - engagedAt < RETURN_GRACE_MS) return
+  if (Date.now() - engagedAt < RETURN_GRACE_MS) {
+    // Re-armed rather than dropped. Returning once and being turned away meant
+    // waiting for some unrelated event to try again.
+    setTimeout(onReturning, RETURN_GRACE_MS)
+    return
+  }
 
   handedOver = false
   retried = false
@@ -1293,7 +1334,16 @@ export function enablePictureInPicture(options: { button: boolean }): void {
 }
 
 /** Stop, and leave no trace. */
+/** Whether a departure is in flight, for the other resumer to keep out of. */
+export function isFloatingAway(): boolean {
+  return floatingAway
+}
+
 export function disablePictureInPicture(): void {
+  // Switched off with the hold up would wedge the page for the rest of its life:
+  // the page's own inline calls stay refused and nothing is left to release them.
+  holdInline(false)
+  floatingAway = false
   for (const [target, event] of swipeSignals()) {
     target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
   }

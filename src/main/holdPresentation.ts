@@ -22,6 +22,7 @@
 // every call the user's own tap makes.
 
 import { HOLD_ATTR } from '../shared/messages.ts'
+import { log } from '../shared/log.ts'
 
 export function holdPresentation(): void {
   const proto = HTMLVideoElement.prototype as unknown as {
@@ -32,7 +33,11 @@ export function holdPresentation(): void {
 
   proto.webkitSetPresentationMode = function (this: HTMLVideoElement, mode: string) {
     if (mode === 'inline' && document.documentElement?.hasAttribute(HOLD_ATTR)) {
-      // Refused, and silently: throwing here would land inside YouTube's own code.
+      // Refused — and said so. Silence here meant there was no way to tell whether
+      // the pull was a page-world call at all, which is the first thing anyone
+      // reading the log wants to know. Not thrown: an exception here would land
+      // inside YouTube's own code.
+      log('페이지가 inline 으로 되돌리려 함 — 거절')
       return
     }
     return native.call(this, mode)
