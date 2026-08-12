@@ -197,3 +197,29 @@ test('한 번도 재생된 적 없으면 아무것도 안 한다', () => {
     false,
   )
 })
+
+// 돌아왔을 때 어디로 되돌릴 것인가.
+//
+// 인라인이 언제나 정답은 아니다. 전체화면으로 보다가 나갔다 온 사람에게 페이지에
+// 둘러싸인 작은 플레이어를 돌려주는 것은, 어떻게 볼지를 확장이 대신 정하는 것이다.
+import { modeToRestore } from '../src/isolated/pip.ts'
+
+test('인라인으로 보다 나갔으면 인라인으로 돌아온다', () => {
+  assert.equal(modeToRestore({ before: 'inline', current: 'picture-in-picture' }), 'inline')
+})
+
+test('전체화면으로 보다 나갔으면 전체화면으로 돌아온다', () => {
+  assert.equal(modeToRestore({ before: 'fullscreen', current: 'picture-in-picture' }), 'fullscreen')
+})
+
+test('이미 제자리면 건드리지 않는다', () => {
+  assert.equal(modeToRestore({ before: 'inline', current: 'inline' }), null)
+})
+
+test('작은 창도 전체화면도 아닌 상태는 우리 것이 아니다', () => {
+  assert.equal(modeToRestore({ before: 'inline', current: undefined }), null)
+})
+
+test('기록이 없으면 인라인이 기본이다', () => {
+  assert.equal(modeToRestore({ before: null, current: 'picture-in-picture' }), 'inline')
+})

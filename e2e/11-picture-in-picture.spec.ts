@@ -168,6 +168,10 @@ test('버튼이 플레이어 밖에, 화면에 고정돼 있다', async ({ conte
       position: style.position,
       insidePlayer: !!el.closest('#movie_player'),
       size: [el.getBoundingClientRect().width, el.getBoundingClientRect().height],
+      chip: (() => {
+        const chip = el.firstElementChild?.getBoundingClientRect()
+        return chip ? [chip.width, chip.height] : null
+      })(),
     }
   })
 
@@ -176,9 +180,10 @@ test('버튼이 플레이어 밖에, 화면에 고정돼 있다', async ({ conte
   expect(where?.insidePlayer, '플레이어 안에 있으면 탭을 뺏긴다').toBe(false)
   expect(where?.parent).toBe('HTML')
   expect(where?.position).toBe('fixed')
-  // 아이콘에 맞춘 크기다. 44px 짜리 판때기는 남의 플레이어 위에서 판때기로 보였다.
-  expect(where?.size?.[0]).toBeGreaterThanOrEqual(28)
-  expect(where?.size?.[0], '아이콘보다 한참 큰 판때기가 됐다').toBeLessThanOrEqual(36)
+  // 엄지가 닿는 면적은 44 — 아이폰 16(393pt, 3x)에서 8.8mm, 애플이 말하는 최소치다.
+  // 보이는 칩은 그보다 작다. 그 둘은 다른 질문이라 다른 크기를 갖는다.
+  expect(where?.size?.[0], '엄지가 닿을 면적이 줄었다').toBeGreaterThanOrEqual(44)
+  expect(where?.chip?.[0], '보이는 칩이 아이콘보다 한참 크다').toBeLessThanOrEqual(34)
 })
 
 test('다시 끄면 버튼이 사라진다', async ({ context, background }) => {

@@ -39,14 +39,19 @@ import { reportDiagnostics } from './diagnostics.ts'
 const BUTTON_ID = 'oc-abp-pip'
 
 /**
- * Sized to the icon rather than to a guideline.
+ * Two sizes, because they answer different questions.
  *
- * It was 44 — the usual smallest-tappable-target figure — and on the phone that
- * read as a slab with a small picture floating in the middle of it. This is the
- * icon plus a hairline of padding, which is what a control sitting on somebody
- * else's player should look like.
+ * What it looks like is the chip: the icon plus a hairline. At 44 the control
+ * read as a slab with a small picture floating in it, on somebody else's player,
+ * where anything we add should be as quiet as it can be.
+ *
+ * What it is, to a thumb, is the button around that chip — 44 CSS px, which on an
+ * iPhone 16 (393pt wide, 3x) is about 8.8mm, Apple's own floor for a touch
+ * target. Shrinking the picture is a design decision; shrinking what a moving
+ * thumb has to hit is a different one, and not the one being asked for.
  */
-const BUTTON_SIZE = 32
+const BUTTON_SIZE = 44
+const CHIP_SIZE = 30
 
 interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
@@ -279,6 +284,33 @@ function enterPip(video: WebkitVideo): void {
 }
 
 /**
+ * Ask again, now that it is playing.
+ *
+ * The whole difficulty of leaving from plain inline playback is a race with two
+ * halves that cannot be run in one instant: the engine has already paused the
+ * video, and WebKit will not float a paused one. Playback comes back
+ * asynchronously, so the second ask has to wait for it — and it is still worth
+ * making, because the page goes on running for a while after the app leaves when
+ * there is media playing.
+ *
+ * Guarded on all three things that make it wrong to do: the user came back, the
+ * window is already open, or something else moved the video meanwhile.
+ */
+function retryFloat(video: WebkitVideo, why: string): void {
+  if (!document.hidden) return
+  if (video.paused) return
+  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') return
+  if (document.pictureInPictureElement === video) return
+  const attempt = attemptSync(video)
+  log(`나감: 재요청 (${why}) → ${attempt}`)
+  // Read back once the mode has had time to change, so the log says what came of
+  // it rather than what was asked for.
+  setTimeout(() => {
+    log(`나감: 재요청 결과 모드=${video.webkitPresentationMode ?? '?'}`)
+  }, 600)
+}
+
+/**
  * Did the window actually open? Answered late, acted on next tap.
  *
  * WebKit can take the call, fire webkitpresentationmodechanged and leave nothing
@@ -357,17 +389,19 @@ function ensureButton(video: WebkitVideo): void {
     'padding:0',
     'margin:0',
     'border:none',
-    'border-radius:9px',
-    'background:rgba(24,24,37,.86)',
-    'box-shadow:0 6px 20px -6px rgba(0,0,0,.6)',
+    // The hit area is transparent; the chip inside is what is seen.
+    'background:transparent',
     'cursor:pointer',
     'touch-action:manipulation',
     '-webkit-tap-highlight-color:transparent',
   ].join(';')
   button.innerHTML =
+    `<span style="display:grid;place-items:center;width:${CHIP_SIZE}px;height:${CHIP_SIZE}px;` +
+    'border-radius:9px;background:rgba(24,24,37,.86);box-shadow:0 6px 20px -6px rgba(0,0,0,.6)">' +
     '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>'
+    '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>' +
+    '</span>'
 
   button.onclick = (event) => {
     event.preventDefault()
@@ -633,6 +667,34 @@ function record(signal: string, outcome: string): void {
 let handedOver = false
 
 /**
+ * Where the video was before we moved it, so coming back can put it there.
+ *
+ * Inline is not the only right answer. Someone watching fullscreen who leaves
+ * and comes back expects fullscreen; dropping them into a small inline player
+ * with the page around it is the extension deciding how they should watch.
+ */
+let modeBeforeLeaving: string | null = null
+
+/**
+ * Which presentation to put the video back into on return.
+ *
+ * `null` means leave it alone — either it is already there, or it is somewhere
+ * we did not put it and therefore not ours to change.
+ */
+export function modeToRestore(state: {
+  before: string | null
+  current: string | undefined
+}): 'inline' | 'fullscreen' | null {
+  const target = state.before === 'fullscreen' ? 'fullscreen' : 'inline'
+  const current = state.current ?? 'inline'
+  if (current === target) return null
+  // Only ever out of a floating window or a fullscreen we arranged. Anything
+  // else on screen is the player's business.
+  if (current !== 'picture-in-picture' && current !== 'fullscreen') return null
+  return target
+}
+
+/**
  * When the video was last known to be playing.
  *
  * Because by the time we are told the user is leaving, it is not playing any
@@ -719,6 +781,9 @@ function onLeaving(event: Event): void {
 
   const video = playerVideo()
   if (!video) return record(signal, 'skip:no-video')
+  if (modeBeforeLeaving === null && document.hidden) {
+    modeBeforeLeaving = video.webkitPresentationMode ?? 'inline'
+  }
   if (!document.hidden) {
     // Not a departure at all. Coming back fires visibilitychange too, and
     // background playback re-announces that one as well, so letting it write the
@@ -740,12 +805,23 @@ function onLeaving(event: Event): void {
   }
 
   // Ask for it back before asking for the window: WebKit will not float a video
-  // that is not playing. The call is synchronous even if its promise is not,
-  // which is all that can be had at this point in the page's life.
+  // that is not playing.
+  //
+  // But asking is not the same as playing. `play()` settles later, and the
+  // request below goes out on this tick with the video still paused — which is
+  // exactly the refusal we were trying to avoid, and why leaving from plain
+  // inline playback ended up with sound and no window. So the request is made
+  // again the moment playback actually resumes.
   if (resume) {
     try {
-      void video.play().catch(() => {})
       log('나감: 엔진이 멈춘 영상 되살리기 시도')
+      void video
+        .play()
+        .then(() => retryFloat(video, 'play 성공'))
+        .catch((e: unknown) => {
+          log(`나감: 되살리기 거절 — ${e instanceof Error ? e.message : String(e)}`)
+        })
+      video.addEventListener('playing', () => retryFloat(video, 'playing'), { once: true })
     } catch {
       // Refused. The attempt below is still worth making.
     }
@@ -831,8 +907,12 @@ function onReturning(): void {
   // Whether it was playing has to be read before the mode changes, because
   // changing it is what stops it.
   const wasPlaying = !video.paused && !video.ended
+  const target = modeToRestore({ before: modeBeforeLeaving, current: video.webkitPresentationMode })
+  modeBeforeLeaving = null
+  if (target === null) return
   try {
-    video.webkitSetPresentationMode?.('inline')
+    video.webkitSetPresentationMode?.(target)
+    log(`돌아옴: ${target} 로 되돌림`)
   } catch {
     // Refused — leave it where it is rather than fight the browser for it.
   }
