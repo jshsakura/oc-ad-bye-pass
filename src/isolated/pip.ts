@@ -66,6 +66,22 @@ interface WebkitVideo extends HTMLVideoElement {
 /** How long to wait before deciding webkitSetPresentationMode did nothing. */
 const PRESENTATION_SETTLE_MS = 900
 
+/**
+ * Is there a live user activation right now?
+ *
+ * Kept after the paths that were built around it were deleted, because it is the
+ * only thing that distinguishes a call that could have worked from one that never
+ * could — and on this browser the answer turned out not to matter, which is a
+ * fact worth continuing to record rather than assume.
+ *
+ * `?` means the browser has no such API, which is itself worth knowing.
+ */
+function activation(): string {
+  const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
+  if (!ua) return '?'
+  return ua.isActive ? '활성' : '만료'
+}
+
 let observer: MutationObserver | null = null
 
 /** Whether the panel has ever been told about a page that had a player in it. */
@@ -196,6 +212,7 @@ function isFloating(video: WebkitVideo): boolean {
  */
 function leavePip(video: WebkitVideo): void {
   // Theirs now — the hold exists to protect a departure, not to trap a video.
+  holdInline(false)
   floatingAway = false
   preferFullscreen = false
   log('탭: 접기')
@@ -336,7 +353,6 @@ function ensureButton(video: WebkitVideo): void {
     button.onclick = (event) => {
       event.preventDefault()
       event.stopPropagation()
-      ourTapAt = Date.now()
       enterPip(video)
     }
     return
@@ -391,7 +407,6 @@ function ensureButton(video: WebkitVideo): void {
   button.onclick = (event) => {
     event.preventDefault()
     event.stopPropagation()
-    ourTapAt = Date.now()
     enterPip(video)
   }
   log('PiP 버튼 붙임')
@@ -481,6 +496,24 @@ function placementSignals(): [EventTarget, string][] {
  * arrives as the same event.
  */
 
+/** Read by src/main/deafenPlayer.ts, which has its own copy of the name. */
+const HOLD_ATTR = 'data-oc-abp-hold'
+
+/**
+ * Ours is up — the page may not put it away.
+ *
+ * Raised only by the mode actually changing, lowered by the mode changing back,
+ * by the user returning, by the button, and by switching the feature off. A hold
+ * left standing would refuse the page its own video for good, so every path that
+ * can end a departure lowers it.
+ */
+function holdInline(on: boolean): void {
+  const root = document.documentElement
+  if (!root) return
+  if (on) root.setAttribute(HOLD_ATTR, '1')
+  else root.removeAttribute(HOLD_ATTR)
+}
+
 function guardPresentation(video: WebkitVideo): void {
   if (video.dataset.ocAbpGuarded === '1') return
   video.dataset.ocAbpGuarded = '1'
@@ -506,12 +539,14 @@ function guardPresentation(video: WebkitVideo): void {
     if (mode === 'picture-in-picture') {
       floatingAway = true
       floatedVideo = video
+      holdInline(true)
       return
     }
 
     // Back in the page, by whoever's doing. Nothing of the departure survives it.
     floatingAway = false
     floatedVideo = null
+    holdInline(false)
   })
 }
 
@@ -885,74 +920,29 @@ export function shouldResumeOnLeave(state: {
  *   freeze            does not exist in WebKit. Harmless on Chromium, inert on
  *                     the phone this was written for.
  */
-/**
- * When our own control was last pressed.
+/*
+ * What used to be here: a call made from `blur`, on the theory that it is the
+ * last moment holding a live user activation.
  *
- * Pressing a button in the page blurs the window, and the button that asks for a
- * window is no exception — so without this the attempt below fires on the way
- * out of our own tap and races the call that tap already made.
+ * The theory was sound and the platform did not need it. Orion grants the window
+ * with the activation long expired — measured, repeatedly:
+ *
+ *   59:29.388 나감 blur → called:from-inline:활성화=만료
+ *   59:29.389 모드 바뀜 → picture-in-picture
+ *
+ * So the extra path bought nothing, and it cost: blur fires for the address bar,
+ * for a share sheet, for anything at all, and each one floated a window in front
+ * of somebody who had not gone anywhere. Then the restore closed it two seconds
+ * later, so what the user saw was the video jumping out of the page and back for
+ * no reason they could name.
+ *
+ *   59:22.492 나감 blur-armed → called:...:활성화=활성
+ *   59:22.503 모드 바뀜 → picture-in-picture
+ *   59:25.070 돌아옴: 작은 창을 페이지로 되돌림
+ *
+ * onLeaving takes blur already, gated on the page actually being hidden, which is
+ * the same signal without the guessing.
  */
-let ourTapAt = 0
-
-/**
- * The last moment that can still be granted.
- *
- * Everything that says "the user is leaving" says it too late. `visibilitychange`,
- * `pagehide` and `freeze` all arrive after the page is hidden, and by then the
- * user activation WebKit requires is gone — measured on the device as
- * `called:from-inline:활성화=만료`, a call taken and quietly ignored.
- *
- * `blur` is different: it fires while the page is still in front, on the way out.
- * If the user touched something in the last few seconds — pressed play, tapped the
- * video, scrolled — the activation from that touch is still alive, and a request
- * made here is a request made inside it.
- *
- * This was tried before and taken out, for a good reason: everything blurs a
- * window. Tapping the address bar, opening a share sheet, pressing one of our own
- * buttons. A window floated for any of those is a window nobody asked for.
- *
- * What makes it worth trying again is that the reason can now be checked instead
- * of guessed. `navigator.userActivation.isActive` says whether there is anything
- * to spend, which is the same question as "did the user just touch the page", and
- * the two false positives that are ours to exclude — our own buttons — are known
- * here. What is left is: the page is losing focus, a video is playing, and the
- * user touched it moments ago.
- *
- * It can still be wrong. Tapping the address bar with a video playing will float
- * it. That is a window the user can close, against a feature that otherwise
- * cannot work at all on this platform, and the trade is worth stating plainly
- * rather than deciding silently — so it says what it did in the log.
- */
-function onBlurWhileArmed(): void {
-  if (!wantLeaveAttempt || isMusic()) return
-  if (handedOver || floatingAway) return
-  if (Date.now() - ourTapAt < 1500) return
-
-  const video = playerVideo()
-  if (!video) return
-  if (video.paused || video.ended) return
-  if (isFloating(video)) return
-
-  // The whole point. No activation, nothing to spend, and a call would be the
-  // same silent no-op every leaving signal has already produced.
-  const gesture = activation()
-  if (gesture !== '활성') {
-    log(`blur: 활성화 ${gesture} — 안 부름`)
-    return
-  }
-
-  allowPip(video)
-  leftAt = video.currentTime
-  const attempt = attemptSync(video)
-  handedOver = true
-  wentAway = true
-  // Nothing is claimed here. `called` means the call was made, which on this
-  // platform is true whether or not a window appeared — raising the hold on it
-  // left the hold standing over nothing, and everything the hold protects then
-  // applied to a video that was sitting in the page. guardPresentation raises it
-  // when the mode actually changes, which is the only honest signal there is.
-  record('blur-armed', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=활성`)
-}
 
 function onLeaving(event: Event): void {
   if (handedOver) return
@@ -1122,6 +1112,10 @@ function handleReturn(): void {
    */
   reportDiagnostics()
 
+  // Before anything else on the way back: the user is here, so the page may have
+  // its video back whenever it likes.
+  holdInline(false)
+
   if (!wentAway) return
 
   const video = floatedVideo ?? playerVideo()
@@ -1241,190 +1235,21 @@ function resumeAfterRestore(video: WebkitVideo): void {
   setTimeout(tick, 120)
 }
 
-// --- Catching the way out ----------------------------------------------------
+// --- What used to be the way out --------------------------------------------
 //
-// The button works because a tap carries user activation. Leaving does not — and
-// the last thing a person does before leaving is a gesture: the swipe up from the
-// bottom edge that goes home. That touch reaches the page before the system takes
-// it, which makes it the one moment before the app goes away that can ask for a
-// window and be granted it.
+// A touch watcher looked for the swipe up from the bottom edge, on the theory
+// that it is the one gesture that reaches the page before the system takes it and
+// therefore the one moment a window could be asked for and granted.
 //
-// So the swipe is watched for, and the request is made inside the handler, on the
-// same tick, exactly as the button does it. Nothing is simulated and no gesture is
-// taken from anyone: it is the user's own way out, used for the thing they asked
-// for when they switched this on.
+// Both halves turned out to be unnecessary and untrue here. Unnecessary, because
+// this browser grants the window without an activation at all. Untrue, because
+// the page never sees that touch: the census counted every touch for a whole
+// session and the closest any of them came to the bottom of the page was 477px.
+// The bottom of the screen belongs to the browser's own toolbar, and a swipe that
+// starts there starts outside the document.
 //
-// Narrow on purpose. The press has to start within a thumb's width of the bottom
-// edge, travel upwards, and travel further up than sideways — page scrolling does
-// not begin down there, and a horizontal swipe is a different intention.
-
-/**
- * How close to the bottom edge a press has to start to be the way out.
- *
- * Widened, because this is no longer a nicety — it is the mechanism. Apple's own
- * answer on this is that picture-in-picture may only begin in response to user
- * interaction and never programmatically, and WebKit enforces it by granting the
- * window only inside a live user activation. A call from a visibility handler
- * reports success, fires the change event, and presents nothing; that is the
- * "모드는 PiP 인데 창이 없다" exactly, and it is why the same code worked whenever a
- * tap happened to be a second or two old.
- *
- * The swipe up from the bottom is the gesture that leaves, and its touch reaches
- * the page before the system takes it. It is the one moment that can ask and be
- * granted.
- */
-const HOME_EDGE = 60
-/** How far up it has to travel before it counts. */
-const HOME_TRAVEL = 16
-
-let swipeFrom: { x: number; y: number } | null = null
-
-export function isHomeSwipe(state: {
-  fromBottom: number
-  up: number
-  sideways: number
-}): boolean {
-  if (state.fromBottom > HOME_EDGE) return false
-  if (state.up < HOME_TRAVEL) return false
-  return state.up > state.sideways
-}
-
-/**
- * The bottom of what a thumb can actually reach, in the coordinates touches
- * arrive in.
- *
- * Not `window.innerHeight`. On iOS the layout viewport is not the visible one —
- * the browser's own bars overlay it — so `innerHeight` runs on underneath the
- * bottom bar, and the lowest point of the page anyone can press still measures a
- * bar's height away from it. That is 50 to 90 px against a HOME_EDGE of 60: the
- * test passed or failed depending on whether the bar happened to be expanded,
- * which is one more reason the same swipe worked some of the time.
- *
- * place() has always measured this correctly, for exactly this reason. The swipe
- * was left on the wrong ruler.
- */
-function visibleBottom(): number {
-  const view = window.visualViewport
-  if (!view) return window.innerHeight
-  return view.offsetTop + view.height
-}
-
-/**
- * Is a user activation live at this instant?
- *
- * The single thing that decides whether a request for a window is granted, and
- * until Safari 17 there was no way to ask — which is why every answer about it so
- * far has been inferred from whether a window appeared. Recorded, not acted on:
- * which of these moments carries an activation is the question the last
- * twenty-three releases guessed at, and one reading from the device settles it.
- *
- * `?` means the browser has no such API, which is itself worth knowing.
- */
-function activation(): string {
-  const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
-  if (!ua) return '?'
-  return ua.isActive ? '활성' : '만료'
-}
-
-/** So the probe below cannot fill the ring buffer that holds the departure. */
-let lastProbeAt = 0
-
-function onTouchStart(event: Event): void {
-  if (!(event instanceof TouchEvent)) return
-  const touch = event.changedTouches[0]
-  if (!touch) return
-  const fromBottom = visibleBottom() - touch.clientY
-  swipeFrom = fromBottom <= HOME_EDGE ? { x: touch.clientX, y: touch.clientY } : null
-
-  // Near misses are the evidence. If the swipe is never recognised, the reason is
-  // either that the press lands further from the edge than HOME_EDGE allows or
-  // that the page never sees it at all, and only one of those leaves a line here.
-  // Both rulers, so the gap between them is readable rather than argued about.
-  const now = Date.now()
-  if (fromBottom < 160 && now - lastProbeAt > 900) {
-    lastProbeAt = now
-    log(
-      `터치 시작: 아래에서 ${Math.round(fromBottom)}px (구식자 ${Math.round(
-        window.innerHeight - touch.clientY,
-      )}px) 활성화=${activation()} ${swipeFrom ? '후보' : '무시'}`,
-    )
-  }
-}
-
-/** How the gesture ended, and only when it was a candidate. */
-function onTouchDone(event: Event): void {
-  if (!swipeFrom) return
-  swipeFrom = null
-  log(`터치 끝: ${event.type} 활성화=${activation()}`)
-}
-
-function onTouchMove(event: Event): void {
-  if (!swipeFrom || !(event instanceof TouchEvent)) return
-  const touch = event.changedTouches[0]
-  if (!touch) return
-  const up = swipeFrom.y - touch.clientY
-  const sideways = Math.abs(touch.clientX - swipeFrom.x)
-  if (!isHomeSwipe({ fromBottom: visibleBottom() - swipeFrom.y, up, sideways })) return
-  swipeFrom = null
-  log(`나가는 손짓: 위로 ${Math.round(up)}px 활성화=${activation()}`)
-
-  const video = playerVideo()
-  if (!video) return
-  // Nothing to carry away if it was not playing.
-  if (video.paused || video.ended) return
-  if (document.pictureInPictureElement === video) return
-
-  /*
-   * A mode that says picture-in-picture with no window on screen is a state this
-   * API can get stuck in — the call reports success whether or not anything is
-   * presented, so a refused attempt leaves the property claiming a window that
-   * does not exist, and the next attempt is skipped as unnecessary. Putting it
-   * back inline first is the only reset the prefixed API offers.
-   */
-  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') {
-    if (userIsHere()) {
-      log(`나가는 손짓: 모드가 ${video.webkitPresentationMode} 인데 화면엔 없음 — 되돌리고 다시`)
-      try {
-        video.webkitSetPresentationMode?.('inline')
-      } catch {
-        return
-      }
-    } else {
-      return
-    }
-  }
-
-  allowPip(video)
-  leftAt = video.currentTime
-  const gesture = activation()
-  const attempt = attemptSync(video)
-  handedOver = true
-  wentAway = true
-  // Same as the blur path: the call proves nothing, so it claims nothing.
-  record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
-  setTimeout(() => {
-    log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
-  }, 700)
-}
-
-/**
- * Handlers travel with their events.
- *
- * They used to be picked back out with `event === 'touchstart' ? … : …`, which
- * silently binds everything that is not touchstart to the move handler — fine for
- * two events and wrong the moment there is a third.
- */
-function swipeSignals(): [EventTarget, string, EventListener][] {
-  return [
-    [document, 'touchstart', onTouchStart],
-    [document, 'touchmove', onTouchMove],
-    // Not for the work they do — for what they say. A home swipe that the system
-    // takes ends in touchcancel, not touchend, and which of the two arrives
-    // decides whether there is any moment left to ask in.
-    [document, 'touchend', onTouchDone],
-    [document, 'touchcancel', onTouchDone],
-  ]
-}
+// So the listeners are gone, and with them the only reason this file had to read
+// touches at all.
 
 // --- What used to be here ---------------------------------------------------
 //
@@ -1442,24 +1267,10 @@ function swipeSignals(): [EventTarget, string, EventListener][] {
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false
 
-/** Whether the blur attempt is armed — the one call that can still be granted. */
-let wantLeaveAttempt = false
 
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
-  wantLeaveAttempt = true
-  // Its own registration rather than a place in leavingSignals: onLeaving turns
-  // blur away by design (the page is not hidden yet) and that is exactly why this
-  // one wants it.
-  window.removeEventListener('blur', onBlurWhileArmed, true)
-  window.addEventListener('blur', onBlurWhileArmed, true)
-  for (const [target, event, handler] of swipeSignals()) {
-    target.removeEventListener(event, handler, true)
-    // Passive: this never prevents the gesture. Taking the user's way out away
-    // from them would be a far worse bug than not floating a video.
-    target.addEventListener(event, handler, { capture: true, passive: true })
-  }
   if (!wantButton) document.getElementById(BUTTON_ID)?.remove()
   sweep()
   for (const [target, event] of leavingSignals()) {
@@ -1496,13 +1307,8 @@ export function isFloatingAway(): boolean {
 export function disablePictureInPicture(): void {
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
+  holdInline(false)
   floatingAway = false
-  wantLeaveAttempt = false
-  window.removeEventListener('blur', onBlurWhileArmed, true)
-  for (const [target, event, handler] of swipeSignals()) {
-    target.removeEventListener(event, handler, true)
-  }
-  swipeFrom = null
   observer?.disconnect()
   observer = null
   for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)

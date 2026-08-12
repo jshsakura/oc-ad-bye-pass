@@ -23,6 +23,22 @@ import { pausedByUser } from './intent.ts'
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
 
+/*
+ * Not "and it must have arrived with the departure".
+ *
+ * That was written and taken out again before it shipped. It reads as obviously
+ * right — the engine stops the media as the app goes away, so a pause a minute
+ * later must be a person's — and the device log says otherwise: the engine keeps
+ * stopping it, every few seconds, for as long as the page is in the background.
+ *
+ *   00:04.500 엔진이 세움 → 00:05.434 되살림
+ *   00:12.306 엔진이 세움 → 00:13.198 되살림
+ *   00:24.179 엔진이 세움 → 00:25.135 되살림
+ *
+ * That loop *is* background playback on this platform. Any window around the
+ * departure switches the feature off a few seconds after leaving.
+ */
+
 /** Retries, spaced. A pause can land again as the browser finishes hiding the tab. */
 const RETRIES = [120, 400, 1200]
 
@@ -57,6 +73,7 @@ function onPause(): void {
   }
   if (!document.hidden) return
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
+
 
   log('배경재생: 엔진이 세움 — 되살리기 시도')
   let attempt = 0

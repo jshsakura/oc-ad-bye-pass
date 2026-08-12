@@ -76,12 +76,26 @@ export function bindMediaSession(): void {
   if (!session?.setActionHandler) return
 
   const video = largestVideo()
-  if (!video || video === bound) return
+  if (!video) return
+  const isNew = video !== bound
   bound = video
 
-  allowRemotePlayback(video)
-  watchRemotePlayback(video)
+  if (isNew) {
+    allowRemotePlayback(video)
+    watchRemotePlayback(video)
+  }
 
+  /*
+   * The handlers below are re-set every sweep, not once per element.
+   *
+   * There is one registration per action for the whole page and the last caller
+   * owns it. YouTube registers its own whenever its player reinitialises, which
+   * silently takes ours away — and ours is the only place this extension is ever
+   * *told* that a person pressed pause, so losing it turns the lock-screen pause
+   * back into something that has to be inferred, and inferring it is what made the
+   * video start itself again.
+   */
+  if (isNew) {
   // Without metadata iOS has nothing to draw on the lock screen, and a media
   // session it cannot present is one it need not keep.
   try {
@@ -93,6 +107,7 @@ export function bindMediaSession(): void {
     session.metadata = new MediaMetadata({ title, artist: 'YouTube', artwork })
   } catch {
     // MediaMetadata is missing on some engines; the handlers below still help.
+  }
   }
 
   const safely = (action: MediaSessionAction, handler: () => void) => {
@@ -128,8 +143,10 @@ export function bindMediaSession(): void {
     // property assignment leaves no attribute for the observer above to see.
     allowRemotePlayback(video)
   }
-  video.addEventListener('play', sync)
-  video.addEventListener('pause', sync)
+  if (isNew) {
+    video.addEventListener('play', sync)
+    video.addEventListener('pause', sync)
+  }
   sync()
   safely('seekbackward', () => {
     video.currentTime = Math.max(0, video.currentTime - 10)

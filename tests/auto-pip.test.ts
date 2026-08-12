@@ -117,30 +117,9 @@ test('기록이 없으면 인라인이 기본이다', () => {
   assert.equal(modeToRestore({ before: null, current: 'picture-in-picture' }), 'inline')
 })
 
-// 나가는 손짓.
+// 나가는 손짓의 판정은 사라졌다.
 //
-// 버튼이 되는 이유는 탭이 사용자 제스처를 들고 있기 때문이고, 나가는 순간에는 그것이
-// 없다. 그런데 아이폰에서 앱을 나가기 직전에 사람이 실제로 하는 동작이 하나 있다 —
-// 화면 맨 아래에서 위로 쓸어올리기. 그 터치는 시스템이 가져가기 전에 페이지에 먼저
-// 닿으므로, 나가기 전 마지막으로 창을 요청할 수 있는 순간이다.
-//
-// 좁게 잡는다. 아래 가장자리에서 시작해야 하고, 위로 가야 하고, 옆보다 위로 더 가야
-// 한다 — 페이지 스크롤은 거기서 시작하지 않고, 가로 스와이프는 다른 뜻이다.
-import { isHomeSwipe } from '../src/isolated/pip.ts'
-
-test('아래 가장자리에서 위로 쓸어올리면 나가는 손짓이다', () => {
-  assert.equal(isHomeSwipe({ fromBottom: 10, up: 60, sideways: 8 }), true)
-})
-
-test('화면 한가운데서 시작한 스크롤은 아니다', () => {
-  assert.equal(isHomeSwipe({ fromBottom: 300, up: 60, sideways: 5 }), false)
-})
-
-test('살짝 움직인 것은 아직 아니다', () => {
-  assert.equal(isHomeSwipe({ fromBottom: 8, up: 9, sideways: 2 }), false)
-})
-
-test('옆으로 더 갔으면 다른 뜻이다', () => {
-  // 아래 가장자리의 가로 스와이프는 탭 전환이지 나가는 것이 아니다.
-  assert.equal(isHomeSwipe({ fromBottom: 8, up: 30, sideways: 90 }), false)
-})
+// 화면 맨 아래에서 위로 쓸어올리는 동작을 잡으려 했지만, 이 브라우저는 애초에
+// 사용자 제스처를 요구하지 않았고(활성화=만료 상태로도 창이 열린다), 페이지는 그
+// 터치를 받지도 못한다 — 한 세션 내내 센 터치 중 화면 아래에 가장 가까웠던 것이
+// 477px 이었다. 맨 아래는 브라우저 툴바 몫이다.

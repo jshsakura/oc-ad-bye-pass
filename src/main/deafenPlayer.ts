@@ -21,7 +21,56 @@ import { log } from '../shared/log.ts'
 /** Only this one, and only on videos. A blanket refusal would break the page. */
 const DEAFENED = 'webkitpresentationmodechanged'
 
+/**
+ * Set by the other world while a window it opened is still meant to be up.
+ *
+ * An attribute rather than a message, because the two worlds share the document
+ * and nothing else reliably — and because it has to be readable synchronously,
+ * inside a call this is deciding whether to pass on.
+ */
+const HOLD_ATTR = 'data-oc-abp-hold'
+
+/**
+ * Refuse the page's request to put the video back in the page.
+ *
+ * Three departures in one device log opened a window and lost it again after
+ * 5.02, 5.03 and 5.05 seconds, with the video still playing and nothing of ours
+ * in between — no restore, no button, nothing this extension logs. Something else
+ * asks for `inline` five seconds in, and the only two candidates are the page and
+ * the platform.
+ *
+ * This tells them apart by taking the page's ask away. If the window still falls
+ * after five seconds, nothing in the page did it and there is nothing here to fix;
+ * if it stays up, that was the whole bug.
+ *
+ * Narrow on purpose. It only refuses `inline`, only while the other world says a
+ * window of its own is standing, and that flag is raised by the presentation mode
+ * actually changing and lowered the moment the user is back. A refusal that
+ * outlived its departure would leave the page unable to return the video to itself
+ * for the rest of its life, which is how an earlier attempt at this went wrong.
+ */
+function holdPresentation(): void {
+  const proto = (
+    window as unknown as {
+      HTMLVideoElement?: { prototype: Record<string, unknown> }
+    }
+  ).HTMLVideoElement?.prototype
+  if (!proto) return
+  const native = proto.webkitSetPresentationMode
+  if (typeof native !== 'function') return
+
+  proto.webkitSetPresentationMode = function (this: HTMLVideoElement, mode: string) {
+    if (mode === 'inline' && document.documentElement?.hasAttribute(HOLD_ATTR)) {
+      log('페이지가 작은 창을 접으려 함 — 거절')
+      return
+    }
+    return (native as (this: HTMLVideoElement, mode: string) => unknown).call(this, mode)
+  }
+}
+
 export function deafenPlayer(): void {
+  holdPresentation()
+
   const proto = EventTarget.prototype
   const native = proto.addEventListener
   if (typeof native !== 'function') return
