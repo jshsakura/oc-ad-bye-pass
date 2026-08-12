@@ -151,8 +151,22 @@ export function readLog(): string | null {
     .join('\n')
 }
 
+/**
+ * Only lines this version can place in time.
+ *
+ * Stamps carried minutes and seconds until 2026-08-12 and carry the hour now, and
+ * the two stores hold whatever was written before the update — a page's
+ * localStorage outlives an extension being reinstalled. Ordering a mixture of the
+ * two by their first twelve characters interleaves an hour-old line with a fresh
+ * one and reads as nonsense, which is what the last dump looked like.
+ *
+ * Old lines are dropped rather than migrated. They belong to versions whose
+ * behaviour is no longer the question.
+ */
+const STAMPED = /^\d{2}:\d{2}:\d{2}\.\d{3} /
+
 function lines(text: string): string[] {
-  return text.split('\n').filter(Boolean)
+  return text.split('\n').filter((line) => STAMPED.test(line))
 }
 
 function tally(list: string[]): Map<string, number> {

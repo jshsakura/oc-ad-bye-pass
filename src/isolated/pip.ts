@@ -213,7 +213,6 @@ function isFloating(video: WebkitVideo): boolean {
  */
 function leavePip(video: WebkitVideo): void {
   // Theirs now — the hold exists to protect a departure, not to trap a video.
-  holdInline(false)
   floatingAway = false
   preferFullscreen = false
   log('탭: 접기')
@@ -497,9 +496,6 @@ function placementSignals(): [EventTarget, string][] {
  * arrives as the same event.
  */
 
-/** Read by src/main/deafenPlayer.ts, which has its own copy of the name. */
-const HOLD_ATTR = 'data-oc-abp-hold'
-
 /**
  * Set for the duration of a presentation call we make ourselves.
  *
@@ -519,21 +515,6 @@ function setMode(video: WebkitVideo, mode: string): void {
   } finally {
     root?.removeAttribute(OURS_ATTR)
   }
-}
-
-/**
- * Ours is up — the page may not put it away.
- *
- * Raised only by the mode actually changing, lowered by the mode changing back,
- * by the user returning, by the button, and by switching the feature off. A hold
- * left standing would refuse the page its own video for good, so every path that
- * can end a departure lowers it.
- */
-function holdInline(on: boolean): void {
-  const root = document.documentElement
-  if (!root) return
-  if (on) root.setAttribute(HOLD_ATTR, '1')
-  else root.removeAttribute(HOLD_ATTR)
 }
 
 function guardPresentation(video: WebkitVideo): void {
@@ -561,14 +542,12 @@ function guardPresentation(video: WebkitVideo): void {
     if (mode === 'picture-in-picture') {
       floatingAway = true
       floatedVideo = video
-      holdInline(true)
       return
     }
 
     // Back in the page, by whoever's doing. Nothing of the departure survives it.
     floatingAway = false
     floatedVideo = null
-    holdInline(false)
   })
 }
 
@@ -1140,7 +1119,6 @@ function handleReturn(): void {
 
   // Before anything else on the way back: the user is here, so the page may have
   // its video back whenever it likes.
-  holdInline(false)
   stopAwayRecord('돌아옴')
 
   if (!wentAway) return
@@ -1335,7 +1313,6 @@ export function disablePictureInPicture(): void {
   stopAwayRecord()
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
-  holdInline(false)
   floatingAway = false
   observer?.disconnect()
   observer = null

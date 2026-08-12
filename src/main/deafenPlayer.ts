@@ -28,64 +28,27 @@ const DEAFENED = 'webkitpresentationmodechanged'
  * and nothing else reliably — and because it has to be readable synchronously,
  * inside a call this is deciding whether to pass on.
  */
-const HOLD_ATTR = 'data-oc-abp-hold'
 
 /** Set by the other world around a presentation call of its own. */
 const OURS_ATTR = 'data-oc-abp-ours'
 
 /**
- * The same event, subscribed to the other way.
+ * Watch the presentation calls. Refuse none of them.
  *
- * `addEventListener` is not the only way onto an event. Assigning
- * `video.onwebkitpresentationmodechanged` registers a handler that never touches
- * the method being refused below, so a page that uses the property is listening
- * exactly as before while the log says the registration was blocked. Which is
- * what the log has been saying, next to a window that keeps being pulled down.
+ * Refusing the page's `inline` was tried here and it broke playback outright —
+ * `readyState=0 network=2 시간=0.0 버퍼=0`, a player with nothing loaded and
+ * nothing drawn. YouTube's player cannot be told no about its own video: denied
+ * the state change it asked for, its state machine and the element disagree
+ * forever after, and it stops rendering. The repository's own notes said as much
+ * about the first attempt at this, in as many words, and it was reintroduced
+ * anyway.
+ *
+ * What is left changes nothing and still answers the question. Every call is
+ * logged with the mode and with whose call it is, so the thing that asks for
+ * `inline` five seconds into a departure names itself. Knowing that is worth a log
+ * line; acting on it cost the video.
  */
-const DEAFENED_PROP = 'onwebkitpresentationmodechanged'
-
-function deafenProperty(): void {
-  const proto = (
-    window as unknown as { HTMLVideoElement?: { prototype: object } }
-  ).HTMLVideoElement?.prototype
-  if (!proto) return
-  try {
-    Object.defineProperty(proto, DEAFENED_PROP, {
-      configurable: true,
-      get: () => null,
-      set: () => {
-        if (refusedProp === 0) log('플레이어의 표시 모드 감시를 막았습니다 (속성)')
-        refusedProp += 1
-      },
-    })
-  } catch {
-    // A frozen prototype, or an engine that will not have it redefined. The
-    // addEventListener route below is still covered.
-  }
-}
-
-let refusedProp = 0
-
-/**
- * Refuse the page's request to put the video back in the page.
- *
- * Three departures in one device log opened a window and lost it again after
- * 5.02, 5.03 and 5.05 seconds, with the video still playing and nothing of ours
- * in between — no restore, no button, nothing this extension logs. Something else
- * asks for `inline` five seconds in, and the only two candidates are the page and
- * the platform.
- *
- * This tells them apart by taking the page's ask away. If the window still falls
- * after five seconds, nothing in the page did it and there is nothing here to fix;
- * if it stays up, that was the whole bug.
- *
- * Narrow on purpose. It only refuses `inline`, only while the other world says a
- * window of its own is standing, and that flag is raised by the presentation mode
- * actually changing and lowered the moment the user is back. A refusal that
- * outlived its departure would leave the page unable to return the video to itself
- * for the rest of its life, which is how an earlier attempt at this went wrong.
- */
-function holdPresentation(): void {
+function tracePresentation(): void {
   const proto = (
     window as unknown as {
       HTMLVideoElement?: { prototype: Record<string, unknown> }
@@ -102,18 +65,12 @@ function holdPresentation(): void {
     // departure is the question this whole file exists to answer.
     const ours = root?.getAttribute(OURS_ATTR) === mode
     log(`표시모드 요청: ${mode} (${ours ? '우리' : '페이지'})`)
-
-    if (!ours && mode === 'inline' && root?.hasAttribute(HOLD_ATTR)) {
-      log('페이지가 작은 창을 접으려 함 — 거절')
-      return
-    }
     return (native as (this: HTMLVideoElement, mode: string) => unknown).call(this, mode)
   }
 }
 
 export function deafenPlayer(): void {
-  holdPresentation()
-  deafenProperty()
+  tracePresentation()
 
   const proto = EventTarget.prototype
   const native = proto.addEventListener
