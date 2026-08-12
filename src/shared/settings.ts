@@ -14,6 +14,7 @@ export const TOGGLE_KEYS = [
   'genericAds',
   'backgroundPlay',
   'pictureInPicture',
+  'pipButton',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -48,21 +49,28 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   },
   {
     key: 'backgroundPlay',
-    label: '탭을 옮겨도 계속 재생',
+    label: '화면을 벗어나도 재생 유지',
     // Deliberately not "화면을 나가도". On iPhone, leaving the app suspends
     // media at the system level and no amount of lying to the page about its
     // visibility changes that. What this does defeat is the page pausing
     // itself, which is what happens on a tab switch, on desktop and on Android.
-    hint: '페이지가 스스로 멈추는 것을 막습니다 (아이폰에서 홈으로 나갈 때는 PiP 쪽)',
+    hint: '탭을 옮기거나 화면이 가려져도 이어서 재생합니다',
   },
   {
     key: 'pictureInPicture',
-    label: '나갈 때 작은 창으로',
-    // One switch, because there was never more than one thing being asked for.
-    // It was briefly two — a button, and the arming that makes leaving work —
-    // which is two settings for one intention and a control on the player nobody
-    // asked to see.
-    hint: '재생 중 화면을 한 번 누르면 준비됩니다 (iOS 설정의 "자동으로 PiP 시작" 필요)',
+    label: '자동으로 PiP 모드로 전환',
+    // The behaviour, not the furniture. Nothing can float a video at the moment
+    // the app goes away, so the fullscreen it floats from is arranged on a tap
+    // the user was making anyway — and nothing is added to the screen for it.
+    hint: '앱을 나가면 작은 창으로 이어서 봅니다 (아이폰은 설정 → 일반 → 그림 속 그림도 켜야 합니다)',
+  },
+  {
+    key: 'pipButton',
+    label: 'PiP 버튼 표시',
+    // Separate because it is a different kind of thing: this one puts a control
+    // on someone else's player. Wanting to leave with the video is not the same
+    // as wanting a button, and it was a mistake to charge one for the other.
+    hint: '플레이어 위에 작은 창 버튼을 답니다',
   },
 ]
 
@@ -104,9 +112,12 @@ export const DEFAULT_SETTINGS: Settings = {
     // player stops when you leave, and the app that does not is the one with the
     // ads in it.
     backgroundPlay: true,
-    // Off. It puts a control on someone else's player and changes what a tap
-    // does — that is not something to help yourself to on their behalf.
-    pictureInPicture: false,
+    // On. Leaving the app with the sound still going is the point of installing
+    // this on a phone, and picture-in-picture is the only mechanism iOS gives a
+    // web page for it.
+    pictureInPicture: true,
+    // Off. It is the one thing here that adds something to the screen.
+    pipButton: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

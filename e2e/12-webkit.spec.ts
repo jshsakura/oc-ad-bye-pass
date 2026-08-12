@@ -121,6 +121,20 @@ test('사이트가 WebKit 에서 오류 없이 뜨고, 브라우저 언어를 �
     // is not in the repository. The deploy is what this test is standing in for,
     // and a footer that silently stays empty is one of the things it should
     // catch — so serve what the workflow serves.
+    // The deploy copies the rule list in beside the page (pages.yml), and the
+    // page links to it. Serving only site/ makes that link 404, which shows up
+    // as a console error the test then blames on the page.
+    if (rel === '/filters/youtube.json') {
+      readFile(join(process.cwd(), 'filters', 'youtube.json'), (err, body) => {
+        if (err) {
+          res.writeHead(404).end()
+          return
+        }
+        res.writeHead(200, { 'content-type': 'application/json' }).end(body)
+      })
+      return
+    }
+
     if (rel === '/build.json') {
       res.writeHead(200, { 'content-type': 'application/json' })
       res.end(JSON.stringify({ version: '0.0.0-test', filterVersion: 1, builtAt: '2026-08-11' }))

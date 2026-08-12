@@ -524,12 +524,15 @@ function sweep(): void {
   guardPresentation(video)
   watchPlayback(video)
   watchForStall(video)
-  // Drawn whenever there is a video. Gating on a capability check meant no
-  // button at all on the device this was written for — webkitSupportsPresentation
-  // Mode answers "not yet" before the video has metadata — and a button that
-  // reports why it failed beats one that never appears.
-  ensureButton(video)
-  place()
+  // Drawn whenever there is a video, and only when asked for. Gating on a
+  // capability check meant no button at all on the device this was written for —
+  // webkitSupportsPresentationMode answers "not yet" before the video has
+  // metadata — and a button that reports why it failed beats one that never
+  // appears.
+  if (wantButton) {
+    ensureButton(video)
+    place()
+  }
 }
 
 /** Read back by src/isolated/diagnostics.ts, which has its own copy of the name. */
@@ -956,8 +959,13 @@ export function disableLeaveFloating(): void {
   armedVideo = null
 }
 
+/** Whether the on-screen control is wanted. The behaviour does not depend on it. */
+let wantButton = false
+
 /** Start offering PiP. Safe to call repeatedly. */
-export function enablePictureInPicture(): void {
+export function enablePictureInPicture(options: { button: boolean }): void {
+  wantButton = options.button
+  if (!wantButton) document.getElementById(BUTTON_ID)?.remove()
   sweep()
   for (const [target, event] of leavingSignals()) {
     target.removeEventListener(event, onLeaving, true)

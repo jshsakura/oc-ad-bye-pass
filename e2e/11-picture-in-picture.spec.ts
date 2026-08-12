@@ -15,20 +15,26 @@ import { YOUTUBE_URL, installYouTubeFixture } from './youtube-fixture.ts'
 
 const BUTTON = '#oc-abp-pip'
 
+/**
+ * The behaviour and the button are separate settings — wanting to leave with the
+ * video is not the same as wanting a control on the player — so a test that is
+ * about the button has to ask for the button.
+ */
 async function setPip(background: import('@playwright/test').Worker, on: boolean) {
   await background.evaluate(async (value) => {
     const got = await chrome.storage.local.get('settings')
     const settings = got.settings as { toggles: Record<string, boolean> }
     settings.toggles.pictureInPicture = value
+    settings.toggles.pipButton = value
     await chrome.storage.local.set({ settings })
   }, on)
 }
 
-test('기본값은 꺼짐 — 남의 플레이어에 버튼부터 얹지 않는다', async ({ context }) => {
+test('기본값에서는 버튼을 얹지 않는다 — 동작은 켜져 있어도', async ({ context }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
-  // 이 기능만은 화면에 무언가를 더한다. 더하는 것은 요청받고 한다.
+  // 나갈 때 이어보는 것은 기본이다. 남의 플레이어에 컨트롤을 다는 것은 아니다.
   await expect(page.locator(BUTTON)).toHaveCount(0)
 })
 

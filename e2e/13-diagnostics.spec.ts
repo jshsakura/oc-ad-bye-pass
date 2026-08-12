@@ -79,7 +79,7 @@ test('1계층이 늦게 붙어도 아니오로 굳지 않는다', async ({ conte
   await youtube.evaluate(() => document.documentElement.removeAttribute('data-oc-ad-bye-pass'))
   // 팝업이 확장 페이지 위에서 열려 유튜브 전용 항목은 접혀 있다.
   await popup.getByRole('button', { name: '전체 항목 보기' }).click()
-  await popup.getByRole('switch', { name: '나갈 때 작은 창으로' }).click()
+  await popup.getByRole('switch', { name: '자동으로 PiP 모드로 전환' }).click()
   await expect.poll(layer1Reported, { message: '전제가 안 만들어졌다' }).toBe(false)
 
   // 늦게 도착한 1계층. 이걸 못 보고 넘어가면 멀쩡한 계층을 놓고 몇 시간을 쓴다.

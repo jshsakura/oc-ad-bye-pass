@@ -24,6 +24,7 @@ import {
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { reportDiagnostics } from './diagnostics.ts'
+import { disableKeepPlaying, enableKeepPlaying, keepPlayingSweep } from './keepPlaying.ts'
 import { bindMediaSession, unbindMediaSession } from './mediaSession.ts'
 import {
   disableLeaveFloating,
@@ -106,8 +107,10 @@ function recompute(cache: FilterCache | null) {
     // One switch for one intention: the button and the arming that makes leaving
     // work are halves of the same thing, and it adds a control rather than
     // removing one, so it runs only when asked for.
+    // The behaviour is one switch; the control on the player is another, because
+    // wanting to leave with the video is not the same as wanting a button.
     if (settings.toggles.pictureInPicture) {
-      enablePictureInPicture()
+      enablePictureInPicture({ button: settings.toggles.pipButton })
       enableLeaveFloating()
     } else {
       disablePictureInPicture()
@@ -117,8 +120,15 @@ function recompute(cache: FilterCache | null) {
     // The transport controls are the way back once iOS has stopped the page.
     // Bound under the same setting as background playback, since that is the
     // problem it belongs to.
-    if (settings.toggles.backgroundPlay) bindMediaSession()
-    else unbindMediaSession()
+    if (settings.toggles.backgroundPlay) {
+      bindMediaSession()
+      // Lying to the page only defeats the page. WebKit stops the media itself,
+      // and this asks for it back.
+      enableKeepPlaying()
+    } else {
+      unbindMediaSession()
+      disableKeepPlaying()
+    }
   }
 
   sweep()
@@ -181,6 +191,7 @@ function sweep() {
   if (settings.toggles.fullscreenAds) acted += clickCloseButtons(rules.click)
   if (settings.toggles.antiAdblockNag) acted += dismissAdblockNag()
   if (settings.toggles.playerFallback) acted += handleAdState()
+  keepPlayingSweep()
   if (acted) bumpStats({ skipped: acted })
 }
 
