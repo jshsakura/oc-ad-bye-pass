@@ -105,11 +105,29 @@ function leavingSignals(): [EventTarget, string][] {
   ]
 }
 
-/** The video actually being watched — the largest one that has loaded metadata. */
+/**
+ * The video actually being watched.
+ *
+ * Size alone was the test, and on a hidden page everything measures zero — so the
+ * pick fell to whichever element came first, which on YouTube can be an empty one
+ * held in reserve. The device log caught it: a hand-over reported against a
+ * playing video, and the mode change that followed came from something at 0.0
+ * seconds and paused, on the strength of which we concluded the user had closed
+ * the window.
+ *
+ * What is being watched is what is playing. Size only decides between candidates
+ * that are equally alive.
+ */
 function playerVideo(): WebkitVideo | null {
   const videos = [...document.querySelectorAll<WebkitVideo>('video')]
   if (videos.length === 0) return null
-  return videos.reduce((best, v) => (v.clientWidth > best.clientWidth ? v : best))
+  const score = (v: WebkitVideo) =>
+    (!v.paused && !v.ended ? 4 : 0) + (v.currentTime > 0 ? 2 : 0) + (v.readyState >= 2 ? 1 : 0)
+  return videos.reduce((best, v) => {
+    const gap = score(v) - score(best)
+    if (gap !== 0) return gap > 0 ? v : best
+    return v.clientWidth > best.clientWidth ? v : best
+  })
 }
 
 /** Say it on the screen. A phone has no console, and this has to be debuggable there. */
@@ -514,6 +532,13 @@ function guardPresentation(video: WebkitVideo): void {
   video.addEventListener(
     'webkitpresentationmodechanged',
     (event) => {
+      // Only the element we handed over gets to say what happened to it. A page
+      // can hold more than one, and the other one is not in a window.
+      if (floatingAway && floatedVideo && video !== floatedVideo) {
+        log(`모드 바뀜(다른 영상) → ${video.webkitPresentationMode ?? '?'} — 무시`)
+        return
+      }
+
       const mode = video.webkitPresentationMode ?? '?'
       const sinceReturn = Date.now() - returnedAt
       log(
@@ -625,6 +650,17 @@ function watchForStall(video: WebkitVideo): void {
 }
 
 function sweep(): void {
+  /*
+   * The hold stops background playback telling the page it is visible, so a hold
+   * left up is background playback switched off for good — which is what happened:
+   * every path that lowers it is a path through leaving and coming back, and a
+   * departure that never completes leaves it standing.
+   *
+   * This runs on every sweep and costs an attribute read. Somebody is looking at
+   * the page and nothing of ours is away: there is nothing to hold.
+   */
+  if (!floatingAway && !document.hidden) holdInline(false)
+
   const video = playerVideo()
   if (!video) return
   allowPip(video)
@@ -816,6 +852,9 @@ let leftAt = 0
  * again — which is also what happens if the pull was the player rebuilding itself.
  */
 let floatingAway = false
+
+/** The element this departure handed over, so another one cannot answer for it. */
+let floatedVideo: WebkitVideo | null = null
 
 /** Enough goes to survive a rebuild, few enough to stop if it is not working. */
 const REFLOAT_LIMIT = 3
@@ -1041,8 +1080,11 @@ function onLeaving(event: Event): void {
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
-  floatingAway = true
-  holdInline(true)
+  floatingAway = attempt === 'called'
+  floatedVideo = attempt === 'called' ? video : null
+  // Only when something was actually taken. Raised on a refused call it stayed up
+  // with no window behind it and nothing on the way to lower it.
+  if (attempt === 'called') holdInline(true)
   // The mode read here is the one from before the call — WebKit updates it
   // later — so it says what we were leaving from, not what came of it. What came
   // of it is answered on the way back, by onReturning.
@@ -1109,6 +1151,7 @@ function onReturning(): void {
   retried = false
   wentAway = false
   floatingAway = false
+  floatedVideo = null
   refloats = 0
   holdInline(false)
   log(`돌아옴: 모드=${playerVideo()?.webkitPresentationMode ?? '?'}`)
@@ -1285,8 +1328,11 @@ function onTouchMove(event: Event): void {
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
-  floatingAway = true
-  holdInline(true)
+  floatingAway = attempt === 'called'
+  floatedVideo = attempt === 'called' ? video : null
+  // Only when something was actually taken. Raised on a refused call it stayed up
+  // with no window behind it and nothing on the way to lower it.
+  if (attempt === 'called') holdInline(true)
   record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
   setTimeout(() => {
     log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
