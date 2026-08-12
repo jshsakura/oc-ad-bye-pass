@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "OC Ad Bye-Pass",
   "version": "0.10.4",
-  "description": "\uad11\uace0 \ucc28\ub2e8\uae30. \uc720\ud29c\ube0c\ub294 \uc751\ub2f5 \ub2e8\uacc4\uc5d0\uc11c \uad11\uace0\ub97c \ub9c9\uace0, \ub2e4\ub978 \uc0ac\uc774\ud2b8\ub294 \uad11\uace0\ub9dd \uc694\uccad\uc744 \ucc28\ub2e8\ud569\ub2c8\ub2e4.",
+  "description": "광고 차단기. 유튜브 광고는 영상과 같은 데이터에 섞여 오는데, 그걸 미리 걷어냅니다. 다른 사이트에서는 광고 요청 자체를 막습니다.",
   "minimum_chrome_version": "120",
   "icons": {
     "16": "icons/icon16.png",
