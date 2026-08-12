@@ -107,21 +107,72 @@ export function log(line: string): void {
 }
 
 /**
- * The tail, preferring the copy that spans documents.
+ * Both copies, merged and in order.
  *
- * The attribute only ever holds this document's lines, and the interesting ones
- * were written by the last one.
+ * It used to prefer localStorage and fall back to the attribute only when the
+ * first threw. That assumed the two hold the same lines, and there is no
+ * guarantee they do: the extension's world and the page's may not reach the same
+ * storage on every browser, and a partitioned or refused localStorage is a silent
+ * one — it returns a short answer rather than an error, and a short answer wins
+ * over a full attribute. The panel then reports almost nothing while the record
+ * is sitting right there.
+ *
+ * So neither is trusted over the other. Lines carry a full timestamp, which makes
+ * merging them exact rather than a guess.
  */
 export function readLog(): string | null {
-  try {
-    const stored = localStorage.getItem(STORE_KEY)
-    if (stored) return stored
-  } catch {
-    // Fall through to the attribute.
+  const store = lines(readStore())
+  const attribute = lines(readAttribute())
+  if (store.length === 0 && attribute.length === 0) return null
+
+  /*
+   * Merged as multisets, not as sets.
+   *
+   * The two copies overlap wherever both worlds could write, so a plain union
+   * would print everything twice — and a plain de-duplication would delete the
+   * second of two identical lines written inside one millisecond, which is a real
+   * thing this log does. Taking the larger count of each line keeps the overlap
+   * collapsed and the genuine repeats intact.
+   */
+  const merged = [...store]
+  const room = tally(store)
+  for (const line of attribute) {
+    const left = (room.get(line) ?? 0) - 1
+    room.set(line, left)
+    if (left < 0) merged.push(line)
   }
+
+  // By timestamp only, and stably. Sorting whole lines puts them in alphabetical
+  // order within a millisecond, which scrambles exactly the bursts worth reading.
+  return merged
+    .map((line, index) => ({ line, index }))
+    .sort((a, b) => a.line.slice(0, 12).localeCompare(b.line.slice(0, 12)) || a.index - b.index)
+    .map((entry) => entry.line)
+    .join('\n')
+}
+
+function lines(text: string): string[] {
+  return text.split('\n').filter(Boolean)
+}
+
+function tally(list: string[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const line of list) counts.set(line, (counts.get(line) ?? 0) + 1)
+  return counts
+}
+
+function readStore(): string {
   try {
-    return document.documentElement?.getAttribute(ATTR) ?? null
+    return localStorage.getItem(STORE_KEY) ?? ''
   } catch {
-    return null
+    return ''
+  }
+}
+
+function readAttribute(): string {
+  try {
+    return document.documentElement?.getAttribute(ATTR) ?? ''
+  } catch {
+    return ''
   }
 }

@@ -89,3 +89,34 @@ test('페이지가 바뀌어도 앞 문서의 줄이 남는다', () => {
 
   delete (globalThis as unknown as { localStorage?: unknown }).localStorage
 })
+
+// 두 벌을 합칠 때 무엇을 지우고 무엇을 남기는가.
+//
+// 두 세계가 같은 줄을 각자 쓸 수 있으니 겹치는 것은 접어야 하고, 같은 밀리초에
+// 똑같은 줄이 두 번 나오는 것은 실제로 일어나는 일이라 남겨야 한다. 그리고
+// localStorage 가 세계별로 갈라져 있으면 한쪽만 읽어서는 절반밖에 못 본다 —
+// 그게 "로그가 뭐 남는 게 없다" 로 보였다.
+test('두 벌이 겹치면 접고, 한쪽에만 있는 줄은 살린다', () => {
+  const store = new Map<string, string>()
+  ;(globalThis as unknown as { localStorage: unknown }).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      store.set(k, v)
+    },
+  }
+
+  log('앞 시험 정리')
+  attributes.clear()
+  store.clear()
+
+  // 양쪽에 다 쓰인 줄 하나, 어트리뷰트에만 남은 줄 하나.
+  log('둘 다 본 줄')
+  const both = store.get('oc-abp-log') ?? ''
+  attributes.set('data-oc-abp-log', `${both}\n${both.slice(0, 12)} 어트리뷰트에만`)
+
+  const merged = (readLog() ?? '').split('\n').filter(Boolean)
+  assert.equal(merged.filter((l) => l.includes('둘 다 본 줄')).length, 1, '겹친 줄이 두 번 나왔다')
+  assert.equal(merged.filter((l) => l.includes('어트리뷰트에만')).length, 1, '한쪽 줄이 사라졌다')
+
+  delete (globalThis as unknown as { localStorage?: unknown }).localStorage
+})
