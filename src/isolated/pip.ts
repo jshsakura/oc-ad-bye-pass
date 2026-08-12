@@ -199,6 +199,7 @@ function leavePip(video: WebkitVideo): void {
  * Everything here runs inside the tap. No awaits before a privileged call.
  */
 function enterPip(video: WebkitVideo): void {
+  handledByUser = Date.now()
   if (isFloating(video)) return leavePip(video)
 
   // Right now, not at the last sweep. YouTube puts `disablePictureInPicture`
@@ -502,6 +503,14 @@ let engagedAt = 0
 function guardPresentation(video: WebkitVideo): void {
   if (video.dataset.ocAbpGuarded === '1') return
   video.dataset.ocAbpGuarded = '1'
+  // Every change, whoever caused it. Without this the log shows what we asked for
+  // and never what became of it, and the two turned out to differ.
+  video.addEventListener('webkitpresentationmodechanged', () => {
+    log(
+      `모드 바뀜 → ${video.webkitPresentationMode ?? '?'}` +
+        ` (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)} 우리것=${engagedByUs})`,
+    )
+  })
   video.addEventListener(
     'webkitpresentationmodechanged',
     (event) => {
@@ -725,6 +734,18 @@ const RETURN_GRACE_MS = 1400
  * worse than not resuming at all. So the position goes with us.
  */
 let leftAt = 0
+
+/**
+ * When the user last acted on this themselves.
+ *
+ * The early float undoes itself if the page turns out not to have gone anywhere,
+ * and on the device that undo closed a window the user had opened by hand three
+ * milliseconds later: the tap that presses the button also blurs the document, so
+ * we floated, they floated, and then our timer took both away.
+ *
+ * Nothing we started gets taken back if they have touched it since.
+ */
+let handledByUser = 0
 
 /**
  * Where the video was before we moved it, so coming back can put it there.
@@ -990,6 +1011,10 @@ function onReturning(): void {
   // changing it is what stops it.
   const wasPlaying = !video.paused && !video.ended
   const target = modeToRestore({ before: modeBeforeLeaving, current: video.webkitPresentationMode })
+  log(
+    `돌아옴: 판단 before=${modeBeforeLeaving ?? '-'} now=${video.webkitPresentationMode ?? '?'}` +
+      ` → ${target ?? '그대로'} (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)})`,
+  )
   modeBeforeLeaving = null
   if (target === null) return
   try {
@@ -1155,18 +1180,33 @@ function floatEarly(): void {
   wentAway = true
   record('blur', `${attempt}:from-inline`)
 
+  const floatedAt = Date.now()
   setTimeout(() => {
     if (!floatedEarly) return
     const gone = document.hidden || !document.hasFocus()
-    log(`나가는 길: 확인 — ${gone ? '정말 나감' : '안 나갔음, 되돌림'}`)
+    const theirs = handledByUser > floatedAt
+    log(
+      `나가는 길: 확인 — ${gone ? '정말 나감' : '안 나갔음'}` +
+        `${theirs ? ', 사용자가 손댐 — 그대로 둠' : gone ? '' : ', 되돌림'}` +
+        ` (숨김=${document.hidden} 포커스=${document.hasFocus()} 모드=${video.webkitPresentationMode ?? '?'})`,
+    )
     if (gone) return
+    // Theirs now. Taking back a window somebody opened on purpose is worse than
+    // leaving one open that nobody asked for.
+    if (theirs) {
+      floatedEarly = false
+      return
+    }
     floatedEarly = false
     engagedByUs = false
+    const wasPlaying = !video.paused && !video.ended
     try {
       video.webkitSetPresentationMode?.('inline')
     } catch {
       // Leave it rather than fight the player for it.
     }
+    // Putting it back inline stops it, and it was playing a second ago.
+    if (wasPlaying) resumeAfterRestore(video)
   }, 1600)
 }
 
