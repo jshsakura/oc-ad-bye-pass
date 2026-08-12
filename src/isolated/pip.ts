@@ -512,11 +512,10 @@ function guardPresentation(video: WebkitVideo): void {
         ` (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)} 우리것=${engagedByUs})`,
     )
     if (video.webkitPresentationMode !== 'inline') return
-    // Not gated on `document.hidden`: with a window open iOS counts the page as
-    // visible, so requiring hidden here meant the one case this exists for — the
-    // player dragging the video back out, measured five seconds after it floated —
-    // never qualified. `floatingAway` is the real question, and coming back clears
-    // it before anything here can run.
+    // Reopening is the backstop for a pull that got through anyway — the swallow
+    // above stops the player hearing about it, but it can still act on something
+    // else. Not gated on `document.hidden`: with a window open iOS counts the page
+    // as visible, so requiring hidden here meant this never qualified.
     if (!floatingAway) return
     if (video.paused || video.ended) return
     if (refloats >= REFLOAT_LIMIT) {
@@ -539,18 +538,24 @@ function guardPresentation(video: WebkitVideo): void {
         engagedByUs = false
         return
       }
-      // Nothing is swallowed any more.
+      // Swallowed while away, and only while away.
       //
-      // Hiding these from the player was meant to stop it dragging the video back
-      // inline, and it cost more than it saved: the player is a state machine fed
-      // by these events, and kept blind to where the video actually is it leaves
-      // its own placeholder on screen — "This video is playing in picture in
-      // picture", over a page the user has already come back to — and comes back
-      // to a video it believes is elsewhere.
+      // This is the seam. YouTube cancels picture-in-picture by reacting to this
+      // event, not by any call we can wrap — the same finding, with the same
+      // capture-phase fix, is what the iOS Shortcuts trick for forcing YouTube PiP
+      // has used for years, and Firefox ships an intervention against the same
+      // behaviour on its own path.
       //
-      // Being dragged back is handled where it happens now, by opening the window
-      // again, so the player can be told the truth.
-      void event
+      // Both extremes were wrong. Holding it for a fixed moment after our own call
+      // missed the pull, which the device measured at five seconds; letting
+      // everything through meant the pull always won. What is right is the span of
+      // the departure: while the user is away the player has no business moving the
+      // video, and the moment they are back it needs to know everything, or it
+      // leaves its "playing in picture in picture" card over a page they are
+      // already looking at.
+      if (!floatingAway) return
+      log(`표시 모드 이벤트 삼킴 (모드=${video.webkitPresentationMode ?? '?'})`)
+      event.stopImmediatePropagation()
     },
     true,
   )
@@ -594,6 +599,7 @@ function sweep(): void {
   allowPip(video)
   guardPresentation(video)
   watchPlayback(video)
+  keepFloatingAlive(video)
   watchForStall(video)
   // Drawn whenever there is a video, and only when asked for. Gating on a
   // capability check meant no button at all on the device this was written for —
@@ -833,6 +839,30 @@ let lastPlayingAt = 0
 let pausedAt = 0
 let pausedWhileHidden = false
 
+/**
+ * Keep it playing while it is floating.
+ *
+ * A paused video is the commonest reason a picture-in-picture window closes by
+ * itself, and while one is open iOS counts the page as visible — so the
+ * background-playback resume, which waits for the page to be hidden, never runs.
+ * YouTube pausing once in that window took the window with it.
+ *
+ * Separate from that resume on purpose: this one asks no questions about who
+ * paused it. For the span of a departure the answer cannot be the user, because
+ * the user is not here.
+ */
+function keepFloatingAlive(video: WebkitVideo): void {
+  if (video.dataset.ocAbpFloatWatch === '1') return
+  video.dataset.ocAbpFloatWatch = '1'
+  video.addEventListener('pause', () => {
+    if (!floatingAway || video.ended) return
+    log('작은 창: 멈춰서 다시 재생')
+    void video.play().catch((e: unknown) => {
+      log(`작은 창: 재생 거절 — ${e instanceof Error ? e.message : String(e)}`)
+    })
+  })
+}
+
 function watchPlayback(video: WebkitVideo): void {
   if (video.dataset.ocAbpPlayWatch === '1') return
   video.dataset.ocAbpPlayWatch = '1'
@@ -1019,8 +1049,14 @@ function onLeaving(event: Event): void {
 function onReturning(): void {
   // Released first, before any judgement about whether this is really a return:
   // holding the player off while somebody is looking at the page can only delay
-  // the video coming back into it, and that delay is the seconds they see.
-  if (!document.hidden) holdInline(false)
+  // the video coming back into it, and that delay is the seconds they see. The
+  // swallow goes with it — from here on the player is told everything, which is
+  // what makes it put its own player back instead of leaving its card up.
+  if (!document.hidden) {
+    holdInline(false)
+    floatingAway = false
+    refloats = 0
+  }
 
   // Opening the window looks like coming back. It is not: nothing has been left
   // yet, and this handler undoing the float it was told about is what made leaving
