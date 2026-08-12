@@ -507,7 +507,12 @@ function guardPresentation(video: WebkitVideo): void {
         ` (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)} 우리것=${engagedByUs})`,
     )
     if (video.webkitPresentationMode !== 'inline') return
-    if (!floatingAway || !document.hidden) return
+    // Not gated on `document.hidden`: with a window open iOS counts the page as
+    // visible, so requiring hidden here meant the one case this exists for — the
+    // player dragging the video back out, measured five seconds after it floated —
+    // never qualified. `floatingAway` is the real question, and coming back clears
+    // it before anything here can run.
+    if (!floatingAway) return
     if (video.paused || video.ended) return
     if (refloats >= REFLOAT_LIMIT) {
       log('작은 창: 다시 열기 포기 (세 번 밀려남)')
