@@ -663,8 +663,36 @@ function record(signal: string, outcome: string): void {
   log(`나감 ${signal} → ${outcome}`)
 }
 
+/**
+ * YouTube Music gets sound, not a window.
+ *
+ * The two cannot both be had — a floating window is the only way iOS keeps a web
+ * page's media alive, and it is a window, on top of whatever you left to do. For a
+ * video that is the point; for a song it is a black rectangle following you around.
+ * So on Music nothing is floated and background playback carries it, which is
+ * src/isolated/keepPlaying.ts and is on by default.
+ */
+/**
+ * A function, not a constant: this module is imported by a unit test in node,
+ * where `location` does not exist — the same reason the signal lists are functions.
+ */
+function isMusic(): boolean {
+  return typeof location !== 'undefined' && location.hostname.startsWith('music.')
+}
+
 /** One hand-over per departure, however many signals announce it. */
 let handedOver = false
+
+/**
+ * Floated on the way out before the page was actually hidden.
+ *
+ * Because that is the one instant when it can work: `blur` arrives while the video
+ * is still playing, and WebKit will not float a video it has already paused —
+ * which by `visibilitychange` it has. The cost is that `blur` also fires for things
+ * that are not leaving, like reaching for the address bar, so it is undone if the
+ * page turns out to still be there.
+ */
+let floatedEarly = false
 
 /**
  * Where the video was before we moved it, so coming back can put it there.
@@ -777,7 +805,18 @@ export function shouldResumeOnLeave(state: {
  */
 function onLeaving(event: Event): void {
   if (handedOver) return
+  if (isMusic()) return
   const signal = event.type
+
+  // The moment before the engine stops it.
+  //
+  // Every other signal arrives too late by one tick: iOS pauses the media as the
+  // app goes away, and a paused video is one WebKit refuses to float. `blur` comes
+  // first, while it is still playing — so that is where the window is asked for.
+  if (signal === 'blur' && !document.hidden) {
+    floatEarly()
+    return
+  }
 
   const video = playerVideo()
   if (!video) return record(signal, 'skip:no-video')
@@ -877,6 +916,7 @@ function onLeaving(event: Event): void {
  */
 function onReturning(): void {
   handedOver = false
+  floatedEarly = false
   log(`돌아옴: 모드=${playerVideo()?.webkitPresentationMode ?? '?'}`)
   const video = playerVideo()
   if (!video) return
@@ -1037,6 +1077,41 @@ function swipeSignals(): [EventTarget, string][] {
 // The leaving path asks for picture-in-picture directly, which is the same call the
 // button makes. When that call is refused there is no clever way around it, and a
 // wrong answer delivered smoothly is still a wrong answer.
+
+/**
+ * Ask now, while it is still playing, and take it back if they did not leave.
+ *
+ * Reaching for the address bar blurs the page too. Floating for that would be the
+ * extension throwing a window over someone who never went anywhere, so the page is
+ * given a moment to prove it is really gone — if it is still visible and focused
+ * shortly after, the video goes back where it was and nothing was announced.
+ */
+function floatEarly(): void {
+  const video = playerVideo()
+  if (!video) return
+  if (video.paused || video.ended) return
+  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') return
+  if (document.pictureInPictureElement === video) return
+
+  allowPip(video)
+  const attempt = attemptSync(video)
+  floatedEarly = true
+  record('blur', `${attempt}:from-inline`)
+
+  setTimeout(() => {
+    if (!floatedEarly) return
+    const gone = document.hidden || !document.hasFocus()
+    log(`나가는 길: 확인 — ${gone ? '정말 나감' : '안 나갔음, 되돌림'}`)
+    if (gone) return
+    floatedEarly = false
+    engagedByUs = false
+    try {
+      video.webkitSetPresentationMode?.('inline')
+    } catch {
+      // Leave it rather than fight the player for it.
+    }
+  }, 1600)
+}
 
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false

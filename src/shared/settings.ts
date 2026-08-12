@@ -62,7 +62,10 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // The behaviour, not the furniture. Nothing can float a video at the moment
     // the app goes away, so the fullscreen it floats from is arranged on a tap
     // the user was making anyway — and nothing is added to the screen for it.
-    hint: '앱을 나갈 때 작은 창으로 넘깁니다 (아이폰은 설정 → 일반 → 그림 속 그림도 켜야 합니다)',
+    // Music is named because the difference is deliberate and would otherwise read
+    // as the feature failing there. A floating black rectangle following you around
+    // is not what anyone wants from a song.
+    hint: '앱을 나갈 때 작은 창으로 넘깁니다 · 뮤직은 소리만 이어집니다 (아이폰은 설정 → 일반 → 그림 속 그림도 켜야 합니다)',
   },
   {
     key: 'pipButton',
