@@ -189,27 +189,20 @@ export function chooseEntry(state: {
   /** iOS hands a fullscreen video over by itself. Nothing else does. */
   autoPipFromFullscreen?: boolean
 }): 'webkit' | 'standard' | 'fullscreen' | 'none' {
-  if (state.autoPipFromFullscreen && state.fullscreen) return 'fullscreen'
+  /*
+   * The fullscreen-first route is gone.
+   *
+   * iOS really does hand a fullscreen video over by itself, and routing the tap
+   * there really would make leaving automatic — but on the device the button
+   * stopped responding at all, and a control that does nothing is worse than one
+   * that does the wrong thing. The tap opens a window, which is measured to work
+   * every time.
+   */
   const wantPip = !state.preferFullscreen && state.supported !== false
   if (wantPip && state.webkit) return 'webkit'
   if (wantPip && state.standard) return 'standard'
   if (state.fullscreen) return 'fullscreen'
   return 'none'
-}
-
-/**
- * Is this the platform that floats a fullscreen video on its own?
- *
- * iOS, and only iOS. macOS Safari has the same prefixed API and does not do it,
- * so the presence of `webkitEnterFullscreen` is not the test — a touch screen
- * alongside it is as close as the platform lets us get.
- */
-function handsOverFromFullscreen(video: WebkitVideo): boolean {
-  return (
-    typeof video.webkitEnterFullscreen === 'function' &&
-    typeof video.webkitSetPresentationMode === 'function' &&
-    (navigator.maxTouchPoints ?? 0) > 0
-  )
 }
 
 /** Is this video floating right now, by either engine's reckoning? */
@@ -284,7 +277,6 @@ function enterPip(video: WebkitVideo): void {
     webkit: typeof video.webkitSetPresentationMode === 'function',
     standard: typeof video.requestPictureInPicture === 'function',
     fullscreen: typeof video.webkitEnterFullscreen === 'function',
-    autoPipFromFullscreen: handsOverFromFullscreen(video),
   })
 
   log(`탭: 경로=${route}`)
@@ -475,7 +467,11 @@ function place(): void {
 
   // Tighter into the corner across than down: the player's own controls run along
   // the bottom, and the right edge is the one place nothing else wants.
-  const inset = 12
+  //
+  // Lowered on request — it sat far enough up the player to read as part of
+  // YouTube's own row of controls. Four pixels off each edge puts it in the
+  // corner and out of everything.
+  const inset = 4
   const insetX = 4
   const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
   const left = Math.min(box.right - BUTTON_SIZE - insetX, visibleRight - BUTTON_SIZE - insetX)

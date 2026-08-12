@@ -9,7 +9,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseEntry, shouldAutoPip } from '../src/isolated/pip.ts'
+import { shouldAutoPip } from '../src/isolated/pip.ts'
 
 const playing = { paused: false, ended: false }
 
@@ -145,31 +145,8 @@ test('옆으로 더 갔으면 다른 뜻이다', () => {
   assert.equal(isHomeSwipe({ fromBottom: 8, up: 30, sideways: 90 }), false)
 })
 
-// 아이폰에서는 전체화면이 정답이다.
+// 아이폰에서 탭을 전체화면으로 보내는 갈래는 지웠다.
 //
-// "앱처럼" 이 뜻하는 것은 나갈 때 알아서 뜬다는 것인데, 웹 페이지는 그걸 못 한다 —
-// WebKit 은 살아있는 제스처 안에서만 창을 열어주고 나가는 순간에는 그것이 없다.
-// 대신 iOS 가 **전체화면 영상**은 스스로 넘겨준다. 실기기에서 확인했다.
-//
-// 그래서 탭 한 번의 값어치가 달라진다. 창을 여는 탭은 보고 있던 페이지 위에 창을
-// 띄우고, 전체화면으로 넣는 탭은 어차피 그렇게 볼 것을 그렇게 만들 뿐이며 그 뒤로는
-// 나가기만 하면 된다.
-const IOS = { supported: true, webkit: true, standard: false, fullscreen: true, autoPipFromFullscreen: true }
-
-test('아이폰이면 전체화면으로 넘긴다 — 나가는 것만으로 창이 되게', () => {
-  assert.equal(chooseEntry({ preferFullscreen: false, ...IOS }), 'fullscreen')
-})
-
-test('아이폰이 아니면 예전 그대로 창을 연다', () => {
-  assert.equal(
-    chooseEntry({ ...IOS, autoPipFromFullscreen: false, preferFullscreen: false }),
-    'webkit',
-  )
-})
-
-test('전체화면이 없는 아이폰 같은 것은 없지만, 있으면 창으로 간다', () => {
-  assert.equal(
-    chooseEntry({ ...IOS, fullscreen: false, preferFullscreen: false }),
-    'webkit',
-  )
-})
+// iOS 가 전체화면 영상을 스스로 넘겨주는 것은 사실이고 실기기에서 확인도 했지만,
+// 그렇게 바꾸자 버튼이 아예 반응하지 않았다. 아무 일도 안 하는 컨트롤은 엉뚱한 일을
+// 하는 컨트롤보다 나쁘다. 탭은 다시 창을 연다 — 그건 매번 되는 것이 확인돼 있다.

@@ -73,7 +73,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Separate because it is a different kind of thing: this one puts a control
     // on someone else's player. Wanting to leave with the video is not the same
     // as wanting a button, and it was a mistake to charge one for the other.
-    hint: '아이폰에서는 전체화면으로 넘깁니다 — 그 상태로 나가면 작은 창이 됩니다',
+    hint: '나가기 전에 누르면 그 창이 앱 밖에서도 남습니다',
   },
 ]
 
