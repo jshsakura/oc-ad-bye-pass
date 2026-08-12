@@ -801,6 +801,16 @@ function keepFloatingAlive(video: WebkitVideo): void {
   video.dataset.ocAbpFloatWatch = '1'
   video.addEventListener('pause', () => {
     if (!floatingAway || video.ended) return
+    /*
+     * And the window has to actually be there.
+     *
+     * A flag is a belief; this is the fact. Left to the flag alone, a departure
+     * that raised the hold and never lowered it turned every pause the user
+     * pressed into a video that started itself again — reported from the phone,
+     * and the second time this file has overruled a person on the strength of
+     * something it merely believed.
+     */
+    if (!isFloating(video)) return
     log('작은 창: 멈춰서 다시 재생')
     void video.play().catch((e: unknown) => {
       log(`작은 창: 재생 거절 — ${e instanceof Error ? e.message : String(e)}`)
@@ -931,8 +941,11 @@ function onBlurWhileArmed(): void {
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
-  floatingAway = attempt === 'called'
-  floatedVideo = attempt === 'called' ? video : null
+  // Nothing is claimed here. `called` means the call was made, which on this
+  // platform is true whether or not a window appeared — raising the hold on it
+  // left the hold standing over nothing, and everything the hold protects then
+  // applied to a video that was sitting in the page. guardPresentation raises it
+  // when the mode actually changes, which is the only honest signal there is.
   record('blur-armed', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=활성`)
 }
 
@@ -1382,10 +1395,7 @@ function onTouchMove(event: Event): void {
   const attempt = attemptSync(video)
   handedOver = true
   wentAway = true
-  floatingAway = attempt === 'called'
-  floatedVideo = attempt === 'called' ? video : null
-  // Only when something was actually taken. Raised on a refused call it stayed up
-  // with no window behind it and nothing on the way to lower it.
+  // Same as the blur path: the call proves nothing, so it claims nothing.
   record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=${gesture}`)
   setTimeout(() => {
     log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
