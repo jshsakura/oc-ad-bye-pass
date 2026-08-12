@@ -70,20 +70,23 @@ test('켜면 버튼이 붙고, 유튜브가 걸어둔 차단이 풀린다', asyn
     .toBe(false)
 })
 
-test('누르면 어느 경로를 탔는지 화면에 말해준다', async ({ context, background }) => {
+// 눌렀을 때 무슨 일이 있었는지는 이제 기록으로 남는다.
+//
+// 예전에는 화면에 토스트로 띄웠다 — 폰에 아무것도 물어볼 수 없던 시절의 방편이고,
+// 버튼을 누를 때마다 남의 영상 위로 배너가 지나가는 값을 치르고 있었다.
+// 진단 패널의 기록이 같은 것을 더 자세히 들고 있다.
+test('누르면 무엇을 했는지 기록에 남는다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
   await setPip(background, true)
   await page.locator(BUTTON).click()
 
-  // 폰에는 콘솔이 없다. 눌렀을 때 무슨 일이 일어났는지가 화면에 남아야
-  // "진입점이 없다" 와 "진입점이 거절했다" 를 구분할 수 있고, 그 둘은 고치는
-  // 방법이 정반대다.
-  await expect(page.getByText(/PiP 진입점:/)).toBeVisible()
-
-  // 그리고 실제로 API 까지 갔는지 — 크로미움에는 표준 API 가 있으니 그 이름이 뜬다.
-  await expect(page.getByText(/standard/)).toBeVisible()
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.getAttribute('data-oc-abp-log')), {
+      message: '탭이 기록되지 않았다',
+    })
+    .toContain('탭: 경로=')
 })
 
 // 스텁이 아니라 진짜 창.

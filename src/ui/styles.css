@@ -45,8 +45,32 @@ a {
 }
 
 .layer.opt {
-  color: var(--muted);
+  color: #cba6f7;
+  border-color: rgba(203, 166, 247, 0.40);
   border-style: dashed;
+  background: rgba(203, 166, 247, 0.08);
+}
+
+.page-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Small, quiet, and always there — it is the way out of a page that has no other. */
+.page-top .close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 13px;
+  cursor: pointer;
 }
 
 /* The diagnostics panel. Monospaced and selectable — it exists to be copied out
@@ -265,13 +289,39 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   opacity: 0.45;
 }
 
+/* The layer badges.
+   Three layers and one thing that is not a layer at all, told apart by colour
+   rather than by reading them: L1 cuts the ad out of the data, L2 hides what is
+   already on the page, L3 is the fallback that acts once something got through,
+   and APP changes what YouTube does rather than what it shows. The order of the
+   hues follows that order — earliest and strongest first. */
 .layer {
   font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--fg-muted);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0 5px;
   flex: none;
+}
+
+.layer.l1 {
+  color: #a6e3a1;
+  border-color: rgba(166, 227, 161, 0.45);
+  background: rgba(166, 227, 161, 0.10);
+}
+
+.layer.l2 {
+  color: #89b4fa;
+  border-color: rgba(137, 180, 250, 0.45);
+  background: rgba(137, 180, 250, 0.10);
+}
+
+.layer.l3 {
+  color: #fab387;
+  border-color: rgba(250, 179, 135, 0.45);
+  background: rgba(250, 179, 135, 0.10);
 }
 
 /* Current-site card — the escape hatch, so it sits above everything else */

@@ -230,13 +230,9 @@ function enterPip(video: WebkitVideo): void {
       ? video.webkitSupportsPresentationMode('picture-in-picture')
       : undefined
 
-  const routes = [
-    typeof video.webkitSetPresentationMode === 'function' ? 'webkit' : null,
-    typeof video.requestPictureInPicture === 'function' ? 'standard' : null,
-    typeof video.webkitEnterFullscreen === 'function' ? 'fullscreen' : null,
-  ].filter(Boolean)
-  toast(`PiP 진입점: ${routes.length ? routes.join(' · ') : '없음'} · 지원: ${supported ?? '알 수 없음'}`)
-
+  // No toast for the ordinary case any more. It was there when the phone could
+  // not be asked anything; the log answers all of it now, and a banner across
+  // somebody's video every time they press a button is a cost with no payer.
   log(`탭: 지원=${supported ?? '?'} 모드=${video.webkitPresentationMode ?? '?'} 재생=${!video.paused}`)
   const route = chooseEntry({
     preferFullscreen,
@@ -1021,6 +1017,11 @@ function onLeaving(event: Event): void {
  * who moved it.
  */
 function onReturning(): void {
+  // Released first, before any judgement about whether this is really a return:
+  // holding the player off while somebody is looking at the page can only delay
+  // the video coming back into it, and that delay is the seconds they see.
+  if (!document.hidden) holdInline(false)
+
   // Opening the window looks like coming back. It is not: nothing has been left
   // yet, and this handler undoing the float it was told about is what made leaving
   // appear not to work at all.

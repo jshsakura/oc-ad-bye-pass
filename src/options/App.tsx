@@ -140,7 +140,30 @@ export function App() {
 
   return (
     <div className="page">
-      <h1>OC Ad Bye-Pass 설정</h1>
+      <div className="page-top">
+        <h1>OC Ad Bye-Pass 설정</h1>
+        {/*
+          On a phone this page has no browser chrome around it — Orion opens it as
+          the whole screen, and there was no way back out of it at all. `close()`
+          only works on a window a script opened, so history is the fallback and
+          the popup's own page is the last resort.
+        */}
+        <button
+          className="close"
+          type="button"
+          aria-label="설정 닫기"
+          onClick={() => {
+            window.close()
+            setTimeout(() => {
+              if (history.length > 1) history.back()
+              else location.replace('popup.html')
+            }, 120)
+          }}
+        >
+          <Icon name="close" />
+          닫기
+        </button>
+      </div>
       {update?.newer && (
         <div className="banner update">
           <span>

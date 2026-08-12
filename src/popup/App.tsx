@@ -161,7 +161,7 @@ export function App() {
               <span className="hint">{meta.hint}</span>
             </span>
             {meta.layer ? (
-              <span className="layer" title={`${meta.layer}계층`}>
+              <span className={`layer l${meta.layer}`} title={`${meta.layer}계층`}>
                 L{meta.layer}
               </span>
             ) : (
