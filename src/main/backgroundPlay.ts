@@ -22,29 +22,29 @@
 // or a server. It is the same thing a desktop browser does by simply having
 // tabs.
 
-import { HOLD_ATTR, LEAVING_EVENT } from '../shared/messages.ts'
+import { LEAVING_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 
 const state = { on: false }
 
-/**
- * Is the video away in a floating window right now?
+/*
+ * The lie does not stop while the video floats — that was tried and it cost
+ * everything.
  *
- * While it is, the lie has to stop. Telling YouTube the page is visible when its
- * video is in a small window somewhere else is a contradiction the player tries to
- * resolve — and it resolves it by pulling the video back, which the device log
- * shows about five seconds after each hand-over:
+ * The reasoning was sound: telling YouTube the page is visible while its video is
+ * in a window somewhere else is a contradiction, and the player was resolving it
+ * by pulling the video home. So the truth was told for the span of a departure.
  *
- *   54:14.855  mode -> picture-in-picture
- *   54:19.889  mode -> inline (still playing)
+ * What the player does with the truth is worse. Told the page is hidden it takes
+ * the whole player down: 77 milliseconds after the hand-over the element came back
+ * at 0.0 seconds, paused, with webkitSupportsPresentationMode answering no —
+ * nothing left to float and nothing left to play. Background playback went with
+ * it, which is the feature this extension exists for.
  *
- * Hidden is also the truth then, and the truth costs nothing here: media in a
- * picture-in-picture window keeps playing because iOS keeps it playing, not
- * because the page believes anything.
+ * So the page keeps believing it is visible, and the player is kept from hearing
+ * about presentation changes at all instead — src/main/deafenPlayer.ts, which
+ * refuses it the listener rather than arguing with what it does after it fires.
  */
-function floating(): boolean {
-  return document.documentElement?.hasAttribute(HOLD_ATTR) ?? false
-}
 
 let installed = false
 
@@ -60,9 +60,6 @@ let installed = false
  */
 function swallow(event: Event): void {
   if (!state.on) return
-  // With the video floating, the page is better off knowing it is hidden: a player
-  // that thinks it is on screen goes looking for its video.
-  if (floating()) return
   event.stopImmediatePropagation()
   log('배경재생: visibilitychange 삼킴 → 우리 쪽으로 다시 알림')
   document.dispatchEvent(new CustomEvent(LEAVING_EVENT))
@@ -85,11 +82,11 @@ function install(): void {
   // restores the real values rather than pinning them to a guess.
   Object.defineProperty(document, 'hidden', {
     configurable: true,
-    get: () => (state.on && !floating() ? false : hidden.get?.call(document)),
+    get: () => (state.on ? false : hidden.get?.call(document)),
   })
   Object.defineProperty(document, 'visibilityState', {
     configurable: true,
-    get: () => (state.on && !floating() ? 'visible' : visibility.get?.call(document)),
+    get: () => (state.on ? 'visible' : visibility.get?.call(document)),
   })
 
   // Capture phase, both targets: the event goes window → document → window, and
