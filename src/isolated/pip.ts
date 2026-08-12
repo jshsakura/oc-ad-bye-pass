@@ -335,6 +335,7 @@ function ensureButton(video: WebkitVideo): void {
     button.onclick = (event) => {
       event.preventDefault()
       event.stopPropagation()
+      ourTapAt = Date.now()
       enterPip(video)
     }
     return
@@ -389,6 +390,7 @@ function ensureButton(video: WebkitVideo): void {
   button.onclick = (event) => {
     event.preventDefault()
     event.stopPropagation()
+    ourTapAt = Date.now()
     enterPip(video)
   }
   log('PiP 버튼 붙임')
@@ -863,12 +865,77 @@ export function shouldResumeOnLeave(state: {
  *                     the real one, so it also arrives under our own name.
  *   pagehide          not swallowed, and hidden by the time it lands
  *   blur              fires before the page is hidden, so the guard below turns
- *                     it away. Kept for the record it leaves, not for the work
- *                     it does — ungating it would float a window when someone
- *                     merely tapped the address bar.
+ *                     it away — and onBlurWhileArmed picks it up instead, which
+ *                     is where the only call that can be granted is made.
  *   freeze            does not exist in WebKit. Harmless on Chromium, inert on
  *                     the phone this was written for.
  */
+/**
+ * When our own control was last pressed.
+ *
+ * Pressing a button in the page blurs the window, and the button that asks for a
+ * window is no exception — so without this the attempt below fires on the way
+ * out of our own tap and races the call that tap already made.
+ */
+let ourTapAt = 0
+
+/**
+ * The last moment that can still be granted.
+ *
+ * Everything that says "the user is leaving" says it too late. `visibilitychange`,
+ * `pagehide` and `freeze` all arrive after the page is hidden, and by then the
+ * user activation WebKit requires is gone — measured on the device as
+ * `called:from-inline:활성화=만료`, a call taken and quietly ignored.
+ *
+ * `blur` is different: it fires while the page is still in front, on the way out.
+ * If the user touched something in the last few seconds — pressed play, tapped the
+ * video, scrolled — the activation from that touch is still alive, and a request
+ * made here is a request made inside it.
+ *
+ * This was tried before and taken out, for a good reason: everything blurs a
+ * window. Tapping the address bar, opening a share sheet, pressing one of our own
+ * buttons. A window floated for any of those is a window nobody asked for.
+ *
+ * What makes it worth trying again is that the reason can now be checked instead
+ * of guessed. `navigator.userActivation.isActive` says whether there is anything
+ * to spend, which is the same question as "did the user just touch the page", and
+ * the two false positives that are ours to exclude — our own buttons — are known
+ * here. What is left is: the page is losing focus, a video is playing, and the
+ * user touched it moments ago.
+ *
+ * It can still be wrong. Tapping the address bar with a video playing will float
+ * it. That is a window the user can close, against a feature that otherwise
+ * cannot work at all on this platform, and the trade is worth stating plainly
+ * rather than deciding silently — so it says what it did in the log.
+ */
+function onBlurWhileArmed(): void {
+  if (!wantLeaveAttempt || isMusic()) return
+  if (handedOver || floatingAway) return
+  if (Date.now() - ourTapAt < 1500) return
+
+  const video = playerVideo()
+  if (!video) return
+  if (video.paused || video.ended) return
+  if (isFloating(video)) return
+
+  // The whole point. No activation, nothing to spend, and a call would be the
+  // same silent no-op every leaving signal has already produced.
+  const gesture = activation()
+  if (gesture !== '활성') {
+    log(`blur: 활성화 ${gesture} — 안 부름`)
+    return
+  }
+
+  allowPip(video)
+  leftAt = video.currentTime
+  const attempt = attemptSync(video)
+  handedOver = true
+  wentAway = true
+  floatingAway = attempt === 'called'
+  floatedVideo = attempt === 'called' ? video : null
+  record('blur-armed', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}:활성화=활성`)
+}
+
 function onLeaving(event: Event): void {
   if (handedOver) return
   if (isMusic()) return
@@ -1360,9 +1427,18 @@ function swipeSignals(): [EventTarget, string, EventListener][] {
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false
 
+/** Whether the blur attempt is armed — the one call that can still be granted. */
+let wantLeaveAttempt = false
+
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
+  wantLeaveAttempt = true
+  // Its own registration rather than a place in leavingSignals: onLeaving turns
+  // blur away by design (the page is not hidden yet) and that is exactly why this
+  // one wants it.
+  window.removeEventListener('blur', onBlurWhileArmed, true)
+  window.addEventListener('blur', onBlurWhileArmed, true)
   for (const [target, event, handler] of swipeSignals()) {
     target.removeEventListener(event, handler, true)
     // Passive: this never prevents the gesture. Taking the user's way out away
@@ -1406,6 +1482,8 @@ export function disablePictureInPicture(): void {
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
   floatingAway = false
+  wantLeaveAttempt = false
+  window.removeEventListener('blur', onBlurWhileArmed, true)
   for (const [target, event, handler] of swipeSignals()) {
     target.removeEventListener(event, handler, true)
   }
