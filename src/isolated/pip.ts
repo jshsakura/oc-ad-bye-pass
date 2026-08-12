@@ -948,6 +948,83 @@ function resumeAfterRestore(video: WebkitVideo): void {
   setTimeout(tick, 120)
 }
 
+// --- Catching the way out ----------------------------------------------------
+//
+// The button works because a tap carries user activation. Leaving does not — and
+// the last thing a person does before leaving is a gesture: the swipe up from the
+// bottom edge that goes home. That touch reaches the page before the system takes
+// it, which makes it the one moment before the app goes away that can ask for a
+// window and be granted it.
+//
+// So the swipe is watched for, and the request is made inside the handler, on the
+// same tick, exactly as the button does it. Nothing is simulated and no gesture is
+// taken from anyone: it is the user's own way out, used for the thing they asked
+// for when they switched this on.
+//
+// Narrow on purpose. The press has to start within a thumb's width of the bottom
+// edge, travel upwards, and travel further up than sideways — page scrolling does
+// not begin down there, and a horizontal swipe is a different intention.
+
+/** How close to the bottom edge a press has to start to be the way out. */
+const HOME_EDGE = 28
+/** How far up it has to travel before it counts. */
+const HOME_TRAVEL = 24
+
+let swipeFrom: { x: number; y: number } | null = null
+
+export function isHomeSwipe(state: {
+  fromBottom: number
+  up: number
+  sideways: number
+}): boolean {
+  if (state.fromBottom > HOME_EDGE) return false
+  if (state.up < HOME_TRAVEL) return false
+  return state.up > state.sideways
+}
+
+function onTouchStart(event: Event): void {
+  if (!(event instanceof TouchEvent)) return
+  const touch = event.changedTouches[0]
+  if (!touch) return
+  swipeFrom =
+    window.innerHeight - touch.clientY <= HOME_EDGE
+      ? { x: touch.clientX, y: touch.clientY }
+      : null
+}
+
+function onTouchMove(event: Event): void {
+  if (!swipeFrom || !(event instanceof TouchEvent)) return
+  const touch = event.changedTouches[0]
+  if (!touch) return
+  const up = swipeFrom.y - touch.clientY
+  const sideways = Math.abs(touch.clientX - swipeFrom.x)
+  if (!isHomeSwipe({ fromBottom: window.innerHeight - swipeFrom.y, up, sideways })) return
+  swipeFrom = null
+
+  const video = playerVideo()
+  if (!video) return
+  // Nothing to carry away if it was not playing, and nothing to do if it is
+  // already out of the page.
+  if (video.paused || video.ended) return
+  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') return
+  if (document.pictureInPictureElement === video) return
+
+  allowPip(video)
+  const attempt = attemptSync(video)
+  handedOver = true
+  record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
+  setTimeout(() => {
+    log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
+  }, 700)
+}
+
+function swipeSignals(): [EventTarget, string][] {
+  return [
+    [document, 'touchstart'],
+    [document, 'touchmove'],
+  ]
+}
+
 // --- What used to be here ---------------------------------------------------
 //
 // A tap on the player was spent on fullscreen, because iOS floats a fullscreen
@@ -967,6 +1044,15 @@ let wantButton = false
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
+  for (const [target, event] of swipeSignals()) {
+    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
+    // Passive: this never prevents the gesture. Taking the user's way out away
+    // from them would be a far worse bug than not floating a video.
+    target.addEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, {
+      capture: true,
+      passive: true,
+    })
+  }
   if (!wantButton) document.getElementById(BUTTON_ID)?.remove()
   sweep()
   for (const [target, event] of leavingSignals()) {
@@ -996,6 +1082,10 @@ export function enablePictureInPicture(options: { button: boolean }): void {
 
 /** Stop, and leave no trace. */
 export function disablePictureInPicture(): void {
+  for (const [target, event] of swipeSignals()) {
+    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
+  }
+  swipeFrom = null
   observer?.disconnect()
   observer = null
   for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)
