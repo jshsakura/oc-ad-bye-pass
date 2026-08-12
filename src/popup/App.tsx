@@ -19,37 +19,25 @@ import {
 } from '../shared/sites.ts'
 import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
+import { App as SettingsView } from '../options/App.tsx'
 import { collect, format, type Report } from './diagnose.ts'
 import { formatCount } from '../ui/format.ts'
-
-/**
- * Open the settings page.
- *
- * `openOptionsPage` is the idiomatic call and the right one on desktop. On iOS
- * there is no options entry point at all — the extension is reachable only
- * through its popup — and the call can resolve having done nothing. Opening the
- * page as an ordinary tab always works, so that is the fallback, and it is the
- * only way settings are reachable at all on a phone.
- */
-async function openSettings() {
-  const url = chrome.runtime.getURL('options.html')
-  try {
-    if (chrome.runtime.openOptionsPage) {
-      await chrome.runtime.openOptionsPage()
-      // It resolved, but on WebKit that is not proof anything opened. Check.
-      const open = await chrome.tabs.query({ url })
-      if (open.length > 0) return
-    }
-  } catch {
-    // fall through
-  }
-  await chrome.tabs.create({ url })
-}
 
 /** Toggles that only mean anything on YouTube. */
 const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
 export function App() {
+  /*
+   * Settings live in the popup, not behind it.
+   *
+   * They were a page, opened with `openOptionsPage` and a fallback that opens the
+   * file as a tab. On a phone that tab arrives with no browser chrome around it,
+   * so there was nothing to close it with — and the button that was added for
+   * that took two presses, because the first one only handed focus back.
+   *
+   * There is no second window to manage if there is no second window.
+   */
+  const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS)
   const [host, setHost] = useState<string | null>(null)
@@ -98,6 +86,14 @@ export function App() {
 
   const blocked = stats.pruned + stats.skipped
   const active = settings.enabled && !siteOff
+
+  if (showSettings) {
+    return (
+      <div className="popup">
+        <SettingsView onClose={() => setShowSettings(false)} />
+      </div>
+    )
+  }
 
   return (
     <div className="popup">
@@ -186,7 +182,7 @@ export function App() {
           <Icon name="layers" />
           {showAll ? '이 사이트 항목만' : '전체 항목 보기'}
         </button>
-        <button onClick={() => void openSettings()}>
+        <button onClick={() => setShowSettings(true)}>
           <Icon name="settings" />
           설정
         </button>

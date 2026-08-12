@@ -51,7 +51,7 @@ async function requestOrigin(origin: string): Promise<boolean> {
   }
 }
 
-export function App() {
+export function App({ onClose }: { onClose?: () => void } = {}) {
   const [update, setUpdate] = useState<UpdateCheck | null>(null)
   const [checking, setChecking] = useState(false)
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
@@ -153,6 +153,11 @@ export function App() {
           type="button"
           aria-label="설정 닫기"
           onClick={() => {
+            // Inside the popup this is a view, not a page: closing it means going
+            // back to the list, not closing anything. Only a settings page that
+            // really is a page needs the window dance, and on a phone that page
+            // has no chrome around it to close it with.
+            if (onClose) return onClose()
             window.close()
             setTimeout(() => {
               if (history.length > 1) history.back()

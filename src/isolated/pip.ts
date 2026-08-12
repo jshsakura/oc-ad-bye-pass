@@ -1141,6 +1141,28 @@ function onReturning(): void {
   // Whether it was playing has to be read before the mode changes, because
   // changing it is what stops it.
   const wasPlaying = !video.paused && !video.ended
+  /*
+   * Back in the page, and the video still in a window: put it in the page. Full
+   * stop.
+   *
+   * This used to run only for a window we could prove was ours — and after a
+   * reopen we could not prove it, so the video stayed floating over a page
+   * somebody was looking at, which is the "PiP 에서 복귀 시 인라인으로 안 간다" of
+   * it. Whoever opened it, they are here now and it belongs here.
+   */
+  if (!document.hidden && video.webkitPresentationMode === 'picture-in-picture') {
+    const wasPlaying = !video.paused && !video.ended
+    log('돌아옴: 작은 창을 페이지로 되돌림')
+    try {
+      video.webkitSetPresentationMode?.('inline')
+    } catch {
+      // Leave it where it is rather than fight the browser for it.
+    }
+    modeBeforeLeaving = null
+    if (wasPlaying) resumeAfterRestore(video)
+    return
+  }
+
   const target = modeToRestore({ before: modeBeforeLeaving, current: video.webkitPresentationMode })
   log(
     `돌아옴: 판단 before=${modeBeforeLeaving ?? '-'} now=${video.webkitPresentationMode ?? '?'}` +

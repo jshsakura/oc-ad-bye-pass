@@ -16,6 +16,26 @@ import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
 
+/**
+ * The last report from YouTube, kept apart from the last report from anywhere.
+ *
+ * One slot meant the last page to load won, and on a phone that is routinely an
+ * about:blank tab: the panel would say "비디오 0개, PiP 없음" about a blank page
+ * while the question being asked was about the video playing in the other tab.
+ */
+const YOUTUBE_KEY = 'diagnosticsYoutube'
+
+/**
+ * The log, kept across pages.
+ *
+ * It lives in a DOM attribute so it can be written while the page is being
+ * suspended, and a DOM attribute dies with the page — so every navigation started
+ * the story again, which is why opening the panel after a video had loaded showed
+ * one line. The tail is folded into storage on every report instead.
+ */
+const LOG_KEY = 'diagnosticsLog'
+const LOG_KEEP = 6000
+
 /** Written by src/isolated/pip.ts when the user leaves with a video playing. */
 const AUTO_PIP_ATTR = 'data-oc-abp-autopip'
 
@@ -81,8 +101,37 @@ export function reportDiagnostics(): void {
     userAgent: navigator.userAgent,
   }
   void chrome.storage.local.set({ [KEY]: facts })
+  if (location.hostname.endsWith('youtube.com')) {
+    void chrome.storage.local.set({ [YOUTUBE_KEY]: facts })
+  }
+  void mergeLog(facts.log)
 
   if (!facts.layer1) watchForLayer1()
+}
+
+/**
+ * Fold this page's tail into the running one.
+ *
+ * Lines are matched rather than counted: the same report is written several times
+ * per page, and appending each time would keep the same lines over and over. What
+ * is new is whatever comes after the last line already stored.
+ */
+async function mergeLog(tail: string | null): Promise<void> {
+  if (!tail) return
+  try {
+    const got = await chrome.storage.local.get(LOG_KEY)
+    const stored = typeof got[LOG_KEY] === 'string' ? (got[LOG_KEY] as string) : ''
+    const lines = tail.split('\n')
+    const known = new Set(stored.split('\n'))
+    const fresh = lines.filter((line) => line && !known.has(line))
+    if (fresh.length === 0) return
+    const merged = stored ? `${stored}\n${fresh.join('\n')}` : fresh.join('\n')
+    await chrome.storage.local.set({
+      [LOG_KEY]: merged.length > LOG_KEEP ? merged.slice(merged.length - LOG_KEEP) : merged,
+    })
+  } catch {
+    // The panel still has this page's own tail; a merged history is a bonus.
+  }
 }
 
 let waitingForLayer1: MutationObserver | null = null

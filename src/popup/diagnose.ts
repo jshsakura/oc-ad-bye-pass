@@ -87,12 +87,27 @@ async function extensionFacts(): Promise<ExtensionFacts> {
 
 export async function collect(): Promise<Report> {
   const extension = await extensionFacts()
-  const got = await chrome.storage.local.get('diagnostics')
-  const page = (got.diagnostics as PageFacts | undefined) ?? null
+  const got = await chrome.storage.local.get(['diagnostics', 'diagnosticsYoutube', 'diagnosticsLog'])
+  const any = (got.diagnostics as PageFacts | undefined) ?? null
+  const youtube = (got.diagnosticsYoutube as PageFacts | undefined) ?? null
+
+  // YouTube's report wins unless something else has reported more recently — a
+  // blank tab loading last used to wipe the answer to the question being asked.
+  const page = youtube && (!any || any.at <= youtube.at || !isYoutube(any)) ? youtube : any
+  const history = typeof got.diagnosticsLog === 'string' ? (got.diagnosticsLog as string) : null
+
   return {
     extension,
-    page,
+    page: page ? { ...page, log: history ?? page.log } : null,
     pageError: page ? null : '아직 어떤 페이지도 보고하지 않았습니다 (탭을 한 번 새로고침해 보세요)',
+  }
+}
+
+function isYoutube(page: PageFacts): boolean {
+  try {
+    return new URL(page.url).hostname.endsWith('youtube.com')
+  } catch {
+    return false
   }
 }
 
