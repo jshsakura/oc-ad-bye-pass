@@ -33,15 +33,6 @@ export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
  */
 export const LEAVING_EVENT = 'oc-ad-bye-pass:leaving'
 
-/**
- * Set on the document element while the user is away with the video floating.
- *
- * The page's own `webkitSetPresentationMode('inline')` is refused while it is up —
- * see src/main/holdPresentation.ts. An attribute rather than a message because
- * both worlds share the DOM and nothing else, and because it has to be readable
- * synchronously inside a call the page is making right now.
- */
-export const HOLD_ATTR = 'data-oc-abp-hold'
 
 /**
  * "The user is really back", passed from ISOLATED to MAIN.

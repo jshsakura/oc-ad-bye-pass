@@ -34,82 +34,14 @@ test('끝난 영상도 넘기지 않는다', () => {
   assert.equal(shouldAutoPip({ hidden: true, video: { paused: false, ended: true } }), false)
 })
 
-// 돌아왔을 때 되돌릴지 — 나갈 때만큼이나 조심할 곳이다. 사용자가 스스로 전체화면으로
-// 본 것을 확장이 멋대로 접으면 그건 기능이 아니라 훼방이다.
-import { shouldRestoreInline } from '../src/isolated/pip.ts'
 
-test('우리가 넘긴 것만 되돌린다', () => {
-  assert.equal(
-    shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'picture-in-picture' }),
-    true,
-  )
-  assert.equal(shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'fullscreen' }), true)
-})
 
-test('사용자가 직접 전체화면으로 본 것은 건드리지 않는다', () => {
-  assert.equal(shouldRestoreInline({ visible: true, engagedByUs: false, mode: 'fullscreen' }), false)
-})
-
-test('아직 안 돌아왔으면 되돌리지 않는다', () => {
-  assert.equal(
-    shouldRestoreInline({ visible: false, engagedByUs: true, mode: 'picture-in-picture' }),
-    false,
-  )
-})
-
-test('이미 인라인이면 할 일이 없다', () => {
-  assert.equal(shouldRestoreInline({ visible: true, engagedByUs: true, mode: 'inline' }), false)
-})
-
-// 어떤 호출을 할지는 탭 안에서 정해져야 한다.
+// 되돌리기의 판단은 함수에서 사라졌다.
 //
-// iOS 에서 작은 창도 전체화면도 사용자 제스처를 요구하는데, 첫 호출이 먹었는지
-// 알아보려면 기다려야 하고, 기다리고 나면 제스처가 없다. 900ms 뒤에 부른
-// 전체화면은 거절당하면서 화면에는 "전체화면으로 넘겼습니다" 만 남았다.
-// 그래서 폴백은 다음 탭이 하고, 그 판단이 이 함수다.
-import { chooseEntry } from '../src/isolated/pip.ts'
-
-const ios = { webkit: true, standard: false, fullscreen: true }
-
-test('아이폰에서는 webkit 경로가 먼저다', () => {
-  assert.equal(chooseEntry({ preferFullscreen: false, supported: true, ...ios }), 'webkit')
-})
-
-test('이 영상은 안 된다고 하면 호출을 낭비하지 않는다', () => {
-  // webkitSupportsPresentationMode 가 false 면 아무리 불러도 창은 안 열린다.
-  // 남은 제스처 한 번을 전체화면에 쓴다 — 아이폰이 스스로 띄워주는 상태다.
-  assert.equal(chooseEntry({ preferFullscreen: false, supported: false, ...ios }), 'fullscreen')
-})
-
-test('한 번 무응답이었으면 다음 탭은 전체화면이다', () => {
-  assert.equal(chooseEntry({ preferFullscreen: true, supported: true, ...ios }), 'fullscreen')
-})
-
-test('크로미움에는 표준 API 만 있다', () => {
-  assert.equal(
-    chooseEntry({
-      preferFullscreen: false,
-      supported: undefined,
-      webkit: false,
-      standard: true,
-      fullscreen: false,
-    }),
-    'standard',
-  )
-})
-
-test('아무 진입점도 없으면 없다고 한다', () => {
-  assert.equal(
-    chooseEntry({
-      preferFullscreen: false,
-      supported: undefined,
-      webkit: false,
-      standard: false,
-      fullscreen: false,
-    }),
-    'none',
-  )
-})
+// 네 가지가 같은 결정을 나눠 갖고 있었고 — 가시성 검사, 스스로 재무장하는 유예,
+// 출발 모드와의 비교, 그리고 별도의 "무조건 되돌리기" 갈래 — 그것들이 서로 겹쳐서
+// 창이 열린 지 0.25초 만에 창을 닫았다. 사람이 돌아왔다는 증거는 하나도 없이.
+// 이제 규칙은 하나다: 포커스가 여기 있으면 영상도 여기 있어야 한다.
 
 // 나가는 순간의 멈춤은 누구 것인가.
 //
