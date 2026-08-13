@@ -35,7 +35,7 @@
 import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
-import { pausedByUser } from './intent.ts'
+import { clearUserPause, pausedByUser } from './intent.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -713,9 +713,22 @@ function onReturning(): void {
   const video = floatedVideo ?? playerVideo()
   log(`돌아옴: 모드=${video?.webkitPresentationMode ?? '?'}`)
 
+  /*
+   * They are here, so nothing they did while away is still in force.
+   *
+   * A pause pressed on the lock screen stops background playback from undoing
+   * it, and it clears when playback resumes — but if they come back to a paused
+   * video and simply leave again, it never resumed, and the next departure has
+   * background playback already switched off. Being in front of the page ends it.
+   */
+  clearUserPause()
+
   // One announcement, so the page draws itself again — the swallow eats the real
   // one and a player that never hears it leaves the frame blank.
   document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
+
+  // And the picture has to come back with them.
+  if (video) unstick(video)
 
   wentAway = false
 
@@ -748,6 +761,27 @@ function onReturning(): void {
  * land after the mode has finished changing — and no more than two, because a
  * loop that fights the player is worse than a video that stays paused.
  */
+/**
+ * Playing with nothing to show.
+ *
+ * Reported from the phone as 뱅뱅뱅 — the spinner turns and the video never
+ * arrives. Coming back from the background the element can be left playing with
+ * an empty buffer: the pipeline stopped while the app was away and nothing asks
+ * it to start again, because as far as the element is concerned it never stopped.
+ *
+ * One seek of a thousandth of a second is the smallest thing that makes it refill,
+ * and it happens once, three seconds after the return, only if it is still stuck.
+ * A loop here would fight a video that is merely slow.
+ */
+function unstick(video: WebkitVideo): void {
+  setTimeout(() => {
+    if (document.hidden || video.paused || video.ended) return
+    if (video.readyState >= 3) return
+    log(`복귀: 아직 못 그림 (readyState=${video.readyState}) — 한 번 흔든다`)
+    nudgeFrame(video)
+  }, 3000)
+}
+
 /**
  * Make it draw a frame again.
  *
@@ -855,9 +889,23 @@ export function enablePictureInPicture(options: { button: boolean }): void {
 }
 
 /** Stop, and leave no trace. */
-/** Whether a departure is in flight, for the other resumer to keep out of. */
+/**
+ * Is a window of ours really up right now?
+ *
+ * Checked against the element, not just the flag. Background playback stands
+ * aside while this is true — two `play()` promises on one video make the earlier
+ * one reject — so a flag left standing switches background playback off for the
+ * rest of the page's life, silently. That is the fourth time today a latch has
+ * outlived what it described, and the answer each time was to ask the thing
+ * itself.
+ */
 export function isFloatingAway(): boolean {
-  return floatingAway
+  if (!floatingAway) return false
+  if (floatedVideo && isFloating(floatedVideo)) return true
+  // The window went away without telling us. Nothing is being protected.
+  floatingAway = false
+  floatedVideo = null
+  return false
 }
 
 export function disablePictureInPicture(): void {
