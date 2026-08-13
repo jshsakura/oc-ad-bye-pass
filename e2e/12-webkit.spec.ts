@@ -6,10 +6,10 @@
 // correct on the engine nobody installs this on.
 //
 // WebKit cannot load the extension, so what runs here is the mechanism rather
-// than the product: the exact overrides src/main/backgroundPlay.ts performs and
-// the exact API src/isolated/pip.ts reaches for, executed against a real
-// WebKit. If one of them cannot work there, the feature cannot work there, and
-// that is worth knowing without a phone in hand.
+// than the product: the cosmetic stylesheet and the picture-in-picture route
+// decision src/isolated/pip.ts makes, executed against a real WebKit. If one of
+// them cannot work there, the feature cannot work there, and that is worth
+// knowing without a phone in hand.
 
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs'
@@ -27,51 +27,6 @@ const test = base.extend<{ wk: import('@playwright/test').Page }>({
     await use(page)
     await browser.close()
   },
-})
-
-test('WebKit 에서 document.hidden 을 가려낼 수 있다', async ({ wk }) => {
-  // src/main/backgroundPlay.ts 의 install() 과 같은 순서로 한다.
-  const result = await wk.evaluate(() => {
-    const hidden = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden')
-    const visibility = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState')
-    if (!hidden?.get || !visibility?.get) return { supported: false }
-
-    const state = { on: true }
-    Object.defineProperty(document, 'hidden', {
-      configurable: true,
-      get: () => (state.on ? false : hidden.get?.call(document)),
-    })
-    Object.defineProperty(document, 'visibilityState', {
-      configurable: true,
-      get: () => (state.on ? 'visible' : visibility.get?.call(document)),
-    })
-
-    const spoofed = { hidden: document.hidden, state: document.visibilityState }
-    state.on = false
-    const restored = { hidden: document.hidden, state: document.visibilityState }
-    return { supported: true, spoofed, restored }
-  })
-
-  // 프로토타입에 접근자가 있어야 가려낼 수 있다. 없으면 이 기능은 WebKit 에서 불가능하다.
-  expect(result.supported, 'Document.prototype 에 접근자가 없다 — 방식 자체를 바꿔야 한다').toBe(true)
-  expect(result.spoofed).toEqual({ hidden: false, state: 'visible' })
-  // 끄면 원래 값으로 돌아온다 — 원본 게터를 호출하고 있다는 뜻이다.
-  expect(result.restored?.state).toBe('visible')
-})
-
-test('WebKit 에서 visibilitychange 를 캡처 단계에서 삼킬 수 있다', async ({ wk }) => {
-  const reached = await wk.evaluate(() => {
-    let sawIt = false
-    const swallow = (e: Event) => e.stopImmediatePropagation()
-    window.addEventListener('visibilitychange', swallow, true)
-    document.addEventListener('visibilitychange', swallow, true)
-    document.addEventListener('visibilitychange', () => {
-      sawIt = true
-    })
-    document.dispatchEvent(new Event('visibilitychange'))
-    return sawIt
-  })
-  expect(reached, '페이지의 핸들러까지 이벤트가 도달했다 — 재생이 그대로 멈춘다').toBe(false)
 })
 
 test('PiP 진입점이 없는 WebKit 에서는 버튼을 붙이지 않는다', async ({ wk }) => {

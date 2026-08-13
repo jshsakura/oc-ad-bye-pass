@@ -21,20 +21,6 @@ import { log } from '../shared/log.ts'
 /** Only this one, and only on videos. A blanket refusal would break the page. */
 const DEAFENED = 'webkitpresentationmodechanged'
 
-/*
- * Refusing the page its own `setActionHandler` was tried here and taken out.
- *
- * It is exact and it works on paper — the page cannot own a handler it was never
- * allowed to set — and on the device leaving stopped carrying the sound and
- * coming back gave an endless spinner. Every change this week that reached into
- * the page to take something away from the player has done that, without
- * exception, and this was the fourth.
- *
- * Ours are re-registered on a timer instead (src/isolated/mediaSession.ts). It is
- * polling and it looks like polling; it is also the only arrangement measured to
- * keep both halves working at once.
- */
-
 export function deafenPlayer(): void {
   const proto = EventTarget.prototype
   const native = proto.addEventListener

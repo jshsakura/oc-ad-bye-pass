@@ -19,7 +19,6 @@
 // YouTube's own retry and streaming logic.
 
 import { NS, isBridgeMessage, type MainConfig } from '../shared/messages.ts'
-import { setBackgroundPlay } from './backgroundPlay.ts'
 import { deafenPlayer } from './deafenPlayer.ts'
 import { BUNDLED_PRUNE } from '../shared/selectors.ts'
 import { pruneAdFields } from './prune.ts'
@@ -32,9 +31,6 @@ const config: MainConfig = {
   enabled: true,
   videoAds: true,
   prunePaths: BUNDLED_PRUNE,
-  // Not the same default as the rest. Over-blocking for a moment is harmless;
-  // holding a video open for someone who never asked for it is not.
-  backgroundPlay: false,
 }
 
 const isActive = () => config.enabled && config.videoAds
@@ -163,7 +159,6 @@ function listenForConfig() {
       config.enabled = next.enabled
       config.videoAds = next.videoAds
       if (Array.isArray(next.prunePaths) && next.prunePaths.length) config.prunePaths = next.prunePaths
-      setBackgroundPlay(next.enabled && next.backgroundPlay === true)
     },
     false,
   )

@@ -747,19 +747,12 @@
       <dd>화면이 깨지는 사이트가 있으면 확장 아이콘을 눌러 <strong>그 사이트만</strong> 끄실 수 있습니다. 하위 도메인도 함께 꺼집니다.</dd>
       <dt>규칙 자동 갱신</dt>
       <dd>차단 규칙은 확장과 따로 관리합니다. 사이트가 화면을 바꿔도 <strong>다시 설치하실 필요가 없습니다.</strong></dd>
-      <dt>탭을 옮겨도 계속 재생</dt>
-      <dd>플레이어는 화면이 가려지면 스스로 재생을 멈춥니다. 그걸 막습니다.<br>
-        <strong>아이폰에서 홈으로 나가는 경우는 다릅니다.</strong> 그건 WebKit 이 엔진 안에서
-        비디오를 세우는 것이라 웹페이지가 손댈 수 없습니다. 대신 두 갈래가 있습니다 —
-        나가기 전에 <strong>작은 창(PiP)으로 넘겨두면 계속 재생</strong>되고, 이미 멈췄다면
-        <strong>제어센터의 재생 버튼</strong>으로 이어집니다. 그 버튼이 듣도록 이 확장이
-        미디어 세션을 걸어 둡니다.</dd>
-      <dt>화면 속 화면(PiP)</dt>
-      <dd>모바일 웹 플레이어는 PiP 가 막혀 있습니다. 플레이어에 버튼이 붙습니다.<br>
-        <strong>아이폰에서 나가고도 계속 들으려면 이 방법뿐입니다.</strong> 작은 창에 있는 동안은
-        시스템이 재생을 유지하거든요. 다만 iOS 는 <strong>전체화면 상태로 나갈 때만</strong> 작은
-        창으로 넘겨줍니다 — 그 전환 자체는 iOS 가 하고, 확장이 하는 일은 한 번의 탭으로 그
-        상태를 만들어 주는 것입니다.</dd>
+      <dt>작은 화면(PiP) 버튼</dt>
+      <dd>모바일 웹 플레이어에는 작은 화면 버튼이 없습니다. 그 버튼 하나를 플레이어 오른쪽
+        아래에 답니다 — 누르면 브라우저의 작은 화면(그림 속 그림)이 열립니다. 그게 전부입니다.<br>
+        나가도 자동으로 계속 재생되는 기능은 <strong>없습니다.</strong> 아이폰에서 그건 웹페이지가
+        할 수 있는 일이 아니라서요. 작은 화면으로 열어 두거나 전체화면으로 나가면 iOS 가
+        재생을 유지하는데, 그 전환은 iOS 몫이고 이 버튼은 거기로 가는 지름길일 뿐입니다.</dd>
       <dt>계정 없음 · 서버 없음</dt>
       <dd>모든 처리가 브라우저 안에서 끝납니다. 밖으로 나가는 데이터는 없습니다.</dd>
     </dl>
@@ -773,17 +766,14 @@
       <dd>If a page breaks, click the icon and turn it off <strong>for that site only</strong> — subdomains included.</dd>
       <dt>Rules update themselves</dt>
       <dd>The blocking rules live apart from the extension. When a site changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
-      <dt>Keeps playing across tabs</dt>
-      <dd>The player pauses itself when its page is covered. This stops that.<br>
-        <strong>Leaving the app on iPhone is a different thing</strong>: WebKit stops the video
-        inside the engine, where no page can reach. Two ways round it — hand the video to a
-        small window before you go and it keeps playing, or press play in Control Centre once
-        it has stopped. The extension wires the media session so that button reaches the
-        video.</dd>
-      <dt>Picture-in-picture</dt>
-      <dd>The mobile player is opted out of picture-in-picture. A button is added.<br>
-        <strong>On iPhone the video has to be fullscreen when you leave</strong> — that hand-off
-        is iOS's own, and what the extension does is get you into that state in one tap.</dd>
+      <dt>Picture-in-picture button</dt>
+      <dd>The mobile web player ships no PiP control. This adds one, in the player's
+        bottom-right corner — tap it and the browser's own picture-in-picture opens. That is
+        all it does.<br>
+        There is <strong>no</strong> keep-playing-when-you-leave. On iPhone that is not
+        something a web page can do. iOS keeps playback alive once the video is in a floating
+        window or fullscreen, but that hand-off is iOS's; the button is only the shortcut into
+        it.</dd>
       <dt>No account, no server</dt>
       <dd>All of it happens inside your browser. Nothing is sent anywhere.</dd>
     </dl>

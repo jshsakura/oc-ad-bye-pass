@@ -24,8 +24,6 @@ import {
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { reportDiagnostics } from './diagnostics.ts'
-import { disableKeepPlaying, enableKeepPlaying, keepPlayingSweep } from './keepPlaying.ts'
-import { bindMediaSession, unbindMediaSession } from './mediaSession.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
@@ -66,10 +64,9 @@ function detach() {
     sweepTimer = null
   }
   disablePictureInPicture()
-  unbindMediaSession()
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
-    sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune, backgroundPlay: false })
+    sendConfigToMain({ enabled: false, videoAds: false, prunePaths: rules.prune })
   }
 }
 
@@ -93,33 +90,17 @@ function recompute(cache: FilterCache | null) {
       enabled: true,
       videoAds: settings.toggles.videoAds,
       prunePaths: rules.prune,
-      backgroundPlay: settings.toggles.backgroundPlay,
     })
     // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
     else stopWatchingAppBannerHints()
 
-    // One switch for one intention: the button and the arming that makes leaving
-    // work are halves of the same thing, and it adds a control rather than
-    // removing one, so it runs only when asked for.
-    // The behaviour is one switch; the control on the player is another, because
-    // wanting to leave with the video is not the same as wanting a button.
-    if (settings.toggles.pictureInPicture)
-      enablePictureInPicture({ button: settings.toggles.pipButton })
+    // Just the button — a shortcut to the browser's own picture-in-picture.
+    // Everything that tried to make leaving automatic is gone; it never worked
+    // on this platform and cost more than it saved.
+    if (settings.toggles.pipButton) enablePictureInPicture({ button: true })
     else disablePictureInPicture()
 
-    // The transport controls are the way back once iOS has stopped the page.
-    // Bound under the same setting as background playback, since that is the
-    // problem it belongs to.
-    if (settings.toggles.backgroundPlay) {
-      bindMediaSession()
-      // Lying to the page only defeats the page. WebKit stops the media itself,
-      // and this asks for it back.
-      enableKeepPlaying()
-    } else {
-      unbindMediaSession()
-      disableKeepPlaying()
-    }
   }
 
   sweep()
@@ -182,7 +163,6 @@ function sweep() {
   if (settings.toggles.fullscreenAds) acted += clickCloseButtons(rules.click)
   if (settings.toggles.antiAdblockNag) acted += dismissAdblockNag()
   if (settings.toggles.playerFallback) acted += handleAdState()
-  keepPlayingSweep()
   if (acted) bumpStats({ skipped: acted })
 }
 

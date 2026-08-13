@@ -12,8 +12,6 @@ export const TOGGLE_KEYS = [
   'antiAdblockNag',
   'appPromo',
   'genericAds',
-  'backgroundPlay',
-  'pictureInPicture',
   'pipButton',
 ] as const
 
@@ -48,32 +46,14 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     layer: 2,
   },
   {
-    key: 'backgroundPlay',
-    label: '화면을 벗어나도 재생 유지',
-    // Deliberately not "화면을 나가도". On iPhone, leaving the app suspends
-    // media at the system level and no amount of lying to the page about its
-    // visibility changes that. What this does defeat is the page pausing
-    // itself, which is what happens on a tab switch, on desktop and on Android.
-    hint: '탭을 옮기거나 화면이 가려져도 이어서 재생합니다',
-  },
-  {
-    key: 'pictureInPicture',
-    label: '나갈 때 재생 유지',
-    // The behaviour, not the furniture. Nothing can float a video at the moment
-    // the app goes away, so the fullscreen it floats from is arranged on a tap
-    // the user was making anyway — and nothing is added to the screen for it.
-    // Music is named because the difference is deliberate and would otherwise read
-    // as the feature failing there. A floating black rectangle following you around
-    // is not what anyone wants from a song.
-    hint: '앱을 나가도 소리가 이어집니다 · 작은 창은 나가기 전에 버튼을 눌러야 합니다',
-  },
-  {
     key: 'pipButton',
-    label: 'PiP 버튼 표시',
-    // Separate because it is a different kind of thing: this one puts a control
-    // on someone else's player. Wanting to leave with the video is not the same
-    // as wanting a button, and it was a mistake to charge one for the other.
-    hint: '플레이어 오른쪽 아래에 답니다 — 나가기 전에 누르면 그 창이 앱 밖에서도 남습니다',
+    // No promise it cannot keep. The floating window and the fullscreen hand-off
+    // are the browser's own; all this adds is a shortcut to open the window,
+    // which the mobile site hides. Nothing here makes leaving automatic — that is
+    // not possible for a web page on this platform, and pretending otherwise was
+    // the whole of a very long detour.
+    label: '작은 화면(PiP) 버튼',
+    hint: '플레이어 오른쪽 아래에 버튼을 답니다 — 누르면 브라우저의 작은 화면이 열립니다',
   },
 ]
 
@@ -113,12 +93,8 @@ export const DEFAULT_SETTINGS: Settings = {
     genericAds: true,
     // On, and the reason the extension is on a phone at all: the mobile web
     // player stops when you leave, and the app that does not is the one with the
-    // ads in it.
-    backgroundPlay: true,
     // On. Leaving the app with the sound still going is the point of installing
     // this on a phone, and picture-in-picture is the only mechanism iOS gives a
-    // web page for it.
-    pictureInPicture: true,
     /*
      * On, because it is the only thing that works.
      *

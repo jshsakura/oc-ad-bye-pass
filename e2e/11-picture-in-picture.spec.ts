@@ -24,7 +24,6 @@ async function setPip(background: import('@playwright/test').Worker, on: boolean
   await background.evaluate(async (value) => {
     const got = await chrome.storage.local.get('settings')
     const settings = got.settings as { toggles: Record<string, boolean> }
-    settings.toggles.pictureInPicture = value
     settings.toggles.pipButton = value
     await chrome.storage.local.set({ settings })
   }, on)
@@ -92,7 +91,7 @@ test('누르면 무엇을 했는지 기록에 남는다', async ({ context, back
     .poll(() => page.evaluate(() => document.documentElement.getAttribute('data-oc-abp-log')), {
       message: '탭이 기록되지 않았다',
     })
-    .toContain('탭: 경로=')
+    .toContain('경로=')
 })
 
 // 스텁이 아니라 진짜 창.
@@ -207,56 +206,3 @@ test('다시 끄면 버튼이 사라진다', async ({ context, background }) => 
   await setPip(background, false)
   await expect(page.locator(BUTTON)).toHaveCount(0)
 })
-
-// 자동 PiP 의 동작 자체는 여기서 못 돌린다. 헤드리스 크로미움은 모든 페이지를
-// visible 로 유지하고, Page.setWebLifecycleState · Emulation.setPageVisibility ·
-// setFocusEmulationEnabled 어느 것도 document.hidden 을 움직이지 못한다.
-// 판단 부분은 tests/auto-pip.test.ts 가 함수로 덮는다.
-
-// 배경 재생이 자동 PiP 를 죽이던 자리.
-//
-// MAIN 세계가 visibilitychange 를 stopImmediatePropagation 으로 삼키면 그 표시는
-// 이벤트에 붙지 세계에 붙지 않는다. 두 세계가 대상마다 리스너 목록 하나를
-// 공유하므로, 페이지를 막으려던 한 줄이 우리 쪽 리스너까지 같이 막았다.
-// 둘 다 기본값이 켜짐이라, 기본 설정에서 자동 PiP 는 신호를 못 받고 있었다.
-//
-// 두 기능을 따로 시험하면 둘 다 통과한다. 이 시험만 둘을 같이 켠다.
-//
-// 이벤트는 페이지에서 직접 쏜다. 헤드리스 크로미움은 탭을 뒤로 보내도 문서를
-// 숨김으로 만들지 않아서, 탭 전환으로는 visibilitychange 자체가 나지 않는다.
-// 숨김이 아니니 핸들러는 넘어가겠지만, 넘어갔다는 기록이 남는다는 것이
-// 곧 신호가 도착했다는 뜻이고 그것이 이 시험이 지키려는 것이다.
-// 삼키기는 페이지만 속인다.
-//
-// 이 시험이 지키는 것은 하나로 줄었다. 예전에는 삼킨 이벤트가 우리 쪽 PiP 핸들러까지
-// 우리 이름으로 다시 오는지도 확인했는데, 그 핸들러가 하던 일(나갈 때 작은 창으로
-// 넘기기)이 이 플랫폼에서 불가능한 것으로 확인돼 사라졌다. 남은 절반이 진짜다 —
-// 페이지가 이 이벤트를 보면 유튜브가 스스로 멈추고, 그러면 배경 재생이 죽는다.
-test('배경 재생을 켜도 페이지는 나가는 신호를 못 본다', async ({ context, background }) => {
-  await installYouTubeFixture(context)
-  const page = await context.newPage()
-  await page.goto(YOUTUBE_URL)
-  await setPip(background, true)
-  await expect(page.locator(BUTTON)).toBeVisible()
-
-  await page.evaluate(() => {
-    // 페이지가 이 이벤트를 못 보는 것도 함께 확인한다 — 삼키기를 없애는 것으로
-    // 이 시험을 통과시키면 배경 재생이 죽는다.
-    let pageSaw = false
-    const spy = () => {
-      pageSaw = true
-    }
-    document.addEventListener('visibilitychange', spy)
-    document.dispatchEvent(new Event('visibilitychange'))
-    document.removeEventListener('visibilitychange', spy)
-    if (pageSaw) throw new Error('페이지가 visibilitychange 를 봤다 — 배경 재생이 안 걸렸다')
-  })
-
-})
-
-// 나갈 때 작은 창으로 — 여기서는 못 돌린다.
-//
-// 미리 걸어두는 쪽이 부르는 것은 webkit 접두 API 라 크로미움은 그 줄에 닿지 않고,
-// 테스트 페이지에서 스텁을 심어도 소용없다 — DOM 요소에 붙인 확장 속성은 확장의
-// 세계로 넘어가지 않는다(실제로 이 시험을 그렇게 썼다가 배웠다).
-// 판단은 tests/auto-pip.test.ts 의 shouldArm 이 덮는다.
