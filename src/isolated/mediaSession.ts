@@ -53,11 +53,8 @@ let remoteWatcher: MutationObserver | null = null
  * dead. Two seconds is slow enough for that and far faster than the page
  * reinitialises.
  */
-/*
- * No timer any more. The page is refused these registrations at the source
- * (src/main/deafenPlayer.ts), so ours are set once and stay — polling to win
- * them back was for a race that no longer happens.
- */
+let reassert: ReturnType<typeof setInterval> | null = null
+const REASSERT_MS = 2000
 
 /**
  * Put the video back in the system's Now Playing.
@@ -107,6 +104,11 @@ export function bindMediaSession(): void {
   if (!video || video === bound) return
   bound = video
 
+  if (reassert === null) {
+    reassert = setInterval(() => {
+      if (bound?.isConnected) setHandlers(bound)
+    }, REASSERT_MS)
+  }
 
 
   allowRemotePlayback(video)
@@ -182,6 +184,8 @@ function setHandlers(video: WebkitVideo): void {
 }
 
 export function unbindMediaSession(): void {
+  if (reassert !== null) clearInterval(reassert)
+  reassert = null
   bound = null
   remoteWatcher?.disconnect()
   remoteWatcher = null
