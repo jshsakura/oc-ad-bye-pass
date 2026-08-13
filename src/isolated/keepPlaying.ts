@@ -17,7 +17,7 @@
 // because it is the same promise that setting already makes.
 
 import { log } from '../shared/log.ts'
-import { isFloatingAway } from './pip.ts'
+import { isFloatingAway, playerVideo } from './pip.ts'
 import { pausedByUser } from './intent.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
@@ -117,11 +117,22 @@ function detachListeners(): void {
 }
 
 /** Called from the sweep, since YouTube swaps the element out on navigation. */
+/**
+ * The video actually being watched — the same pick picture-in-picture makes.
+ *
+ * This chose the widest element, and on a hidden page every element measures
+ * zero, so it fell to whichever came first: on YouTube that can be an empty one
+ * held in reserve. The listeners went on that, and the real video could stop
+ * without a word reaching here — which is what a departure looked like in the
+ * device log, eighty-two seconds with nothing written at all.
+ *
+ * src/isolated/pip.ts learned this once already and its comment says so. Sharing
+ * the pick is how it stays learned.
+ */
 export function keepPlayingSweep(): void {
   if (!enabled) return
-  const videos = [...document.querySelectorAll<HTMLVideoElement>('video')]
-  if (videos.length === 0) return
-  attach(videos.reduce((best, v) => (v.clientWidth > best.clientWidth ? v : best)))
+  const video = playerVideo()
+  if (video) attach(video)
 }
 
 /*

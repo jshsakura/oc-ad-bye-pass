@@ -115,7 +115,7 @@ function leavingSignals(): [EventTarget, string][] {
  * What is being watched is what is playing. Size only decides between candidates
  * that are equally alive.
  */
-function playerVideo(): WebkitVideo | null {
+export function playerVideo(): WebkitVideo | null {
   const videos = [...document.querySelectorAll<WebkitVideo>('video')]
   if (videos.length === 0) return null
   const score = (v: WebkitVideo) =>
