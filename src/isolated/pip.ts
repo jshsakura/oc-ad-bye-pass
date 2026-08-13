@@ -640,6 +640,24 @@ function sweep(): void {
  */
 let wentAway = false
 
+/**
+ * When the page went away, so a flicker can be told from a departure.
+ *
+ * The device log has four in a row and they are not the same thing: eighty-two
+ * seconds, then 0.8, then 1.5, then **eight milliseconds**. Nobody left the app
+ * for eight milliseconds. The page is briefly reported hidden — an app-switcher
+ * preview, a tab redraw, the system taking a snapshot — and every one of those
+ * was being handled as a full departure and return: the announcement fired, the
+ * restore ran, the state turned over. That is what "두 번째부터 다르네" is.
+ *
+ * A real absence is not measured in milliseconds. Anything shorter than this is
+ * the page blinking, and the right response to it is none.
+ */
+let hiddenAt = 0
+
+/** Below this, it was a flicker rather than somebody leaving. */
+const REAL_ABSENCE_MS = 1000
+
 
 /**
  * Where the video was when we left it.
@@ -713,6 +731,7 @@ function keepFloatingAlive(video: WebkitVideo): void {
 function onLeaving(): void {
   if (!document.hidden || wentAway) return
   wentAway = true
+  hiddenAt = Date.now()
   const video = playerVideo()
   if (video) leftAt = video.currentTime
   log('나감')
@@ -779,8 +798,23 @@ function handleReturn(): void {
   if (!userIsHere()) return
   if (!wentAway) return
 
+  const away = Date.now() - hiddenAt
+  if (away < REAL_ABSENCE_MS) {
+    /*
+     * The page blinked. Nothing happened, so nothing is undone.
+     *
+     * Announcing a return the page never left leaves the player one event out of
+     * phase, and running the restore turns over state that was never spent — both
+     * of which are visible from the outside as the extension behaving differently
+     * the second time round.
+     */
+    log(`깜빡임 ${away}ms — 이탈로 안 침`)
+    wentAway = false
+    return
+  }
+
   const video = floatedVideo ?? playerVideo()
-  log(`돌아옴: 모드=${video?.webkitPresentationMode ?? '?'}`)
+  log(`돌아옴: 모드=${video?.webkitPresentationMode ?? '?'} (나가있던 시간 ${(away / 1000).toFixed(1)}초)`)
 
   /*
    * They are here, so nothing they did while away is still in force.
