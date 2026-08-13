@@ -35,7 +35,43 @@ const DEAFENED = 'webkitpresentationmodechanged'
  * keep both halves working at once.
  */
 
+/**
+ * The transport controls are ours, and the page may not take them back.
+ *
+ * setActionHandler keeps one registration per action for the whole document and
+ * the last caller wins. YouTube sets its own whenever its player reinitialises,
+ * so ours vanish within seconds of any navigation — and ours is the only place
+ * this extension is told a person pressed pause. Without it, background playback
+ * has nothing but document.hidden, true the entire time you are away, so it
+ * resumes the pause you pressed on the lock screen exactly like the engine's.
+ *
+ * Blamed once for breaking playback, but that release also had background
+ * playback listening on an empty reserve <video> (fixed later); the breakage was
+ * most likely that. Re-tested clean: refuse the page the four actions we provide.
+ */
+const HELD: ReadonlySet<string> = new Set(['play', 'pause', 'seekbackward', 'seekforward'])
+
+function holdMediaSession(): void {
+  const proto = (window as unknown as { MediaSession?: { prototype: Record<string, unknown> } })
+    .MediaSession?.prototype
+  if (!proto) return
+  const native = proto.setActionHandler
+  if (typeof native !== 'function') return
+
+  let refused = 0
+  proto.setActionHandler = function (this: unknown, action: string, handler: unknown) {
+    if (HELD.has(action)) {
+      if (refused === 0) log('플레이어의 재생 컨트롤 가로채기를 막았습니다')
+      refused += 1
+      return
+    }
+    return (native as (this: unknown, a: string, h: unknown) => unknown).call(this, action, handler)
+  }
+}
+
 export function deafenPlayer(): void {
+  holdMediaSession()
+
   const proto = EventTarget.prototype
   const native = proto.addEventListener
   if (typeof native !== 'function') return
