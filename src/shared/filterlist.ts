@@ -52,8 +52,20 @@ const TOO_BROAD = new Set(['*', 'html', ':root', 'body', 'head', 'html *', ':roo
  */
 const GENERIC_TAG = /^[a-z][a-z0-9]*$/
 
+/** A plain hostname and nothing else — no scheme, no path, no wildcard. */
+const HOSTNAME = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/
+
 export interface FilterRules {
   hide: Partial<Record<ToggleKey, string[]>>
+  /**
+   * Selectors that apply only on named hosts.
+   *
+   * The Korean lists this mirrors are mostly domain-scoped — `dcinside.com##.ad`
+   * — and flattening that scope is how a filter list breaks sites it was never
+   * pointed at. So the scope survives into the format and is matched at runtime
+   * against the page's own hostname.
+   */
+  domains?: Record<string, string[]>
   prune: string[]
   click: string[]
   /** Escape hatch for false positives: removed from the result by exact string match. */
@@ -263,6 +275,29 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
     }
   }
 
+  /*
+   * Domain-scoped selectors, held to the same rules as the rest.
+   *
+   * The host is checked as strictly as the selectors are: anything that is not a
+   * plain hostname is dropped rather than normalised, because a host we guessed
+   * at is a rule applied somewhere its author never named.
+   */
+  const domains: Record<string, string[]> = {}
+  if (typeof r.domains === 'object' && r.domains !== null && !Array.isArray(r.domains)) {
+    for (const [host, value] of Object.entries(r.domains as Record<string, unknown>)) {
+      if (!HOSTNAME.test(host)) {
+        dropped.push(`domains: 호스트가 아닙니다 "${host.slice(0, 60)}"`)
+        continue
+      }
+      const list = sanitizeSelectors(value, canParse, dropped, `domains.${host}`)
+      total += list.length
+      if (total > MAX_SELECTORS_TOTAL) {
+        return { ok: false, error: `셀렉터 총량 상한(${MAX_SELECTORS_TOTAL}) 초과` }
+      }
+      if (list.length) domains[host] = list
+    }
+  }
+
   // Remote lists never get click rules. See MAX_CLICK_SELECTORS above for why.
   const click: string[] = []
   if (Array.isArray(r.click) && r.click.length > 0) {
@@ -290,7 +325,7 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
       name: typeof obj.name === 'string' ? obj.name.slice(0, 200) : 'unnamed',
       version,
       updatedAt: typeof obj.updatedAt === 'string' ? obj.updatedAt.slice(0, 40) : '',
-      rules: { hide, prune, click, allow },
+      rules: { hide, domains, prune, click, allow },
     },
   }
 }
@@ -302,6 +337,8 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
 export interface ResolvedRules {
   /** Hide selectors, grouped by the toggle that controls them. */
   hide: Partial<Record<ToggleKey, string[]>>
+  /** Hide selectors that apply only on the hosts that name them. */
+  domains: Record<string, string[]>
   /** The user's own rules. Always applied, regardless of toggles. */
   custom: string[]
   click: string[]
@@ -335,8 +372,15 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
     if (merged.length) hide[key] = merged
   }
 
+  const domains: Record<string, string[]> = {}
+  for (const [host, list] of Object.entries(remote?.rules.domains ?? {})) {
+    const kept = keep(list)
+    if (kept.length) domains[host] = kept
+  }
+
   return {
     hide,
+    domains,
     custom: customRules.filter((s) => isSafeSelector(s)),
     // Bundled only — a cache written by an older build may still hold remote
     // click rules, so this is enforced here too, not just at validation time.
@@ -361,10 +405,16 @@ const GENERIC_GROUP: ToggleKey = 'genericAds'
  * One rule per selector, deliberately: joined by commas, a single invalid
  * selector (unsupported syntax, say) makes the browser discard the whole rule.
  */
+/** Does this page belong to a host the list named? Subdomains count. */
+export function hostMatches(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`)
+}
+
 export function buildStylesheet(
   rules: ResolvedRules,
   toggles: Record<ToggleKey, boolean>,
   kind: SiteKind = 'youtube',
+  hostname = '',
 ): string {
   const groups = kind === 'youtube' ? TOGGLE_KEYS : [GENERIC_GROUP]
 
@@ -372,6 +422,15 @@ export function buildStylesheet(
   for (const key of groups) {
     if (!toggles[key]) continue
     for (const s of rules.hide[key] ?? []) selectors.add(s)
+  }
+  // Under the same switch as the rest of the off-YouTube hiding: these are the
+  // mirrored lists, and somebody who turned general ad hiding off did not ask
+  // for the Korean ones either.
+  if (toggles[GENERIC_GROUP] && hostname) {
+    for (const [domain, list] of Object.entries(rules.domains)) {
+      if (!hostMatches(hostname, domain)) continue
+      for (const s of list) selectors.add(s)
+    }
   }
   // The user's own rules are theirs — they apply wherever they put them.
   for (const s of rules.custom) selectors.add(s)

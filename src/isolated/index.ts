@@ -86,7 +86,7 @@ function recompute(cache: FilterCache | null) {
 
   const remote = settings.listEnabled && cache?.url === settings.listUrl ? cache.list : null
   rules = resolveRules(remote, parseCustomRules(settings.customRules))
-  applyStylesheet(buildStylesheet(rules, settings.toggles, SITE))
+  applyStylesheet(buildStylesheet(rules, settings.toggles, SITE, location.hostname))
 
   if (IS_YOUTUBE) {
     sendConfigToMain({

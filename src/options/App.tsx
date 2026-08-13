@@ -181,7 +181,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
         </div>
       )}
       <p className="lede">
-        차단 규칙은 확장 안에 기본값이 들어 있고, 아래 필터 리스트를 더해서 씁니다. 유튜브가
+        차단 규칙은 확장 안에 기본값이 들어 있고, 아래 필터 리스트를 더해서 씁니다. 영상 사이트가
         태그를 바꿔도 리스트만 갱신되면 재설치 없이 반영됩니다.
       </p>
 
@@ -289,7 +289,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
 
         {needsPermission && (
           <p className="status error" style={{ marginTop: 10 }}>
-            GitHub 이 아닌 주소입니다. 리스트 제공자는 유튜브 화면의 요소를 숨길 수 있으니 믿을 수
+            GitHub 이 아닌 주소입니다. 리스트 제공자는 보고 있는 화면의 요소를 숨길 수 있으니 믿을 수
             있는 곳만 쓰세요.
           </p>
         )}

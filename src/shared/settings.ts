@@ -44,7 +44,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   {
     key: 'genericAds',
     label: '다른 사이트 광고 숨김',
-    hint: '유튜브 밖에서도 광고 자리를 숨깁니다',
+    hint: '영상 사이트 밖에서도 광고 자리를 숨깁니다',
     layer: 2,
   },
   {

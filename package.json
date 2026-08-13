@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.10.69",
   "type": "module",
-  "description": "Ad blocker for Chrome, Edge and Orion (iPhone included). Strips YouTube ads out of the video data before the player sees them.",
+  "description": "Ad blocker for Chrome, Edge and Orion (iPhone included). Strips ads out of the response data before the player sees them.",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "vite build && node scripts/build-content.mjs",

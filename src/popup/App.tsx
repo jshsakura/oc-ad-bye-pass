@@ -23,7 +23,7 @@ import { App as SettingsView } from '../options/App.tsx'
 import { collect, format, type Report } from './diagnose.ts'
 import { formatCount } from '../ui/format.ts'
 
-/** Toggles that only mean anything on YouTube. */
+/** Toggles that only mean anything on a video site we have all three layers for. */
 const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
 export function App() {
@@ -124,7 +124,7 @@ export function App() {
                 : siteOff
                   ? '이 사이트에서 꺼져 있습니다'
                   : onYouTube
-                    ? '유튜브 — 3계층 전부 동작 중'
+                    ? '이 사이트 — 3계층 전부 동작 중'
                     : '광고망 차단 + 광고 자리 숨김'}
             </span>
           </div>
