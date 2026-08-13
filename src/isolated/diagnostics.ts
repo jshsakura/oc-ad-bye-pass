@@ -36,9 +36,6 @@ const YOUTUBE_KEY = 'diagnosticsYoutube'
 const LOG_KEY = 'diagnosticsLog'
 const LOG_KEEP = 6000
 
-/** Written by src/isolated/pip.ts when the user leaves with a video playing. */
-const AUTO_PIP_ATTR = 'data-oc-abp-autopip'
-
 /** Written by src/isolated/injectMain.ts — how layer 1 got here, or why it did not. */
 const INJECT_ATTR = 'data-oc-abp-inject'
 
@@ -59,8 +56,6 @@ export interface PageDiagnostics {
   visibilityState: string
   /** What the video is doing now: inline, fullscreen or picture-in-picture. */
   presentationMode: string
-  /** What the automatic hand-over managed last time, or null if it never ran. */
-  autoPip: string | null
   /** Whether the injection fallback was needed, and whether the page allowed it. */
   inject: string | null
   /** The tail of what happened, including while the app was away. */
@@ -95,7 +90,6 @@ export function reportDiagnostics(): void {
     fullscreenFallback: typeof video?.webkitEnterFullscreen === 'function',
     visibilityState: document.visibilityState,
     presentationMode: video?.webkitPresentationMode ?? 'inline',
-    autoPip: document.documentElement.getAttribute(AUTO_PIP_ATTR),
     inject: document.documentElement.getAttribute(INJECT_ATTR),
     log: readLog(),
     userAgent: navigator.userAgent,

@@ -80,8 +80,9 @@ function returningSignals(): [EventTarget, string][] {
   return [
     [document, 'visibilitychange'],
     [window, 'pageshow'],
+    // Focus is the one that knows: with a floating window open iOS calls the page
+    // visible, so only this separates "the window opened" from "they came back".
     [window, 'focus'],
-    [document, 'resume'],
   ]
 }
 
@@ -89,12 +90,9 @@ function leavingSignals(): [EventTarget, string][] {
   return [
     [document, 'visibilitychange'],
     // The same news under our own name, sent by src/main/backgroundPlay.ts after
-    // it swallows the real event. Without this the two features cancel out: the
-    // swallow silences this world's listeners too, and both are on by default.
+    // it swallows the real event — the swallow silences this world's listeners
+    // too, and both features are on by default.
     [document, LEAVING_EVENT],
-    [window, 'pagehide'],
-    [window, 'blur'],
-    [document, 'freeze'],
   ]
 }
 
@@ -536,38 +534,6 @@ function guardPresentation(video: WebkitVideo): void {
   })
 }
 
-/** Last state the stall watch reported, so it says it once rather than every sweep. */
-let stalledSince = 0
-
-/**
- * Playing with nothing to show.
- *
- * Reported from the phone: the spinner runs forever while the audio keeps going.
- * It is a state the page cannot be asked about after the fact, so it is written
- * down as it happens — readyState says whether there are frames to draw,
- * networkState whether it is still fetching, and the presentation mode whether
- * this followed a trip to a floating window.
- */
-function watchForStall(video: WebkitVideo): void {
-  const stalled = !video.paused && !video.ended && video.readyState < 3
-  if (!stalled) {
-    stalledSince = 0
-    return
-  }
-  const now = Date.now()
-  if (stalledSince === 0) {
-    stalledSince = now
-    return
-  }
-  if (now - stalledSince < 4000) return
-  stalledSince = now
-  log(
-    `멈춤: readyState=${video.readyState} network=${video.networkState} ` +
-      `모드=${video.webkitPresentationMode ?? '?'} 시간=${video.currentTime.toFixed(1)} ` +
-      `버퍼=${video.buffered.length}`,
-  )
-}
-
 function sweep(): void {
   /*
    * The hold stops background playback telling the page it is visible, so a hold
@@ -583,7 +549,6 @@ function sweep(): void {
   allowPip(video)
   guardPresentation(video)
   keepFloatingAlive(video)
-  watchForStall(video)
   // Drawn whenever there is a video, and only when asked for. Gating on a
   // capability check meant no button at all on the device this was written for —
   // webkitSupportsPresentationMode answers "not yet" before the video has
@@ -657,25 +622,6 @@ let floatingAway = false
 /** The element this departure handed over, so another one cannot answer for it. */
 let floatedVideo: WebkitVideo | null = null
 
-
-/**
- * Which presentation to put the video back into on return.
- *
- * `null` means leave it alone — either it is already there, or it is somewhere
- * we did not put it and therefore not ours to change.
- */
-export function modeToRestore(state: {
-  before: string | null
-  current: string | undefined
-}): 'inline' | 'fullscreen' | null {
-  const target = state.before === 'fullscreen' ? 'fullscreen' : 'inline'
-  const current = state.current ?? 'inline'
-  if (current === target) return null
-  // Only ever out of a floating window or a fullscreen we arranged. Anything
-  // else on screen is the player's business.
-  if (current !== 'picture-in-picture' && current !== 'fullscreen') return null
-  return target
-}
 
 /**
  * Keep it playing while it is floating.
