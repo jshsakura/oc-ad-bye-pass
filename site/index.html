@@ -1451,7 +1451,22 @@
         if (!a) continue;
         const asset = release?.assets?.find((x) => x.name.includes(kind) && x.name.endsWith('.zip'));
         const name = asset?.name ?? `oc-ad-bye-pass-${kind}.zip`;
-        if (asset?.browser_download_url) a.href = asset.browser_download_url;
+        /*
+         * Our own copy first.
+         *
+         * A release asset URL is a 302 to another host, so iOS opens a tab and
+         * downloads cross-origin, where `download` is ignored — which is the new
+         * tab that appears on every press. `download/<name>` is the same file,
+         * same origin, no redirect, and the browser can be told it is a download.
+         * The release URL stays as the fallback for a deploy that ran before the
+         * release it belongs to.
+         */
+        if (asset) {
+          a.href = `download/${asset.name}`;
+          a.setAttribute('download', asset.name);
+        } else if (release) {
+          a.removeAttribute('download');
+        }
         const size = asset ? humanSize(asset.size) : (a.dataset.size ?? '');
         const what = a.querySelector('.what');
         if (what) what.textContent = [name, `v${b.version}`, size].filter(Boolean).join(' · ');

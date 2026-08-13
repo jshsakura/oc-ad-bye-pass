@@ -15,11 +15,21 @@
 #   filters/list.json    the rule list, for reading
 #   build.json           filter version for the footer
 #
-# It does not build or serve the packages. It did for a while, on the theory
-# that the cross-host redirect to a release asset was mangling downloads on
-# iOS — it was not. Orion's installer is simply intermittent, and building here
-# only meant the page could hand out a different version from the release
-# without anything saying so.
+# It serves the packages, and it does not build them — it copies the newest
+# release's own assets. Those are two different things, and the difference is
+# why this came back.
+#
+# It served *built* packages once and was removed for a good reason: the page
+# could hand out a different version from the release with nothing saying so.
+# Downloading the release's assets cannot drift, and the version is in the
+# filename, so what the page gives you names itself.
+#
+# What this buys, and it is not an install fix: a release asset URL is a 302 to
+# objects.githubusercontent.com, so iOS opens a tab and does the download
+# cross-origin, where the `download` attribute is ignored. From here it is one
+# same-origin file and no redirect. The theory that the redirect was mangling
+# downloads was tested once and rejected; this is for the plain link, not for
+# that.
 
 name: pages
 
@@ -58,6 +68,22 @@ jobs:
           mkdir -p _site/filters
           cp -R site/. _site/
           cp filters/list.json _site/filters/list.json
+
+      # The newest release's own assets, not a fresh build — see the note at the
+      # top. If there is no release yet the page falls back to its API lookup, so
+      # a missing download directory is not a failure.
+      - name: 최신 릴리스 패키지를 함께 올린다
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p _site/download
+          tag="$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || true)"
+          if [ -z "$tag" ]; then
+            echo '릴리스가 없습니다 — 다운로드 디렉터리를 비워 둡니다'
+            exit 0
+          fi
+          gh release download "$tag" -D _site/download --pattern '*.zip' || true
+          ls -l _site/download
 
           # Fallback only. The page asks the releases API for the version it
           # actually links to; this is what shows when that call cannot be made.

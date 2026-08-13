@@ -19,6 +19,8 @@ on:
 
 permissions:
   contents: write
+  # workflow_dispatch 로 pages.yml 을 깨우기 위해서만 쓴다.
+  actions: write
 
 jobs:
   build:
@@ -151,4 +153,16 @@ jobs:
             이미 설치돼 있다면 같은 폴더에 덮어쓰고 `chrome://extensions` 에서 새로고침하세요.
 
             > 차단 규칙만 바뀐 경우에는 재설치가 필요 없습니다 — 확장이 6시간마다
-            > `filters/youtube.json` 을 알아서 받아갑니다.
+            > `filters/list.json` 을 알아서 받아갑니다.
+
+      # 릴리스가 만들어진 뒤에. 페이지는 최신 릴리스의 자산을 그대로 복사해 가므로
+      # 이 순서가 뒤집히면 한 버전 뒤진 것을 집어간다.
+      #
+      # GITHUB_TOKEN 이 만든 이벤트는 다른 워크플로를 트리거하지 못하지만
+      # workflow_dispatch 는 API 호출이라 동작한다 — pages.yml 이 release 를
+      # 듣지 못하는 이유가 그것이고, 이것이 그 우회다.
+      - name: 페이지가 이 릴리스를 집어가게 한다
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main || true
