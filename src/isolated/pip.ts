@@ -35,7 +35,7 @@
 import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { log } from '../shared/log.ts'
 import { reportDiagnostics } from './diagnostics.ts'
-import { clearUserPause } from './intent.ts'
+import { clearUserPause, pausedByUser } from './intent.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -598,6 +598,7 @@ function sweep(): void {
   watchForStall(video)
   allowPip(video)
   guardPresentation(video)
+  keepFloatingAlive(video)
   // Drawn whenever there is a video, and only when asked for. Gating on a
   // capability check meant no button at all on the device this was written for —
   // webkitSupportsPresentationMode answers "not yet" before the video has
@@ -691,6 +692,36 @@ let floatingAway = false
 let floatedVideo: WebkitVideo | null = null
 
 
+/**
+ * Keep it playing while it is floating.
+ *
+ * A paused video is the commonest reason a picture-in-picture window closes by
+ * itself, and while one is open iOS counts the page as visible — so the
+ * background-playback resume, which waits for the page to be hidden, never runs.
+ * YouTube pausing once in that window took the window with it.
+ *
+ * Separate from that resume on purpose: this one asks no questions about who
+ * paused it. For the span of a departure the answer cannot be the user, because
+ * the user is not here.
+ */
+function keepFloatingAlive(video: WebkitVideo): void {
+  if (video.dataset.ocAbpFloatWatch === '1') return
+  video.dataset.ocAbpFloatWatch = '1'
+  video.addEventListener('pause', () => {
+    if (!floatingAway || video.ended) return
+    // And the window has to actually be there — a flag is a belief, this is the
+    // fact. A hold left standing turned every pause the user pressed into a video
+    // that started itself again.
+    if (!isFloating(video)) return
+    // And they may still have meant it. A window closing because its video was
+    // paused is a cost; restarting a video somebody deliberately stopped is worse.
+    if (pausedByUser()) return
+    log('작은 창: 멈춰서 다시 재생')
+    void video.play().catch((e: unknown) => {
+      log(`작은 창: 재생 거절 — ${e instanceof Error ? e.message : String(e)}`)
+    })
+  })
+}
 
 /*
  * The leave-time request is gone, finally and on evidence.
