@@ -124,43 +124,18 @@ export function keepPlayingSweep(): void {
   attach(videos.reduce((best, v) => (v.clientWidth > best.clientWidth ? v : best)))
 }
 
-/**
- * Tell iOS this page is a media player, not a page that happens to make noise.
+/*
+ * `navigator.audioSession.type = 'playback'` was tried here and the sound stopped
+ * carrying at all — reported immediately, and it is the one thing that release
+ * added to this path.
  *
- * `navigator.audioSession.type = 'playback'` (Safari 16.4) puts the page's audio
- * in the same class as a music app's, and the system stops treating it as
- * incidental sound to be cut when the app goes away. Everything else in this file
- * is the other approach — let the engine stop the media and put it back — and
- * that one is a chase: it fires after the fact, it can be wrong about whose pause
- * it answered, and it has been wrong.
- *
- * The repository's notes list this API as tried and dismissed, with the reason
- * "백그라운드 실행과 무관" — which answers whether the *page* keeps running, a
- * different question from whether the *media session* survives. It is one
- * property, it reaches into nothing, and if it works the chase never starts. If
- * it does not, the log says the API was not there and nothing else changes.
+ * The repository's notes already listed the API as dismissed. It was brought back
+ * because the stated reason answered a different question, and that reasoning was
+ * sound and the result was not. Whatever declaring the session does on this
+ * browser, it is not what the resumer needs, and the resumer works.
  */
-function claimAudioSession(): void {
-  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
-  if (!session) {
-    log('배경재생: audioSession 없음 — 되살리기로만 간다')
-    return
-  }
-  try {
-    session.type = 'playback'
-    log(`배경재생: audioSession=${session.type}`)
-  } catch (e) {
-    log(`배경재생: audioSession 거절 — ${e instanceof Error ? e.message : String(e)}`)
-  }
-}
-
-let claimed = false
 
 export function enableKeepPlaying(): void {
-  if (!claimed) {
-    claimed = true
-    claimAudioSession()
-  }
   enabled = true
   keepPlayingSweep()
 }
