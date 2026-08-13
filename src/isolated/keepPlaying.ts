@@ -16,6 +16,7 @@
 import { log } from '../shared/log.ts'
 import { RETURNED_EVENT } from '../shared/messages.ts'
 import { pausedByUser } from './intent.ts'
+import { reportDiagnostics } from './diagnostics.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
@@ -31,6 +32,9 @@ let watched: HTMLVideoElement | null = null
 let lastPlayingAt = 0
 let enabled = false
 let wasHidden = false
+
+/** Whether the panel has been told about a page that actually has a player. */
+let reportedWithVideo = false
 
 function onPlaying(): void {
   lastPlayingAt = Date.now()
@@ -143,7 +147,16 @@ function onVisibility(): void {
 export function keepPlayingSweep(): void {
   if (!enabled) return
   const video = playerVideo()
-  if (video) attach(video)
+  if (!video) return
+  attach(video)
+
+  // The report is first written before the player exists, so the panel says
+  // "비디오 0개" for the life of the page. Say it once more when a real video with
+  // metadata turns up. This used to live in pip.ts's sweep and went with it.
+  if (!reportedWithVideo && video.readyState >= 1) {
+    reportedWithVideo = true
+    reportDiagnostics()
+  }
 }
 
 export function enableKeepPlaying(): void {
