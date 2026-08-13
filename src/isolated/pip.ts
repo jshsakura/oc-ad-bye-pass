@@ -524,6 +524,13 @@ function guardPresentation(video: WebkitVideo): void {
    * nothing; this event, with the mode actually reading picture-in-picture, is the
    * one thing that says a window exists.
    */
+  // When the video last advanced. The leave attempt below needs to know whether
+  // anything was actually being watched, and this is the cheapest honest answer —
+  // timeupdate fires a few times a second while playing and not at all otherwise.
+  video.addEventListener('timeupdate', () => {
+    lastPlayingAt = Date.now()
+  })
+
   video.addEventListener('webkitpresentationmodechanged', () => {
     const mode = video.webkitPresentationMode ?? '?'
     log(`모드 바뀜 → ${mode} (재생=${!video.paused} 시간=${video.currentTime.toFixed(1)})`)
@@ -687,6 +694,9 @@ let leftAt = 0
  */
 let floatingAway = false
 
+/** When any watched video last advanced. Stamped in guardPresentation. */
+let lastPlayingAt = 0
+
 /** The element this departure handed over, so another one cannot answer for it. */
 let floatedVideo: WebkitVideo | null = null
 
@@ -723,10 +733,30 @@ function keepFloatingAlive(video: WebkitVideo): void {
 }
 
 /**
- * Note that the user has gone. Nothing else.
+ * Note that the user has gone — and spend their last touch if it is still warm.
  *
- * Several signals, because a second notice costs nothing and missing the only one
- * that fired costs a return that never announces itself.
+ * The automatic hand-over was deleted wholesale, and that deleted the one case
+ * that was measured to work. The device log has it plainly:
+ *
+ *   57:17.326  터치
+ *   57:18.345  나감
+ *   57:18.471  모드 바뀜 → picture-in-picture
+ *
+ * WebKit's user activation outlives the touch by a few seconds, and a call made
+ * inside that window rides it. Every opening the log ever recorded sits within
+ * seconds of a real touch; every silent failure sits long after one. People
+ * usually touch the page — scroll, a tap — moments before swiping home, so in
+ * practice this fires with a live activation more often than not.
+ *
+ * When the activation is dead the call is taken and quietly ignored — measured
+ * exhaustively — so the failure mode is nothing happening, which is where we
+ * already are. The return path restores inline either way, and the 5-second
+ * pull-down this used to lose to is gone (src/main/deafenPlayer.ts).
+ *
+ * The conditions are few and each earns its place: a video that was actually
+ * advancing in the last few seconds (not one somebody paused and walked away
+ * from), not Music (a floating black rectangle is not a feature), not already
+ * floating.
  */
 function onLeaving(): void {
   if (!document.hidden || wentAway) return
@@ -734,7 +764,19 @@ function onLeaving(): void {
   hiddenAt = Date.now()
   const video = playerVideo()
   if (video) leftAt = video.currentTime
-  log('나감')
+
+  if (!video || video.ended) return log('나감')
+  if (location.hostname.startsWith('music.')) return log('나감')
+  if (isFloating(video)) return log('나감 (이미 작은 창)')
+  if (Date.now() - lastPlayingAt > 5000) return log('나감 (한동안 재생 없음)')
+
+  allowPip(video)
+  try {
+    video.webkitSetPresentationMode?.('picture-in-picture')
+    log('나감 → 작은 창 요청 (직전 터치의 활성화가 살아 있으면 열립니다)')
+  } catch (e) {
+    log(`나감 → 거절: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 /**
