@@ -17,7 +17,6 @@
 // because it is the same promise that setting already makes.
 
 import { log } from '../shared/log.ts'
-import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { isFloatingAway } from './pip.ts'
 import { pausedByUser } from './intent.ts'
 
@@ -33,28 +32,28 @@ function onPlaying(): void {
 }
 
 /**
- * Armed by the departure, spent by the first pause after it.
+ * Retries, spaced. The stop can land again as the browser finishes hiding the tab.
  *
- * The engine stops the media once, as the app goes to the background. That one
- * stop is what this file exists to undo, and everything else that arrives while
- * the page is hidden belongs to somebody: an earphone squeeze, the lock screen,
- * a headphone pulled out. Those were being resumed too, because the only test
- * was "hidden and paused", which stays true for the whole time the user is away.
- *
- * So the departure arms it, one pause spends it, and nothing re-arms it until the
- * user has been back.
+ * Each one re-checks intent before firing, which is what the first version of
+ * this could not do: its chain was scheduled up front and its later attempts
+ * arrived long after the pause had turned out to be the user's.
  */
-let armed = false
+const RETRIES = [120, 400, 1200]
 
-function onHiddenChanged(): void {
-  if (document.hidden) {
-    armed = true
-    return
-  }
-  // Back in front. Whatever happens here is the user's, and the next departure
-  // gets its own single attempt.
-  armed = false
-}
+/**
+ * A single-shot version of this was tried and it switched background playback
+ * off a few seconds after leaving.
+ *
+ * The engine does not stop the media once on the way out. It keeps stopping it,
+ * every few seconds, for as long as the page is in the background — the device
+ * log has it at fifteen, twenty-three and thirty-five seconds past a departure —
+ * and putting it back each time *is* background playback here. Undoing only the
+ * first stop meant the sound died with the second.
+ *
+ * So the answer to "whose pause was that" cannot be a count or a clock. It is
+ * asked of the user directly, through the transport controls, which is the one
+ * place this extension is told rather than left to guess.
+ */
 
 function onPause(): void {
   if (!enabled || !watched) return
@@ -72,38 +71,31 @@ function onPause(): void {
 
   if (!document.hidden) return
 
-  /*
-   * Not the departure's stop, so not ours.
-   *
-   * This is the whole fix. "Hidden and paused" is true for as long as somebody is
-   * away, so every pause they made out there — earphones, lock screen — read as
-   * the engine's and was undone, three times over, by a retry chain that never
-   * looked again at whether they still meant it.
-   */
-  if (!armed) {
-    log('배경재생: 나간 순간의 멈춤이 아님 — 손 안 댄다')
-    return
-  }
-  armed = false
-
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
-  /*
-   * Once. No retries.
-   *
-   * There used to be three, at 120, 400 and 1200ms, because the stop can land
-   * again while the browser finishes hiding the tab. It also meant a person's
-   * pause was answered three times, and the chain could not be called off — its
-   * later attempts fired long after we had worked out that the pause was theirs.
-   * One attempt that sometimes loses the race is better than a loop that wins
-   * against the user.
-   */
-  log('배경재생: 나간 순간 엔진이 세움 — 한 번 되살린다')
-  video.play().catch((e: unknown) => {
-    // The interesting case. If iOS refuses a hidden page's media outright, this
-    // is where it says so, and no amount of retrying would change it.
-    log(`배경재생: 거절 — ${e instanceof Error ? e.message : String(e)}`)
-  })
+  log('배경재생: 엔진이 세움 — 되살리기 시도')
+  let attempt = 0
+  const tryPlay = () => {
+    if (!enabled || video !== watched) return
+    if (!document.hidden) return
+    // Re-asked on every attempt. The whole failing of the old chain was that it
+    // was scheduled once and could not be called off — a person's pause landed
+    // between attempts and the rest of the chain answered it anyway.
+    if (pausedByUser()) {
+      log('배경재생: 되살리는 중에 사용자가 멈춤 — 그만둔다')
+      return
+    }
+    if (!video.paused) return
+    attempt += 1
+    video.play().catch((e: unknown) => {
+      // The interesting case. If iOS refuses a hidden page's media outright,
+      // this is where it says so, and no amount of retrying will change it.
+      log(`배경재생: 거절 — ${e instanceof Error ? e.message : String(e)}`)
+    })
+    const next = RETRIES[attempt]
+    if (next !== undefined) setTimeout(tryPlay, next)
+  }
+  setTimeout(tryPlay, RETRIES[0])
 }
 
 function attach(video: HTMLVideoElement): void {
@@ -133,22 +125,11 @@ export function keepPlayingSweep(): void {
 }
 
 export function enableKeepPlaying(): void {
-  if (!enabled) {
-    // Both, because background playback swallows the real event before this
-    // world's listeners see it and re-announces it under our own name.
-    document.addEventListener('visibilitychange', onHiddenChanged, true)
-    document.addEventListener(LEAVING_EVENT, onHiddenChanged, true)
-    document.addEventListener(RETURNED_EVENT, onHiddenChanged, true)
-  }
   enabled = true
   keepPlayingSweep()
 }
 
 export function disableKeepPlaying(): void {
   enabled = false
-  armed = false
-  document.removeEventListener('visibilitychange', onHiddenChanged, true)
-  document.removeEventListener(LEAVING_EVENT, onHiddenChanged, true)
-  document.removeEventListener(RETURNED_EVENT, onHiddenChanged, true)
   detachListeners()
 }

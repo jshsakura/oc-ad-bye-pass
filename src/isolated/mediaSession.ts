@@ -134,6 +134,17 @@ export function bindMediaSession(): void {
   }
   video.addEventListener('play', sync)
   video.addEventListener('pause', sync)
+  /*
+   * Re-registered on the state changes as well as on the timer.
+   *
+   * YouTube installs its own handlers when its player reinitialises, and the
+   * two-second timer leaves a window in which theirs is the registered one — a
+   * pause pressed on an earphone in that window is never reported to us and
+   * reads as the engine's. These are the moments its player is most likely to
+   * have just done that.
+   */
+  video.addEventListener('play', () => setHandlers(video))
+  video.addEventListener('pause', () => setHandlers(video))
   sync()
 }
 

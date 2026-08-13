@@ -15,7 +15,6 @@ export const TOGGLE_KEYS = [
   'backgroundPlay',
   'pictureInPicture',
   'pipButton',
-  'pipButtonFullscreen',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -76,28 +75,6 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // as wanting a button, and it was a mistake to charge one for the other.
     hint: '나가기 전에 누르면 그 창이 앱 밖에서도 남습니다',
   },
-  {
-    key: 'pipButtonFullscreen',
-    label: '버튼을 전체화면으로',
-    /*
-     * The one flow on iOS that needs nothing from us at the moment of leaving.
-     *
-     * Nothing can float a video as the app goes away — WebKit grants the window
-     * only inside a live user activation, and Apple's own answer on this is that
-     * picture-in-picture may begin only in response to user interaction. But iOS
-     * hands a *fullscreen* video over by itself, confirmed on the device: go
-     * fullscreen, leave, and the window is there with no code of ours running.
-     *
-     * So this is the same single tap spent differently. A window on tap floats
-     * over the page you are still looking at; fullscreen is how you were going to
-     * watch it anyway, and leaving does the rest.
-     *
-     * Off by default because the immediate window is what the button has always
-     * done and is measured to work every time, while this route came back from
-     * the device once as a button that did nothing at all.
-     */
-    hint: '작은 창 대신 전체화면으로 넘깁니다 — 그 상태로 나가면 iOS 가 알아서 작은 창을 띄웁니다',
-  },
 ]
 
 export interface Settings {
@@ -156,9 +133,6 @@ export const DEFAULT_SETTINGS: Settings = {
      * only working way in was hidden behind a setting nobody had reason to find.
      */
     pipButton: true,
-    // Off. The window on tap is what works everywhere; this is the app-shaped
-    // alternative for whoever wants leaving itself to be the trigger.
-    pipButtonFullscreen: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

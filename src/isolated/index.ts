@@ -105,10 +105,7 @@ function recompute(cache: FilterCache | null) {
     // The behaviour is one switch; the control on the player is another, because
     // wanting to leave with the video is not the same as wanting a button.
     if (settings.toggles.pictureInPicture)
-      enablePictureInPicture({
-        button: settings.toggles.pipButton,
-        fullscreenTap: settings.toggles.pipButtonFullscreen,
-      })
+      enablePictureInPicture({ button: settings.toggles.pipButton })
     else disablePictureInPicture()
 
     // The transport controls are the way back once iOS has stopped the page.

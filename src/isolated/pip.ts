@@ -151,19 +151,20 @@ function toast(text: string): void {
   setTimeout(() => el.remove(), 4200)
 }
 
-/**
- * After a refusal, the next tap goes straight to fullscreen.
+/*
+ * The tap always asks for a window.
  *
- * Because there is no way to fall back within one tap. Everything that opens a
- * window or a fullscreen player on iOS needs user activation, and activation
- * does not survive the wait needed to find out whether the first call worked —
- * WebKit reports the new presentation mode asynchronously. A fallback issued
- * 900ms later is issued without a gesture and is refused, which is how the
- * button could report "전체화면으로 넘겼습니다" and leave the screen unchanged.
+ * There used to be a latch: if the presentation mode did not read
+ * picture-in-picture 900ms after the call, the next tap went to fullscreen
+ * instead, and nothing but a successful window ever cleared it. One bad read —
+ * a mode that had already been pulled back, a check that raced the change — and
+ * the control became a fullscreen button for the rest of the page's life, with
+ * no way for anyone to say otherwise. Reported as "왜 전체임", and it is a
+ * control quietly deciding what it is.
  *
- * So the second tap does what the first one learned.
+ * A refusal is now reported and nothing more. The tap means the same thing every
+ * time it is pressed.
  */
-let preferFullscreen = false
 
 /**
  * Which call this tap makes. Decided before anything is called, and only from
@@ -237,7 +238,6 @@ function isFloating(video: WebkitVideo): boolean {
 function leavePip(video: WebkitVideo): void {
   // Theirs now — the hold exists to protect a departure, not to trap a video.
   floatingAway = false
-  preferFullscreen = false
   log('탭: 접기')
   try {
     if (video.webkitPresentationMode !== undefined && video.webkitSetPresentationMode) {
@@ -285,7 +285,7 @@ function enterPip(video: WebkitVideo): void {
   // somebody's video every time they press a button is a cost with no payer.
   log(`탭: 지원=${supported ?? '?'} 모드=${video.webkitPresentationMode ?? '?'} 재생=${!video.paused}`)
   const route = chooseEntry({
-    preferFullscreen: preferFullscreen || wantFullscreenTap,
+    preferFullscreen: false,
     supported,
     webkit: typeof video.webkitSetPresentationMode === 'function',
     standard: typeof video.requestPictureInPicture === 'function',
@@ -307,7 +307,6 @@ function enterPip(video: WebkitVideo): void {
     // The call is what needs the gesture; its promise settling later is fine.
     video.requestPictureInPicture().catch((e: unknown) => {
       toast(`표준 API 거절: ${e instanceof Error ? e.message : String(e)}`)
-      preferFullscreen = true
     })
     return
   }
@@ -319,7 +318,6 @@ function enterPip(video: WebkitVideo): void {
   if (typeof video.webkitEnterFullscreen === 'function') {
     try {
       video.webkitEnterFullscreen()
-      preferFullscreen = false
       log(`탭: 전체화면 요청함 (모드=${video.webkitPresentationMode ?? '?'} readyState=${video.readyState})`)
       toast('이대로 홈으로 나가면 작은 창이 됩니다')
       // Said late, and only if nothing happened. WebKit takes this call and can
@@ -337,25 +335,16 @@ function enterPip(video: WebkitVideo): void {
 }
 
 /**
- * Did the window actually open? Answered late, acted on next tap.
+ * Did the window actually open? Answered late, and only written down.
  *
  * WebKit can take the call, fire webkitpresentationmodechanged and leave nothing
  * on screen. Reading the mode straight away always says `inline`, so the answer
  * has to be waited for — and by then nothing privileged can be called, which is
- * why this only tells the user what the next tap will do.
+ * why this changes nothing about what the next tap does.
  */
 async function confirmOrOfferFullscreen(video: WebkitVideo): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, PRESENTATION_SETTLE_MS))
   log(`탭 결과: 모드=${video.webkitPresentationMode ?? '?'}`)
-  if (video.webkitPresentationMode === 'picture-in-picture') {
-    preferFullscreen = false
-    return
-  }
-  preferFullscreen = true
-  toast(
-    `작은 창이 열리지 않았습니다 (모드: ${video.webkitPresentationMode ?? '알 수 없음'}) — ` +
-      '한 번 더 누르면 전체화면으로 넘깁니다',
-  )
 }
 
 /**
@@ -1248,19 +1237,9 @@ function swipeSignals(): [EventTarget, string][] {
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false
 
-/**
- * Whether the tap should spend itself on fullscreen instead of a window.
- *
- * The only flow on this platform where leaving is the trigger — iOS hands a
- * fullscreen video over by itself and asks nobody. Everything else has to be
- * asked for inside the tap.
- */
-let wantFullscreenTap = false
-
 /** Start offering PiP. Safe to call repeatedly. */
-export function enablePictureInPicture(options: { button: boolean; fullscreenTap?: boolean }): void {
+export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
-  wantFullscreenTap = options.fullscreenTap === true
   for (const [target, event] of swipeSignals()) {
     target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
     // Passive: this never prevents the gesture. Taking the user's way out away
