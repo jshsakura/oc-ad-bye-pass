@@ -123,8 +123,7 @@ jobs:
 
             1. App Store 에서 **Orion Browser by Kagi** 를 설치합니다.
             2. **`oc-ad-bye-pass-orion-…zip`** 을 받습니다 (Chrome 용과 다른 파일입니다).
-            3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다.
-            4. `youtube.com` 권한을 허용합니다.
+            3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다. 설치하면 바로 적용됩니다 — 따로 허용할 권한은 없습니다.
 
             설치가 **"Extensions Error / Something went wrong"** 으로 튕기면 파일 문제가
             아닙니다. 순서대로 해보세요.

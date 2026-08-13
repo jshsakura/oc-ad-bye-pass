@@ -75,8 +75,7 @@ Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 �
 
 1. App Store 에서 **Orion Browser by Kagi** 설치
 2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-orion-…zip`** 을 받는다 (Chrome 용과 다른 파일이다)
-3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
-4. `youtube.com` 권한 허용
+3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택. 설치하면 바로 적용된다 — 따로 허용할 권한은 없다
 
 **Orion 은 Chrome 패키지를 설치조차 거절한다.** 실기기에서 확인했다 —
 "Extensions Error. Something went wrong." 한 줄이 전부고 이유는 안 알려준다.
