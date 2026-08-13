@@ -31,23 +31,19 @@ interface WebkitVideo extends HTMLVideoElement {
 let bound: WebkitVideo | null = null
 let remoteWatcher: MutationObserver | null = null
 
-/**
- * Re-registering the handlers, on a timer of its own.
+/*
+ * Set once per video element, and then left alone.
  *
- * There is one registration per action for the whole page and the last caller
- * owns it. YouTube registers its own whenever its player reinitialises, which
- * takes ours away without a word — and ours is the only place this extension is
- * ever *told* that a person pressed pause. Without it the lock-screen pause is
- * back to being inferred from `document.hidden`, which says the opposite of the
- * truth there, and the video starts itself again.
+ * The page can take these back — there is one registration per action for the
+ * whole document and the last caller owns it — and two answers to that were
+ * tried and both were worse than the problem. A two-second timer re-registering
+ * them is polling against a page that will always be faster, and at the DOM
+ * sweep's rate it rebuilt the session faster than iOS would answer for it, which
+ * left the lock-screen play button dead. Refusing the page its own
+ * `setActionHandler` works, and reaches into the page to do it.
  *
- * Its own interval rather than the DOM sweep: the sweep runs on every animation
- * frame YouTube gives it work in, and calling setActionHandler at that rate
- * rebuilds the session faster than iOS will answer for it — the play button on
- * the lock screen then does nothing at all.
+ * So: once, when the element changes. If YouTube takes them, it takes them.
  */
-let reassert: ReturnType<typeof setInterval> | null = null
-const REASSERT_MS = 2000
 
 /**
  * Put the video back in the system's Now Playing.
@@ -97,11 +93,6 @@ export function bindMediaSession(): void {
   if (!video || video === bound) return
   bound = video
 
-  if (reassert === null) {
-    reassert = setInterval(() => {
-      if (bound && bound.isConnected) setHandlers(bound)
-    }, REASSERT_MS)
-  }
 
   allowRemotePlayback(video)
   watchRemotePlayback(video)
@@ -133,17 +124,6 @@ export function bindMediaSession(): void {
   }
   video.addEventListener('play', sync)
   video.addEventListener('pause', sync)
-  /*
-   * Re-registered on the state changes as well as on the timer.
-   *
-   * YouTube installs its own handlers when its player reinitialises, and the
-   * two-second timer leaves a window in which theirs is the registered one — a
-   * pause pressed on an earphone in that window is never reported to us and
-   * reads as the engine's. These are the moments its player is most likely to
-   * have just done that.
-   */
-  video.addEventListener('play', () => setHandlers(video))
-  video.addEventListener('pause', () => setHandlers(video))
   sync()
 }
 
@@ -187,8 +167,6 @@ function setHandlers(video: WebkitVideo): void {
 }
 
 export function unbindMediaSession(): void {
-  if (reassert !== null) clearInterval(reassert)
-  reassert = null
   bound = null
   remoteWatcher?.disconnect()
   remoteWatcher = null

@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass",
   "private": true,
-  "version": "0.10.68",
+  "version": "0.10.69",
   "type": "module",
   "description": "Ad blocker for Chrome, Edge and Orion (iPhone included). Strips YouTube ads out of the video data before the player sees them.",
   "license": "GPL-3.0-or-later",
