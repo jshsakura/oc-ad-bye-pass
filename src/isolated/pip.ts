@@ -696,7 +696,26 @@ function userIsHere(): boolean {
   }
 }
 
+/**
+ * Standing guard against this function calling itself.
+ *
+ * Clearing the state before announcing is what breaks the cycle; this is what
+ * stops the next one being a live bug. Anything dispatched from in here can come
+ * back through one of the returning signals, and re-entering is never right.
+ */
+let returning = false
+
 function onReturning(): void {
+  if (returning) return
+  returning = true
+  try {
+    handleReturn()
+  } finally {
+    returning = false
+  }
+}
+
+function handleReturn(): void {
   /*
    * One rule, one direction: the user is here, so the video belongs here.
    *
@@ -723,14 +742,22 @@ function onReturning(): void {
    */
   clearUserPause()
 
+  /*
+   * Cleared before the announcement, because the announcement comes back here.
+   *
+   * RETURNED_EVENT makes backgroundPlay dispatch a visibilitychange so the player
+   * redraws, and visibilitychange is one of this function's own signals — so it
+   * re-enters, finds the departure still standing, and announces again. On the
+   * device that ran until the log buffer was full.
+   */
+  wentAway = false
+
   // One announcement, so the page draws itself again — the swallow eats the real
   // one and a player that never hears it leaves the frame blank.
   document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
 
   // And the picture has to come back with them.
   if (video) unstick(video)
-
-  wentAway = false
 
   if (video && video.webkitPresentationMode === 'picture-in-picture') {
     const wasPlaying = !video.paused && !video.ended

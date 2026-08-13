@@ -31,19 +31,30 @@ interface WebkitVideo extends HTMLVideoElement {
 let bound: WebkitVideo | null = null
 let remoteWatcher: MutationObserver | null = null
 
-/*
- * Set once per video element, and then left alone.
+/**
+ * Re-registered on a timer, because the page keeps taking them.
  *
- * The page can take these back — there is one registration per action for the
- * whole document and the last caller owns it — and two answers to that were
- * tried and both were worse than the problem. A two-second timer re-registering
- * them is polling against a page that will always be faster, and at the DOM
- * sweep's rate it rebuilt the session faster than iOS would answer for it, which
- * left the lock-screen play button dead. Refusing the page its own
- * `setActionHandler` works, and reaches into the page to do it.
+ * There is one registration per action for the whole document and the last caller
+ * owns it; YouTube sets its own whenever its player reinitialises. Ours is the
+ * only place this extension is ever *told* a person pressed pause, and without
+ * that telling background playback has nothing to go on but `document.hidden` —
+ * true for the whole time somebody is away — so it resumes the pause they pressed
+ * on the lock screen exactly as it resumes the engine's.
  *
- * So: once, when the element changes. If YouTube takes them, it takes them.
+ * Two other answers were tried. Setting them once and leaving them is what the
+ * page wins. Refusing the page its own `setActionHandler` is exact, and it reaches
+ * into the player: leaving stopped carrying the sound and coming back gave an
+ * endless spinner, which is what every change that took something from the player
+ * has done this week.
+ *
+ * So it polls, on its own interval rather than from the DOM sweep — the sweep runs
+ * on every animation frame YouTube gives it work in, and at that rate this rebuilt
+ * the session faster than iOS would answer for it and the lock-screen button went
+ * dead. Two seconds is slow enough for that and far faster than the page
+ * reinitialises.
  */
+let reassert: ReturnType<typeof setInterval> | null = null
+const REASSERT_MS = 2000
 
 /**
  * Put the video back in the system's Now Playing.
@@ -92,6 +103,12 @@ export function bindMediaSession(): void {
   const video = largestVideo()
   if (!video || video === bound) return
   bound = video
+
+  if (reassert === null) {
+    reassert = setInterval(() => {
+      if (bound?.isConnected) setHandlers(bound)
+    }, REASSERT_MS)
+  }
 
 
   allowRemotePlayback(video)
@@ -167,6 +184,8 @@ function setHandlers(video: WebkitVideo): void {
 }
 
 export function unbindMediaSession(): void {
+  if (reassert !== null) clearInterval(reassert)
+  reassert = null
   bound = null
   remoteWatcher?.disconnect()
   remoteWatcher = null
