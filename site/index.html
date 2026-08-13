@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="유튜브 전용 광고 차단 확장 — Orion(iOS) · Chrome">
+<meta name="description" content="영상 광고까지 잡는 광고 차단 확장 — Orion(iOS) · Chrome">
 <title>Ad Bye-Pass</title>
 <link rel="preload" href="fonts/zen-tokyo-zoo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="OC Ad Bye-Pass">
 <meta property="og:title" content="Ad Bye-Pass — 광고 차단 확장">
-<meta property="og:description" content="유튜브 광고를 영상 데이터에서 미리 걷어냅니다. 아이폰(Orion)과 Chrome · Edge가 같은 zip 하나를 씁니다.">
+<meta property="og:description" content="광고가 영상과 같은 데이터에 섞여 오는 곳에서도 미리 걷어냅니다. 아이폰(Orion)과 Chrome · Edge가 같은 zip 하나를 씁니다.">
 <meta property="og:url" content="https://jshsakura.github.io/oc-ad-bye-pass/">
 <meta property="og:image" content="https://jshsakura.github.io/oc-ad-bye-pass/og.png">
 <meta property="og:image:type" content="image/png">
@@ -739,23 +739,23 @@
     </div>
 
     <dl class="feats" lang="ko">
-      <dt>유튜브 광고</dt>
+      <dt>영상 광고</dt>
       <dd>재생 전과 중간에 붙는 광고를 <strong>영상 데이터에서 미리 걷어냅니다.</strong> 플레이어가 광고를 아예 받지 않기 때문에, 건너뛸 것도 남지 않습니다.</dd>
       <dt>다른 사이트</dt>
       <dd>알려진 광고·추적 도메인으로 나가는 요청을 차단하고, 남은 광고 자리는 보이지 않게 숨깁니다.</dd>
       <dt>사이트별 끄기</dt>
       <dd>화면이 깨지는 사이트가 있으면 확장 아이콘을 눌러 <strong>그 사이트만</strong> 끄실 수 있습니다. 하위 도메인도 함께 꺼집니다.</dd>
       <dt>규칙 자동 갱신</dt>
-      <dd>차단 규칙은 확장과 따로 관리합니다. 유튜브가 화면을 바꿔도 <strong>다시 설치하실 필요가 없습니다.</strong></dd>
+      <dd>차단 규칙은 확장과 따로 관리합니다. 사이트가 화면을 바꿔도 <strong>다시 설치하실 필요가 없습니다.</strong></dd>
       <dt>탭을 옮겨도 계속 재생</dt>
-      <dd>유튜브는 화면이 가려지면 스스로 재생을 멈춥니다. 그걸 막습니다.<br>
+      <dd>플레이어는 화면이 가려지면 스스로 재생을 멈춥니다. 그걸 막습니다.<br>
         <strong>아이폰에서 홈으로 나가는 경우는 다릅니다.</strong> 그건 WebKit 이 엔진 안에서
         비디오를 세우는 것이라 웹페이지가 손댈 수 없습니다. 대신 두 갈래가 있습니다 —
         나가기 전에 <strong>작은 창(PiP)으로 넘겨두면 계속 재생</strong>되고, 이미 멈췄다면
         <strong>제어센터의 재생 버튼</strong>으로 이어집니다. 그 버튼이 듣도록 이 확장이
         미디어 세션을 걸어 둡니다.</dd>
       <dt>화면 속 화면(PiP)</dt>
-      <dd>유튜브가 모바일 웹에서 PiP 를 막아 두었습니다. 플레이어에 버튼이 붙습니다.<br>
+      <dd>모바일 웹 플레이어는 PiP 가 막혀 있습니다. 플레이어에 버튼이 붙습니다.<br>
         <strong>아이폰에서 나가고도 계속 들으려면 이 방법뿐입니다.</strong> 작은 창에 있는 동안은
         시스템이 재생을 유지하거든요. 다만 iOS 는 <strong>전체화면 상태로 나갈 때만</strong> 작은
         창으로 넘겨줍니다 — 그 전환 자체는 iOS 가 하고, 확장이 하는 일은 한 번의 탭으로 그
@@ -765,23 +765,23 @@
     </dl>
 
     <dl class="feats" lang="en">
-      <dt>On YouTube</dt>
+      <dt>Video ads</dt>
       <dd>Ads before and during a video are <strong>cut out of the response.</strong> The player never receives them, so there is nothing left to skip.</dd>
       <dt>Everywhere else</dt>
       <dd>Requests to known ad and tracking domains are blocked, and the leftover ad slots are hidden.</dd>
       <dt>Off switch per site</dt>
       <dd>If a page breaks, click the icon and turn it off <strong>for that site only</strong> — subdomains included.</dd>
       <dt>Rules update themselves</dt>
-      <dd>The blocking rules live apart from the extension. When YouTube changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
+      <dd>The blocking rules live apart from the extension. When a site changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
       <dt>Keeps playing across tabs</dt>
-      <dd>YouTube pauses itself when its page is covered. This stops that.<br>
+      <dd>The player pauses itself when its page is covered. This stops that.<br>
         <strong>Leaving the app on iPhone is a different thing</strong>: WebKit stops the video
         inside the engine, where no page can reach. Two ways round it — hand the video to a
         small window before you go and it keeps playing, or press play in Control Centre once
         it has stopped. The extension wires the media session so that button reaches the
         video.</dd>
       <dt>Picture-in-picture</dt>
-      <dd>YouTube opts its mobile player out of picture-in-picture. A button is added.<br>
+      <dd>The mobile player is opted out of picture-in-picture. A button is added.<br>
         <strong>On iPhone the video has to be fullscreen when you leave</strong> — that hand-off
         is iOS's own, and what the extension does is get you into that state in one tap.</dd>
       <dt>No account, no server</dt>
@@ -827,7 +827,7 @@
         그쪽은 막는 방식이 달라서 웬만하면 잘 되기 때문입니다.</p>
       <p><strong>이 버튼은 Orion 전용 파일을 받습니다.</strong> 아래 Chrome용과는 다른 파일이에요.
         Orion은 크롬의 네트워크 차단 기능을 지원하지 않아서, 그 부분을 뺀 가벼운 빌드(276KB)입니다.
-        유튜브 차단은 그대로이고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
+        영상 차단은 그대로이고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
       <p><strong>"Extensions Error / Something went wrong" 이 뜨면 파일 문제가 아닙니다.</strong>
         Orion 의 확장 설치는 아직 베타라 자주 실패하는데, 실기기에서 끝까지 따라가 보니
         듣는 것은 하나였습니다.</p>
@@ -845,7 +845,7 @@
         Those are blocked a different way and almost always go.</p>
       <p><strong>This button downloads the Orion build</strong> — a different file from the
         Chrome one below. Orion does not implement Chrome's network blocking, so that part
-        is left out (276KB). YouTube blocking is unchanged; elsewhere ad requests go out
+        is left out (276KB). Video blocking is unchanged; elsewhere ad requests go out
         but the ad slots are still hidden.</p>
       <p><strong>"Extensions Error / Something went wrong" is not the file.</strong> Extension
         installation in Orion is still in beta and fails often. Chased to the end on a real
@@ -944,7 +944,7 @@
     <div class="table-wrap" lang="ko">
       <table>
         <thead>
-          <tr><th>브라우저</th><th>받는 파일</th><th>유튜브</th><th>다른 사이트</th></tr>
+          <tr><th>브라우저</th><th>받는 파일</th><th>영상</th><th>다른 사이트</th></tr>
         </thead>
         <tbody>
           <tr><td>Orion (아이폰·아이패드·맥)</td><td>Orion zip</td><td class="yes">전부</td><td>숨김만</td></tr>
@@ -961,7 +961,7 @@
     <div class="table-wrap" lang="en">
       <table>
         <thead>
-          <tr><th>Browser</th><th>Package</th><th>YouTube</th><th>Elsewhere</th></tr>
+          <tr><th>Browser</th><th>Package</th><th>Video</th><th>Elsewhere</th></tr>
         </thead>
         <tbody>
           <tr><td>Orion (iPhone · iPad · Mac)</td><td>Orion zip</td><td class="yes">all layers</td><td>hiding only</td></tr>
@@ -977,7 +977,7 @@
 
     <div class="note" lang="ko">
       <p><strong>Orion 에서는 "다른 사이트"가 숨김만 됩니다.</strong> Orion 이 크롬의 네트워크 차단
-        기능을 구현하지 않아서, 광고 요청은 나가되 광고 자리는 보이지 않습니다. 유튜브 차단은
+        기능을 구현하지 않아서, 광고 요청은 나가되 광고 자리는 보이지 않습니다. 영상 차단은
         아무것도 빠지지 않습니다.</p>
       <p>Brave · Vivaldi 는 크로미움 계열이라 Chrome 과 같은 파일로 동작할 것으로 보지만,
         직접 확인하지는 않았습니다.</p>
@@ -988,7 +988,7 @@
     <div class="note" lang="en">
       <p><strong>On Orion, "elsewhere" is hiding only.</strong> Orion does not implement Chrome's
         network blocking, so ad requests go out but the slots stay invisible. Nothing is missing
-        from the YouTube side.</p>
+        from the video side.</p>
       <p>Brave and Vivaldi are Chromium, so the Chrome package should work there — untested.</p>
       <p>Safari needs the extension wrapped in a signed app, which was dropped; Firefox has a
         different manifest; Chrome for Android supports no extensions at all.</p>
@@ -1002,9 +1002,9 @@
       <h2>Filter List</h2>
     </div>
     <p class="lede" lang="ko">차단 규칙은 확장 코드와 따로 관리합니다.<br>
-      유튜브를 열 때마다 확장이 최신 규칙을 확인하기 때문에, 규칙이 바뀌어도 다시 설치하실 필요가 없습니다.</p>
+      페이지를 열 때마다 확장이 최신 규칙을 확인하기 때문에, 규칙이 바뀌어도 다시 설치하실 필요가 없습니다.</p>
     <p class="lede" lang="en">The blocking rules are kept apart from the extension code.<br>
-      The extension checks for new ones whenever you open YouTube, so a rule change never means reinstalling.</p>
+      The extension checks for new ones whenever you open a page, so a rule change never means reinstalling.</p>
     <div class="note" lang="ko">
       <p>확장이 기본으로 쓰는 주소입니다. 직접 고친 규칙을 쓰시려면 확장 옵션의
         <strong>리스트 주소</strong>를 바꾸시면 됩니다.</p>
@@ -1027,7 +1027,7 @@
        못 본다. -->
   <div class="legal" lang="ko">
     <p><strong>개인이 만든 오픈소스 프로젝트</strong>입니다 (GPLv3).
-      YouTube · Google · Chrome · Kagi Orion은 각 소유자의 상표이며,
+      Google · Chrome · Kagi Orion은 각 소유자의 상표이며,
       이 프로젝트는 그 어느 곳과도 제휴하거나 후원받는 관계가 아닙니다.</p>
     <p>하는 일은 <strong>내 브라우저의 요청을 내 기기에서 거르고, 이미 받은 페이지에서
       광고 요소를 숨기는 것</strong>뿐입니다. 서비스의 서버나 보호 장치는 건드리지 않으며,
@@ -1040,7 +1040,7 @@
 
   <div class="legal" lang="en">
     <p>An <strong>open-source project by one person</strong> (GPLv3).
-      YouTube, Google, Chrome and Kagi Orion are trademarks of their respective
+      Google, Chrome and Kagi Orion are trademarks of their respective
       owners; this project is not affiliated with, endorsed by, or sponsored by
       any of them.</p>
     <p>What it does is <strong>filter the requests your own browser makes, on your
@@ -1312,8 +1312,8 @@
   const label = document.getElementById('lang-label');
   const desc = document.querySelector('meta[name="description"]');
   const DESC = {
-    ko: '유튜브 광고 차단 확장 — Orion(아이폰) · Chrome',
-    en: 'An ad blocker that cuts YouTube ads — Orion (iPhone) · Chrome',
+    ko: '영상 광고까지 잡는 광고 차단 확장 — Orion(아이폰) · Chrome',
+    en: 'An ad blocker that cuts ads out of the video itself — Orion (iPhone) · Chrome',
   };
 
   // announce=false on the first call. The quote typer listens for langchange and
