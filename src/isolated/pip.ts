@@ -68,6 +68,12 @@ const PRESENTATION_SETTLE_MS = 900
 
 let observer: MutationObserver | null = null
 
+/** Whether the panel has ever been told about a page that had a player in it. */
+let reportedWithVideo = false
+
+/** Last time the stall watch spoke, so it says it once rather than every sweep. */
+let stalledSince = 0
+
 
 /**
  * Everything that can mean "the user is leaving". They overlap on purpose.
@@ -534,6 +540,34 @@ function guardPresentation(video: WebkitVideo): void {
   })
 }
 
+/**
+ * Playing with nothing to show.
+ *
+ * The spinner turns and the video never arrives — reported from the phone twice,
+ * and it is a state the page cannot be asked about afterwards, so it is written
+ * down as it happens. readyState says whether there are frames to draw,
+ * networkState whether it is still fetching, and the position whether it has
+ * moved at all.
+ */
+function watchForStall(video: WebkitVideo): void {
+  const stalled = !video.paused && !video.ended && video.readyState < 3
+  if (!stalled) {
+    stalledSince = 0
+    return
+  }
+  const now = Date.now()
+  if (stalledSince === 0) {
+    stalledSince = now
+    return
+  }
+  if (now - stalledSince < 4000) return
+  stalledSince = now
+  log(
+    `멈춤: readyState=${video.readyState} network=${video.networkState} ` +
+      `시간=${video.currentTime.toFixed(1)} 버퍼=${video.buffered.length} 숨김=${document.hidden}`,
+  )
+}
+
 function sweep(): void {
   /*
    * The hold stops background playback telling the page it is visible, so a hold
@@ -546,6 +580,22 @@ function sweep(): void {
    */
   const video = playerVideo()
   if (!video) return
+
+  /*
+   * Say it again now there is something to say.
+   *
+   * The report is written when the filters are applied, which is before the
+   * player exists — so the panel answers "비디오 0개 · PiP 없음" for the rest of
+   * the page's life, describing half a second after navigation rather than
+   * anything the reader is asking about. Metadata, not merely an element:
+   * `webkitSupportsPresentationMode` says no about a video it knows nothing of.
+   */
+  if (!reportedWithVideo && video.readyState >= 1) {
+    reportedWithVideo = true
+    reportDiagnostics()
+  }
+
+  watchForStall(video)
   allowPip(video)
   guardPresentation(video)
   keepFloatingAlive(video)
