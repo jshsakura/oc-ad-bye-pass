@@ -12,7 +12,7 @@
 #
 # What gets published:
 #   site/**              the page and its fonts
-#   filters/youtube.json the rule list, for reading
+#   filters/list.json    the rule list, for reading
 #   build.json           filter version for the footer
 #
 # It does not build or serve the packages. It did for a while, on the theory
@@ -57,7 +57,7 @@ jobs:
         run: |
           mkdir -p _site/filters
           cp -R site/. _site/
-          cp filters/youtube.json _site/filters/youtube.json
+          cp filters/list.json _site/filters/list.json
 
           # Fallback only. The page asks the releases API for the version it
           # actually links to; this is what shows when that call cannot be made.
@@ -65,7 +65,7 @@ jobs:
 
           node -e '
             const fs = require("fs");
-            const list = JSON.parse(fs.readFileSync("filters/youtube.json", "utf8"));
+            const list = JSON.parse(fs.readFileSync("filters/list.json", "utf8"));
             const pad = (n) => String(n).padStart(2, "0");
             const d = new Date();
             const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
