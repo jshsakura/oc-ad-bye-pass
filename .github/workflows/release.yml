@@ -3,8 +3,8 @@
 # **The release is the distribution.** The site (GitHub Pages) links to
 # the releases API, matching assets by name, so the names carry the version:
 #
-#   oc-ad-bye-pass-desktop-vX.Y.Z.zip  Chrome · Edge
-#   oc-ad-bye-pass-orion-vX.Y.Z.zip    Orion (iOS · macOS). No declarativeNetRequest —
+#   oc-ad-bye-pass-desktop-vX_Y_Z.zip  Chrome · Edge
+#   oc-ad-bye-pass-orion-vX_Y_Z.zip    Orion (iOS · macOS). No declarativeNetRequest —
 #                                      Orion refused the Chrome package outright.
 #
 # The version is in the filename because a fixed name is how a phone ends up
@@ -89,7 +89,9 @@ jobs:
       # 그 경로를 쓰지 않게 되면서 사라졌다.
       - name: zip 으로 묶기
         run: |
-          v="${GITHUB_REF_NAME:-dev}"
+          # 점을 언더바로. 이름 가운데의 `.` 을 확장자로 읽는 파일 선택기가
+          # 있고, 설치가 막히는 원인을 찾는 동안 변수를 하나라도 줄여둔다.
+          v="$(printf '%s' "${GITHUB_REF_NAME:-dev}" | tr '.' '_')"
           (cd dist && zip -qr "../oc-ad-bye-pass-desktop-$v.zip" .)
           (cd dist-orion && zip -qr "../oc-ad-bye-pass-orion-$v.zip" .)
           ls -lh ./*.zip
@@ -130,7 +132,7 @@ jobs:
             3. 유튜브 탭이 아니라 **빈 탭에서** 다시 설치합니다
 
             실기기에서 2번 하나가 갈랐습니다. 파일 이름에 버전이 들어가 있으니
-            (`…-v0.10.70.zip`) 어느 빌드를 골랐는지 Files 앱에서 확인하실 수 있습니다.
+            (`…-v0_10_70.zip`) 어느 빌드를 골랐는지 Files 앱에서 확인하실 수 있습니다.
 
             Orion 은 `declarativeNetRequest` 를 구현하지 않아 Chrome 패키지를 설치조차
             거절합니다. Orion 빌드는 그 키와 3.6MB 룰셋을 뺀 것이고(276KB), 유튜브 차단은
