@@ -26,7 +26,6 @@ import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmeti
 import { reportDiagnostics } from './diagnostics.ts'
 import { disableKeepPlaying, enableKeepPlaying, keepPlayingSweep } from './keepPlaying.ts'
 import { bindMediaSession, unbindMediaSession } from './mediaSession.ts'
-import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
@@ -65,7 +64,6 @@ function detach() {
     clearInterval(sweepTimer)
     sweepTimer = null
   }
-  disablePictureInPicture()
   unbindMediaSession()
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
@@ -99,14 +97,6 @@ function recompute(cache: FilterCache | null) {
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
     else stopWatchingAppBannerHints()
 
-    // One switch for one intention: the button and the arming that makes leaving
-    // work are halves of the same thing, and it adds a control rather than
-    // removing one, so it runs only when asked for.
-    // The behaviour is one switch; the control on the player is another, because
-    // wanting to leave with the video is not the same as wanting a button.
-    if (settings.toggles.pictureInPicture)
-      enablePictureInPicture({ button: settings.toggles.pipButton })
-    else disablePictureInPicture()
 
     // The transport controls are the way back once iOS has stopped the page.
     // Bound under the same setting as background playback, since that is the
