@@ -1,8 +1,10 @@
 // Who asked for this — ISOLATED world.
 //
-// Background playback puts back the pause the engine takes when the app goes to
-// the background (src/isolated/keepPlaying.ts). It is right about that pause and
-// wrong about one other — the pause a person pressed.
+// Two things in here undo a pause: background playback puts back what the engine
+// took (src/isolated/keepPlaying.ts), and the floating-window watch keeps a
+// picture-in-picture window from closing on a paused video (src/isolated/pip.ts).
+// Both are right about the pause they were written for and both are wrong about
+// the same one — the pause a person pressed.
 //
 // They told the two apart by where the page was: the engine's pause lands with
 // the page already hidden, so a pause while hidden was the engine's. That reading

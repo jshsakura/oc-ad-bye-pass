@@ -1,98 +1,67 @@
-// Keep playing when the screen goes away — ISOLATED world.
+// Put it back on when the engine takes it away — ISOLATED world.
 //
-// One feature, one switch: "나갈 때 재생 유지". It has two opponents and they are
-// not the same. The page is one — the site listens for visibilitychange and
-// pauses itself, which src/main/backgroundPlay.ts defeats by lying about
-// visibility. The engine is the other — WebKit stops media when the tab goes to
-// the background, inside HTMLVideoElement, where no lie reaches. This watches for
-// that stop and asks for playback back.
+// Background playback has two opponents. The page is one: the site listens for
+// visibilitychange and pauses itself, which src/main/backgroundPlay.ts defeats by
+// lying about visibility. The engine is the other: WebKit stops media the moment
+// the app backgrounds, inside HTMLVideoElement, where no lie reaches. This watches
+// for that stop and asks for playback back.
 //
-// It is a request, not a guarantee: iOS may refuse a hidden page's media, and the
-// refusal is logged rather than swallowed. What it does not do is float a window —
-// that needs a live user gesture the moment of leaving does not have, which a day
-// of measurement settled. On iPhone this keeps the sound; the picture is the OS's
-// to give, from fullscreen, and it does.
+// The hard part is not resuming — it is knowing WHICH pause to resume. The
+// engine's stop on leaving and a person's press on the lock screen look identical
+// from here: both arrive while the player is not visible. Telling them apart by
+// "who pressed it" needs the media-session handler, which the site keeps taking
+// back — that chase is the whole of the "무한재생" bug. They differ in one thing
+// that cannot be stolen: WHEN. The engine stops in the same breath as the
+// departure; a deliberate pause comes seconds later, after you have been listening
+// in the background. So only a pause that lands within a moment of going hidden is
+// the engine's, and only that one is put back.
 
 import { log } from '../shared/log.ts'
-import { RETURNED_EVENT } from '../shared/messages.ts'
-import { pausedByUser } from './intent.ts'
-import { reportDiagnostics } from './diagnostics.ts'
+import { isFloatingAway, playerVideo } from './pip.ts'
 
-/** How long after a pause we still consider it the engine's doing. */
-const ENGINE_PAUSE_MS = 400
+/** How long after going hidden a pause is still the engine's departure stop. */
+const DEPARTURE_WINDOW_MS = 1500
 
-/** Retries, spaced. The stop can land again as the browser finishes hiding the tab. */
-const RETRIES = [120, 400, 1200]
-
-interface WebkitVideo extends HTMLVideoElement {
-  webkitPresentationMode?: string
-}
+/** Retries, spaced — the stop can land again as the browser finishes hiding. */
+const RETRIES = [150, 500, 1000]
 
 let watched: HTMLVideoElement | null = null
-let lastPlayingAt = 0
 let enabled = false
-let wasHidden = false
 
-/** Whether the panel has been told about a page that actually has a player. */
-let reportedWithVideo = false
+/** When the page last became hidden. 0 while visible. */
+let hiddenAt = 0
 
-function onPlaying(): void {
-  lastPlayingAt = Date.now()
+function onVisibility(): void {
+  // The real value: the spoof lives in the other world, this listener is ours.
+  hiddenAt = document.hidden ? Date.now() : 0
 }
 
-/**
- * The video actually being watched.
- *
- * Not the widest element: on a hidden page everything measures zero, so width
- * falls to whichever comes first, which on a video site can be an empty one held
- * in reserve. Listeners on that never hear the real video stop — a departure with
- * eighty-two seconds of silence in the log. Scored by liveness instead, width
- * only breaking ties.
- */
-function playerVideo(): WebkitVideo | null {
-  const videos = [...document.querySelectorAll<WebkitVideo>('video')]
-  if (videos.length === 0) return null
-  const score = (v: WebkitVideo) =>
-    (!v.paused && !v.ended ? 4 : 0) + (v.currentTime > 0 ? 2 : 0) + (v.readyState >= 2 ? 1 : 0)
-  return videos.reduce((best, v) => {
-    const gap = score(v) - score(best)
-    if (gap !== 0) return gap > 0 ? v : best
-    return v.clientWidth > best.clientWidth ? v : best
-  })
-}
-
-/**
- * The engine stops the media the moment the app backgrounds. Put it back —
- * unless the person is the one who stopped it.
- *
- * The engine does not stop it once; it keeps stopping it every few seconds while
- * hidden, and putting it back each time is what background playback is here. So
- * this cannot bail after the first stop. Whose pause it was is asked of the user
- * directly (the transport controls set the flag in ./intent.ts), because a count
- * or a clock cannot tell the engine's stop from a deliberate one.
- */
 function onPause(): void {
   if (!enabled || !watched) return
   const video = watched
 
-  if (pausedByUser()) {
-    log('배경재생: 사용자가 멈춤 — 그대로 둔다')
+  // A floating window keeps itself alive (src/isolated/pip.ts); staying out avoids
+  // two play() promises racing on one element.
+  if (isFloatingAway()) return
+
+  // Visible → the player is in front of them, so the pause is theirs. Leave it.
+  if (!document.hidden) return
+
+  // Both the engine's stop and a lock-screen press arrive while hidden. Only the
+  // engine's rides in with the departure. A pause this long after going hidden was
+  // pressed on purpose — reviving it is exactly the loop people fought.
+  const sinceHidden = hiddenAt === 0 ? Infinity : Date.now() - hiddenAt
+  if (sinceHidden > DEPARTURE_WINDOW_MS) {
+    log(`배경재생: 나간 지 ${(sinceHidden / 1000).toFixed(1)}s 뒤 멈춤 — 사용자 것, 안 건드림`)
     return
   }
-  if (!document.hidden) return
-  if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
-  log('배경재생: 엔진이 세움 — 되살리기 시도')
+  log('배경재생: 나간 순간 엔진이 세움 — 되살림')
   let attempt = 0
   const tryPlay = () => {
-    if (!enabled || video !== watched) return
-    if (!document.hidden) return
-    // Re-asked every attempt: a person's pause can land between attempts, and the
-    // rest of a chain scheduled up front would answer it anyway.
-    if (pausedByUser()) {
-      log('배경재생: 되살리는 중에 사용자가 멈춤 — 그만둔다')
-      return
-    }
+    if (!enabled || video !== watched || !document.hidden) return
+    // Still the departure's, not a press that landed mid-chain.
+    if (Date.now() - hiddenAt > DEPARTURE_WINDOW_MS + 1500) return
     if (!video.paused) return
     attempt += 1
     video.play().catch((e: unknown) => {
@@ -109,60 +78,26 @@ function attach(video: HTMLVideoElement): void {
   if (watched === video) return
   detachListeners()
   watched = video
-  video.addEventListener('playing', onPlaying)
-  video.addEventListener('timeupdate', onPlaying)
   video.addEventListener('pause', onPause)
-  if (!video.paused) onPlaying()
 }
 
 function detachListeners(): void {
   if (!watched) return
-  watched.removeEventListener('playing', onPlaying)
-  watched.removeEventListener('timeupdate', onPlaying)
   watched.removeEventListener('pause', onPause)
   watched = null
-}
-
-/**
- * Tell the page it is back, once, when it really is.
- *
- * backgroundPlay.ts swallows every visibilitychange so the page never pauses
- * itself — including the one that says "visible again", which the page needs to
- * redraw. Without this the frame stays blank on return. The value read here is
- * the true one: the swallow is in the other world, this listener is ours.
- */
-function onVisibility(): void {
-  if (!enabled) return
-  if (document.hidden) {
-    wasHidden = true
-    return
-  }
-  if (!wasHidden) return
-  wasHidden = false
-  document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
-  log('돌아옴 — 페이지에 다시 알림')
 }
 
 /** Called from the sweep, since the site swaps the element out on navigation. */
 export function keepPlayingSweep(): void {
   if (!enabled) return
   const video = playerVideo()
-  if (!video) return
-  attach(video)
-
-  // The report is first written before the player exists, so the panel says
-  // "비디오 0개" for the life of the page. Say it once more when a real video with
-  // metadata turns up. This used to live in pip.ts's sweep and went with it.
-  if (!reportedWithVideo && video.readyState >= 1) {
-    reportedWithVideo = true
-    reportDiagnostics()
-  }
+  if (video) attach(video)
 }
 
 export function enableKeepPlaying(): void {
   if (!enabled) {
     enabled = true
-    // Capture, and the real value: see onVisibility.
+    hiddenAt = document.hidden ? Date.now() : 0
     document.addEventListener('visibilitychange', onVisibility, true)
   }
   keepPlayingSweep()
@@ -170,7 +105,7 @@ export function enableKeepPlaying(): void {
 
 export function disableKeepPlaying(): void {
   enabled = false
-  wasHidden = false
+  hiddenAt = 0
   document.removeEventListener('visibilitychange', onVisibility, true)
   detachListeners()
 }

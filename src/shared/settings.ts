@@ -13,6 +13,8 @@ export const TOGGLE_KEYS = [
   'appPromo',
   'genericAds',
   'backgroundPlay',
+  'pictureInPicture',
+  'pipButton',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -47,14 +49,31 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   },
   {
     key: 'backgroundPlay',
+    label: '화면을 벗어나도 재생 유지',
+    // Deliberately not "화면을 나가도". On iPhone, leaving the app suspends
+    // media at the system level and no amount of lying to the page about its
+    // visibility changes that. What this does defeat is the page pausing
+    // itself, which is what happens on a tab switch, on desktop and on Android.
+    hint: '탭을 옮기거나 화면이 가려져도 이어서 재생합니다',
+  },
+  {
+    key: 'pictureInPicture',
     label: '나갈 때 재생 유지',
-    // One switch for the whole behaviour: the page is stopped from pausing
-    // itself, the engine's background stop is undone, and the lock-screen
-    // controls stay ours so a pause you press sticks. On iPhone this keeps the
-    // sound — the floating picture is the OS's to give, from fullscreen. There is
-    // no separate PiP toggle any more; nothing here could open a window on its
-    // own, so offering it as a setting only promised what it could not do.
-    hint: '탭을 옮기거나 앱을 나가도 소리가 이어집니다 · 아이폰은 전체화면으로 나가면 iOS 가 작은 창으로 띄웁니다',
+    // The behaviour, not the furniture. Nothing can float a video at the moment
+    // the app goes away, so the fullscreen it floats from is arranged on a tap
+    // the user was making anyway — and nothing is added to the screen for it.
+    // Music is named because the difference is deliberate and would otherwise read
+    // as the feature failing there. A floating black rectangle following you around
+    // is not what anyone wants from a song.
+    hint: '앱을 나가도 소리가 이어집니다 · 작은 창은 나가기 전에 버튼을 눌러야 합니다',
+  },
+  {
+    key: 'pipButton',
+    label: 'PiP 버튼 표시',
+    // Separate because it is a different kind of thing: this one puts a control
+    // on someone else's player. Wanting to leave with the video is not the same
+    // as wanting a button, and it was a mistake to charge one for the other.
+    hint: '플레이어 오른쪽 아래에 답니다 — 나가기 전에 누르면 그 창이 앱 밖에서도 남습니다',
   },
 ]
 
@@ -96,6 +115,10 @@ export const DEFAULT_SETTINGS: Settings = {
     // player stops when you leave, and the app that does not is the one with the
     // ads in it.
     backgroundPlay: true,
+    // On. Leaving the app with the sound still going is the point of installing
+    // this on a phone, and picture-in-picture is the only mechanism iOS gives a
+    // web page for it.
+    pictureInPicture: true,
     /*
      * On, because it is the only thing that works.
      *
@@ -109,6 +132,7 @@ export const DEFAULT_SETTINGS: Settings = {
      * the button is not an extra: it is the feature. Off by default meant the
      * only working way in was hidden behind a setting nobody had reason to find.
      */
+    pipButton: true,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

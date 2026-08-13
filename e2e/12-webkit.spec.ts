@@ -7,7 +7,7 @@
 //
 // WebKit cannot load the extension, so what runs here is the mechanism rather
 // than the product: the exact overrides src/main/backgroundPlay.ts performs and
-// the visibility techniques src/main/backgroundPlay.ts relies on, executed against a real
+// the exact API src/isolated/pip.ts reaches for, executed against a real
 // WebKit. If one of them cannot work there, the feature cannot work there, and
 // that is worth knowing without a phone in hand.
 
@@ -17,6 +17,7 @@ import { join } from 'node:path'
 import { expect, test as base, webkit } from '@playwright/test'
 import { buildStylesheet, resolveRules } from '../src/shared/filterlist.ts'
 import { DEFAULT_SETTINGS } from '../src/shared/settings.ts'
+import { chooseEntry } from '../src/isolated/pip.ts'
 
 const test = base.extend<{ wk: import('@playwright/test').Page }>({
   wk: async ({}, use) => {
@@ -71,6 +72,42 @@ test('WebKit 에서 visibilitychange 를 캡처 단계에서 삼킬 수 있다',
     return sawIt
   })
   expect(reached, '페이지의 핸들러까지 이벤트가 도달했다 — 재생이 그대로 멈춘다').toBe(false)
+})
+
+test('PiP 진입점이 없는 WebKit 에서는 버튼을 붙이지 않는다', async ({ wk }) => {
+  const apis = await wk.evaluate(() => {
+    const video = document.createElement('video')
+    const el = video as unknown as Record<string, unknown>
+    return {
+      standard: typeof video.requestPictureInPicture,
+      webkitSupports: typeof el.webkitSupportsPresentationMode,
+      webkitSet: typeof el.webkitSetPresentationMode,
+      optOut: 'disablePictureInPicture' in video,
+    }
+  })
+
+  // Playwright 의 리눅스 WebKit 에는 사파리의 미디어 스택이 없어서 셋 다 없다.
+  // 아이폰 사파리에는 webkit 접두사 쪽이 있다 — 그래서 pip.ts 가 그쪽을 먼저
+  // 부른다. 여기서 증명할 수 있는 것은 반대쪽이다: 아무것도 없을 때 무엇을 하는가.
+  console.log('WebKit PiP APIs:', JSON.stringify(apis))
+
+  const behaviour = await wk.evaluate(() => {
+    // src/isolated/pip.ts 의 canPip() 과 같은 판정.
+    const video = document.createElement('video')
+    const el = video as unknown as { webkitSupportsPresentationMode?: (m: string) => boolean }
+    const canPip =
+      typeof el.webkitSupportsPresentationMode === 'function'
+        ? el.webkitSupportsPresentationMode('picture-in-picture')
+        : typeof video.requestPictureInPicture === 'function'
+    return { canPip }
+  })
+
+  // 눌러도 아무 일도 없는 버튼을 남의 플레이어에 붙이는 것이 최악이다.
+  // 진입점이 있으면 붙이고, 없으면 붙이지 않는다 — 어느 쪽이든 그 판정을 따른다.
+  expect(typeof behaviour.canPip).toBe('boolean')
+  if (!apis.webkitSet && apis.standard !== 'function') {
+    expect(behaviour.canPip, '진입점이 없는데 버튼을 붙이려 한다').toBe(false)
+  }
 })
 
 test('사이트가 WebKit 에서 오류 없이 뜨고, 브라우저 언어를 따른다', async () => {
@@ -244,4 +281,79 @@ test('2계층 스타일시트가 WebKit 에서 실제로 광고를 숨긴다', a
   // 그리고 멀쩡한 것을 지우지 않아야 한다. 피드가 통째로 사라지는 실패가 여기다.
   expect(result.normalCard, '평범한 카드까지 숨겼다').toBe(false)
   expect(result.shortsNormal, '광고 없는 Shorts 까지 숨겼다').toBe(false)
+})
+
+// The route decision, run in WebKit, by the function that ships.
+//
+// The rest of this file re-implements a mechanism and checks the engine allows
+// it. This one is different: `chooseEntry` is pure, so its source goes into the
+// page and the real thing decides, against a <video> this engine created.
+//
+// It matters because that branch — the webkit-prefixed one — is the branch an
+// iPhone takes and the one no test has ever executed. Linux WebKit has none of
+// those APIs, so the shape is supplied here; what is being checked is our
+// decision, not Apple's implementation.
+test('아이폰 모양의 비디오에서 우리 판정 함수가 webkit 경로를 고른다', async ({ wk }) => {
+  const decide = await wk.evaluate(
+    ({ source }) => {
+      const chooseEntry = new Function(`return (${source})`)() as (state: {
+        preferFullscreen: boolean
+        supported: boolean | undefined
+        webkit: boolean
+        standard: boolean
+        fullscreen: boolean
+      }) => string
+
+      const shaped = (opts: { supports: boolean }) => {
+        const video = document.createElement('video') as HTMLVideoElement &
+          Record<string, unknown>
+        // 아이폰 사파리가 가진 것만 붙인다. 표준 API 는 일부러 두지 않는다 —
+        // 아이폰에는 믿을 수 있는 형태로 없기 때문이다.
+        video.webkitSupportsPresentationMode = () => opts.supports
+        video.webkitSetPresentationMode = () => {}
+        video.webkitEnterFullscreen = () => {}
+        return {
+          supported:
+            typeof video.webkitSupportsPresentationMode === 'function'
+              ? (video.webkitSupportsPresentationMode as (m: string) => boolean)(
+                  'picture-in-picture',
+                )
+              : undefined,
+          webkit: typeof video.webkitSetPresentationMode === 'function',
+          standard: typeof video.requestPictureInPicture === 'function',
+          fullscreen: typeof video.webkitEnterFullscreen === 'function',
+        }
+      }
+
+      const allowed = shaped({ supports: true })
+      const refused = shaped({ supports: false })
+      return {
+        firstTap: chooseEntry({ preferFullscreen: false, ...allowed }),
+        afterNoOp: chooseEntry({ preferFullscreen: true, ...allowed }),
+        videoRefuses: chooseEntry({ preferFullscreen: false, ...refused }),
+        bare: chooseEntry({
+          preferFullscreen: false,
+          supported: undefined,
+          webkit: false,
+          standard: typeof document.createElement('video').requestPictureInPicture === 'function',
+          fullscreen: false,
+        }),
+      }
+    },
+    { source: chooseEntry.toString() },
+  )
+
+  // 첫 탭은 작은 창을 시도한다.
+  expect(decide.firstTap).toBe('webkit')
+  // 무응답이었으면 다음 탭은 전체화면 — 아이폰이 스스로 띄워주는 상태다.
+  expect(decide.afterNoOp).toBe('fullscreen')
+  // 이 영상은 안 된다고 하면 제스처를 낭비하지 않는다.
+  expect(decide.videoRefuses).toBe('fullscreen')
+  // 그리고 이 엔진이 실제로 가진 것에 맞게 답해야 한다. 리눅스 WebKit 에는
+  // 아무것도 없어 'none' 이고, macOS 러너의 WebKit(사파리 엔진)에는 표준 API 가
+  // 있어 'standard' 다 — 어느 쪽이든 없는 것을 부르려 해서는 안 된다.
+  const hasStandard = await wk.evaluate(
+    () => typeof document.createElement('video').requestPictureInPicture === 'function',
+  )
+  expect(decide.bare).toBe(hasStandard ? 'standard' : 'none')
 })
