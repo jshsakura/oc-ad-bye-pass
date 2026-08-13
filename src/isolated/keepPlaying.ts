@@ -17,35 +17,12 @@
 // because it is the same promise that setting already makes.
 
 import { log } from '../shared/log.ts'
+import { LEAVING_EVENT, RETURNED_EVENT } from '../shared/messages.ts'
 import { isFloatingAway } from './pip.ts'
-import { markUserPause, pausedByUser } from './intent.ts'
+import { pausedByUser } from './intent.ts'
 
 /** How long after a pause we still consider it the engine's doing. */
 const ENGINE_PAUSE_MS = 400
-
-/** Retries, spaced. A pause can land again as the browser finishes hiding the tab. */
-const RETRIES = [120, 400, 1200]
-
-/**
- * When we last put playback back, and how many times that was undone at once.
- *
- * The backstop, and the one that needs no cooperation. Telling the engine's pause
- * from a person's depends on our media-session handler still being the registered
- * one, and YouTube installs its own whenever its player reinitialises — so when
- * the inference is wrong, this is what notices. A person who pauses, sees it
- * start again, and pauses again has said it twice; nothing here gets a third turn.
- */
-let resumedAt = 0
-let fought = 0
-
-/**
- * How soon after our resume a pause reads as an answer to it rather than the engine.
- *
- * The engine's own pauses come around every five to eight seconds while the page
- * is in the background, so anything inside this window arrived while playback was
- * still going and somebody stopped it.
- */
-const FIGHT_WINDOW_MS = 3500
 
 let watched: HTMLVideoElement | null = null
 let lastPlayingAt = 0
@@ -53,6 +30,30 @@ let enabled = false
 
 function onPlaying(): void {
   lastPlayingAt = Date.now()
+}
+
+/**
+ * Armed by the departure, spent by the first pause after it.
+ *
+ * The engine stops the media once, as the app goes to the background. That one
+ * stop is what this file exists to undo, and everything else that arrives while
+ * the page is hidden belongs to somebody: an earphone squeeze, the lock screen,
+ * a headphone pulled out. Those were being resumed too, because the only test
+ * was "hidden and paused", which stays true for the whole time the user is away.
+ *
+ * So the departure arms it, one pause spends it, and nothing re-arms it until the
+ * user has been back.
+ */
+let armed = false
+
+function onHiddenChanged(): void {
+  if (document.hidden) {
+    armed = true
+    return
+  }
+  // Back in front. Whatever happens here is the user's, and the next departure
+  // gets its own single attempt.
+  armed = false
 }
 
 function onPause(): void {
@@ -64,66 +65,45 @@ function onPause(): void {
   // with AbortError, which was then logged as a refusal that never happened.
   if (isFloatingAway()) return
 
-  // Whose pause was it? The engine's arrives with the page already hidden.
-  // Someone pressing pause while watching is not to be overruled, and this is
-  // the only signal that separates them.
-  //
-  // Except on the lock screen, where the two look identical and the answer is the
-  // opposite one: the transport controls work *because* the page is hidden, so the
-  // most deliberate pause a person can make arrives here looking exactly like the
-  // engine's. It was resumed every time. Intent is asked for first now.
   if (pausedByUser()) {
     log('배경재생: 사용자가 멈춤 — 그대로 둔다')
     return
   }
+
   if (!document.hidden) return
+
+  /*
+   * Not the departure's stop, so not ours.
+   *
+   * This is the whole fix. "Hidden and paused" is true for as long as somebody is
+   * away, so every pause they made out there — earphones, lock screen — read as
+   * the engine's and was undone, three times over, by a retry chain that never
+   * looked again at whether they still meant it.
+   */
+  if (!armed) {
+    log('배경재생: 나간 순간의 멈춤이 아님 — 손 안 댄다')
+    return
+  }
+  armed = false
+
   if (Date.now() - lastPlayingAt > ENGINE_PAUSE_MS + 1000) return
 
   /*
-   * Undone straight after we put it back.
+   * Once. No retries.
    *
-   * The first pause of a departure is the engine's and is what this whole file
-   * exists to undo. A second one, landing while the video we just restarted was
-   * still playing, is a person pressing the button again because the first press
-   * did not take — reported as "중지시 무한 자동재생".
-   *
-   * It used to need three: the counter only rises inside the window, and the
-   * first press is normally outside it, so the give-up landed on the third press.
-   * Two is what a person means by pressing it twice.
+   * There used to be three, at 120, 400 and 1200ms, because the stop can land
+   * again while the browser finishes hiding the tab. It also meant a person's
+   * pause was answered three times, and the chain could not be called off — its
+   * later attempts fired long after we had worked out that the pause was theirs.
+   * One attempt that sometimes loses the race is better than a loop that wins
+   * against the user.
    */
-  fought = Date.now() - resumedAt < FIGHT_WINDOW_MS ? fought + 1 : 0
-  if (fought >= 1) {
-    log('배경재생: 계속 멈춘다 — 사용자 뜻으로 보고 그만둔다')
-    markUserPause()
-    return
-  }
-
-  log('배경재생: 엔진이 세움 — 되살리기 시도')
-  let attempt = 0
-  const tryPlay = () => {
-    if (!enabled || video !== watched) return
-    if (!document.hidden) return
-    if (!video.paused) {
-      resumedAt = Date.now()
-      log(`배경재생: 되살림 (시도 ${attempt})`)
-      return
-    }
-    attempt += 1
-    video
-      .play()
-      .then(() => {
-        resumedAt = Date.now()
-        log(`배경재생: 되살림 (시도 ${attempt})`)
-      })
-      .catch((e: unknown) => {
-        // The interesting case. If iOS refuses a hidden page's media outright,
-        // this is where it says so, and no amount of retrying will change it.
-        log(`배경재생: 거절 — ${e instanceof Error ? e.message : String(e)}`)
-      })
-    const next = RETRIES[attempt]
-    if (next !== undefined) setTimeout(tryPlay, next)
-  }
-  setTimeout(tryPlay, RETRIES[0])
+  log('배경재생: 나간 순간 엔진이 세움 — 한 번 되살린다')
+  video.play().catch((e: unknown) => {
+    // The interesting case. If iOS refuses a hidden page's media outright, this
+    // is where it says so, and no amount of retrying would change it.
+    log(`배경재생: 거절 — ${e instanceof Error ? e.message : String(e)}`)
+  })
 }
 
 function attach(video: HTMLVideoElement): void {
@@ -153,11 +133,22 @@ export function keepPlayingSweep(): void {
 }
 
 export function enableKeepPlaying(): void {
+  if (!enabled) {
+    // Both, because background playback swallows the real event before this
+    // world's listeners see it and re-announces it under our own name.
+    document.addEventListener('visibilitychange', onHiddenChanged, true)
+    document.addEventListener(LEAVING_EVENT, onHiddenChanged, true)
+    document.addEventListener(RETURNED_EVENT, onHiddenChanged, true)
+  }
   enabled = true
   keepPlayingSweep()
 }
 
 export function disableKeepPlaying(): void {
   enabled = false
+  armed = false
+  document.removeEventListener('visibilitychange', onHiddenChanged, true)
+  document.removeEventListener(LEAVING_EVENT, onHiddenChanged, true)
+  document.removeEventListener(RETURNED_EVENT, onHiddenChanged, true)
   detachListeners()
 }
