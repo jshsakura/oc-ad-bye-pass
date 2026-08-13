@@ -66,6 +66,19 @@ interface WebkitVideo extends HTMLVideoElement {
 /** How long to wait before deciding webkitSetPresentationMode did nothing. */
 const PRESENTATION_SETTLE_MS = 900
 
+/**
+ * Is there a live user activation right now?
+ *
+ * Recorded rather than acted on. It is the difference between a call that could
+ * have worked and one that never could, and the two are otherwise
+ * indistinguishable afterwards — WebKit reports success either way.
+ */
+function activation(): string {
+  const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
+  if (!ua) return '?'
+  return ua.isActive ? '활성' : '만료'
+}
+
 let observer: MutationObserver | null = null
 
 
@@ -272,7 +285,7 @@ function enterPip(video: WebkitVideo): void {
   // somebody's video every time they press a button is a cost with no payer.
   log(`탭: 지원=${supported ?? '?'} 모드=${video.webkitPresentationMode ?? '?'} 재생=${!video.paused}`)
   const route = chooseEntry({
-    preferFullscreen,
+    preferFullscreen: preferFullscreen || wantFullscreenTap,
     supported,
     webkit: typeof video.webkitSetPresentationMode === 'function',
     standard: typeof video.requestPictureInPicture === 'function',
@@ -307,7 +320,14 @@ function enterPip(video: WebkitVideo): void {
     try {
       video.webkitEnterFullscreen()
       preferFullscreen = false
+      log(`탭: 전체화면 요청함 (모드=${video.webkitPresentationMode ?? '?'} readyState=${video.readyState})`)
       toast('이대로 홈으로 나가면 작은 창이 됩니다')
+      // Said late, and only if nothing happened. WebKit takes this call and can
+      // do nothing at all — the device reported a button with no visible effect,
+      // and without this the log could not tell that from the call never running.
+      setTimeout(() => {
+        log(`탭: 전체화면 결과 모드=${video.webkitPresentationMode ?? '?'}`)
+      }, PRESENTATION_SETTLE_MS)
       return
     } catch (e) {
       toast(`전체화면도 거절: ${e instanceof Error ? e.message : String(e)}`)
@@ -1228,9 +1248,19 @@ function swipeSignals(): [EventTarget, string][] {
 /** Whether the on-screen control is wanted. The behaviour does not depend on it. */
 let wantButton = false
 
+/**
+ * Whether the tap should spend itself on fullscreen instead of a window.
+ *
+ * The only flow on this platform where leaving is the trigger — iOS hands a
+ * fullscreen video over by itself and asks nobody. Everything else has to be
+ * asked for inside the tap.
+ */
+let wantFullscreenTap = false
+
 /** Start offering PiP. Safe to call repeatedly. */
-export function enablePictureInPicture(options: { button: boolean }): void {
+export function enablePictureInPicture(options: { button: boolean; fullscreenTap?: boolean }): void {
   wantButton = options.button
+  wantFullscreenTap = options.fullscreenTap === true
   for (const [target, event] of swipeSignals()) {
     target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
     // Passive: this never prevents the gesture. Taking the user's way out away
@@ -1268,6 +1298,41 @@ export function enablePictureInPicture(options: { button: boolean }): void {
 }
 
 /** Stop, and leave no trace. */
+/**
+ * Float it, from inside somebody else's gesture.
+ *
+ * The one path on this platform where a window can be opened *after* the user has
+ * left. WebKit runs a media-session action handler inside a real user gesture —
+ * `MediaSession::callActionHandler` opens `UserGestureIndicator(ProcessingUserGesture,
+ * document())`, a full gesture rather than a media-scoped one, landed in r277588
+ * for bug 225875 — so the lock screen and Control Centre carry the very
+ * permission a departure cannot.
+ *
+ * Everything else about leaving was an attempt to manufacture that permission at
+ * a moment that has none, and every one of them was taken and silently ignored.
+ * This does not manufacture anything: the user really did press a button, it is
+ * really their gesture, and the window is theirs to be given.
+ *
+ * Called synchronously from the handler, before anything can be awaited.
+ */
+export function floatFromGesture(video: HTMLVideoElement, why: string): void {
+  const target = video as WebkitVideo
+  if (isFloating(target)) return
+  // Nothing to float on a page somebody is looking at — they can see the video.
+  if (!document.hidden) return
+  if (target.webkitSupportsPresentationMode?.('picture-in-picture') === false) {
+    log(`잠금화면 ${why}: 이 영상은 작은 창을 지원하지 않음`)
+    return
+  }
+  allowPip(target)
+  log(`잠금화면 ${why}: 작은 창 요청 (활성화=${activation()})`)
+  try {
+    target.webkitSetPresentationMode?.('picture-in-picture')
+  } catch (e) {
+    log(`잠금화면 ${why}: 거절 — ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
 /** Whether a departure is in flight, for the other resumer to keep out of. */
 export function isFloatingAway(): boolean {
   return floatingAway
