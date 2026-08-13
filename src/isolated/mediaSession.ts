@@ -21,7 +21,6 @@
 // entered — one press instead of unlocking, finding the tab, and pressing play.
 
 import { clearUserPause, markUserPause } from './intent.ts'
-import { floatFromGesture } from './pip.ts'
 
 interface WebkitVideo extends HTMLVideoElement {
   webkitPresentationMode?: string
@@ -164,22 +163,7 @@ function setHandlers(video: WebkitVideo): void {
     }
   }
 
-  /*
-   * Every button out there is a gesture we are allowed to spend.
-   *
-   * This is the whole point of routing the transport controls through our own
-   * handlers rather than YouTube's. WebKit runs an action handler inside a real
-   * user gesture, so a press on the lock screen carries the one permission the
-   * moment of leaving does not — and the video can be floated from the
-   * background, which is the thing this extension has been unable to do.
-   *
-   * Before the action's own work, and synchronously: the gesture does not survive
-   * an await.
-   */
-  const float = (why: string) => floatFromGesture(video, why)
-
   safely('play', () => {
-    float('재생')
     clearUserPause()
     void video.play().catch(() => {})
     session.playbackState = 'playing'
@@ -194,24 +178,12 @@ function setHandlers(video: WebkitVideo): void {
   })
 
   safely('seekbackward', () => {
-    float('뒤로')
     video.currentTime = Math.max(0, video.currentTime - 10)
   })
   safely('seekforward', () => {
-    float('앞으로')
     video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10)
   })
 
-  // Registered for the button, not for the behaviour. iOS puts skip controls on
-  // the lock screen for a session that claims them, and each one is another press
-  // that can hand the video its window. Pause is left out on purpose — somebody
-  // stopping the video is not asking for a picture of it.
-  safely('nexttrack', () => {
-    float('다음')
-  })
-  safely('previoustrack', () => {
-    float('이전')
-  })
 }
 
 export function unbindMediaSession(): void {

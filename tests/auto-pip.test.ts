@@ -9,93 +9,22 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { shouldAutoPip } from '../src/isolated/pip.ts'
+import { modeToRestore } from '../src/isolated/pip.ts'
 
-const playing = { paused: false, ended: false }
-
-test('탭이 앞에 있으면 넘기지 않는다', () => {
-  assert.equal(shouldAutoPip({ hidden: false, video: playing }), false)
-})
-
-test('숨겨졌고 재생 중이면 넘긴다', () => {
-  assert.equal(shouldAutoPip({ hidden: true, video: playing }), true)
-})
-
-test('영상이 없으면 넘길 것도 없다', () => {
-  assert.equal(shouldAutoPip({ hidden: true, video: null }), false)
-})
-
-test('멈춰 있는 영상은 넘기지 않는다', () => {
-  // 떠 있을 이유가 없는 창이 사용자가 하러 간 일 위에 남는다.
-  assert.equal(shouldAutoPip({ hidden: true, video: { paused: true, ended: false } }), false)
-})
-
-test('끝난 영상도 넘기지 않는다', () => {
-  assert.equal(shouldAutoPip({ hidden: true, video: { paused: false, ended: true } }), false)
-})
-
-
-
-// 되돌리기의 판단은 함수에서 사라졌다.
+// 나갈 때의 판단은 전부 사라졌다.
 //
-// 네 가지가 같은 결정을 나눠 갖고 있었고 — 가시성 검사, 스스로 재무장하는 유예,
-// 출발 모드와의 비교, 그리고 별도의 "무조건 되돌리기" 갈래 — 그것들이 서로 겹쳐서
-// 창이 열린 지 0.25초 만에 창을 닫았다. 사람이 돌아왔다는 증거는 하나도 없이.
-// 이제 규칙은 하나다: 포커스가 여기 있으면 영상도 여기 있어야 한다.
-
-// 나가는 순간의 멈춤은 누구 것인가.
+// shouldAutoPip · shouldResumeOnLeave · isHomeSwipe 는 모두 "앱을 나가는 순간
+// 영상을 작은 창으로 넘긴다" 를 위한 것이었다. 그건 이 플랫폼에서 불가능하다 —
+// WebKit 은 살아있는 사용자 제스처 안에서만 창을 열어주고, 나가는 순간에는 그것이
+// 없다. 실기기에서 하루치로 확인했고, 두 곳에서 독립적으로 같은 답을 받았고,
+// 애플이 직접 답한 문서도 있다. 그 판단들을 지키는 것은 없는 기능을 지키는 것이다.
 //
-// 기기 로그가 알려준 사실: 나가는 신호가 도착할 때 영상은 이미 멈춰 있다. WebKit 이
-// 앱을 백그라운드로 보내면서 엔진 레벨에서 먼저 세우기 때문이다. 그래서 "멈춰 있으면
-// 넘어간다" 는 판단은 매번 걸렸다.
-//
-// 그렇다고 아무 멈춤이나 되살리면, 직접 멈추고 나간 사람의 영상이 그 사람이 하러 간
-// 일 위에서 다시 재생된다. 그 둘을 가르는 것이 이 함수다.
-import { shouldResumeOnLeave } from '../src/isolated/pip.ts'
-
-const now = 1_000_000
-
-test('엔진이 세운 것이면 되살린다 — 이미 숨겨진 뒤에 멈췄다', () => {
-  assert.equal(
-    shouldResumeOnLeave({ now, pausedAt: now - 10, pausedWhileHidden: true, lastPlayingAt: now - 50 }),
-    true,
-  )
-})
-
-test('나가는 것과 같은 순간에 멈췄으면 되살린다', () => {
-  assert.equal(
-    shouldResumeOnLeave({ now, pausedAt: now - 100, pausedWhileHidden: false, lastPlayingAt: now - 200 }),
-    true,
-  )
-})
-
-test('보면서 멈춘 것은 건드리지 않는다', () => {
-  // 멈추고 나간 사람의 영상이 다시 켜지면 그건 기능이 아니라 참견이다.
-  assert.equal(
-    shouldResumeOnLeave({ now, pausedAt: now - 3000, pausedWhileHidden: false, lastPlayingAt: now - 3200 }),
-    false,
-  )
-})
-
-test('한참 전에 멈춘 영상은 되살릴 것이 없다', () => {
-  assert.equal(
-    shouldResumeOnLeave({ now, pausedAt: now - 60_000, pausedWhileHidden: true, lastPlayingAt: now - 60_000 }),
-    false,
-  )
-})
-
-test('한 번도 재생된 적 없으면 아무것도 안 한다', () => {
-  assert.equal(
-    shouldResumeOnLeave({ now, pausedAt: 0, pausedWhileHidden: false, lastPlayingAt: 0 }),
-    false,
-  )
-})
+// 남은 것은 버튼(매번 열린다)과, 돌아왔을 때 어디로 되돌릴지 하나뿐이다.
 
 // 돌아왔을 때 어디로 되돌릴 것인가.
 //
-// 인라인이 언제나 정답은 아니다. 전체화면으로 보다가 나갔다 온 사람에게 페이지에
+// 인라인이 언제나 정답은 아니다. 전체화면으로 보다 나갔다 온 사람에게 페이지에
 // 둘러싸인 작은 플레이어를 돌려주는 것은, 어떻게 볼지를 확장이 대신 정하는 것이다.
-import { modeToRestore } from '../src/isolated/pip.ts'
 
 test('인라인으로 보다 나갔으면 인라인으로 돌아온다', () => {
   assert.equal(modeToRestore({ before: 'inline', current: 'picture-in-picture' }), 'inline')
@@ -114,39 +43,5 @@ test('작은 창도 전체화면도 아닌 상태는 우리 것이 아니다', (
 })
 
 test('기록이 없으면 인라인이 기본이다', () => {
-  assert.equal(modeToRestore({ before: null, current: 'picture-in-picture' }), 'inline')
+  assert.equal(modeToRestore({ before: null, current: 'picture-in-picture' }), null === null ? 'inline' : 'inline')
 })
-
-// 나가는 손짓.
-//
-// 버튼이 되는 이유는 탭이 사용자 제스처를 들고 있기 때문이고, 나가는 순간에는 그것이
-// 없다. 그런데 아이폰에서 앱을 나가기 직전에 사람이 실제로 하는 동작이 하나 있다 —
-// 화면 맨 아래에서 위로 쓸어올리기. 그 터치는 시스템이 가져가기 전에 페이지에 먼저
-// 닿으므로, 나가기 전 마지막으로 창을 요청할 수 있는 순간이다.
-//
-// 좁게 잡는다. 아래 가장자리에서 시작해야 하고, 위로 가야 하고, 옆보다 위로 더 가야
-// 한다 — 페이지 스크롤은 거기서 시작하지 않고, 가로 스와이프는 다른 뜻이다.
-import { isHomeSwipe } from '../src/isolated/pip.ts'
-
-test('아래 가장자리에서 위로 쓸어올리면 나가는 손짓이다', () => {
-  assert.equal(isHomeSwipe({ fromBottom: 10, up: 60, sideways: 8 }), true)
-})
-
-test('화면 한가운데서 시작한 스크롤은 아니다', () => {
-  assert.equal(isHomeSwipe({ fromBottom: 300, up: 60, sideways: 5 }), false)
-})
-
-test('살짝 움직인 것은 아직 아니다', () => {
-  assert.equal(isHomeSwipe({ fromBottom: 8, up: 9, sideways: 2 }), false)
-})
-
-test('옆으로 더 갔으면 다른 뜻이다', () => {
-  // 아래 가장자리의 가로 스와이프는 탭 전환이지 나가는 것이 아니다.
-  assert.equal(isHomeSwipe({ fromBottom: 8, up: 30, sideways: 90 }), false)
-})
-
-// 아이폰에서 탭을 전체화면으로 보내는 갈래는 지웠다.
-//
-// iOS 가 전체화면 영상을 스스로 넘겨주는 것은 사실이고 실기기에서 확인도 했지만,
-// 그렇게 바꾸자 버튼이 아예 반응하지 않았다. 아무 일도 안 하는 컨트롤은 엉뚱한 일을
-// 하는 컨트롤보다 나쁘다. 탭은 다시 창을 연다 — 그건 매번 되는 것이 확인돼 있다.

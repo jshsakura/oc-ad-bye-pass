@@ -58,14 +58,14 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   },
   {
     key: 'pictureInPicture',
-    label: '자동으로 PiP 모드로 전환',
+    label: '나갈 때 재생 유지',
     // The behaviour, not the furniture. Nothing can float a video at the moment
     // the app goes away, so the fullscreen it floats from is arranged on a tap
     // the user was making anyway — and nothing is added to the screen for it.
     // Music is named because the difference is deliberate and would otherwise read
     // as the feature failing there. A floating black rectangle following you around
     // is not what anyone wants from a song.
-    hint: '아이폰은 전체화면으로 보다 나가면 iOS 가 작은 창으로 넘겨줍니다 · 뮤직은 소리만 이어집니다',
+    hint: '앱을 나가도 소리가 이어집니다 · 작은 창은 나가기 전에 버튼을 눌러야 합니다',
   },
   {
     key: 'pipButton',
@@ -73,7 +73,7 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
     // Separate because it is a different kind of thing: this one puts a control
     // on someone else's player. Wanting to leave with the video is not the same
     // as wanting a button, and it was a mistake to charge one for the other.
-    hint: '나가기 전에 누르면 그 창이 앱 밖에서도 남습니다',
+    hint: '플레이어 오른쪽 아래에 답니다 — 나가기 전에 누르면 그 창이 앱 밖에서도 남습니다',
   },
 ]
 

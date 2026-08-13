@@ -189,10 +189,11 @@ test('버튼이 플레이어 밖에, 화면에 고정돼 있다', async ({ conte
   expect(where?.insidePlayer, '플레이어 안에 있으면 탭을 뺏긴다').toBe(false)
   expect(where?.parent).toBe('HTML')
   expect(where?.position).toBe('fixed')
-  // 엄지가 닿는 면적은 44 — 아이폰 16(393pt, 3x)에서 8.8mm, 애플이 말하는 최소치다.
-  // 보이는 칩은 그보다 작다. 그 둘은 다른 질문이라 다른 크기를 갖는다.
-  expect(where?.size?.[0], '엄지가 닿을 면적이 줄었다').toBeGreaterThanOrEqual(44)
-  expect(where?.chip?.[0], '보이는 칩이 아이콘보다 한참 크다').toBeLessThanOrEqual(34)
+  // 닿는 면적과 보이는 칩은 다른 질문이라 다른 크기를 갖는다. 면적은 36 —
+  // 애플이 말하는 최소치 44보다 작고, 그건 요청에 따른 것이다. 남의 플레이어 위에
+  // 있는 물건이라 작을수록 낫다는 판단이 최소치보다 앞섰다. 그 아래로는 안 간다.
+  expect(where?.size?.[0], '엄지가 닿을 면적이 더 줄었다').toBeGreaterThanOrEqual(36)
+  expect(where?.chip?.[0], '보이는 칩이 아이콘보다 한참 크다').toBeLessThanOrEqual(24)
 })
 
 test('다시 끄면 버튼이 사라진다', async ({ context, background }) => {
@@ -225,7 +226,13 @@ test('다시 끄면 버튼이 사라진다', async ({ context, background }) => 
 // 숨김으로 만들지 않아서, 탭 전환으로는 visibilitychange 자체가 나지 않는다.
 // 숨김이 아니니 핸들러는 넘어가겠지만, 넘어갔다는 기록이 남는다는 것이
 // 곧 신호가 도착했다는 뜻이고 그것이 이 시험이 지키려는 것이다.
-test('배경 재생을 켜도 나가는 신호가 PiP 까지 온다', async ({ context, background }) => {
+// 삼키기는 페이지만 속인다.
+//
+// 이 시험이 지키는 것은 하나로 줄었다. 예전에는 삼킨 이벤트가 우리 쪽 PiP 핸들러까지
+// 우리 이름으로 다시 오는지도 확인했는데, 그 핸들러가 하던 일(나갈 때 작은 창으로
+// 넘기기)이 이 플랫폼에서 불가능한 것으로 확인돼 사라졌다. 남은 절반이 진짜다 —
+// 페이지가 이 이벤트를 보면 유튜브가 스스로 멈추고, 그러면 배경 재생이 죽는다.
+test('배경 재생을 켜도 페이지는 나가는 신호를 못 본다', async ({ context, background }) => {
   await installYouTubeFixture(context)
   const page = await context.newPage()
   await page.goto(YOUTUBE_URL)
@@ -245,14 +252,6 @@ test('배경 재생을 켜도 나가는 신호가 PiP 까지 온다', async ({ c
     if (pageSaw) throw new Error('페이지가 visibilitychange 를 봤다 — 배경 재생이 안 걸렸다')
   })
 
-  // 기록 쪽을 본다. 숨겨지지 않은 상태의 신호는 패널의 헤드라인을 차지하지 않게
-  // 됐지만(그 자리는 실제로 나갔던 마지막 순간의 것이어야 한다), 도착했다는 사실은
-  // 남는다 — 그리고 이 시험이 지키려는 것이 바로 그 도착이다.
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.getAttribute('data-oc-abp-log')), {
-      message: '나가는 신호가 PiP 핸들러까지 오지 않았다',
-    })
-    .toContain('oc-ad-bye-pass:leaving')
 })
 
 // 나갈 때 작은 창으로 — 여기서는 못 돌린다.

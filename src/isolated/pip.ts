@@ -51,8 +51,8 @@ const BUTTON_ID = 'oc-abp-pip'
  * target. Shrinking the picture is a design decision; shrinking what a moving
  * thumb has to hit is a different one, and not the one being asked for.
  */
-const BUTTON_SIZE = 44
-const CHIP_SIZE = 30
+const BUTTON_SIZE = 36
+const CHIP_SIZE = 22
 
 interface WebkitVideo extends HTMLVideoElement {
   webkitSupportsPresentationMode?: (mode: string) => boolean
@@ -65,19 +65,6 @@ interface WebkitVideo extends HTMLVideoElement {
 
 /** How long to wait before deciding webkitSetPresentationMode did nothing. */
 const PRESENTATION_SETTLE_MS = 900
-
-/**
- * Is there a live user activation right now?
- *
- * Recorded rather than acted on. It is the difference between a call that could
- * have worked and one that never could, and the two are otherwise
- * indistinguishable afterwards — WebKit reports success either way.
- */
-function activation(): string {
-  const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation
-  if (!ua) return '?'
-  return ua.isActive ? '활성' : '만료'
-}
 
 let observer: MutationObserver | null = null
 
@@ -415,7 +402,7 @@ function ensureButton(video: WebkitVideo): void {
     // as little of it as it can and still be findable.
     'border-radius:9px;background:rgba(24,24,37,.42);' +
     'border:1px solid rgba(255,255,255,.16);box-shadow:0 4px 14px -6px rgba(0,0,0,.5)">' +
-    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>' +
     '</span>'
@@ -474,14 +461,13 @@ function place(): void {
   const mark = button.querySelector('rect + rect') as SVGRectElement | null
   mark?.setAttribute('fill', floating ? '#a6e3a1' : '#fab387')
 
-  // Tighter into the corner across than down: the player's own controls run along
-  // the bottom, and the right edge is the one place nothing else wants.
+  // Hard into the bottom-right corner of the player.
   //
-  // Lowered on request — it sat far enough up the player to read as part of
-  // YouTube's own row of controls. Four pixels off each edge puts it in the
-  // corner and out of everything.
-  const inset = 4
-  const insetX = 4
+  // It has been walked down twice: twelve pixels up read as part of YouTube's own
+  // row of controls, and four still sat above the corner. Two is as close as it
+  // goes without clipping its own shadow.
+  const inset = 2
+  const insetX = 2
   const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
   const left = Math.min(box.right - BUTTON_SIZE - insetX, visibleRight - BUTTON_SIZE - insetX)
   button.style.display = 'grid'
@@ -596,7 +582,6 @@ function sweep(): void {
   if (!video) return
   allowPip(video)
   guardPresentation(video)
-  watchPlayback(video)
   keepFloatingAlive(video)
   watchForStall(video)
   // Drawn whenever there is a video, and only when asked for. Gating on a
@@ -610,100 +595,21 @@ function sweep(): void {
   }
 }
 
-/** Read back by src/isolated/diagnostics.ts, which has its own copy of the name. */
-const AUTO_ATTR = 'data-oc-abp-autopip'
-
-
-export function shouldAutoPip(state: {
-  hidden: boolean
-  video: { paused: boolean; ended: boolean } | null
-}): boolean {
-  // Nothing to hand over if the tab is still in front, if there is no video, or
-  // if it was not playing — putting a paused video in a floating window is a
-  // window nobody asked for, sitting over whatever they left to do.
-  if (!state.hidden) return false
-  if (!state.video) return false
-  return !state.video.paused && !state.video.ended
-}
-
-/**
- * The synchronous attempt, made from inside the event handler.
+/*
+ * The automatic hand-over is gone, and every piece of bookkeeping it needed with
+ * it: whose pause it was, whether to resume before asking, how many times to ask
+ * again, which of six signals to trust, and the record each attempt wrote.
  *
- * iOS stops running the page the moment the app goes to the background. Not
- * "slows"; stops. Anything after an `await` in a visibilitychange handler may
- * simply never run, so the call that matters has to happen on the same tick as
- * the event, before any promise, any timer, any lookup that can be deferred.
- * This is the whole reason automatic PiP is a separate path from the button.
- */
-type Attempt = 'called' | 'threw' | 'no-entry'
-
-function attemptSync(video: WebkitVideo): Attempt {
-  try {
-    if (typeof video.webkitSetPresentationMode === 'function') {
-      // One call, and no reading back. `webkitPresentationMode` is updated
-      // asynchronously — the button path waits PRESENTATION_SETTLE_MS before
-      // trusting it — so a read on this tick always says `inline`, including
-      // when the request was accepted. This used to read it anyway and
-      // "escalate" to fullscreen on `inline`, which meant a granted PiP was
-      // immediately overridden by a fullscreen request.
-      video.webkitSetPresentationMode('picture-in-picture')
-      return 'called'
-    }
-    if (typeof video.requestPictureInPicture === 'function') {
-      // Fires the request now; its promise settles later, which is fine — the
-      // browser has already been told.
-      void video.requestPictureInPicture().catch(() => {})
-      return 'called'
-    }
-  } catch {
-    // Taken and refused, which is a different thing from there being nothing to
-    // call. The panel keeps them apart because they need opposite fixes.
-    return 'threw'
-  }
-  return 'no-entry'
-}
-
-/**
- * Everything that happened at the moment nobody can watch, written where it
- * survives.
+ * Nothing can float a video at the moment the app goes away. WebKit grants the
+ * window only inside a live user activation and a departure has none — measured
+ * across a day of releases, confirmed independently twice, and answered by Apple
+ * in as many words. Eight attempts at it lived here; several of them broke
+ * playback, and none of them ever opened a window.
  *
- * An attribute, synchronously, because iOS is about to stop running this page: a
- * storage write started here would never flush, while an attribute is still on
- * the element when the page comes back.
- *
- * Every path writes one, including the ones that decide to do nothing. Silence
- * used to mean four different things — the handler never ran, it ran on a signal
- * that fires before the page is hidden, there was no video, the video was
- * paused — and the first of those is a bug in this extension while the rest are
- * not. A panel that cannot tell them apart sends the reader after the wrong one.
+ * What is left is the button, which works every time, and one flag saying a
+ * departure happened — a return still has to be announced or the player comes
+ * back to a blank frame.
  */
-function record(signal: string, outcome: string): void {
-  document.documentElement.setAttribute(AUTO_ATTR, `${signal}:${outcome}`)
-  log(`나감 ${signal} → ${outcome}`)
-}
-
-/**
- * YouTube Music gets sound, not a window.
- *
- * The two cannot both be had — a floating window is the only way iOS keeps a web
- * page's media alive, and it is a window, on top of whatever you left to do. For a
- * video that is the point; for a song it is a black rectangle following you around.
- * So on Music nothing is floated and background playback carries it, which is
- * src/isolated/keepPlaying.ts and is on by default.
- */
-/**
- * A function, not a constant: this module is imported by a unit test in node,
- * where `location` does not exist — the same reason the signal lists are functions.
- */
-function isMusic(): boolean {
-  return typeof location !== 'undefined' && location.hostname.startsWith('music.')
-}
-
-/** One hand-over per departure, however many signals announce it. */
-let handedOver = false
-
-/** And one re-request: the play promise and the `playing` event both arrive. */
-let retried = false
 
 /**
  * Did a departure actually happen?
@@ -753,15 +659,6 @@ let floatedVideo: WebkitVideo | null = null
 
 
 /**
- * Where the video was before we moved it, so coming back can put it there.
- *
- * Inline is not the only right answer. Someone watching fullscreen who leaves
- * and comes back expects fullscreen; dropping them into a small inline player
- * with the page around it is the extension deciding how they should watch.
- */
-let modeBeforeLeaving: string | null = null
-
-/**
  * Which presentation to put the video back into on return.
  *
  * `null` means leave it alone — either it is already there, or it is somewhere
@@ -779,24 +676,6 @@ export function modeToRestore(state: {
   if (current !== 'picture-in-picture' && current !== 'fullscreen') return null
   return target
 }
-
-/**
- * When the video was last known to be playing.
- *
- * Because by the time we are told the user is leaving, it is not playing any
- * more. Measured on the device: every leaving signal arrives with
- * `paused === true`, since WebKit stops media at the engine level as the app
- * goes to the background — before the page hears about it. Bailing on "not
- * playing" therefore bailed every single time.
- *
- * A few seconds of memory separates that from a video the user paused and walked
- * away from, which nobody wants floating over what they went to do.
- */
-let lastPlayingAt = 0
-
-/** When it stopped, and whether the page was already gone when it did. */
-let pausedAt = 0
-let pausedWhileHidden = false
 
 /**
  * Keep it playing while it is floating.
@@ -829,136 +708,18 @@ function keepFloatingAlive(video: WebkitVideo): void {
   })
 }
 
-function watchPlayback(video: WebkitVideo): void {
-  if (video.dataset.ocAbpPlayWatch === '1') return
-  video.dataset.ocAbpPlayWatch = '1'
-  const playing = () => {
-    lastPlayingAt = Date.now()
-  }
-  video.addEventListener('playing', playing)
-  video.addEventListener('timeupdate', playing)
-  video.addEventListener('pause', () => {
-    pausedAt = Date.now()
-    // The real value: this world does not see the spoof the page is given.
-    pausedWhileHidden = document.hidden
-  })
-  if (!video.paused) playing()
-}
-
 /**
- * Who stopped this video?
+ * Note that the user has gone. Nothing else.
  *
- * It matters, because one of them wants it back and the other does not. WebKit
- * stops media at the engine level as the app goes to the background, so by the
- * time anything hears about the leaving, the video is paused — resuming that is
- * restoring what the user had. Someone who pressed pause and then left wants it
- * to stay paused, and starting it again over whatever they went to do is the
- * extension helping itself to their phone.
- *
- * The two are told apart by when and where the pause happened: the engine's
- * lands with the page already hidden, or in the same breath as the departure.
- * A pause made while looking at the page, a moment earlier, is a person's.
+ * Several signals, because a second notice costs nothing and missing the only one
+ * that fired costs a return that never announces itself.
  */
-export function shouldResumeOnLeave(state: {
-  now: number
-  pausedAt: number
-  pausedWhileHidden: boolean
-  lastPlayingAt: number
-}): boolean {
-  // Never played, or not for a while — nothing here is being taken away.
-  if (state.lastPlayingAt === 0) return false
-  if (state.now - state.lastPlayingAt > 5000) return false
-  if (state.pausedWhileHidden) return true
-  // Same breath as the departure. A person's pause is separated from it by the
-  // time it takes to then leave the app.
-  return state.now - state.pausedAt < 400
-}
-
-/**
- * Hand the video over when the tab goes away.
- *
- * Several signals, not one, and they overlap on purpose — the cost of a second
- * attempt is nothing, the cost of missing the only one that fired is the
- * feature. What each is worth, measured rather than assumed:
- *
- *   visibilitychange  the documented route, and the only one that is reliably
- *                     hidden by the time it fires. Background playback swallows
- *                     the real one, so it also arrives under our own name.
- *   pagehide          not swallowed, and hidden by the time it lands
- *   blur              fires before the page is hidden, so the guard below turns
- *                     it away. Kept for the record it leaves, not for the work
- *                     it does — ungating it would float a window when someone
- *                     merely tapped the address bar.
- *   freeze            does not exist in WebKit. Harmless on Chromium, inert on
- *                     the phone this was written for.
- */
-function onLeaving(event: Event): void {
-  if (handedOver) return
-  if (isMusic()) return
-  const signal = event.type
-
+function onLeaving(): void {
+  if (!document.hidden || wentAway) return
+  wentAway = true
   const video = playerVideo()
-  if (!video) return record(signal, 'skip:no-video')
-  if (!document.hidden) {
-    log(`나감 ${signal} → 아직 안 숨겨짐 (기록 안 함)`)
-    return
-  }
-  if (modeBeforeLeaving === null) modeBeforeLeaving = video.webkitPresentationMode ?? 'inline'
-
-  // Paused is the normal state here: the engine stops the media before the page
-  // is told anything. Whose pause it was decides whether to undo it.
-  const resume =
-    video.paused &&
-    shouldResumeOnLeave({ now: Date.now(), pausedAt, pausedWhileHidden, lastPlayingAt })
-  if (!shouldAutoPip({ hidden: document.hidden, video }) && !resume) {
-    return record(signal, video.paused ? 'skip:사용자가-멈춤' : 'skip:paused')
-  }
-
-  handedOver = true
-  leftAt = video.currentTime
-
-  // On this path, now. A clear from the last sweep is not a clear: YouTube puts
-  // the opt-out back whenever it rebuilds the player, and WebKit reads it when
-  // deciding whether the mode is available at all.
-  allowPip(video)
-
-  /*
-   * The free shot, and it is expected to be refused.
-   *
-   * WebKit grants a floating window only inside a live user activation — Apple's
-   * own answer on this is that picture-in-picture may begin only in response to
-   * user interaction and never programmatically — and a departure has none. The
-   * call reports success either way, so nothing here treats it as proof.
-   */
-  if (resume) {
-    log('나감: 엔진이 멈춘 영상 되살리기 시도')
-    void video
-      .play()
-      .then(() => askAgain(video))
-      .catch(() => {
-        // The 'playing' listener below is the other half of this.
-      })
-    video.addEventListener('playing', () => askAgain(video), { once: true })
-  }
-
-  const attempt = attemptSync(video)
-  record(signal, `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
-}
-
-/**
- * Ask once more, now that it is really playing.
- *
- * Gated on our own confirmation rather than on `webkitPresentationMode`: the mode
- * can read picture-in-picture with nothing on screen, and trusting it there meant
- * the one call that could have worked — playing, then ask — was skipped as
- * unnecessary.
- */
-function askAgain(video: WebkitVideo): void {
-  if (retried || floatingAway) return
-  retried = true
-  if (!document.hidden || video.paused || video.ended) return
-  allowPip(video)
-  log(`나감: 재요청 → ${attemptSync(video)}`)
+  if (video) leftAt = video.currentTime
+  log('나감')
 }
 
 /**
@@ -1006,24 +767,11 @@ function onReturning(): void {
   const video = floatedVideo ?? playerVideo()
   log(`돌아옴: 모드=${video?.webkitPresentationMode ?? '?'}`)
 
-  // Close the record before anything changes the mode: what the system did while
-  // the app was away is readable only in this instant.
-  const mark = document.documentElement.getAttribute(AUTO_ATTR)
-  if (mark && !mark.includes('|')) {
-    document.documentElement.setAttribute(
-      AUTO_ATTR,
-      `${mark}|back:${video?.webkitPresentationMode ?? 'unknown'}`,
-    )
-  }
-
   // One announcement, so the page draws itself again — the swallow eats the real
   // one and a player that never hears it leaves the frame blank.
   document.dispatchEvent(new CustomEvent(RETURNED_EVENT))
 
-  handedOver = false
-  retried = false
   wentAway = false
-  modeBeforeLeaving = null
 
   if (video && video.webkitPresentationMode === 'picture-in-picture') {
     const wasPlaying = !video.paused && !video.ended
@@ -1106,120 +854,13 @@ function resumeAfterRestore(video: WebkitVideo): void {
   setTimeout(tick, 120)
 }
 
-// --- Catching the way out ----------------------------------------------------
+// --- What used to be the way out --------------------------------------------
 //
-// The button works because a tap carries user activation. Leaving does not — and
-// the last thing a person does before leaving is a gesture: the swipe up from the
-// bottom edge that goes home. That touch reaches the page before the system takes
-// it, which makes it the one moment before the app goes away that can ask for a
-// window and be granted it.
-//
-// So the swipe is watched for, and the request is made inside the handler, on the
-// same tick, exactly as the button does it. Nothing is simulated and no gesture is
-// taken from anyone: it is the user's own way out, used for the thing they asked
-// for when they switched this on.
-//
-// Narrow on purpose. The press has to start within a thumb's width of the bottom
-// edge, travel upwards, and travel further up than sideways — page scrolling does
-// not begin down there, and a horizontal swipe is a different intention.
-
-/**
- * How close to the bottom edge a press has to start to be the way out.
- *
- * Widened, because this is no longer a nicety — it is the mechanism. Apple's own
- * answer on this is that picture-in-picture may only begin in response to user
- * interaction and never programmatically, and WebKit enforces it by granting the
- * window only inside a live user activation. A call from a visibility handler
- * reports success, fires the change event, and presents nothing; that is the
- * "모드는 PiP 인데 창이 없다" exactly, and it is why the same code worked whenever a
- * tap happened to be a second or two old.
- *
- * The swipe up from the bottom is the gesture that leaves, and its touch reaches
- * the page before the system takes it. It is the one moment that can ask and be
- * granted.
- */
-const HOME_EDGE = 60
-/** How far up it has to travel before it counts. */
-const HOME_TRAVEL = 16
-
-let swipeFrom: { x: number; y: number } | null = null
-
-export function isHomeSwipe(state: {
-  fromBottom: number
-  up: number
-  sideways: number
-}): boolean {
-  if (state.fromBottom > HOME_EDGE) return false
-  if (state.up < HOME_TRAVEL) return false
-  return state.up > state.sideways
-}
-
-function onTouchStart(event: Event): void {
-  if (!(event instanceof TouchEvent)) return
-  const touch = event.changedTouches[0]
-  if (!touch) return
-  swipeFrom =
-    window.innerHeight - touch.clientY <= HOME_EDGE
-      ? { x: touch.clientX, y: touch.clientY }
-      : null
-}
-
-function onTouchMove(event: Event): void {
-  if (!swipeFrom || !(event instanceof TouchEvent)) return
-  const touch = event.changedTouches[0]
-  if (!touch) return
-  const up = swipeFrom.y - touch.clientY
-  const sideways = Math.abs(touch.clientX - swipeFrom.x)
-  if (!isHomeSwipe({ fromBottom: window.innerHeight - swipeFrom.y, up, sideways })) return
-  swipeFrom = null
-
-  const video = playerVideo()
-  if (!video) return
-  // Nothing to carry away if it was not playing.
-  if (video.paused || video.ended) return
-  if (document.pictureInPictureElement === video) return
-
-  /*
-   * A mode that says picture-in-picture with no window on screen is a state this
-   * API can get stuck in — the call reports success whether or not anything is
-   * presented, so a refused attempt leaves the property claiming a window that
-   * does not exist, and the next attempt is skipped as unnecessary. Putting it
-   * back inline first is the only reset the prefixed API offers.
-   */
-  if (video.webkitPresentationMode && video.webkitPresentationMode !== 'inline') {
-    if (userIsHere()) {
-      log(`나가는 손짓: 모드가 ${video.webkitPresentationMode} 인데 화면엔 없음 — 되돌리고 다시`)
-      try {
-        video.webkitSetPresentationMode?.('inline')
-      } catch {
-        return
-      }
-    } else {
-      return
-    }
-  }
-
-  allowPip(video)
-  leftAt = video.currentTime
-  const attempt = attemptSync(video)
-  handedOver = true
-  wentAway = true
-  floatingAway = attempt === 'called'
-  floatedVideo = attempt === 'called' ? video : null
-  // Only when something was actually taken. Raised on a refused call it stayed up
-  // with no window behind it and nothing on the way to lower it.
-  record('home-swipe', `${attempt}:from-${video.webkitPresentationMode ?? 'unknown'}`)
-  setTimeout(() => {
-    log(`나가는 손짓: 결과 모드=${video.webkitPresentationMode ?? '?'}`)
-  }, 700)
-}
-
-function swipeSignals(): [EventTarget, string][] {
-  return [
-    [document, 'touchstart'],
-    [document, 'touchmove'],
-  ]
-}
+// A touch watcher looked for the swipe up from the bottom edge, on the theory
+// that its touch reaches the page before the system takes it. The census
+// answered that: over a whole session the closest any touch came to the bottom of
+// the page was 477px, because the bottom of the screen belongs to the browser's
+// own toolbar. Nothing here reads touches now.
 
 // --- What used to be here ---------------------------------------------------
 //
@@ -1240,15 +881,6 @@ let wantButton = false
 /** Start offering PiP. Safe to call repeatedly. */
 export function enablePictureInPicture(options: { button: boolean }): void {
   wantButton = options.button
-  for (const [target, event] of swipeSignals()) {
-    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
-    // Passive: this never prevents the gesture. Taking the user's way out away
-    // from them would be a far worse bug than not floating a video.
-    target.addEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, {
-      capture: true,
-      passive: true,
-    })
-  }
   if (!wantButton) document.getElementById(BUTTON_ID)?.remove()
   sweep()
   for (const [target, event] of leavingSignals()) {
@@ -1277,41 +909,6 @@ export function enablePictureInPicture(options: { button: boolean }): void {
 }
 
 /** Stop, and leave no trace. */
-/**
- * Float it, from inside somebody else's gesture.
- *
- * The one path on this platform where a window can be opened *after* the user has
- * left. WebKit runs a media-session action handler inside a real user gesture —
- * `MediaSession::callActionHandler` opens `UserGestureIndicator(ProcessingUserGesture,
- * document())`, a full gesture rather than a media-scoped one, landed in r277588
- * for bug 225875 — so the lock screen and Control Centre carry the very
- * permission a departure cannot.
- *
- * Everything else about leaving was an attempt to manufacture that permission at
- * a moment that has none, and every one of them was taken and silently ignored.
- * This does not manufacture anything: the user really did press a button, it is
- * really their gesture, and the window is theirs to be given.
- *
- * Called synchronously from the handler, before anything can be awaited.
- */
-export function floatFromGesture(video: HTMLVideoElement, why: string): void {
-  const target = video as WebkitVideo
-  if (isFloating(target)) return
-  // Nothing to float on a page somebody is looking at — they can see the video.
-  if (!document.hidden) return
-  if (target.webkitSupportsPresentationMode?.('picture-in-picture') === false) {
-    log(`잠금화면 ${why}: 이 영상은 작은 창을 지원하지 않음`)
-    return
-  }
-  allowPip(target)
-  log(`잠금화면 ${why}: 작은 창 요청 (활성화=${activation()})`)
-  try {
-    target.webkitSetPresentationMode?.('picture-in-picture')
-  } catch (e) {
-    log(`잠금화면 ${why}: 거절 — ${e instanceof Error ? e.message : String(e)}`)
-  }
-}
-
 /** Whether a departure is in flight, for the other resumer to keep out of. */
 export function isFloatingAway(): boolean {
   return floatingAway
@@ -1321,15 +918,10 @@ export function disablePictureInPicture(): void {
   // Switched off with the hold up would wedge the page for the rest of its life:
   // the page's own inline calls stay refused and nothing is left to release them.
   floatingAway = false
-  for (const [target, event] of swipeSignals()) {
-    target.removeEventListener(event, event === 'touchstart' ? onTouchStart : onTouchMove, true)
-  }
-  swipeFrom = null
   observer?.disconnect()
   observer = null
   for (const [target, event] of leavingSignals()) target.removeEventListener(event, onLeaving, true)
   for (const [target, event] of returningSignals()) target.removeEventListener(event, onReturning, true)
   for (const [target, event] of placementSignals()) target.removeEventListener(event, place)
-  document.documentElement.removeAttribute(AUTO_ATTR)
   document.getElementById(BUTTON_ID)?.remove()
 }
