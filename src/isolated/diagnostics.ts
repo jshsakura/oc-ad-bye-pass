@@ -26,15 +26,21 @@ const KEY = 'diagnostics'
 const YOUTUBE_KEY = 'diagnosticsYoutube'
 
 /**
- * The log, kept across pages.
+ * The tail, kept across documents.
  *
- * It lives in a DOM attribute so it can be written while the page is being
- * suspended, and a DOM attribute dies with the page — so every navigation started
- * the story again, which is why opening the panel after a video had loaded showed
- * one line. The tail is folded into storage on every report instead.
+ * The log lives in an attribute on the document element, which is the only thing
+ * that survives the page being suspended — and dies with the document. Coming
+ * back from the background reloads this page routinely, so every line written on
+ * the way out is gone before anyone can read it: four dumps in a row have been
+ * the first second of a fresh page, with the departure they were taken for
+ * nowhere in them.
+ *
+ * This is the extension's own storage, not the page's. A copy in localStorage was
+ * tried and removed while playback was broken, because it wrote into the page on
+ * every line; this writes nothing there and only on a report.
  */
 const LOG_KEY = 'diagnosticsLog'
-const LOG_KEEP = 6000
+const LOG_KEEP = 8000
 
 /** Written by src/isolated/injectMain.ts — how layer 1 got here, or why it did not. */
 const INJECT_ATTR = 'data-oc-abp-inject'
@@ -95,6 +101,7 @@ export function reportDiagnostics(): void {
     userAgent: navigator.userAgent,
   }
   void chrome.storage.local.set({ [KEY]: facts })
+  void mergeLog(facts.log)
   if (location.hostname.endsWith('youtube.com')) {
     void chrome.storage.local.set({ [YOUTUBE_KEY]: facts })
   }
@@ -103,28 +110,33 @@ export function reportDiagnostics(): void {
   if (!facts.layer1) watchForLayer1()
 }
 
+
 /**
- * Fold this page's tail into the running one.
+ * Fold this document's tail into the running one, in time order.
  *
- * Lines are matched rather than counted: the same report is written several times
- * per page, and appending each time would keep the same lines over and over. What
- * is new is whatever comes after the last line already stored.
+ * Merged by line rather than appended blindly — the same report is written
+ * several times per page and the tail overlaps itself. Sorted by the stamp alone
+ * and stably, because sorting whole lines alphabetises a burst inside one
+ * millisecond, which is exactly the part worth reading.
  */
 async function mergeLog(tail: string | null): Promise<void> {
   if (!tail) return
   try {
     const got = await chrome.storage.local.get(LOG_KEY)
     const stored = typeof got[LOG_KEY] === 'string' ? (got[LOG_KEY] as string) : ''
-    const lines = tail.split('\n')
     const known = new Set(stored.split('\n'))
-    const fresh = lines.filter((line) => line && !known.has(line))
+    const fresh = tail.split('\n').filter((line) => line && !known.has(line))
     if (fresh.length === 0) return
-    const merged = stored ? `${stored}\n${fresh.join('\n')}` : fresh.join('\n')
+    const merged = [...stored.split('\n').filter(Boolean), ...fresh]
+      .map((line, index) => ({ line, index }))
+      .sort((a, b) => a.line.slice(0, 9).localeCompare(b.line.slice(0, 9)) || a.index - b.index)
+      .map((entry) => entry.line)
+      .join('\n')
     await chrome.storage.local.set({
       [LOG_KEY]: merged.length > LOG_KEEP ? merged.slice(merged.length - LOG_KEEP) : merged,
     })
   } catch {
-    // The panel still has this page's own tail; a merged history is a bonus.
+    // The panel still has this document's own tail; a longer history is a bonus.
   }
 }
 
