@@ -1,4 +1,4 @@
-// Checks that the filters/youtube.json we publish passes the extension's own
+// Checks that the filters/video.json we publish passes the extension's own
 // validator. Pushing a broken one makes every installed extension fail to
 // update, so CI blocks it.
 
@@ -8,9 +8,9 @@ import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { parseFilterList } from '../src/shared/filterlist.ts'
 
-const LIST_PATH = fileURLToPath(new URL('../filters/youtube.json', import.meta.url))
+const LIST_PATH = fileURLToPath(new URL('../filters/video.json', import.meta.url))
 
-test('filters/youtube.json 이 검증을 통과한다', () => {
+test('filters/video.json 이 검증을 통과한다', () => {
   const result = parseFilterList(readFileSync(LIST_PATH, 'utf8'))
   assert.equal(result.ok, true, result.ok ? '' : result.error)
   if (!result.ok) return

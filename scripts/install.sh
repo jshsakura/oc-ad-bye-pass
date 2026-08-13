@@ -20,13 +20,13 @@ set -euo pipefail
 # short form goes via `latest`, which skips prereleases — and every release here
 # is one while the project is unfinished, so the short form is a 404. The list
 # endpoint answers with the newest release whatever it is marked as.
-ASSET='oc-ad-bye-pass-desktop.zip'
+ASSET='oc-ad-bye-pass-desktop'
 API='https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases?per_page=1'
 
 resolve_zip() {
   curl -fsSL "$API" 2>/dev/null |
     tr ',' '\n' |
-    grep -o "https://[^\"]*/${ASSET}" |
+    grep -o "https://[^\"]*${ASSET}[^\"]*\.zip" |
     head -n 1
 }
 

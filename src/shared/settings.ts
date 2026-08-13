@@ -96,7 +96,7 @@ export interface Settings {
 }
 
 export const DEFAULT_LIST_URL =
-  'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/youtube.json'
+  'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/list.json'
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,

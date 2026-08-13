@@ -124,8 +124,8 @@ test('사이트가 WebKit 에서 오류 없이 뜨고, 브라우저 언어를 �
     // The deploy copies the rule list in beside the page (pages.yml), and the
     // page links to it. Serving only site/ makes that link 404, which shows up
     // as a console error the test then blames on the page.
-    if (rel === '/filters/youtube.json') {
-      readFile(join(process.cwd(), 'filters', 'youtube.json'), (err, body) => {
+    if (rel === '/filters/video.json') {
+      readFile(join(process.cwd(), 'filters', 'video.json'), (err, body) => {
         if (err) {
           res.writeHead(404).end()
           return

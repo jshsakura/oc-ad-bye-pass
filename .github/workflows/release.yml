@@ -1,12 +1,14 @@
 # Builds the zips people install and attaches them to the GitHub release.
 #
 # **The release is the distribution.** The site (GitHub Pages) links to
-# `releases/latest/download/<name>.zip`, so the asset names below are a contract
-# — rename one and every download button on the page 404s.
+# the releases API, matching assets by name, so the names carry the version:
 #
-#   oc-ad-bye-pass-desktop.zip  Chrome · Edge
-#   oc-ad-bye-pass-orion.zip   Orion (iOS · macOS). No declarativeNetRequest —
-#                              Orion refused the Chrome package outright.
+#   oc-ad-bye-pass-desktop-vX.Y.Z.zip  Chrome · Edge
+#   oc-ad-bye-pass-orion-vX.Y.Z.zip    Orion (iOS · macOS). No declarativeNetRequest —
+#                                      Orion refused the Chrome package outright.
+#
+# The version is in the filename because a fixed name is how a phone ends up
+# handing the browser a zip it downloaded weeks ago.
 
 name: release
 
@@ -75,12 +77,23 @@ jobs:
           ! find dist dist-orion -name '_*' -print | grep . || {
             echo "::error::예약된 _ 이름이 남아 있다 (위 목록)"; exit 1; }
 
+      # 파일 이름에 버전이 들어간다.
+      #
+      # 이름이 고정이면 폰이 예전에 받아둔 같은 이름의 zip 을 그대로 넘긴다 —
+      # Orion 의 "Extensions Error" 대부분이 이것이고, 캐시를 지워야 풀리는 것도
+      # 이 때문이다. 이름이 매번 다르면 재사용할 파일 자체가 없고, Files 앱에서
+      # 어느 빌드를 골랐는지도 눈으로 확인된다.
+      #
+      # 사이트와 설치 스크립트는 릴리스 API 로 자산을 찾으므로 이름이 바뀌어도
+      # 따라온다. 이름을 고정으로 두던 이유(`latest/download/<이름>.zip`)는
+      # 그 경로를 쓰지 않게 되면서 사라졌다.
       - name: zip 으로 묶기
         run: |
-          (cd dist && zip -qr ../oc-ad-bye-pass-desktop.zip .)
-          (cd dist-orion && zip -qr ../oc-ad-bye-pass-orion.zip .)
+          v="${GITHUB_REF_NAME:-dev}"
+          (cd dist && zip -qr "../oc-ad-bye-pass-desktop-$v.zip" .)
+          (cd dist-orion && zip -qr "../oc-ad-bye-pass-orion-$v.zip" .)
           ls -lh ./*.zip
-          unzip -l oc-ad-bye-pass-desktop.zip
+          unzip -l "oc-ad-bye-pass-desktop-$v.zip"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -105,13 +118,19 @@ jobs:
             ## 아이폰 · 아이패드 (Orion)
 
             1. App Store 에서 **Orion Browser by Kagi** 를 설치합니다.
-            2. **`oc-ad-bye-pass-orion.zip`** 을 받습니다 (Chrome 용과 다른 파일입니다).
+            2. **`oc-ad-bye-pass-orion-…zip`** 을 받습니다 (Chrome 용과 다른 파일입니다).
             3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다.
             4. `youtube.com` 권한을 허용합니다.
 
-            설치가 "Extensions Error" 로 튕기면 **Orion 설정에서 캐시를 지우고** 다시
-            해보세요. 실기기에서 이것 하나가 갈랐습니다. 이미 깔려 있다면 먼저 지우셔야
-            하고, 덮어쓰기 설치는 되지 않습니다.
+            설치가 **"Extensions Error / Something went wrong"** 으로 튕기면 파일 문제가
+            아닙니다. 순서대로 해보세요.
+
+            1. Extensions 에서 **기존 것을 먼저 지웁니다** (덮어쓰기 설치는 안 됩니다)
+            2. Orion **설정 → 개인정보 보호 → 캐시 지우기**
+            3. 유튜브 탭이 아니라 **빈 탭에서** 다시 설치합니다
+
+            실기기에서 2번 하나가 갈랐습니다. 파일 이름에 버전이 들어가 있으니
+            (`…-v0.10.70.zip`) 어느 빌드를 골랐는지 Files 앱에서 확인하실 수 있습니다.
 
             Orion 은 `declarativeNetRequest` 를 구현하지 않아 Chrome 패키지를 설치조차
             거절합니다. Orion 빌드는 그 키와 3.6MB 룰셋을 뺀 것이고(276KB), 유튜브 차단은
@@ -119,7 +138,7 @@ jobs:
 
             ## Chrome · Edge
 
-            1. `oc-ad-bye-pass-desktop.zip` 을 받아 압축을 풉니다.
+            1. `oc-ad-bye-pass-desktop-…zip` 을 받아 압축을 풉니다.
             2. `chrome://extensions` 를 엽니다.
             3. 우측 상단 **개발자 모드**를 켭니다.
             4. **압축해제된 확장 프로그램을 로드**를 눌러 압축 푼 폴더를 선택합니다.

@@ -74,7 +74,7 @@ Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 �
 다시 서명할 일도 없다.
 
 1. App Store 에서 **Orion Browser by Kagi** 설치
-2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-orion.zip`** 을 받는다 (Chrome 용과 다른 파일이다)
+2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-orion-…zip`** 을 받는다 (Chrome 용과 다른 파일이다)
 3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
 4. `youtube.com` 권한 허용
 
@@ -291,14 +291,14 @@ E2E `07-mainworld-paths` 는 한 걸음 더 간다: `dist/` 에서 정적 MAIN �
 ## 필터 리스트 — 규칙만 따로 업데이트
 
 그 사이트가 렌더러 태그를 바꿔도 재설치가 필요 없도록, 차단 규칙을 코드에서 분리해
-[`filters/youtube.json`](filters/youtube.json) 에 둔다. uBlock Origin / AdGuard 의 필터
+[`filters/video.json`](filters/video.json) 에 둔다. uBlock Origin / AdGuard 의 필터
 리스트 구독과 같은 모델이다.
 
 **광고가 하나 안 막히면 이렇게 고친다.**
 
 1. 개발자도구로 광고 요소를 찍어 셀렉터를 얻는다
 2. 확장 옵션의 **내 규칙**에 붙여넣어 바로 확인한다
-3. 잘 되면 `filters/youtube.json` 의 해당 그룹에 추가하고 **`version` 을 올려서** push
+3. 잘 되면 `filters/video.json` 의 해당 그룹에 추가하고 **`version` 을 올려서** push
 4. 몇 시간 안에 이 확장을 쓰는 모두에게 반영된다
 
 `version` 을 안 올리면 확장이 거부한다 (롤백 방지). 번들 기본 규칙
@@ -387,7 +387,7 @@ src/
 scripts/
   targets.mjs    ← 타깃 정의 (출력 경로·다운레벨 타깃). vite/esbuild/manifest 가 전부 읽는다
   manifest.mjs   ← public/manifest.json → 타깃별 manifest. vite 의 closeBundle 에서 불린다
-filters/youtube.json   ← 원격 필터 리스트 정본
+filters/video.json   ← 원격 필터 리스트 정본
 ```
 
 MAIN world 는 `chrome.storage` 를 못 읽어서 설정은 ISOLATED 가 `postMessage` 로 넘긴다.
@@ -514,12 +514,12 @@ storage.sync                       Partial support ← 유일한 구멍
 ```
 git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
-       oc-ad-bye-pass-desktop.zip  Chrome · Edge
-       oc-ad-bye-pass-orion.zip   Orion (아이폰 포함). DNR 을 뺀 276KB
+       oc-ad-bye-pass-desktop-vX.Y.Z.zip  Chrome · Edge
+       oc-ad-bye-pass-orion-vX.Y.Z.zip    Orion (아이폰 포함). DNR 을 뺀 276KB
 ```
 
 사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은
-`releases/latest/download/...` 를 가리키고, 푸터의 버전은 브라우저가 릴리스 API 에서
+릴리스 API 가 알려주는 자산 주소를 가리키고, 푸터의 버전도 같은 응답에서
 직접 읽는다. `pages.yml` 은 `site/` 나 필터가 바뀔 때만 돈다.
 
 > `release: published` 트리거는 안 쓴다. **안 걸린다.** 릴리스를 만든 주체가
@@ -527,9 +527,9 @@ git tag v0.2.0 && git push --tags
 
 | 어디 | 무엇 |
 |---|---|
-| [Releases](../../releases/latest) | zip 정본. `releases/latest/download/<이름>.zip` 은 항상 최신으로 넘어간다 |
+| [Releases](../../releases) | zip 정본. 파일 이름에 버전이 들어간다 — 고정 이름은 폰이 예전 zip 을 재사용하게 만든다 |
 | [사이트](https://jshsakura.github.io/oc-ad-bye-pass/) (`site/`) | 설치 안내. 다운로드 버튼은 위 주소를 가리킬 뿐 파일을 들고 있지 않다 |
-| `filters/youtube.json` | 규칙. 릴리스와 무관하게 갱신되고 확장이 알아서 받아간다 |
+| `filters/video.json` | 규칙. 릴리스와 무관하게 갱신되고 확장이 알아서 받아간다 |
 
 **에셋 이름은 계약이다.** 사이트 버튼도 `install.sh`/`install.ps1` 도 그 이름을 박아
 쓴다. 바꾸면 전부 404 가 되고, 아무도 오류를 못 본다 — 그냥 다운로드가 안 될 뿐이다.
@@ -601,7 +601,7 @@ ad-badge-view-model < … < ytd-in-feed-ad-layout-renderer < ytd-ad-slot-rendere
 안 막히는 광고를 [uAssets](https://github.com/uBlockOrigin/uAssets) 나
 [AdguardFilters](https://github.com/AdguardTeam/AdguardFilters) 에서 퍼오는 일이 생길 텐데,
 **셀렉터 목록은 편집저작물로 보호될 수 있다.** 둘 다 GPLv3 이고 이 프로젝트도 GPLv3 이라
-가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/youtube.json` 의 해당 항목에
+가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/video.json` 의 해당 항목에
 주석으로 남긴다.
 
 ## Orion 에서 달라지는 것

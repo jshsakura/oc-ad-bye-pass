@@ -540,8 +540,7 @@
         "*[class*=\"-coupas-\"]"
       ],
       "3rd.supply": [
-        ".h-hori-ad",
-        ".text-center:has(sp-common-adsense)"
+        ".h-hori-ad"
       ],
       "47news.jp": [
         "div#gAds_detailPage"
@@ -587,8 +586,7 @@
       "a-ha.io": [
         "div.teads-middle-box-wrapper",
         "div[aria-label=\"advertisement\"]",
-        "div[class^=\"teads-\"]",
-        "hr:has(+ div[aria-label=\"advertisement\"])"
+        "div[class^=\"teads-\"]"
       ],
       "academy.prompie.com": [
         "div[onclick^=\"location.href='https://academy.prompie.com/banners/\"]"
@@ -639,7 +637,6 @@
         "div[class$=\"_ad\"]"
       ],
       "algumon.com": [
-        "div:has([data-tip^='파트너스'], div[style*='height'], ins):is(.card, .deal-2col)",
         "div[class^=\"ad-\"]"
       ],
       "all-mice.co.kr": [
@@ -753,7 +750,6 @@
       ],
       "app.dcinside.com": [
         "*[class^=\"adv-group\"]",
-        ".detail-top-lst li:has(a[href*=\"//link.coupang.com/\"])",
         ".power-tit",
         "div[id^=\"ad\"]",
         "li.adv-inner"
@@ -786,7 +782,6 @@
       ],
       "arca.live": [
         ".ad",
-        "a:has(img[src*=\"/static/assets/images/karisuma-point\"])",
         "div#newsRank",
         "div.ad",
         "iframe[src^=\"/api/ads\"]"
@@ -1000,15 +995,6 @@
       "bam295co.com": [
         "section.fixed-banner"
       ],
-      "bamgad10.com": [
-        "ul.row:has(img[src*=\"/file/advertise/\"])"
-      ],
-      "bamgad8.com": [
-        "ul.row:has(img[src*=\"/file/advertise/\"])"
-      ],
-      "bamgad9.com": [
-        "ul.row:has(img[src*=\"/file/advertise/\"])"
-      ],
       "banhub.xyz": [
         "div.hidden[class*=\"xl:block\"]"
       ],
@@ -1020,9 +1006,6 @@
       "baskino.co": [
         "div#b-mtbcbar__container",
         "div.skin-block"
-      ],
-      "battlepage.com": [
-        "div[style$=\"min-height:200px;\"]:has(ins.adsbyaiinad)"
       ],
       "bbc.co.uk": [
         "div[amp-access=\"toggles.ads.enabled\"]",
@@ -1036,13 +1019,11 @@
         "#ti3",
         ".board_main ~ div[style^=\"width: 100%; height: \"][style$=\"align-items: center;\"]",
         "div#ti3",
-        "div.clear:has([style*='overflow-x'])",
         "div.nbp_container",
         "div.ti_wrapper",
         "div[class*=\"ad_\"][style]",
         "div[class^=\"adrr_\"]",
-        "div[style].ti_wrapper",
-        "tr:has(.nick[style^='display: inline-block'])"
+        "div[style].ti_wrapper"
       ],
       "beautynury.com": [
         "div[class*=\"_banner_\"]",
@@ -1645,7 +1626,6 @@
         "div[class^=\"popup_cheat_key_container__\"]"
       ],
       "chzzkban.xyz": [
-        "div[class*=\" \"]:is([style^=\"height:\"], [style^=\"pointer-events:\"], [style^=\"width:\"]):has(div[id^=\"adv-\"])",
         "div[id^=\"ad-\"]"
       ],
       "cine21.com": [
@@ -1691,9 +1671,6 @@
         "div.label-banner",
         "div.oxad:not(.global_top)",
         "li.listAd"
-      ],
-      "clickmon.co.kr": [
-        "html *"
       ],
       "clien.net": [
         "#coupangAd",
@@ -1770,8 +1747,7 @@
         "div.top_banner"
       ],
       "coinpan.com": [
-        "img[class^=\"banner_\"]",
-        "li:has(ins.adsbygoogle)"
+        "img[class^=\"banner_\"]"
       ],
       "coinreaders.com": [
         ".td_sub_read_contents div[style*=\"width:\"]",
@@ -2021,7 +1997,6 @@
       ],
       "damoang.net": [
         ".damoang-banner",
-        ".dm-card:has(#gam-index-top-damoang-banner-index)",
         "[class*='-banner']",
         "div.ad-clip-wrapper",
         "div.ad-slot-container",
@@ -2106,8 +2081,7 @@
         "div.rightbanner",
         "div[class$=\"banner\"]",
         "div[class^=\"rightbanner\"]",
-        "iframe[src^=\"https://tm.interworksmedia.co.kr\"]",
-        "tr.ub-content:has(a[onclick^=\"survey\"])"
+        "iframe[src^=\"https://tm.interworksmedia.co.kr\"]"
       ],
       "dcnewsj.joins.com": [
         "div#ad_floating",
@@ -2233,8 +2207,7 @@
         "section.b-right-rail--ads"
       ],
       "diningcode.com": [
-        ".ad-container",
-        "li:has(.PoiAdsSpacerList)"
+        ".ad-container"
       ],
       "diodeo.com": [
         "div#newsFloatingBanner"
@@ -2302,9 +2275,7 @@
       ],
       "doctorjob.co.kr": [
         ".grand_banner",
-        ".grand_banner + .sectionc",
-        ".main_pay + .sectionc:has(a[href^=\"/business/recruit_write.php\"])",
-        ".nurse_banner:has(a[href^=\"/business/recruit_write.php\"])"
+        ".grand_banner + .sectionc"
       ],
       "dogdrip.net": [
         "div.clayerbox-left-ad",
@@ -3051,7 +3022,6 @@
         ".con_banner",
         ".dc_all",
         ".dcmedia.content_box",
-        ".gall_list .ub-content:not(.us-post):has(a[href*=\"//link.coupang.com/\"])",
         ".ltr",
         ".r_dcmedia",
         "div#zzbang_div",
@@ -3663,7 +3633,6 @@
         "div.advertisement"
       ],
       "humorpick.com": [
-        ".view-mobile div[class*=\"margin-\"]:has(#main_bn)",
         "div#sticky-ad-js",
         "div.square-bn",
         "li.list-item-ad",
@@ -3715,10 +3684,8 @@
         "#Suggestion .newServices",
         "#ly_subb",
         "#related-writer-info .in-writer-info",
-        ".home-board:has(.home-banner-wrap)",
         ".ly_subb",
         ".topNoticeArea",
-        "[class$=\"-bn\"]:has(a[target=\"_blank\"])",
         "[class*=\"AdWrap\"]",
         "a[class*=\"_banner\"]",
         "div[data-unit]"
@@ -3817,10 +3784,6 @@
       ],
       "ilemonde.com": [
         "#layer-popups"
-      ],
-      "ilovebees.io": [
-        ".e-con-full.e-flex.e-con:has(a[target=\"_blank\"] img)",
-        ".e-grid.e-con-full.e-con.e-child:has(a[target=\"_blank\"] img)"
       ],
       "ilovevid.com": [
         "div.ads"
@@ -3992,7 +3955,6 @@
         "div.videoAdPopup",
         "div[id$=\"AdTop\"]",
         "div[id^=\"webzineAd\"]",
-        "div[style=\"width: 100%; height: 250px\"]:has(.ad-right2)",
         "section.ad-right2"
       ],
       "inverse.com": [
@@ -4035,9 +3997,6 @@
         "div.body-ad",
         "div[class*=\" page_content-sticky-bottom__\"]",
         "div[class^=\"page_content-ad-box__\"]"
-      ],
-      "issuelink.co.kr": [
-        "table.table-stripped tr:is(:has(.ad), :has(.adsbygoogle))"
       ],
       "issuetory.co.kr": [
         ".code-block-6"
@@ -4448,7 +4407,6 @@
         "div.banner01",
         "div.banner1",
         "div.banner2",
-        "div.iniframe:has(div[data-aa-adunit])",
         "div.left_banner2",
         "div.left_banner3",
         "div.new_ad1",
@@ -4471,9 +4429,6 @@
         "ins[data-ad-slot=\"1990317404\"]",
         "ins[data-ad-slot=\"7060858021\"]",
         "ins[data-ad-slot=\"9022139528\"]"
-      ],
-      "koreaminecraft.net": [
-        "tr.notice:not(:has(.wst_member_title))"
       ],
       "koreanbots.dev": [
         ".container div[style^=\"height:\"].mx-auto"
@@ -5096,6 +5051,8 @@
       ],
       "m.danawa.com": [
         "#bottomTabBar-item-internetJoin",
+        ".banner_ajungdang",
+        ".box__tooltip-internet",
         ".goods-list__ad",
         "div#mdnw-advertise-adReader-container",
         "div#mdnw-floatingBannerContainer",
@@ -5122,7 +5079,6 @@
       "m.dcinside.com": [
         "#light_tipbox",
         "*[class^=\"adv-group\"]",
-        ".detail-top-lst li:has(a[href*=\"//link.coupang.com/\"])",
         ".layer-bottom-popup",
         ".outside-search-box",
         ".power-tit",
@@ -5391,7 +5347,6 @@
       ],
       "m.health.chosun.com": [
         "#_popIn_recommend",
-        "#content ~ .edit_bottom li:has(.li_ad)",
         "a[class*=\"_ad\"]",
         "div[class*=\"_ad\"]"
       ],
@@ -5590,6 +5545,55 @@
         "div#da_kin",
         "div#kin_common_banner",
         "div[class^=\"banner_\"]"
+      ],
+      "m.kmib.co.kr": [
+        ".article_wrap ~ div[class^=\"nwbx\"]",
+        "div.ad_bottom_floating",
+        "div.bnr_cmain01",
+        "div.bnr_cmain02",
+        "div.css_remon_wiki1",
+        "div.ftbnr_margin",
+        "div.m_ad",
+        "div.ms_bnr",
+        "div[class*=\"_ad\"]"
+      ],
+      "m.knn.pe.kr": [
+        "div.bn"
+      ],
+      "m.kormedi.com": [
+        "div#ad_Banner",
+        "div#ad_newsVeiw_Bottom",
+        "div#bottom_adv",
+        "div.adiframe",
+        "iframe[src^=\"http://img.kormedi.com/healthgift/ad/ad\"][src$=\".html\"]"
+      ],
+      "m.kr.ajunews.com": [
+        "div.main_banner2",
+        "div.vs_ad"
+      ],
+      "m.kukinews.com": [
+        "div.articlein_ad_middle_content",
+        "div.articlein_ad_top_content",
+        "div.iwm_aip",
+        "div.iwm_ba"
+      ],
+      "m.kwnews.co.kr": [
+        "div.art_mid_ad",
+        "div.bottom_banner",
+        "ul.local_ad"
+      ],
+      "m.kyeongin.com": [
+        "div.webAdArr",
+        "div[class^=\"mViewAd\"]",
+        "div[class^=\"mView_ad\"]",
+        "ins[data-ad-slot=\"1096998365\"]"
+      ],
+      "m.lady.khan.co.kr": [
+        "div#article_bottom_ad",
+        "div.ad_cont",
+        "div.art_top_bn",
+        "div.contBn",
+        "div.contBn_foot"
       ]
     },
     "prune": [

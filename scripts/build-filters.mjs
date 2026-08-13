@@ -76,8 +76,9 @@ const SOURCES = [
  * `display: none`.
  */
 const UNSAFE = /[{}@<>]|\/\*|\*\//
-const EXTENDED = /:(-abp-|has-text|matches-css|xpath|contains|min-text-length|watch-attr|nth-ancestor|upward|remove\b|style\b)/
-const TOO_BROAD = new Set(['*', 'html', ':root', 'body', 'head'])
+const EXTENDED =
+  /:(-abp-|has\(|has-text|matches-css|xpath|contains|min-text-length|watch-attr|nth-ancestor|upward|remove\b|style\b)/
+const TOO_BROAD = new Set(['*', 'html', ':root', 'body', 'head', 'html *', ':root *'])
 
 /** Cosmetic hide, and nothing else. `#@#` is an exception, `#%#` a scriptlet. */
 const RULE = /^([^#$]*)##([^+].*)$/
@@ -92,6 +93,8 @@ function usable(selector) {
   if (UNSAFE.test(s)) return null
   if (EXTENDED.test(s)) return null
   if (TOO_BROAD.has(s)) return null
+  // Long inline-style matches are brittle and the validator refuses them anyway.
+  if (s.length > 200 && /style="/.test(s)) return null
   // A bare tag name points at a class of content rather than an ad.
   if (/^[a-z][a-z0-9]*$/.test(s)) return null
   return s

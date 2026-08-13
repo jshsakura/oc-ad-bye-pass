@@ -201,7 +201,7 @@ report.leaks = [...leakTags.values()]
 // list. Reporting a rule added only to the list as "unknown" forever would blunt
 // the signal.
 const { BUNDLED_HIDE } = await import('../src/shared/selectors.ts')
-const listPath = path.resolve(import.meta.dirname, '..', 'filters', 'youtube.json')
+const listPath = path.resolve(import.meta.dirname, '..', 'filters', 'video.json')
 const shippedList = JSON.parse(readFileSync(listPath, 'utf8'))
 
 const known = new Set(

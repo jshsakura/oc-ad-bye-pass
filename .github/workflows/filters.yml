@@ -1,4 +1,4 @@
-name: korea
+name: filters
 
 # 한국 필터 리스트 미러링.
 #
@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: korea
+  group: filters
   cancel-in-progress: false
 
 jobs:
@@ -37,12 +37,12 @@ jobs:
       - run: npm ci
 
       - name: 원본을 받아 우리 형식으로 굽는다
-        run: node scripts/build-korea.mjs
+        run: node scripts/build-filters.mjs
 
       # 만들어진 것이 확장이 실제로 받아들이는 것인지 확인한다. 검증기가 거절할
       # 규칙을 커밋하면 그 줄들은 사용자에게 도달한 뒤 조용히 사라진다.
       - name: 확장의 검증기를 통과하는지
-        run: node scripts/verify-korea.mjs
+        run: node scripts/verify-filters.mjs
 
       - name: 바뀌었으면 커밋한다
         run: |

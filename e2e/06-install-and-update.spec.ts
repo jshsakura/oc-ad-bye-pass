@@ -21,7 +21,7 @@ import { layer1Active, layer2Active } from './probes.ts'
 import { YOUTUBE_URL, installYouTubeFixture } from './youtube-fixture.ts'
 
 const DIST = path.resolve(import.meta.dirname, '..', 'dist')
-const LIST_URL = 'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/youtube.json'
+const LIST_URL = 'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/list.json'
 
 // ---------------------------------------------------------------------------
 // 1. Local install — the very zip a user receives

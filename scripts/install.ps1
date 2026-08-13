@@ -15,14 +15,14 @@ $ErrorActionPreference = 'Stop'
 
 # The GitHub release is the distribution — see the comment in install.sh, including
 # why this goes through the API instead of `latest/download/<asset>`.
-$Asset = 'oc-ad-bye-pass-desktop.zip'
+$Asset = 'oc-ad-bye-pass-desktop'
 $Api   = 'https://api.github.com/repos/jshsakura/oc-ad-bye-pass/releases?per_page=1'
 
 function Resolve-ZipUrl {
   try {
     $releases = Invoke-RestMethod -Uri $Api -Headers @{ 'User-Agent' = 'oc-ad-bye-pass-installer' }
     return ($releases | Select-Object -First 1).assets |
-      Where-Object { $_.name -eq $Asset } |
+      Where-Object { $_.name -like "*$Asset*.zip" } |
       Select-Object -First 1 -ExpandProperty browser_download_url
   } catch {
     return $null

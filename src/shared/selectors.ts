@@ -1,6 +1,6 @@
 // Bundled default rules — what works the moment you install, with no network.
 //
-// The remote filter list (filters/youtube.json) does not "override" this list,
+// The remote filter list (filters/video.json) does not "override" this list,
 // it unions with it. So when YouTube renames a tag you only add the new
 // selector to the JSON; the stale one left here matches nothing and is harmless.
 //
@@ -114,7 +114,7 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
   //
   // NOTE: these renderer tags are unverified on a real device. YouTube mobile
   // web varies by experiment group, so if something slips through, grab the tag
-  // in devtools and add it to the appPromo group in filters/youtube.json — it
+  // in devtools and add it to the appPromo group in filters/video.json — it
   // lands without a reinstall.
   appPromo: [
     'ytm-app-promo-renderer',

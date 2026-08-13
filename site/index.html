@@ -814,10 +814,10 @@
       <li>Pick the zip you downloaded and allow the <code>youtube.com</code> permission</li>
     </ol>
 
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-orion.zip" id="dl-orion" data-size="92KB">
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-orion" data-size="92KB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · ORION
-      <span class="what">oc-ad-bye-pass-orion.zip · 92KB</span>
+      <span class="what">Orion 패키지</span>
     </a>
 
     <div class="note" lang="ko">
@@ -925,10 +925,10 @@
       <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
-    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-desktop.zip" id="dl-chrome" data-size="1.5MB">
+    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-chrome" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       DOWNLOAD · CHROME
-      <span class="what">oc-ad-bye-pass-desktop.zip · 1.5MB</span>
+      <span class="what">Chrome · Edge 패키지</span>
     </a>
   </div>
 
@@ -1433,13 +1433,16 @@
       // markup stays as the fallback for a page that could not reach the API —
       // it is wrong in the same way the whole short form is, and it is better
       // than a button with no address at all.
-      for (const [id, name] of [
-        ['dl-orion', 'oc-ad-bye-pass-orion.zip'],
-        ['dl-chrome', 'oc-ad-bye-pass-desktop.zip'],
+      // Matched by shape, because the names carry the version now — a fixed
+      // name is how a phone hands the browser a zip it downloaded weeks ago.
+      for (const [id, kind] of [
+        ['dl-orion', 'orion'],
+        ['dl-chrome', 'desktop'],
       ]) {
         const a = document.getElementById(id);
         if (!a) continue;
-        const asset = release?.assets?.find((x) => x.name === name);
+        const asset = release?.assets?.find((x) => x.name.includes(kind) && x.name.endsWith('.zip'));
+        const name = asset?.name ?? `oc-ad-bye-pass-${kind}.zip`;
         if (asset?.browser_download_url) a.href = asset.browser_download_url;
         const size = asset ? humanSize(asset.size) : (a.dataset.size ?? '');
         const what = a.querySelector('.what');
