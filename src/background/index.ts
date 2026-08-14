@@ -15,19 +15,16 @@ import { syncAllowlistRules } from './network.ts'
 
 // --- Badge ---------------------------------------------------------------------
 //
-// Two ways to show the count, picked by what the browser supports:
+// One number, everywhere: the cumulative pruned+skipped total, the same figure
+// the popup shows, compacted so it never runs past four characters.
 //
-//   Chrome/Edge — `displayActionCountAsBadgeText` lets declarativeNetRequest
-//   drive the badge itself. It counts *blocked requests on the current tab* and
-//   updates live as they happen, on every site — which is the whole point: the
-//   old cumulative badge only ever moved on YouTube (the only place stats:bump
-//   fires), so on an ordinary page it stayed empty while ads were being blocked
-//   by the hundred. Allow / allowAllRequests rules do not count, so a site the
-//   user switched off shows nothing.
-//
-//   Orion/Safari — no declarativeNetRequest at all, so nothing to count from the
-//   network side. There we fall back to the cumulative pruned+skipped total,
-//   which is exactly the YouTube activity those targets do have.
+// It used to be the per-tab declarativeNetRequest count
+// (`displayActionCountAsBadgeText`). That reads well in theory but not in the
+// hand: on a single-page site like YouTube the tab never reloads, so the count
+// climbs on its own as the page keeps firing tracking requests — hundreds while
+// you sit still — until it buries the icon, and it never matched the popup's own
+// total. So it is off, and because that flag is persisted per-profile it has to
+// be turned off explicitly for anyone upgrading from the version that set it.
 //
 // Red ground, white text — legible on either theme, and the colour of "stopped".
 
@@ -40,28 +37,21 @@ function compact(n: number): string {
   return `${(n / 1_000_000).toFixed(1)}M`
 }
 
-async function paintBadgeChrome() {
-  await chrome.action.setBadgeBackgroundColor({ color: '#e62117' })
-  await chrome.action.setBadgeTextColor?.({ color: '#ffffff' })
-}
-
-/** Let declarativeNetRequest own the badge — a live, per-tab blocked count. */
-function enableLiveBadge() {
+/** Undo a previous version's per-tab count badge; the flag persists otherwise. */
+function useCumulativeBadge() {
   if (!HAS_DNR_BADGE) return
   try {
     chrome.declarativeNetRequest.setExtensionActionOptions({
-      displayActionCountAsBadgeText: true,
+      displayActionCountAsBadgeText: false,
     })
   } catch {
-    // Older builds may lack it despite the type — the manual path still runs.
+    // Nothing to undo — the manual badge is the only path anyway.
   }
 }
 
 async function setBadge(stats: Stats) {
-  await paintBadgeChrome()
-  // When the network layer drives the badge, don't also stamp a global total —
-  // a manual setBadgeText would shadow the per-tab count on tabs with no blocks.
-  if (HAS_DNR_BADGE) return
+  await chrome.action.setBadgeBackgroundColor({ color: '#e62117' })
+  await chrome.action.setBadgeTextColor?.({ color: '#ffffff' })
   const total = stats.pruned + stats.skipped
   await chrome.action.setBadgeText({ text: total > 0 ? compact(total) : '' })
 }
@@ -111,7 +101,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     await chrome.storage.local.set({ [STATS_KEY]: { pruned: 0, skipped: 0, since: Date.now() } })
   }
 
-  enableLiveBadge()
+  useCumulativeBadge()
   void updateFilters(true)
   void loadStats().then(setBadge)
   void loadSettings().then((settings) => syncAllowlistRules(settings.allowlist))
@@ -121,7 +111,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 // re-deriving them on every startup costs one storage read and removes a whole
 // class of "they drifted apart somehow" bugs.
 chrome.runtime.onStartup.addListener(() => {
-  enableLiveBadge()
+  useCumulativeBadge()
   void updateFilters()
   void loadStats().then(setBadge)
   void loadSettings().then((settings) => syncAllowlistRules(settings.allowlist))

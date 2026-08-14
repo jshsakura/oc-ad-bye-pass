@@ -10,7 +10,7 @@
 // reachable here. It is stubbed rather than really opened — headless has no
 // window to put it in — and the stub is what proves the click arrived.
 
-import { expect, test } from './fixtures.ts'
+import { orionTest as test, orionExpect as expect } from './fixtures.ts'
 import { YOUTUBE_URL, installYouTubeFixture } from './youtube-fixture.ts'
 
 const BUTTON = '#oc-abp-pip'

@@ -35,6 +35,10 @@ import {
 import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
 import { injectMainWorldFallback } from './injectMain.ts'
 
+// Replaced at build time by esbuild (scripts/build-content.mjs): true only in
+// the Orion package. Content scripts cannot read the manifest to tell otherwise.
+declare const __IS_ORION__: boolean
+
 const SITE: SiteKind = siteKindFor(location.hostname)
 const IS_YOUTUBE = SITE === 'youtube'
 
@@ -98,7 +102,12 @@ function recompute(cache: FilterCache | null) {
     // Just the button — a shortcut to the browser's own picture-in-picture.
     // Everything that tried to make leaving automatic is gone; it never worked
     // on this platform and cost more than it saved.
-    if (settings.toggles.pipButton) enablePictureInPicture({ button: true })
+    //
+    // Orion only. The button exists because the mobile web player hides the
+    // control and leaving the app stops the video; desktop browsers have their
+    // own picture-in-picture, so on the Chrome build there is nothing to add and
+    // a button on someone's video would just be clutter.
+    if (__IS_ORION__ && settings.toggles.pipButton) enablePictureInPicture({ button: true })
     else disablePictureInPicture()
 
   }

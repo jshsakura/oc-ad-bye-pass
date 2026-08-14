@@ -78,7 +78,10 @@ test('1계층이 늦게 붙어도 아니오로 굳지 않는다', async ({ conte
   await youtube.evaluate(() => document.documentElement.removeAttribute('data-oc-ad-bye-pass'))
   // 팝업이 확장 페이지 위에서 열려 유튜브 전용 항목은 접혀 있다.
   await popup.getByRole('button', { name: '전체 항목 보기' }).click()
-  await popup.getByRole('switch', { name: '작은 화면(PiP) 버튼' }).click()
+  // Any setting write re-runs the content script and rewrites the report; a
+  // layer-2 toggle is used because it leaves the layer-1 marker alone. (Not the
+  // PiP toggle — that is hidden on the desktop build this spec runs against.)
+  await popup.getByRole('switch', { name: 'Shorts 광고 숨김' }).click()
   await expect.poll(layer1Reported, { message: '전제가 안 만들어졌다' }).toBe(false)
 
   // 늦게 도착한 1계층. 이걸 못 보고 넘어가면 멀쩡한 계층을 놓고 몇 시간을 쓴다.
