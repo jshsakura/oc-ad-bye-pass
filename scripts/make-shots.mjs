@@ -58,7 +58,7 @@ function composeHtml({ title, sub, png, uiWidth }) {
     `font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}` +
     `.copy{flex:1;max-width:440px}` +
     `.brand{display:inline-flex;align-items:center;gap:9px;margin-bottom:26px;` +
-    `font-family:${WORDMARK};font-size:15px;letter-spacing:.04em;color:${ACCENT}}` +
+    `font-family:${WORDMARK};font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:${ACCENT}}` +
     `.brand i{width:26px;height:26px;border-radius:7px;background-size:cover;` +
     `background-image:url("${MARK}")}` +
     `h1{font-size:46px;line-height:1.1;font-weight:800;letter-spacing:-.02em}` +
@@ -208,7 +208,7 @@ const head =
   `body{background:${BG};color:${INK};overflow:hidden;` +
   `font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}` +
   `.mark{background-image:url("${MARK}");background-size:cover;border-radius:22%;flex:none}` +
-  `.brand{color:${ACCENT};font-family:${WORDMARK};letter-spacing:.04em}</style>`
+  `.brand{color:${ACCENT};font-family:${WORDMARK};letter-spacing:.06em;text-transform:uppercase}</style>`
 
 const promoSmall =
   `<!doctype html><html><head>${head}</head><body style="width:440px;height:280px;` +
