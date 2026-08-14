@@ -37,6 +37,20 @@ const orion = existsSync(join(ROOT, 'dist-orion', 'manifest.json'))
   ? JSON.parse(readFileSync(join(ROOT, 'dist-orion', 'manifest.json'), 'utf8'))
   : null
 
+// The Chrome Web Store caps the manifest description at 132 characters, per
+// locale, and rejects the upload rather than truncating. The description is
+// localized, so check every messages.json — the store counts each one.
+for (const loc of ['en', 'ko']) {
+  const file = join(ROOT, 'dist', '_locales', loc, 'messages.json')
+  if (!existsSync(file)) continue
+  const len = (JSON.parse(readFileSync(file, 'utf8')).extDescription?.message ?? '').length
+  check(
+    `_locales/${loc} description ≤ 132자 (스토어 상한)`,
+    len > 0 && len <= 132,
+    `현재 ${len}자 — 132자를 넘으면 스토어가 업로드를 거부한다`,
+  )
+}
+
 // The fast path. Losing this costs the first pre-roll on every YouTube page,
 // and nothing reports it.
 check(

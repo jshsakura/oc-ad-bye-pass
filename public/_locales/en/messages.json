@@ -4,6 +4,6 @@
     "description": "The extension name. A brand, so it is the same in every locale."
   },
   "extDescription": {
-    "message": "A fast, open-source ad blocker. Where ads come mixed into the content's own response it strips them out before you see them; everywhere else it blocks the ad request itself."
+    "message": "A fast, open-source ad blocker. It strips ads out of the response where they mix with content, and blocks ad requests elsewhere."
   }
 }
