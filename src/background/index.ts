@@ -15,45 +15,27 @@ import { syncAllowlistRules } from './network.ts'
 
 // --- Badge ---------------------------------------------------------------------
 //
-// One number, everywhere: the cumulative pruned+skipped total, the same figure
-// the popup shows, compacted so it never runs past four characters.
-//
-// It used to be the per-tab declarativeNetRequest count
-// (`displayActionCountAsBadgeText`). That reads well in theory but not in the
-// hand: on a single-page site like YouTube the tab never reloads, so the count
-// climbs on its own as the page keeps firing tracking requests — hundreds while
-// you sit still — until it buries the icon, and it never matched the popup's own
-// total. So it is off, and because that flag is persisted per-profile it has to
-// be turned off explicitly for anyone upgrading from the version that set it.
-//
-// Red ground, white text — legible on either theme, and the colour of "stopped".
+// There is no toolbar badge. Every version of one was worse than none: the
+// per-tab declarativeNetRequest count climbed on its own on single-page sites
+// until it buried the icon, and the cumulative total only ever grew and sat
+// there. The count lives in the popup, where it can be read on purpose rather
+// than stared at. This clears any badge a previous build left, and turns off
+// the per-tab count flag (which persists per-profile) for upgraders.
 
 const HAS_DNR_BADGE =
   typeof chrome.declarativeNetRequest?.setExtensionActionOptions === 'function'
 
-function compact(n: number): string {
-  if (n < 1000) return String(n)
-  if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0)}k`
-  return `${(n / 1_000_000).toFixed(1)}M`
-}
-
-/** Undo a previous version's per-tab count badge; the flag persists otherwise. */
-function useCumulativeBadge() {
-  if (!HAS_DNR_BADGE) return
-  try {
-    chrome.declarativeNetRequest.setExtensionActionOptions({
-      displayActionCountAsBadgeText: false,
-    })
-  } catch {
-    // Nothing to undo — the manual badge is the only path anyway.
+async function clearBadge() {
+  if (HAS_DNR_BADGE) {
+    try {
+      chrome.declarativeNetRequest.setExtensionActionOptions({
+        displayActionCountAsBadgeText: false,
+      })
+    } catch {
+      // Not supported here — nothing to undo.
+    }
   }
-}
-
-async function setBadge(stats: Stats) {
-  await chrome.action.setBadgeBackgroundColor({ color: '#e62117' })
-  await chrome.action.setBadgeTextColor?.({ color: '#ffffff' })
-  const total = stats.pruned + stats.skipped
-  await chrome.action.setBadgeText({ text: total > 0 ? compact(total) : '' })
+  await chrome.action.setBadgeText({ text: '' })
 }
 
 // --- Stats ---------------------------------------------------------------------
@@ -71,7 +53,6 @@ function bumpStats(patch: { pruned?: number; skipped?: number }): Promise<void> 
         since: stats.since,
       }
       await chrome.storage.local.set({ [STATS_KEY]: next })
-      await setBadge(next)
     })
     .catch(() => {})
   return writeChain
@@ -101,9 +82,8 @@ chrome.runtime.onInstalled.addListener(async () => {
     await chrome.storage.local.set({ [STATS_KEY]: { pruned: 0, skipped: 0, since: Date.now() } })
   }
 
-  useCumulativeBadge()
+  void clearBadge()
   void updateFilters(true)
-  void loadStats().then(setBadge)
   void loadSettings().then((settings) => syncAllowlistRules(settings.allowlist))
 })
 
@@ -111,9 +91,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 // re-deriving them on every startup costs one storage read and removes a whole
 // class of "they drifted apart somehow" bugs.
 chrome.runtime.onStartup.addListener(() => {
-  useCumulativeBadge()
+  void clearBadge()
   void updateFilters()
-  void loadStats().then(setBadge)
   void loadSettings().then((settings) => syncAllowlistRules(settings.allowlist))
 })
 
