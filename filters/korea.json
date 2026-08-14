@@ -1126,6 +1126,9 @@
         "div.banner",
         "div[class^=\"ad-\"]"
       ],
+      "bntnews.co.kr": [
+        "div[class^=\"banner\"]"
+      ],
       "bntnews.hankyung.com": [
         "a#a_randBanner",
         "div#_BNT_NEWS_BODY_AD_",
@@ -3307,7 +3310,9 @@
         "div.story-ad-half",
         "div[class*=\"-ad-\"]:not(data-el)",
         "div[class^=\"ad-\"]",
-        "div[class^=\"banner-\"]"
+        "div[class^=\"banner-\"]",
+        "div[data-ad-type=\"article-ad\"]",
+        "div[data-ga4^=\"out_taboola\"]"
       ],
       "hankyung.com": [
         "div.ad-area",
@@ -5525,11 +5530,6 @@
         "#news_main_all_wrp .today_issue ~ section[class=\"today_issue\"]",
         "div.fbanner",
         "div[id^=\"slot\"]"
-      ],
-      "m.media.daum.net": [
-        "div.bnr_ad",
-        "div.bnr_service",
-        "div.rolling_banner_list"
       ]
     },
     "prune": [],
