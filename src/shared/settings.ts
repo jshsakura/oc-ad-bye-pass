@@ -1,6 +1,8 @@
 // Settings definitions and all chrome.storage access, in one place.
 // The MAIN world cannot use chrome.*, so it never imports this module.
 
+import { type Lang, detectLang } from './i18n.ts'
+
 export const TOGGLE_KEYS = [
   'videoAds',
   'generalAds',
@@ -19,47 +21,40 @@ export type ToggleKey = (typeof TOGGLE_KEYS)[number]
 
 export interface ToggleMeta {
   key: ToggleKey
-  label: string
-  hint: string
   /**
    * 1 = response pruning, 2 = component filter, 3 = player fallback.
    * Absent for what is not a blocking layer at all.
+   *
+   * Label and hint are not here — they are translated. Look them up with
+   * `t('toggle.<key>.label')` / `.hint` from ./i18n.
    */
   layer?: 1 | 2 | 3
 }
 
 /** Named after the ReVanced patches (video-ads, hide-general-ads, …). */
 export const TOGGLE_META: readonly ToggleMeta[] = [
-  { key: 'videoAds', label: '동영상 광고 차단', hint: '플레이어 응답에서 광고를 제거합니다', layer: 1 },
-  { key: 'generalAds', label: '피드·배너 광고 숨김', hint: '홈/검색/추천의 광고 카드', layer: 2 },
-  { key: 'shortsAds', label: 'Shorts 광고 숨김', hint: 'Shorts 피드에 섞인 광고', layer: 2 },
-  { key: 'merchandise', label: '상품·머천다이즈 숨김', hint: '영상 하단 상품 선반, 쇼핑 패널', layer: 2 },
-  { key: 'getPremium', label: 'Premium 권유 숨김', hint: '하단 배너, 가입 유도 팝업', layer: 2 },
-  { key: 'fullscreenAds', label: '전면·오버레이 광고 닫기', hint: '재생 중 겹쳐 뜨는 광고', layer: 2 },
-  { key: 'antiAdblockNag', label: '애드블록 경고창 무시', hint: '"광고 차단기를 사용 중입니다" 안내', layer: 2 },
-  { key: 'appPromo', label: '앱으로 열기 유도 숨김', hint: '상단 스마트 앱 배너, "앱에서 보기" 바', layer: 2 },
-  { key: 'playerFallback', label: '광고 자동 스킵 (폴백)', hint: '위 차단이 뚫렸을 때만 동작', layer: 3 },
-  {
-    key: 'genericAds',
-    label: '다른 사이트 광고 숨김',
-    hint: '영상 사이트 밖에서도 광고 자리를 숨깁니다',
-    layer: 2,
-  },
-  {
-    key: 'pipButton',
-    // No promise it cannot keep. The floating window and the fullscreen hand-off
-    // are the browser's own; all this adds is a shortcut to open the window,
-    // which the mobile site hides. Nothing here makes leaving automatic — that is
-    // not possible for a web page on this platform, and pretending otherwise was
-    // the whole of a very long detour.
-    label: '작은 화면(PiP) 버튼',
-    hint: '플레이어 오른쪽 아래에 버튼을 답니다 — 누르면 브라우저의 작은 화면이 열립니다',
-  },
+  { key: 'videoAds', layer: 1 },
+  { key: 'generalAds', layer: 2 },
+  { key: 'shortsAds', layer: 2 },
+  { key: 'merchandise', layer: 2 },
+  { key: 'getPremium', layer: 2 },
+  { key: 'fullscreenAds', layer: 2 },
+  { key: 'antiAdblockNag', layer: 2 },
+  { key: 'appPromo', layer: 2 },
+  { key: 'playerFallback', layer: 3 },
+  { key: 'genericAds', layer: 2 },
+  // The floating window and the fullscreen hand-off are the browser's own; all
+  // this adds is a shortcut to open the window, which the mobile site hides.
+  // Nothing here makes leaving automatic — not possible for a web page on this
+  // platform, and pretending otherwise was the whole of a very long detour.
+  { key: 'pipButton' },
 ]
 
 export interface Settings {
   /** Master switch. */
   enabled: boolean
+  /** UI language for the popup and settings page. */
+  lang: Lang
   toggles: Record<ToggleKey, boolean>
   /** Whether to use the remote filter list. */
   listEnabled: boolean
@@ -80,6 +75,9 @@ export const DEFAULT_LIST_URL =
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
+  // Overwritten from the browser locale on first seed; 'ko' is the fallback
+  // when nothing has been stored yet.
+  lang: 'ko',
   toggles: {
     videoAds: true,
     generalAds: true,
@@ -139,6 +137,7 @@ function mergeSettings(stored: unknown): Settings {
   }
   return {
     enabled: typeof s.enabled === 'boolean' ? s.enabled : DEFAULT_SETTINGS.enabled,
+    lang: s.lang === 'ko' || s.lang === 'en' ? s.lang : DEFAULT_SETTINGS.lang,
     toggles,
     listEnabled: typeof s.listEnabled === 'boolean' ? s.listEnabled : DEFAULT_SETTINGS.listEnabled,
     listUrl: typeof s.listUrl === 'string' && s.listUrl ? s.listUrl : DEFAULT_SETTINGS.listUrl,
@@ -268,7 +267,8 @@ export async function seedDefaultSettings(): Promise<void> {
       // An area we cannot read counts as absent
     }
   }
-  await saveSettings({})
+  // First run: take the browser's language as the starting point.
+  await saveSettings({ lang: detectLang() })
 }
 
 /**

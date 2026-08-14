@@ -41,6 +41,18 @@ const SOURCES = [
     license: 'GPL-3.0 / CC BY-SA 3.0',
     url: 'https://easylist.to/easylist/easyprivacy.txt',
   },
+  // The Korean gap. The three lists above are global and carry almost no Korean
+  // ad servers, so Naver and the domestic portals went unblocked at the network
+  // layer no matter how many rules there were. List-KR's AdGuard list is where
+  // the `||veta.naver.com^`, `||adcr.naver.com^`, `||dable.io^` domains live.
+  // We already mirror its *cosmetic* half into filters/ (that is the mobile
+  // path, where declarativeNetRequest does not exist); this pulls its *network*
+  // half into the desktop ruleset. Same list, same GPL-3.0, both halves used.
+  {
+    name: 'List-KR',
+    license: 'GPL-3.0',
+    url: 'https://cdn.jsdelivr.net/npm/@list-kr/filterslists@latest/dist/filterslist-AdGuard.txt',
+  },
 ]
 
 /**

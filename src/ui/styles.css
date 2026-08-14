@@ -58,19 +58,28 @@ a {
   gap: 12px;
 }
 
-/* Small, quiet, and always there — it is the way out of a page that has no other. */
+/* Small, quiet, and always there — it is the way out of a page that has no other.
+   Kept deliberately compact: it is an escape hatch, not an action, and should
+   not weigh as much as the page title it sits beside. */
 .page-top .close {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: none;
-  padding: 7px 12px;
+  min-height: 0;
+  padding: 4px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
   color: var(--fg-muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+}
+
+.page-top .close svg {
+  width: 13px;
+  height: 13px;
 }
 
 /* The diagnostics panel. Monospaced and selectable — it exists to be copied out
@@ -89,6 +98,13 @@ a {
   word-break: break-all;
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* Copy sits first because it is why the panel opened; 닫기 is the way back out
+   once the report has been read or sent. */
+.diag-actions {
+  display: flex;
+  gap: 8px;
 }
 
 /* ── Controls ──────────────────────────────────────────────────────────────

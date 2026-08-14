@@ -20,6 +20,7 @@ import {
   type UpdateCheck,
 } from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
+import { LANGS, LANG_LABEL, makeT } from '../shared/i18n.ts'
 
 const GRANTED_BY_DEFAULT = ['https://raw.githubusercontent.com', 'https://gist.githubusercontent.com']
 
@@ -62,6 +63,8 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
   const [note, setNote] = useState<string | null>(null)
   const [hostDraft, setHostDraft] = useState('')
 
+  const t = useMemo(() => makeT(settings.lang), [settings.lang])
+
   // Checked on open, once. The page is where someone goes when they want to
   // know, and a version banner they have to ask for is a version banner nobody
   // sees.
@@ -99,7 +102,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
 
   const saveUrl = async () => {
     if (!urlOrigin) {
-      setNote('올바른 주소가 아닙니다.')
+      setNote(t('opt.err.badUrl'))
       return
     }
     setBusy(true)
@@ -108,10 +111,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
       if (needsPermission) {
         const granted = await requestOrigin(urlOrigin)
         if (!granted) {
-          setNote(
-            '이 주소를 쓸 권한을 얻지 못했습니다. 브라우저가 권한 요청을 지원하지 않는 경우도 있습니다 — ' +
-              '기본 주소나 jshsakura.github.io 주소는 권한 없이 바로 됩니다.',
-          )
+          setNote(t('opt.err.noPerm'))
           return
         }
       }
@@ -135,13 +135,13 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
   const resetStats = async () => {
     await chrome.storage.local.set({ [STATS_KEY]: { pruned: 0, skipped: 0, since: Date.now() } })
     await chrome.action.setBadgeText({ text: '' })
-    setNote('통계를 초기화했습니다.')
+    setNote(t('opt.stats.resetDone'))
   }
 
   return (
     <div className="page">
       <div className="page-top">
-        <h1>OC Ad Bye-Pass 설정</h1>
+        <h1>{t('opt.title')}</h1>
         {/*
           On a phone this page has no browser chrome around it — Orion opens it as
           the whole screen, and there was no way back out of it at all. `close()`
@@ -151,7 +151,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
         <button
           className="close"
           type="button"
-          aria-label="설정 닫기"
+          aria-label={t('opt.close.aria')}
           onClick={() => {
             // Inside the popup this is a view, not a page: closing it means going
             // back to the list, not closing anything. Only a settings page that
@@ -166,46 +166,60 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           }}
         >
           <Icon name="close" />
-          닫기
+          {t('opt.close')}
         </button>
       </div>
       {update?.newer && (
         <div className="banner update">
-          <span>
-            새 버전 <b>v{update.latest}</b> 이 있습니다 (지금 v{update.current})
-          </span>
+          <span>{t('opt.update.available', { latest: update.latest ?? '', current: update.current })}</span>
           <a className="btn-primary" href={downloadUrlFor(packageForThisBuild())}>
             <Icon name="download" />
-            내려받기
+            {t('opt.update.download')}
           </a>
         </div>
       )}
-      <p className="lede">
-        차단 규칙은 확장 안에 기본값이 들어 있고, 아래 필터 리스트를 더해서 씁니다. 영상 사이트가
-        태그를 바꿔도 리스트만 갱신되면 재설치 없이 반영됩니다.
-      </p>
+      <p className="lede">{t('opt.lede')}</p>
+
+      <section className="card">
+        <h2>
+          <Icon name="settings" />
+          {t('opt.lang')}
+        </h2>
+        <p className="desc">{t('opt.lang.desc')}</p>
+        <div className="actions">
+          {LANGS.map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={settings.lang === code ? 'primary' : ''}
+              aria-pressed={settings.lang === code}
+              onClick={() => void persist({ lang: code })}
+            >
+              {LANG_LABEL[code]}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="card">
         <h2>
           <Icon name="version" />
-          버전
+          {t('opt.version')}
         </h2>
-        <p className="desc">
-          이 확장은 스스로 업데이트하지 못합니다 — 파일로 설치한 확장을 다시 설치해 주는 API 가
-          브라우저에 없습니다. 대신 새 버전이 나왔는지 확인하고 받는 데까지는 해 드립니다.
-          받은 뒤에는 Extensions 에서 기존 것을 지우고 다시 넣으시면 됩니다.
-        </p>
+        <p className="desc">{t('opt.version.desc')}</p>
 
         <dl className="kv">
-          <dt>지금 버전</dt>
+          <dt>{t('opt.version.now')}</dt>
           <dd>v{chrome.runtime.getManifest().version}</dd>
-          <dt>최신 버전</dt>
+          <dt>{t('opt.version.latest')}</dt>
           <dd>
             {update === null
-              ? '확인 전'
+              ? t('opt.version.notChecked')
               : update.latest
-                ? `v${update.latest}${update.newer ? ' — 새 버전' : ' — 최신입니다'}`
-                : (update.error ?? '확인하지 못했습니다')}
+                ? update.newer
+                  ? t('opt.version.new', { v: update.latest })
+                  : t('opt.version.upToDate', { v: update.latest })
+                : (update.error ?? t('opt.version.checkFail'))}
           </dd>
         </dl>
 
@@ -221,12 +235,12 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
             disabled={checking}
           >
             <Icon name="refresh" />
-            {checking ? '확인 중…' : '업데이트 확인'}
+            {checking ? t('opt.version.checking') : t('opt.version.check')}
           </button>
           {update?.newer && (
             <a className="btn-link" href={downloadUrlFor(packageForThisBuild())}>
               <Icon name="download" />
-              {`oc-ad-bye-pass-${packageForThisBuild()}.zip 받기`}
+              {t('opt.version.getZip', { file: `oc-ad-bye-pass-${packageForThisBuild()}.zip` })}
             </a>
           )}
         </div>
@@ -235,28 +249,24 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
       <section className="card">
         <h2>
           <Icon name="list" />
-          필터 리스트
+          {t('opt.list')}
         </h2>
-        <p className="desc">
-          JSON 규칙을 30분마다 받아옵니다. 받아오는 것은 셀렉터 같은{' '}
-          <b>데이터뿐</b>이고 스크립트는 실행하지 않습니다. 형식·크기·안전성 검사를 통과하지
-          못하면 버리고 기존 규칙을 그대로 씁니다.
-        </p>
+        <p className="desc">{t('opt.list.desc')}</p>
 
         <div className="row" style={{ padding: '0 0 14px' }}>
           <span className="text">
-            <span className="label">원격 리스트 사용</span>
-            <span className="hint">끄면 확장에 내장된 기본 규칙만 씁니다</span>
+            <span className="label">{t('opt.list.useRemote')}</span>
+            <span className="hint">{t('opt.list.useRemoteHint')}</span>
           </span>
           <Switch
-            label="원격 리스트 사용"
+            label={t('opt.list.useRemote')}
             checked={settings.listEnabled}
             onChange={(v) => void persist({ listEnabled: v })}
           />
         </div>
 
         <label className="field" htmlFor="listUrl">
-          리스트 주소
+          {t('opt.list.url')}
         </label>
         <input
           id="listUrl"
@@ -270,11 +280,11 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
         <div className="actions">
           <button className="primary" onClick={() => void saveUrl()} disabled={busy || urlDraft === ''}>
             <Icon name="save" />
-            {needsPermission && urlDraft !== settings.listUrl ? '권한 허용하고 저장' : '저장하고 갱신'}
+            {needsPermission && urlDraft !== settings.listUrl ? t('opt.list.savePerm') : t('opt.list.save')}
           </button>
           <button onClick={() => void updateNow()} disabled={busy || !settings.listEnabled}>
             <Icon name="refresh" />
-            지금 업데이트
+            {t('opt.list.updateNow')}
           </button>
           <button
             onClick={() => {
@@ -283,28 +293,27 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
             }}
             disabled={busy || urlDraft === DEFAULT_LIST_URL}
           >
-            기본값으로
+            {t('opt.list.default')}
           </button>
         </div>
 
         {needsPermission && (
           <p className="status error" style={{ marginTop: 10 }}>
-            GitHub 이 아닌 주소입니다. 리스트 제공자는 보고 있는 화면의 요소를 숨길 수 있으니 믿을 수
-            있는 곳만 쓰세요.
+            {t('opt.list.notGithub')}
           </p>
         )}
 
         <dl className="kv" style={{ marginTop: 14 }}>
-          <dt>현재 소스</dt>
-          <dd>{status?.source === 'remote' ? '원격 리스트' : '내장 기본 규칙'}</dd>
-          <dt>버전</dt>
+          <dt>{t('opt.list.source')}</dt>
+          <dd>{status?.source === 'remote' ? t('opt.list.remote') : t('opt.list.builtin')}</dd>
+          <dt>{t('opt.list.version')}</dt>
           <dd>{status?.version ?? '—'}</dd>
-          <dt>마지막 갱신</dt>
-          <dd>{formatWhen(status?.fetchedAt ?? null)}</dd>
+          <dt>{t('opt.list.lastUpdate')}</dt>
+          <dd>{formatWhen(status?.fetchedAt ?? null, t)}</dd>
           {!!status?.dropped && (
             <>
-              <dt>걸러낸 규칙</dt>
-              <dd>{status.dropped}개 (안전 검사 불통과)</dd>
+              <dt>{t('opt.list.dropped')}</dt>
+              <dd>{t('opt.list.droppedVal', { n: status.dropped })}</dd>
             </>
           )}
         </dl>
@@ -315,18 +324,17 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
       <section className="card">
         <h2>
           <Icon name="rules" />
-          내 규칙
+          {t('opt.rules')}
         </h2>
         <p className="desc">
-          한 줄에 CSS 셀렉터 하나. 여기 적은 것은 항상 적용되고 원격 업데이트에 덮이지 않습니다.
-          <code> ! </code>로 시작하는 줄은 주석입니다. 안 사라지는 광고를 직접 찍어 넣는 곳입니다
-          (개발자도구에서 요소 선택 → Copy selector).
+          {t('opt.rules.desc.a')} <code> ! </code>
+          {t('opt.rules.desc.b')}
         </p>
         <textarea
           value={rulesDraft}
           spellCheck={false}
           onChange={(e) => setRulesDraft(e.currentTarget.value)}
-          placeholder={'! 예시\nytd-ad-slot-renderer\n#masthead-ad'}
+          placeholder={'! ytd-ad-slot-renderer\n#masthead-ad'}
         />
         <div className="actions">
           <button
@@ -334,16 +342,16 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
             onClick={() => void persist({ customRules: rulesDraft })}
             disabled={rulesDraft === settings.customRules || badRules.length > 0}
           >
-            저장
+            {t('opt.rules.save')}
           </button>
           {badRules.length > 0 ? (
             <span className="status error">
-              쓸 수 없는 셀렉터 {badRules.length}개: {badRules.slice(0, 3).join(', ')}
+              {t('opt.rules.bad', { n: badRules.length, list: badRules.slice(0, 3).join(', ') })}
             </span>
           ) : (
             <span className="status">
-              {parseCustomRules(rulesDraft).length}개 규칙
-              {rulesDraft !== settings.customRules ? ' · 저장하지 않음' : ''}
+              {t('opt.rules.count', { n: parseCustomRules(rulesDraft).length })}
+              {rulesDraft !== settings.customRules ? t('opt.rules.unsaved') : ''}
             </span>
           )}
         </div>
@@ -352,16 +360,12 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
       <section className="card">
         <h2>
           <Icon name="site" />
-          이 사이트에서 끄기 목록
+          {t('opt.siteOff')}
         </h2>
-        <p className="desc">
-          여기 적힌 사이트에서는 확장이 완전히 손을 뗍니다 — 광고망 차단도, 요소 숨김도 하지
-          않습니다. 하위 도메인까지 함께 적용됩니다. 사이트를 끄는 것은 확장 아이콘을 눌러
-          그 자리에서 할 수 있고, 여기서는 목록을 정리합니다.
-        </p>
+        <p className="desc">{t('opt.siteOff.desc')}</p>
 
         {settings.allowlist.length === 0 ? (
-          <p className="status">아직 없습니다. 어느 사이트에서도 켜져 있습니다.</p>
+          <p className="status">{t('opt.siteOff.empty')}</p>
         ) : (
           <ul className="hosts">
             {settings.allowlist.map((host) => (
@@ -370,7 +374,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
                 <button
                   onClick={() => void persist({ allowlist: removeFromAllowlist(host, settings.allowlist) })}
                 >
-                  다시 켜기
+                  {t('opt.siteOff.reenable')}
                 </button>
               </li>
             ))}
@@ -390,7 +394,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           />
           <button onClick={addHost} disabled={!hostDraft.trim()}>
             <Icon name="plus" />
-            추가
+            {t('opt.siteOff.add')}
           </button>
         </div>
       </section>
@@ -398,13 +402,13 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
       <section className="card">
         <h2>
           <Icon name="chart" />
-          통계
+          {t('opt.stats')}
         </h2>
-        <p className="desc">확장 아이콘 배지에 표시되는 누적 차단 수입니다.</p>
+        <p className="desc">{t('opt.stats.desc')}</p>
         <div className="actions">
           <button onClick={() => void resetStats()}>
             <Icon name="undo" />
-            통계 초기화
+            {t('opt.stats.reset')}
           </button>
         </div>
       </section>

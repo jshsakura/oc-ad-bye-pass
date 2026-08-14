@@ -31,6 +31,11 @@ export const test = base.extend<ExtensionFixtures>({
     }
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
+      // Pin the UI language. The extension seeds its language from the browser
+      // locale on install (detectLang), and the specs select popup controls by
+      // their Korean labels ('진단', …). Without this the suite would render in
+      // whatever locale the host machine runs, and those selectors would miss.
+      locale: 'ko-KR',
       args: [
         `--disable-extensions-except=${EXTENSION_PATH}`,
         `--load-extension=${EXTENSION_PATH}`,

@@ -13,6 +13,7 @@
 //   - reject a version older than the cached one (rollback attack)
 
 import { TOGGLE_KEYS, type ToggleKey } from './settings.ts'
+import type { Lang } from './i18n.ts'
 import type { SiteKind } from './sites.ts'
 import { BUNDLED_CLICK, BUNDLED_HIDE, BUNDLED_PRUNE } from './selectors.ts'
 
@@ -415,6 +416,7 @@ export function buildStylesheet(
   toggles: Record<ToggleKey, boolean>,
   kind: SiteKind = 'youtube',
   hostname = '',
+  lang: Lang = 'ko',
 ): string {
   const groups = kind === 'youtube' ? TOGGLE_KEYS : [GENERIC_GROUP]
 
@@ -423,10 +425,12 @@ export function buildStylesheet(
     if (!toggles[key]) continue
     for (const s of rules.hide[key] ?? []) selectors.add(s)
   }
-  // Under the same switch as the rest of the off-YouTube hiding: these are the
-  // mirrored lists, and somebody who turned general ad hiding off did not ask
-  // for the Korean ones either.
-  if (toggles[GENERIC_GROUP] && hostname) {
+  // The domain-scoped selectors are the mirrored Korean lists — they name
+  // Korean portals and community sites. In English there is no reason to carry
+  // them: the person is not on those sites, and it is a stylesheet on every page
+  // for nothing. So they ride the general-ad switch *and* a Korean UI. Generic
+  // ad hiding (the group above) stays for everyone; only the KR series drops.
+  if (toggles[GENERIC_GROUP] && hostname && lang === 'ko') {
     for (const [domain, list] of Object.entries(rules.domains)) {
       if (!hostMatches(hostname, domain)) continue
       for (const s of list) selectors.add(s)

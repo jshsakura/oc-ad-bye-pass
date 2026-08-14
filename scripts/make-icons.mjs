@@ -13,9 +13,10 @@
 // already a dependency here.
 //
 // Design: the spark inside a shield. Mauve tile, panel-coloured shield, peach
-// spark with a white core. At 16px the shield and the core are dropped — three
-// tones inside sixteen pixels is one too many, and the taper would be two
-// pixels wide.
+// spark with a white core. At 16px only the white *core* is dropped — the
+// shield stays, because without it the toolbar shows a bare spark that reads as
+// a different app than the full mark on the site and in the store. Two tones at
+// sixteen pixels (dark shield, peach spark) hold up; three did not.
 //
 // The mark sits inside the circle inscribed in the tile, with room to spare.
 // Chrome shows the square; Orion crops it to a circle, and at full size the
@@ -36,21 +37,18 @@ const TILE = '#7e4dc5'
 const PANEL = '#181825'
 const PEACH = '#fab387'
 
-/** The full mark. At 16 the shield and the white core come out. */
+/** The full mark. At 16 only the white core comes out; the shield stays. */
 function svg(size) {
   const small = size <= 16
-  const spark = small
-    ? `<path fill="${PEACH}" transform="translate(17.06 14.18) scale(0.4668)" d="${SPARK}"/>`
-    : `<path fill="${PEACH}" transform="translate(19.39 16.19) scale(0.4128)" d="${SPARK}"/>` +
-      `<path fill="#ffffff" transform="translate(25.53 22.34) scale(0.2208)" d="${SPARK}"/>`
+  const spark =
+    `<path fill="${PEACH}" transform="translate(19.39 16.19) scale(0.4128)" d="${SPARK}"/>` +
+    (small ? '' : `<path fill="#ffffff" transform="translate(25.53 22.34) scale(0.2208)" d="${SPARK}"/>`)
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64">` +
     `<rect width="64" height="64" rx="14" fill="${TILE}"/>` +
-    (small
-      ? ''
-      : `<g transform="translate(32 32) scale(0.9) translate(-32 -32)">` +
-        `<path fill="${PANEL}" d="${SHIELD}"/></g>`) +
+    `<g transform="translate(32 32) scale(0.9) translate(-32 -32)">` +
+    `<path fill="${PANEL}" d="${SHIELD}"/></g>` +
     spark +
     '</svg>'
   )

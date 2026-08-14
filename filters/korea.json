@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260813,
-  "updatedAt": "2026-08-13",
+  "version": 20260814,
+  "updatedAt": "2026-08-14",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
     "hide": {
@@ -1917,6 +1917,8 @@
         "div[class^=\"banner_\"]"
       ],
       "dak.gg": [
+        "#venatus-container-top",
+        ".ad[id=\"mobile-takeover\"]",
         "div[class^=\"ad_\"]:not(.ad_lst)",
         "div[id^=\"venatus-\"][id*=\"-banner-\"]"
       ],
@@ -1961,18 +1963,6 @@
       ],
       "darkgg12.com": [
         "div#main-banner"
-      ],
-      "darkgirl14.com": [
-        "#adskip, #posterWrap, #main-banner",
-        ".banner, a[href*=\"clickadu.net\"]"
-      ],
-      "darkgirl15.com": [
-        "#adskip, #posterWrap, #main-banner",
-        ".banner, a[href*=\"clickadu.net\"]"
-      ],
-      "darkgirl16.com": [
-        "#adskip, #posterWrap, #main-banner",
-        ".banner, a[href*=\"clickadu.net\"]"
       ],
       "databucket.duckdns.org": [
         "div#ads-banner-center",
@@ -2327,6 +2317,7 @@
         "div[id^=\"ad-\"]"
       ],
       "dvdprime.com": [
+        "#ad_view_right1",
         "[id$='top_banner']",
         "[id^='ad_mobile']",
         "[id^='slot']"
@@ -3568,10 +3559,16 @@
         "div[class^=\"ad_\"]:not(.ad_lst)"
       ],
       "hungapp.com": [
+        ".fixed-top",
+        "[aria-label=\"헝그리앱 배너\"]",
+        "[class*='-banner']",
         "[class^='banner']"
       ],
       "hungryapp.co.kr": [
         "#cont_warp table[style]",
+        ".fixed-top",
+        "[aria-label=\"헝그리앱 배너\"]",
+        "[class*='-banner']",
         "[class^='banner']",
         "div#banner9_iframe",
         "div#banner_11",
@@ -5519,6 +5516,20 @@
         "div.art_top_bn",
         "div.contBn",
         "div.contBn_foot"
+      ],
+      "m.mail.daum.net": [
+        "div.banner_comm",
+        "div[class$=\"_banner\"]"
+      ],
+      "m.mbn.co.kr": [
+        "#news_main_all_wrp .today_issue ~ section[class=\"today_issue\"]",
+        "div.fbanner",
+        "div[id^=\"slot\"]"
+      ],
+      "m.media.daum.net": [
+        "div.bnr_ad",
+        "div.bnr_service",
+        "div.rolling_banner_list"
       ]
     },
     "prune": [],

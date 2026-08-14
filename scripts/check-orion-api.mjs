@@ -29,6 +29,8 @@ const HANDLED = {
     'Absent on Safari/Orion. network.ts returns early when the API is missing; the Safari manifest drops the key entirely.',
   'declarativeNetRequest.updateDynamicRules':
     'Absent on Safari/Orion. Same guard as above — no network layer on those targets, so nothing to exempt.',
+  'declarativeNetRequest.setExtensionActionOptions':
+    'Absent on Safari/Orion. background.js only calls it behind a typeof-function guard (HAS_DNR_BADGE); when the API is missing the badge falls back to the manual cumulative count, which is the only thing those targets have anyway.',
   'storage.sync':
     'Partial on Orion. settings.ts writes to both sync and local and reads whichever was saved most recently.',
 }
