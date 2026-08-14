@@ -30,10 +30,6 @@ const options = {
   sourcemap: watch ? 'inline' : false,
   legalComments: 'none',
   logLevel: 'info',
-  // Content scripts cannot read extension-only APIs, so they cannot tell which
-  // package they are in at runtime. Bake it in: the PiP button is an Orion-only
-  // feature and must never inject on the desktop build.
-  define: { __IS_ORION__: JSON.stringify(target.name === 'orion') },
 }
 
 if (watch) {

@@ -28,13 +28,6 @@ import { formatCount } from '../ui/format.ts'
 /** Toggles that only mean anything on a video site we have all three layers for. */
 const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
-// The PiP button exists for the mobile web player, where the site hides the
-// control and leaving the app stops the video — a phone problem. On desktop the
-// browser has its own picture-in-picture and there is nothing to add, so the
-// toggle only confuses. declarativeNetRequest is present only in the Chrome
-// (desktop/Edge) package, so its presence is the "this is not Orion" tell.
-const IS_DESKTOP = typeof chrome.declarativeNetRequest !== 'undefined'
-
 export function App() {
   /*
    * Settings live in the popup, not behind it.
@@ -94,8 +87,6 @@ export function App() {
   }
 
   const visibleToggles = TOGGLE_META.filter((meta) => {
-    // The PiP button is an Orion-only feature — never surface it on desktop.
-    if (IS_DESKTOP && meta.key === 'pipButton') return false
     if (showAll) return true
     // Lead with what applies here; the rest is one click away.
     return onYouTube ? YOUTUBE_KEYS.includes(meta.key) : meta.key === 'genericAds'

@@ -215,7 +215,11 @@ function ensureButton(video: WebkitVideo): void {
   button.style.cssText = [
     'position:fixed', 'right:14px', 'bottom:104px', 'z-index:2147483647',
     `width:${BUTTON_SIZE}px`, `height:${BUTTON_SIZE}px`,
-    'display:grid', 'place-items:center', 'padding:0', 'margin:0', 'border:none',
+    // The tap target stays 36px, but the visible chip sits in the button's
+    // bottom-right rather than its centre, so it tucks into the corner instead
+    // of floating ~7px off it. The extra hit area spills up and left, away from
+    // the edge, which is exactly where a thumb has room.
+    'display:grid', 'place-items:end', 'padding:0', 'margin:0', 'border:none',
     'background:transparent', 'cursor:pointer', 'touch-action:manipulation',
     '-webkit-tap-highlight-color:transparent',
   ].join(';')
@@ -271,8 +275,15 @@ function place(): void {
   const label = floating ? '작은 화면 접기' : '화면 속 화면으로 보기'
   button.title = label
   button.setAttribute('aria-label', label)
+  // The little inset moves as well as recolours, so the state reads at a glance
+  // rather than by hue alone: peach in the bottom-right when it will pop out,
+  // green in the top-left once it is floating.
   const mark = button.querySelector('rect + rect') as SVGRectElement | null
-  mark?.setAttribute('fill', floating ? '#a6e3a1' : '#fab387')
+  if (mark) {
+    mark.setAttribute('fill', floating ? '#a6e3a1' : '#fab387')
+    mark.setAttribute('x', floating ? '4' : '12')
+    mark.setAttribute('y', floating ? '6' : '11')
+  }
 
   const inset = 2
   const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)

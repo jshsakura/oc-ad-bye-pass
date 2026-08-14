@@ -864,8 +864,15 @@
       <h2>Chrome · Edge</h2>
       <span class="chip">READY</span>
     </div>
-    <p class="lede" lang="ko">데스크톱에서 쓰는 방법입니다.<br>웹스토어를 거치지 않고, 압축을 푼 폴더를 직접 불러와서 사용합니다.</p>
-    <p class="lede" lang="en">For the desktop.<br>No web store — you load the unpacked folder yourself.</p>
+    <p class="lede" lang="ko">데스크톱에서 쓰는 방법입니다.<br>지금은 압축을 푼 폴더를 직접 불러와서 사용합니다.</p>
+    <p class="lede" lang="en">For the desktop.<br>For now you load the unpacked folder yourself.</p>
+
+    <div class="note" lang="ko">
+      <p>🕒 <strong>크롬 웹스토어 배포를 준비 중입니다.</strong> 심사가 끝나면 스토어에서 한 번에 설치할 수 있게 됩니다 — 그전까지는 아래 방법으로 설치해 주세요.</p>
+    </div>
+    <div class="note" lang="en">
+      <p>🕒 <strong>A Chrome Web Store release is in the works.</strong> Once it's approved you'll be able to install in one click — until then, use the steps below.</p>
+    </div>
 
     <ol lang="ko">
       <li>아래 버튼으로 <strong>확장 zip 파일</strong>을 받아 압축을 풀어 주세요</li>
@@ -881,42 +888,10 @@
     </ol>
 
     <div class="note" lang="ko">
-      <p><strong>명령 한 줄로 받아서 풀 수도 있습니다.</strong> 고정된 위치에 풀고, 크롬에
-        붙여넣을 경로를 찍어줍니다. 업데이트도 같은 명령을 다시 돌리면 됩니다.</p>
-      <div class="cmd">
-        <span class="cmd-os">Windows · PowerShell</span>
-        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code>
-        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
-      </div>
-      <div class="cmd">
-        <span class="cmd-os">macOS · Linux</span>
-        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code>
-        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
-      </div>
-
-    </div>
-
-    <div class="note" lang="ko">
       <p><strong>압축을 푼 폴더는 그대로 두셔야 합니다.</strong></p>
       <p>크롬이 그 폴더를 계속 참조하면서 확장을 실행하기 때문에, 폴더를 지우거나 다른 곳으로 옮기면 확장이 곧바로 멈춥니다.</p>
       <p>다운로드 폴더는 피해 주세요.<br>나중에 정리하다가 실수로 지우기 쉬운 자리입니다.</p>
     </div>
-    <div class="note" lang="en">
-      <p><strong>Or take it in one line.</strong> It unpacks to a fixed location and prints the
-        path to paste into Chrome. Run the same command again to update.</p>
-      <div class="cmd">
-        <span class="cmd-os">Windows · PowerShell</span>
-        <code>irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.ps1 | iex</code>
-        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
-      </div>
-      <div class="cmd">
-        <span class="cmd-os">macOS · Linux</span>
-        <code>curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash</code>
-        <button type="button" class="copy" aria-label="명령 복사" title="복사"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
-      </div>
-
-    </div>
-
     <div class="note" lang="en">
       <p><strong>Leave the unzipped folder where it is.</strong></p>
       <p>Chrome keeps reading that folder to run the extension. Delete it or move it and the extension stops immediately.</p>

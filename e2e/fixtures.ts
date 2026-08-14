@@ -8,8 +8,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { test as base, chromium, type BrowserContext, type Worker } from '@playwright/test'
 
-const DIST = path.resolve(import.meta.dirname, '..', 'dist')
-const DIST_ORION = path.resolve(import.meta.dirname, '..', 'dist-orion')
+const EXTENSION_PATH = path.resolve(import.meta.dirname, '..', 'dist')
 
 /**
  * The control group has to run under identical conditions for the comparison to
@@ -25,17 +24,12 @@ export interface ExtensionFixtures {
   extensionId: string
 }
 
-// One fixture, parameterised by which build to load. Chromium is the only engine
-// Playwright loads an extension into, but the Orion *package* still runs there —
-// its content scripts are the same file, only the manifest differs — so a feature
-// that ships only in the Orion build (the PiP button) is tested against it.
-function extensionTest(extensionPath: string) {
-  return base.extend<ExtensionFixtures>({
-    context: async ({}, use) => {
-      if (!existsSync(path.join(extensionPath, 'manifest.json'))) {
-        throw new Error(`build first: npm run build:all (${extensionPath} is missing)`)
-      }
-      const context = await chromium.launchPersistentContext('', {
+export const test = base.extend<ExtensionFixtures>({
+  context: async ({}, use) => {
+    if (!existsSync(path.join(EXTENSION_PATH, 'manifest.json'))) {
+      throw new Error(`build first: npm run build (${EXTENSION_PATH} is missing)`)
+    }
+    const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       // Pin the UI language. The extension seeds its language from the browser
       // locale on install (detectLang), and the specs select popup controls by
@@ -43,8 +37,8 @@ function extensionTest(extensionPath: string) {
       // whatever locale the host machine runs, and those selectors would miss.
       locale: 'ko-KR',
       args: [
-        `--disable-extensions-except=${extensionPath}`,
-        `--load-extension=${extensionPath}`,
+        `--disable-extensions-except=${EXTENSION_PATH}`,
+        `--load-extension=${EXTENSION_PATH}`,
         ...LAUNCH_ARGS,
       ],
     })
@@ -110,16 +104,9 @@ function extensionTest(extensionPath: string) {
     await use(worker)
   },
 
-    extensionId: async ({ background }, use) => {
-      await use(new URL(background.url()).host)
-    },
-  })
-}
+  extensionId: async ({ background }, use) => {
+    await use(new URL(background.url()).host)
+  },
+})
 
-/** The Chrome/Edge package (dist). The default for almost every spec. */
-export const test = extensionTest(DIST)
 export const expect = test.expect
-
-/** The Orion package (dist-orion) — for features that ship only there. */
-export const orionTest = extensionTest(DIST_ORION)
-export const orionExpect = orionTest.expect
