@@ -5,6 +5,7 @@ import {
   TOGGLE_META,
   loadSettings,
   loadStats,
+  parseCustomRules,
   saveSettings,
   watchSettings,
   type Settings,
@@ -28,6 +29,9 @@ import { formatCount } from '../ui/format.ts'
 /** Toggles that only mean anything on a video site we have all three layers for. */
 const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
+/** Network (DNR) blocking ships only in the Chrome/Edge package, not Orion. */
+const HAS_NETWORK_BLOCKING = typeof chrome.declarativeNetRequest !== 'undefined'
+
 export function App() {
   /*
    * Settings live in the popup, not behind it.
@@ -47,6 +51,7 @@ export function App() {
   const [showAll, setShowAll] = useState(false)
   const [report, setReport] = useState<Report | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showBlocked, setShowBlocked] = useState(false)
 
   useEffect(() => {
     void loadSettings().then(setSettings)
@@ -148,15 +153,72 @@ export function App() {
       )}
 
       <div className="stats">
-        <div className="stat">
+        <button
+          type="button"
+          className="stat stat-btn"
+          onClick={() => {
+            setReport(null)
+            setShowBlocked((v) => !v)
+          }}
+          aria-expanded={showBlocked}
+        >
           <b>{formatCount(stats.pruned, settings.lang)}</b>
           <span>{t('popup.stat.pruned')}</span>
-        </div>
+        </button>
         <div className="stat">
           <b>{formatCount(stats.skipped, settings.lang)}</b>
           <span>{t('popup.stat.skipped')}</span>
         </div>
       </div>
+
+      {showBlocked && (
+        <div className="diag blocked">
+          <div className="blk-host">{host ?? t('popup.blocked.nohost')}</div>
+          {!host ? (
+            <p className="blk-note">{t('popup.blocked.nohost')}</p>
+          ) : siteOff ? (
+            <p className="blk-note">{t('popup.blocked.off')}</p>
+          ) : (
+            <>
+              <div className="blk-label">{t('popup.blocked.applying')}</div>
+              <ul className="blk-list">
+                {HAS_NETWORK_BLOCKING && <li>{t('popup.blocked.network')}</li>}
+                {onYouTube ? (
+                  <li>{t('popup.blocked.youtube')}</li>
+                ) : (
+                  settings.toggles.genericAds && <li>{t('popup.blocked.slots')}</li>
+                )}
+                {settings.lang === 'ko' && settings.toggles.genericAds && (
+                  <li>{t('popup.blocked.krlist')}</li>
+                )}
+                {parseCustomRules(settings.customRules).length > 0 && (
+                  <li>
+                    {t('popup.blocked.custom', {
+                      n: parseCustomRules(settings.customRules).length,
+                    })}
+                  </li>
+                )}
+              </ul>
+              <p className="blk-hint">{t('popup.blocked.hint')}</p>
+            </>
+          )}
+          <div className="diag-actions">
+            {host && (
+              <button
+                className={siteOff ? '' : 'primary'}
+                onClick={() => toggleSite(siteOff)}
+              >
+                <Icon name={siteOff ? 'undo' : 'close'} />
+                {siteOff ? t('popup.blocked.unexempt') : t('popup.blocked.exempt')}
+              </button>
+            )}
+            <button onClick={() => setShowBlocked(false)}>
+              <Icon name="close" />
+              {t('popup.blocked.close')}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="list">
         {visibleToggles.map((meta) => (
@@ -197,6 +259,7 @@ export function App() {
         </button>
         <button
           onClick={() => {
+            setShowBlocked(false)
             setCopied(false)
             void collect().then(setReport)
           }}
