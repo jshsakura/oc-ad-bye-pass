@@ -11,13 +11,24 @@
 // present the site the shot is about.
 
 import { chromium } from '@playwright/test'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
 const EXT = path.join(ROOT, 'dist')
 const OUT = path.join(ROOT, 'assets', 'store')
 mkdirSync(OUT, { recursive: true })
+
+// The brand wordmark font — the same Zen Tokyo Zoo the site sets on its title,
+// inlined so the wordmark on these cards matches the site instead of falling to
+// a system sans. Latin only, which is all "OC Ad Bye-Pass" needs.
+const ZEN_B64 = readFileSync(path.join(ROOT, 'site', 'fonts', 'zen-tokyo-zoo-latin.woff2')).toString(
+  'base64',
+)
+const FONT_FACE =
+  `@font-face{font-family:'Zen Tokyo Zoo';font-style:normal;font-weight:400;` +
+  `src:url(data:font/woff2;base64,${ZEN_B64}) format('woff2')}`
+const WORDMARK = "'Zen Tokyo Zoo', system-ui, sans-serif"
 
 const LIST_URL =
   'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/list.json'
@@ -40,14 +51,14 @@ const ACCENT = '#7e4dc5'
 
 function composeHtml({ title, sub, png, uiWidth }) {
   return (
-    `<!doctype html><html><head><meta charset="utf-8"><style>` +
+    `<!doctype html><html><head><meta charset="utf-8"><style>${FONT_FACE}` +
     `*{margin:0;box-sizing:border-box}html,body{width:1280px;height:800px}` +
     `body{background:${BG};color:${INK};overflow:hidden;padding:0 92px;gap:56px;` +
     `display:flex;align-items:center;` +
     `font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}` +
     `.copy{flex:1;max-width:440px}` +
     `.brand{display:inline-flex;align-items:center;gap:9px;margin-bottom:26px;` +
-    `font-size:15px;font-weight:700;letter-spacing:.02em;color:${ACCENT}}` +
+    `font-family:${WORDMARK};font-size:15px;letter-spacing:.04em;color:${ACCENT}}` +
     `.brand i{width:26px;height:26px;border-radius:7px;background-size:cover;` +
     `background-image:url("${MARK}")}` +
     `h1{font-size:46px;line-height:1.1;font-weight:800;letter-spacing:-.02em}` +
@@ -183,6 +194,7 @@ const plain = await chromium.launch({ channel: 'chromium' })
 const page = await plain.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 })
 for (const s of shots) {
   await page.setContent(composeHtml({ title: s.title, sub: s.sub, png: s.ui, uiWidth: s.uiWidth }))
+  await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(150)
   const out = path.join(OUT, s.file)
   await page.screenshot({ path: out })
@@ -192,11 +204,11 @@ for (const s of shots) {
 // Promo images for the Chrome Web Store — the small tile shown in listings and
 // the wide marquee. English, flat, same palette as the shots.
 const head =
-  `<meta charset="utf-8"><style>*{margin:0;box-sizing:border-box}` +
+  `<meta charset="utf-8"><style>${FONT_FACE}*{margin:0;box-sizing:border-box}` +
   `body{background:${BG};color:${INK};overflow:hidden;` +
   `font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}` +
   `.mark{background-image:url("${MARK}");background-size:cover;border-radius:22%;flex:none}` +
-  `.brand{color:${ACCENT};font-weight:800;letter-spacing:.01em}</style>`
+  `.brand{color:${ACCENT};font-family:${WORDMARK};letter-spacing:.04em}</style>`
 
 const promoSmall =
   `<!doctype html><html><head>${head}</head><body style="width:440px;height:280px;` +
@@ -229,6 +241,7 @@ for (const [w, h, html, file] of [
 ]) {
   await page.setViewportSize({ width: w, height: h })
   await page.setContent(html)
+  await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(150)
   const out = path.join(OUT, file)
   await page.screenshot({ path: out })
