@@ -76,7 +76,11 @@ jobs:
       - name: 테스트가 남긴 브라우저 캐시 제거
         run: |
           rm -rf dist/_metadata dist-orion/_metadata
-          ! find dist dist-orion -name '_*' -print | grep . || {
+          # `_locales` is the one underscore directory the format sanctions —
+          # it carries the manifest's localized name/description and both the
+          # store and Orion accept it. Everything else with a `_` prefix is the
+          # browser's own cache junk and must not ship.
+          ! find dist dist-orion -name '_*' -not -path '*/_locales*' -print | grep . || {
             echo "::error::예약된 _ 이름이 남아 있다 (위 목록)"; exit 1; }
 
       # 파일 이름에 버전이 들어간다.

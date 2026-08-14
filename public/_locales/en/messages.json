@@ -1,0 +1,9 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "A fast, open-source ad blocker. Where ads come mixed into the content's own response it strips them out before you see them; everywhere else it blocks the ad request itself."
+  }
+}
