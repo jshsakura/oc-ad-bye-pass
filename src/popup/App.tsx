@@ -173,7 +173,17 @@ export function App() {
 
       {showBlocked && (
         <div className="diag blocked">
-          <div className="blk-host">{host ?? t('popup.blocked.nohost')}</div>
+          <div className="blk-top">
+            <div className="blk-host">{host ?? t('popup.blocked.nohost')}</div>
+            <button
+              type="button"
+              className="blk-x"
+              aria-label={t('popup.blocked.close')}
+              onClick={() => setShowBlocked(false)}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
           {!host ? (
             <p className="blk-note">{t('popup.blocked.nohost')}</p>
           ) : siteOff ? (
@@ -202,21 +212,17 @@ export function App() {
               <p className="blk-hint">{t('popup.blocked.hint')}</p>
             </>
           )}
-          <div className="diag-actions">
-            {host && (
+          {host && (
+            <div className="diag-actions">
               <button
-                className={siteOff ? '' : 'primary'}
+                className={`blk-exempt${siteOff ? '' : ' primary'}`}
                 onClick={() => toggleSite(siteOff)}
               >
-                <Icon name={siteOff ? 'undo' : 'close'} />
+                <Icon name={siteOff ? 'undo' : 'site'} />
                 {siteOff ? t('popup.blocked.unexempt') : t('popup.blocked.exempt')}
               </button>
-            )}
-            <button onClick={() => setShowBlocked(false)}>
-              <Icon name="close" />
-              {t('popup.blocked.close')}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
 
