@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "OC Ad Bye-Pass",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "광고 차단기. 광고가 콘텐츠와 같은 응답에 섞여 오는 곳에서는 그것을 미리 걷어내고, 그 밖에서는 광고 요청 자체를 막습니다.",
   "minimum_chrome_version": "120",
   "icons": {
