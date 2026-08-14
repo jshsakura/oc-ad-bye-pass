@@ -9,3 +9,6 @@ test-results/
 playwright-report/
 blob-report/
 e2e/__screenshots__/
+
+# Store screenshots (regenerate with scripts/make-shots.mjs; not committed)
+assets/store/
