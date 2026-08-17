@@ -31,9 +31,11 @@
 body {
   margin: 0;
   /* The width a desktop popup opens at — a popup has no window to fill, so its
-     document decides. On a phone this is under the sheet's width and does
-     nothing. */
-  min-width: 320px;
+     document decides. 320 was cramped once a toggle row carries a label, a hint,
+     a layer badge and a switch; 400 gives them room. On a phone this is under
+     the sheet's width and does nothing. (.popup caps at 560, so there is still
+     headroom.) */
+  min-width: 400px;
   background: var(--bg);
   color: var(--fg);
   font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif;
