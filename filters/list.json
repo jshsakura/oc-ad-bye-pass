@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260817,
-  "updatedAt": "2026-08-17",
+  "version": 20260818,
+  "updatedAt": "2026-08-18",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
     "hide": {
@@ -946,7 +946,7 @@
         ".happy-header",
         "img[onclick]"
       ],
-      "avsee.ru": [
+      "avsee.is": [
         ".title",
         "div.main-box:first-child"
       ],
@@ -1499,6 +1499,9 @@
       ],
       "ccdailynews.com": [
         "div[class^=\"ad-\"]"
+      ],
+      "cctimes.kr": [
+        "#adbay_floatingid"
       ],
       "cdmanii.com": [
         "div#googleTop"
@@ -3952,6 +3955,7 @@
       "issuefeed.dcinside.com": [
         "div.body-ad",
         "div[class*=\" page_content-sticky-bottom__\"]",
+        "div[class*=\"ad\"]",
         "div[class^=\"page_content-ad-box__\"]"
       ],
       "issuetory.co.kr": [
@@ -4202,7 +4206,7 @@
         "iframe[src^=\"https://shop.kbench.com/09shop/article_right_box.php\"]"
       ],
       "keybr.com": [
-        "div.Supporter"
+        "div#fs-sticky-footer"
       ],
       "kgirls.net": [
         ".layout_pc_banner"
@@ -5657,25 +5661,6 @@
         "div[data-panel-code=\"SHOP_VOGUE\"] ._MM_TREND_PICK",
         "div[id$=\"_AD\"]",
         "script#MM_search_disaster ~*"
-      ],
-      "m.news.nate.com": [
-        ".adtive",
-        ".divAdv",
-        "div#ad_innerView",
-        "div#ad_innerView2",
-        "div#big_banner",
-        "div.ad_banner",
-        "div.adbox",
-        "div.adtive",
-        "div.adtive_box",
-        "div.adv",
-        "div.float-adv-wrap",
-        "div[id^=\"sec_hangzhou_ad\"]",
-        "iframe[name=\"ad_big\"]",
-        "iframe[name=\"adtive\"]",
-        "iframe[src*=\"//m.news.nate.com/etc/AdTop\"]",
-        "iframe[src^=\"http://networkad.nate.com/nate/mobile_news.html\"]",
-        "iframe[title*=\"광고\"]"
       ]
     },
     "prune": [
