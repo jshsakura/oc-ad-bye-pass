@@ -171,7 +171,9 @@ function onBannerRemoved(count: number) {
 }
 
 function start() {
-  log(`시작: ${SITE}`)
+  // Only the top document's start is worth a line — subframe logs are never
+  // reported (see reportDiagnostics) and would only be dead writes here.
+  if (window.top === window) log(`시작: ${SITE}`)
   if (IS_YOUTUBE) {
     // Runs whenever layer 1 has not marked itself installed — which covers the
     // registration failing outright, and the case that actually bit: a browser
