@@ -18,13 +18,8 @@ import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
-/**
- * Two sizes: the hit area a thumb needs, and the smaller chip it sees. The chip
- * sits on someone else's video, so it stays as quiet as it can while the button
- * around it stays large enough to hit.
- */
+/** The hit area a thumb needs. The glyph inside is aligned to its bottom-right. */
 const BUTTON_SIZE = 36
-const CHIP_SIZE = 22
 
 /** How long to wait before reading back what a presentation call did. */
 const PRESENTATION_SETTLE_MS = 900
@@ -190,15 +185,21 @@ function enterPip(video: WebkitVideo): void {
 }
 
 function ensureButton(video: WebkitVideo): void {
+  // Resolve the current player video at *click* time, not mount time. YouTube
+  // swaps the <video> element on navigation, and this button is only rebound
+  // through recompute — which does not run on an SPA route change. So a
+  // reference captured when the button was made goes stale on the second video,
+  // and the tap reaches a detached element: the button "stops working" on 2회차.
+  // Reading playerVideo() on each click sidesteps that entirely.
+  const activate = (event: Event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    enterPip(playerVideo() ?? video)
+  }
+
   let button = document.getElementById(BUTTON_ID) as HTMLButtonElement | null
   if (button?.isConnected) {
-    // Keep it pointing at whatever video is current — the site swaps the element
-    // out on navigation without touching ours.
-    button.onclick = (event) => {
-      event.preventDefault()
-      event.stopPropagation()
-      enterPip(video)
-    }
+    button.onclick = activate
     return
   }
 
@@ -223,14 +224,14 @@ function ensureButton(video: WebkitVideo): void {
     'background:transparent', 'cursor:pointer', 'touch-action:manipulation',
     '-webkit-tap-highlight-color:transparent',
   ].join(';')
+  // Just the glyph — no chip behind it. A drop-shadow carries the contrast the
+  // chip's dark fill used to, so it stays legible on a bright frame without
+  // drawing a box in the corner of someone's video.
   button.innerHTML =
-    `<span style="display:grid;place-items:center;width:${CHIP_SIZE}px;height:${CHIP_SIZE}px;` +
-    'border-radius:9px;background:rgba(24,24,37,.42);' +
-    'border:1px solid rgba(255,255,255,.16);box-shadow:0 4px 14px -6px rgba(0,0,0,.5)">' +
-    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2"' +
-    ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>' +
-    '</span>'
+    '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.2"' +
+    ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' +
+    ' style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))">' +
+    '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>'
 
   button.onclick = (event) => {
     event.preventDefault()
@@ -250,6 +251,31 @@ function ensureButton(video: WebkitVideo): void {
 }
 
 /**
+ * Keep the icon honest about PiP state.
+ *
+ * The icon's colour and corner are set in place(), which only runs on
+ * scroll/resize — not the moment PiP is entered or left, which is exactly when
+ * the state changes. So listen for those moments on the current video and route
+ * them to place(). Re-bound when the site swaps the <video> on navigation.
+ */
+let presentationVideo: WebkitVideo | null = null
+const PRESENTATION_EVENTS = [
+  'enterpictureinpicture',
+  'leavepictureinpicture',
+  'webkitpresentationmodechanged',
+]
+function watchPresentation(video: WebkitVideo | null): void {
+  if (video === presentationVideo) return
+  if (presentationVideo) {
+    for (const e of PRESENTATION_EVENTS) presentationVideo.removeEventListener(e, place)
+  }
+  presentationVideo = video
+  if (video) {
+    for (const e of PRESENTATION_EVENTS) video.addEventListener(e, place, { passive: true })
+  }
+}
+
+/**
  * Where the button goes: the player's bottom-right corner, inset, in
  * visual-viewport coordinates (on iOS the layout viewport is not the visible
  * one). When the player is scrolled away there is nothing to act on, so it hides.
@@ -257,6 +283,7 @@ function ensureButton(video: WebkitVideo): void {
 function place(): void {
   const button = document.getElementById(BUTTON_ID) as HTMLElement | null
   if (!button) return
+  watchPresentation(playerVideo())
   const player = document.querySelector('#movie_player') ?? playerVideo()
   const box = player?.getBoundingClientRect()
   const view = window.visualViewport
