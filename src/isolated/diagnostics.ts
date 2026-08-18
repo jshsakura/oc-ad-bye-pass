@@ -77,6 +77,15 @@ interface WebkitVideo extends HTMLVideoElement {
 }
 
 export function reportDiagnostics(): void {
+  // Top document only. This script runs in every frame (all_frames), and a page
+  // carries dozens of ad/tracker iframes; each one reporting would race the
+  // single storage slot and, worse, merge a "시작" line into the shared log tail
+  // per frame — hundreds of them, burying the one page's actual story. It also
+  // means dozens of get→sort-8KB→set round trips on load, which is real I/O the
+  // page does not need while it is trying to start a video. The player and its
+  // state live in the top document, so that is the only frame worth reporting.
+  if (window.top !== window) return
+
   const video = document.querySelector<WebkitVideo>('video')
   const facts: PageDiagnostics = {
     at: Date.now(),
@@ -105,7 +114,6 @@ export function reportDiagnostics(): void {
   if (location.hostname.endsWith('youtube.com')) {
     void chrome.storage.local.set({ [YOUTUBE_KEY]: facts })
   }
-  void mergeLog(facts.log)
 
   if (!facts.layer1) watchForLayer1()
 }
