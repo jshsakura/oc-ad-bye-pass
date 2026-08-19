@@ -4,6 +4,6 @@
     "description": "The extension name. A brand, so it is the same in every locale."
   },
   "extDescription": {
-    "message": "광고 차단기. 광고가 콘텐츠와 같은 응답에 섞여 오는 곳에서는 그것을 미리 걷어내고, 그 밖에서는 광고 요청 자체를 막습니다."
+    "message": "광고 차단기입니다. 영상 광고는 재생되기 전에 미리 걷어내 스킵할 것도 없고, 다른 사이트에서는 광고·추적 요청 자체를 막습니다."
   }
 }
