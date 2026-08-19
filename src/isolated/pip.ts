@@ -229,7 +229,7 @@ function ensureButton(video: WebkitVideo): void {
   // chip's dark fill used to, so it stays legible on a bright frame without
   // drawing a box in the corner of someone's video.
   button.innerHTML =
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4"' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' +
     ' style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))">' +
     '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>'
@@ -313,7 +313,11 @@ function place(): void {
     mark.setAttribute('y', floating ? '6' : '11')
   }
 
-  const inset = 2
+  // Margin from the player/viewport edge. Bigger than it looks: the glyph is
+  // centred in a 36px tap target, so the visible gap is this plus ~10px. Kept
+  // clear of the edge so it does not hug the screen wall on a full-width mobile
+  // player, where the viewport clamp below is what decides the position.
+  const inset = 8
   const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
   const left = Math.min(box.right - BUTTON_SIZE - inset, visibleRight - BUTTON_SIZE - inset)
   button.style.display = 'grid'
