@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass",
   "private": true,
-  "version": "0.12.11",
+  "version": "0.12.12",
   "type": "module",
   "description": "Ad blocker for Chrome, Edge and Orion (iPhone included). Strips ads out of the response data before the player sees them.",
   "license": "GPL-3.0-or-later",

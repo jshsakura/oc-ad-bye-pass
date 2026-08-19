@@ -216,11 +216,12 @@ function ensureButton(video: WebkitVideo): void {
   button.style.cssText = [
     'position:fixed', 'right:14px', 'bottom:104px', 'z-index:2147483647',
     `width:${BUTTON_SIZE}px`, `height:${BUTTON_SIZE}px`,
-    // The tap target stays 36px, but the visible chip sits in the button's
-    // bottom-right rather than its centre, so it tucks into the corner instead
-    // of floating ~7px off it. The extra hit area spills up and left, away from
-    // the edge, which is exactly where a thumb has room.
-    'display:grid', 'place-items:end', 'padding:0', 'margin:0', 'border:none',
+    // Centre the glyph in the 36px tap target. Pinning it to the corner
+    // (place-items:end) looked flush on the right but gapped at the bottom,
+    // because the glyph does not fill its own box evenly — so it read as
+    // inconsistent. Centred, it sits an equal margin off both edges of the
+    // player corner, which is the consistent "floating in the corner" look.
+    'display:grid', 'place-items:center', 'padding:0', 'margin:0', 'border:none',
     'background:transparent', 'cursor:pointer', 'touch-action:manipulation',
     '-webkit-tap-highlight-color:transparent',
   ].join(';')
