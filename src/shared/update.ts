@@ -47,8 +47,28 @@ export function packageForThisBuild(): 'orion' | 'desktop' {
   return typeof chrome.declarativeNetRequest === 'undefined' ? 'orion' : 'desktop'
 }
 
-export function downloadUrlFor(kind: 'orion' | 'desktop'): string {
-  return `https://github.com/jshsakura/oc-ad-bye-pass/releases/latest/download/oc-ad-bye-pass-${kind}.zip`
+const REPO = 'https://github.com/jshsakura/oc-ad-bye-pass'
+
+/** The asset a release attaches, e.g. oc-ad-bye-pass-desktop-v0_12_16.zip. */
+export function assetNameFor(kind: 'orion' | 'desktop', version: string): string {
+  return `oc-ad-bye-pass-${kind}-v${version.replace(/\./g, '_')}.zip`
+}
+
+/**
+ * A direct link to the right zip on a specific release.
+ *
+ * Not `releases/latest/download/...`: that path needs a fixed asset name (ours
+ * carry the version now) and a release GitHub has promoted to "Latest" — and
+ * every release here is a prerelease, which is never promoted. Both were why the
+ * old link 404'd. Point at the tagged release's own asset instead.
+ */
+export function downloadUrlFor(kind: 'orion' | 'desktop', version: string): string {
+  return `${REPO}/releases/download/v${version}/${assetNameFor(kind, version)}`
+}
+
+/** The tagged release's page — a safe fallback when the exact asset is unknown. */
+export function releasePageFor(version: string): string {
+  return `${REPO}/releases/tag/v${version}`
 }
 
 export async function checkForUpdate(): Promise<UpdateCheck> {

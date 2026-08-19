@@ -169,10 +169,10 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           {t('opt.close')}
         </button>
       </div>
-      {update?.newer && (
+      {update?.newer && update.latest && (
         <div className="banner update">
-          <span>{t('opt.update.available', { latest: update.latest ?? '', current: update.current })}</span>
-          <a className="btn-primary" href={downloadUrlFor(packageForThisBuild())}>
+          <span>{t('opt.update.available', { latest: update.latest, current: update.current })}</span>
+          <a className="btn-primary" href={downloadUrlFor(packageForThisBuild(), update.latest)}>
             <Icon name="download" />
             {t('opt.update.download')}
           </a>
@@ -217,7 +217,7 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
               ? t('opt.version.notChecked')
               : update.latest
                 ? update.newer
-                  ? t('opt.version.new', { v: update.latest })
+                  ? `v${update.latest}` /* the banner above announces "new"; don't repeat it */
                   : t('opt.version.upToDate', { v: update.latest })
                 : (update.error ?? t('opt.version.checkFail'))}
           </dd>
@@ -237,12 +237,6 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
             <Icon name="refresh" />
             {checking ? t('opt.version.checking') : t('opt.version.check')}
           </button>
-          {update?.newer && (
-            <a className="btn-link" href={downloadUrlFor(packageForThisBuild())}>
-              <Icon name="download" />
-              {t('opt.version.getZip', { file: `oc-ad-bye-pass-${packageForThisBuild()}.zip` })}
-            </a>
-          )}
         </div>
       </section>
 

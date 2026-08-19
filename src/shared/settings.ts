@@ -73,6 +73,17 @@ export interface Settings {
 export const DEFAULT_LIST_URL =
   'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/list.json'
 
+/**
+ * Old default list URLs that no longer exist. A build seeds its default into the
+ * user's settings, and settings outlive the build — so someone who installed
+ * back when the list was `youtube.json` kept fetching a file that has since been
+ * renamed, and every refresh 404'd. Anyone still holding one of these is moved
+ * to the current default on load.
+ */
+const LEGACY_LIST_URLS = new Set([
+  'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/youtube.json',
+])
+
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
   // Overwritten from the browser locale on first seed; 'ko' is the fallback
@@ -140,7 +151,10 @@ function mergeSettings(stored: unknown): Settings {
     lang: s.lang === 'ko' || s.lang === 'en' ? s.lang : DEFAULT_SETTINGS.lang,
     toggles,
     listEnabled: typeof s.listEnabled === 'boolean' ? s.listEnabled : DEFAULT_SETTINGS.listEnabled,
-    listUrl: typeof s.listUrl === 'string' && s.listUrl ? s.listUrl : DEFAULT_SETTINGS.listUrl,
+    listUrl:
+      typeof s.listUrl === 'string' && s.listUrl && !LEGACY_LIST_URLS.has(s.listUrl)
+        ? s.listUrl
+        : DEFAULT_SETTINGS.listUrl,
     customRules: typeof s.customRules === 'string' ? s.customRules : DEFAULT_SETTINGS.customRules,
     allowlist: Array.isArray(s.allowlist)
       ? [...new Set(s.allowlist.filter((h): h is string => typeof h === 'string' && !!h))]
