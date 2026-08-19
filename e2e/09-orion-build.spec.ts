@@ -1,8 +1,9 @@
-// The package that actually goes on a phone.
-//
-// Orion refused the Chrome build outright — "Extensions Error. Something went
-// wrong.", with no reason given — so dist-orion/ exists: the same code with
-// declarativeNetRequest and two Chrome-only manifest keys stripped out.
+// The dormant fallback package — not shipped since v0.13.0, when the full
+// package proved to install on Orion (one-time compatibility warning) and
+// became the single artifact. dist-orion/ is the same code with
+// declarativeNetRequest and two Chrome-only manifest keys stripped out, kept
+// buildable in case an Orion version hard-refuses the full manifest again.
+// This spec runs only when someone builds it: npm run build:orion.
 //
 // That strip is exactly the kind of change that looks fine and ships a corpse.
 // Removing the API does not remove the calls to it, and a service worker that

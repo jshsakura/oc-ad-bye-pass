@@ -1,15 +1,16 @@
 // Build target definitions. vite, esbuild and the manifest generator all read
 // this file.
 //
-// Two targets, and the second one is not speculative — Orion on iPhone refused
-// the Chrome package outright ("Extensions Error. Something went wrong."), which
-// is what this file existed to make cheap to answer.
-//
-//   chrome  Chrome · Edge. Carries the declarativeNetRequest ruleset.
-//   orion   Orion (iOS · macOS). WebKit implements none of declarativeNetRequest
-//           — all 88 entries of Kagi's API table are unsupported — so the key,
-//           the permission and the 3.6MB ruleset come out. See scripts/manifest.mjs
-//           for what else is stripped and why.
+//   chrome  The product. One package for Chrome, Edge and Orion — on 2026-08-19
+//           the full package installed on a real iPhone (Orion shows a one-time
+//           compatibility warning for declarativeNetRequest and runs everything
+//           else), which retired the shipped split.
+//   orion   Dormant fallback, not shipped since v0.13.0. The same code with
+//           declarativeNetRequest and two Chrome-only manifest keys stripped —
+//           kept buildable (`npm run build:orion`) in case an Orion version
+//           turns up that hard-refuses the full manifest, as one appeared to
+//           in 2026-08-11 ("Extensions Error", no reason given; the cache was
+//           the likelier culprit in hindsight).
 //
 // A Safari target existed until 2026-08-11 and was dropped whole; the git
 // history has it if it is ever wanted back.

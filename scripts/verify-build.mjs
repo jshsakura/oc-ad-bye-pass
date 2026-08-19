@@ -114,10 +114,10 @@ check(
   '네트워크 차단이 통째로 빠졌다',
 )
 
-// The Orion package. Orion refused the Chrome one with no reason given, and the
-// three keys below are what it is not known to accept — the whole point of that
-// build is that they are absent. Shipping it with any of them back is shipping
-// the thing that failed.
+// The Orion package — a dormant fallback since v0.13.0, when the full package
+// proved to install on Orion and became the one shipped artifact. These checks
+// only run when someone builds it (`npm run build:orion`); its point is still
+// that the stripped keys are absent.
 if (orion) {
   check(
     'Orion 패키지에 declarativeNetRequest 가 없다',

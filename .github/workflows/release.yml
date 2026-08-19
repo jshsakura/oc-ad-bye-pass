@@ -1,11 +1,15 @@
-# Builds the zips people install and attaches them to the GitHub release.
+# Builds the zip people install and attaches it to the GitHub release.
 #
 # **The release is the distribution.** The site (GitHub Pages) links to
-# the releases API, matching assets by name, so the names carry the version:
+# the releases API, matching assets by name, so the name carries the version:
 #
-#   oc-ad-bye-pass-desktop-vX_Y_Z.zip  Chrome · Edge
-#   oc-ad-bye-pass-orion-vX_Y_Z.zip    Orion (iOS · macOS). No declarativeNetRequest —
-#                                      Orion refused the Chrome package outright.
+#   oc-ad-bye-pass-vX_Y_Z.zip   One package for Chrome, Edge and Orion.
+#
+# There used to be a second, stripped package for Orion, built on the belief
+# that Orion refused a manifest declaring declarativeNetRequest. On 2026-08-19
+# the full package installed on a real iPhone — Orion shows a one-time
+# compatibility warning and runs it fine — so the split was retired. The orion
+# build target is kept in scripts/targets.mjs as a manual fallback only.
 #
 # The version is in the filename because a fixed name is how a phone ends up
 # handing the browser a zip it downloaded weeks ago.
@@ -39,7 +43,7 @@ jobs:
       - run: npm run check
       - run: npm test
 
-      - run: npm run build:all
+      - run: npm run build
 
       # The failure mode this catches: the package still installs and only one
       # layer is dead, with nothing reported.
@@ -58,11 +62,9 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           node -e "
             const fs = require('fs');
-            for (const path of ['dist/manifest.json', 'dist-orion/manifest.json']) {
-              const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
-              manifest.version = '$version';
-              fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
-            }
+            const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
+            manifest.version = '$version';
+            fs.writeFileSync('dist/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
           "
 
       # Chromium writes its compiled ruleset cache into the extension directory
@@ -75,12 +77,12 @@ jobs:
       # then really is the thing the tests ran against.
       - name: 테스트가 남긴 브라우저 캐시 제거
         run: |
-          rm -rf dist/_metadata dist-orion/_metadata
+          rm -rf dist/_metadata
           # `_locales` is the one underscore directory the format sanctions —
           # it carries the manifest's localized name/description and both the
           # store and Orion accept it. Everything else with a `_` prefix is the
           # browser's own cache junk and must not ship.
-          ! find dist dist-orion -name '_*' -not -path '*/_locales*' -print | grep . || {
+          ! find dist -name '_*' -not -path '*/_locales*' -print | grep . || {
             echo "::error::예약된 _ 이름이 남아 있다 (위 목록)"; exit 1; }
 
       # 파일 이름에 버전이 들어간다.
@@ -98,10 +100,9 @@ jobs:
           # 점을 언더바로. 이름 가운데의 `.` 을 확장자로 읽는 파일 선택기가
           # 있고, 설치가 막히는 원인을 찾는 동안 변수를 하나라도 줄여둔다.
           v="$(printf '%s' "${GITHUB_REF_NAME:-dev}" | tr '.' '_')"
-          (cd dist && zip -qr "../oc-ad-bye-pass-desktop-$v.zip" .)
-          (cd dist-orion && zip -qr "../oc-ad-bye-pass-orion-$v.zip" .)
+          (cd dist && zip -qr "../oc-ad-bye-pass-$v.zip" .)
           ls -lh ./*.zip
-          unzip -l "oc-ad-bye-pass-desktop-$v.zip"
+          unzip -l "oc-ad-bye-pass-$v.zip"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -123,11 +124,18 @@ jobs:
 
             설치 안내: https://jshsakura.github.io/oc-ad-bye-pass/
 
+            **패키지는 하나입니다.** `oc-ad-bye-pass-…zip` 한 파일로 Chrome · Edge · Orion
+            을 모두 지원합니다. 파일 이름에 버전이 들어가 있어 어느 빌드를 받았는지
+            파일 앱에서 바로 확인할 수 있습니다.
+
             ## 아이폰 · 아이패드 (Orion)
 
             1. App Store 에서 **Orion Browser by Kagi** 를 설치합니다.
-            2. **`oc-ad-bye-pass-orion-…zip`** 을 받습니다 (Chrome 용과 다른 파일입니다).
-            3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다. 설치하면 바로 적용됩니다 — 따로 허용할 권한은 없습니다.
+            2. 위의 zip 을 받습니다.
+            3. Orion 우측 하단 **•••** → **Extensions** → **+** 로 그 zip 을 고릅니다.
+            4. **호환성 경고가 한 번 뜹니다 — 정상입니다.** Orion 이 지원하지 않는
+               네트워크 차단 API 를 알리는 것뿐이고, 계속을 누르면 설치됩니다.
+               유튜브 광고 차단과 광고 숨기기는 전부 동작합니다.
 
             설치가 **"Extensions Error / Something went wrong"** 으로 튕기면 파일 문제가
             아닙니다. 순서대로 해보세요.
@@ -138,16 +146,9 @@ jobs:
             3. Extensions 에서 **기존 것을 먼저 지웁니다** (덮어쓰기 설치는 안 됩니다)
             4. **+** 로 그 로컬 파일을 고릅니다. 그래도 막히면 설정에서 캐시를 지웁니다
 
-            실기기에서 2번 하나가 갈랐습니다. 파일 이름에 버전이 들어가 있으니
-            (`…-v0_10_70.zip`) 어느 빌드를 골랐는지 Files 앱에서 확인하실 수 있습니다.
-
-            Orion 은 `declarativeNetRequest` 를 구현하지 않아 Chrome 패키지를 설치조차
-            거절합니다. Orion 빌드는 그 키와 3.6MB 룰셋을 뺀 것이고(276KB), 유튜브 차단은
-            그대로입니다 — 다른 사이트의 광고망 **요청 차단**만 빠집니다.
-
             ## Chrome · Edge
 
-            1. `oc-ad-bye-pass-desktop-…zip` 을 받아 압축을 풉니다.
+            1. 같은 zip 을 받아 압축을 풉니다.
             2. `chrome://extensions` 를 엽니다.
             3. 우측 상단 **개발자 모드**를 켭니다.
             4. **압축해제된 확장 프로그램을 로드**를 눌러 압축 푼 폴더를 선택합니다.

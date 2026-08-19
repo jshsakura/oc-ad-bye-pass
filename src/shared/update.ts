@@ -40,33 +40,13 @@ export function isNewer(a: string, b: string): boolean {
   return false
 }
 
-/** Which package this install came from, so the download offered is the right one. */
-export function packageForThisBuild(): 'orion' | 'desktop' {
-  // The Orion build ships without declarativeNetRequest — that is the whole
-  // difference between the two, so it is also how a build knows which it is.
-  return typeof chrome.declarativeNetRequest === 'undefined' ? 'orion' : 'desktop'
-}
-
 const REPO = 'https://github.com/jshsakura/oc-ad-bye-pass'
 
-/** The asset a release attaches, e.g. oc-ad-bye-pass-desktop-v0_12_16.zip. */
-export function assetNameFor(kind: 'orion' | 'desktop', version: string): string {
-  return `oc-ad-bye-pass-${kind}-v${version.replace(/\./g, '_')}.zip`
-}
-
 /**
- * A direct link to the right zip on a specific release.
- *
- * Not `releases/latest/download/...`: that path needs a fixed asset name (ours
- * carry the version now) and a release GitHub has promoted to "Latest" — and
- * every release here is a prerelease, which is never promoted. Both were why the
- * old link 404'd. Point at the tagged release's own asset instead.
+ * The tagged release's page. The notice links here rather than at an asset:
+ * since v0.13.0 there is a single package for every browser, and the page is
+ * where its name and the install steps live.
  */
-export function downloadUrlFor(kind: 'orion' | 'desktop', version: string): string {
-  return `${REPO}/releases/download/v${version}/${assetNameFor(kind, version)}`
-}
-
-/** The tagged release's page — a safe fallback when the exact asset is unknown. */
 export function releasePageFor(version: string): string {
   return `${REPO}/releases/tag/v${version}`
 }

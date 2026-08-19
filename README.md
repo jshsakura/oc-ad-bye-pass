@@ -74,15 +74,19 @@ Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 �
 다시 서명할 일도 없다.
 
 1. App Store 에서 **Orion Browser by Kagi** 설치
-2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-orion-…zip`** 을 받는다 (Chrome 용과 다른 파일이다)
-3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택. 설치하면 바로 적용된다 — 따로 허용할 권한은 없다
+2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-…zip`** 을 받는다 (Chrome 과 같은 파일이다)
+3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
+4. **호환성 경고가 한 번 뜬다 — 정상이다.** Orion 이 구현하지 않은 네트워크 차단
+   API(`declarativeNetRequest`)를 알리는 것뿐이고, 계속을 누르면 설치된다.
+   그 API 는 런타임에서 감지해 건너뛰므로 나머지는 전부 동작한다
 
-**Orion 은 Chrome 패키지를 설치조차 거절한다.** 실기기에서 확인했다 —
-"Extensions Error. Something went wrong." 한 줄이 전부고 이유는 안 알려준다.
-Orion 빌드는 그것이 받지 못하는 것을 뺀 패키지다 (3.9MB → 276KB). 자세한 건 아래
+v0.13.0 전에는 Orion 전용 패키지를 따로 배포했다 — Orion 이 Chrome 패키지를
+거절한다고 봤기 때문인데, 2026-08-19 실기기에서 전체 패키지가 경고 후 정상
+설치·동작함을 확인하고 하나로 합쳤다. 전용 빌드는 `npm run build:orion` 으로
+여전히 만들 수 있는 예비용으로만 남아 있다. 기능 차이는 아래
 "Orion 에서 달라지는 것" 절에 있다.
 
-**같은 오류가 Orion 빌드에서도 난다면 대개 패키지 문제가 아니다.** 2026-08-11 에
+**"Extensions Error. Something went wrong." 이 나면 대개 패키지 문제가 아니다.** 2026-08-11 에
 실기기에서 끝까지 따라가 본 결과, 듣는 것은 하나였다.
 
 ```
@@ -353,8 +357,8 @@ MV3 는 원격 코드 실행을 금지하고, 보안상으로도 리스트 저�
 ```bash
 npm install
 npm run dev        # vite(팝업/옵션) + esbuild(콘텐츠/백그라운드) watch → dist/
-npm run build      # 프로덕션 빌드 → dist/
-npm run build:orion # Orion 패키지 → dist-orion/
+npm run build      # 프로덕션 빌드 → dist/ (배포되는 유일한 패키지)
+npm run build:orion # 예비용 Orion 전용 패키지 → dist-orion/ (v0.13.0 부터 미배포)
 npm run build:all  # 둘 다
 npm run verify     # 빌드 불변식 검사 (조용히 죽는 것들)
 npm run check      # tsc --noEmit
@@ -513,8 +517,7 @@ storage.sync                       Partial support ← 유일한 구멍
 ```
 git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
-       oc-ad-bye-pass-desktop-vX_Y_Z.zip  Chrome · Edge
-       oc-ad-bye-pass-orion-vX_Y_Z.zip    Orion (아이폰 포함). DNR 을 뺀 276KB
+       oc-ad-bye-pass-vX_Y_Z.zip   Chrome · Edge · Orion 공용 (v0.13.0 부터 하나)
 ```
 
 사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은

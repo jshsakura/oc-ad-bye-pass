@@ -408,9 +408,9 @@
     transition: background-color .12s ease, border-color .12s ease, color .12s ease;
   }
   .btn svg { width: 15px; height: 15px; }
-  /* Two download buttons that look alike is how someone ends up installing the
-     desktop package on a phone — which is the one Orion refuses. Each says which
-     file it hands over. */
+  /* One package since v0.13.0 — both buttons hand out the same zip, and the
+     line under each button names the exact file so what lands in Files can be
+     checked against it. */
   .btn { flex-wrap: wrap; }
   .btn .what {
     flex-basis: 100%; margin-top: 5px; text-align: center;
@@ -790,10 +790,10 @@
       <li>Pick the zip you downloaded — that is it, there is no permission to grant</li>
     </ol>
 
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-orion" data-size="92KB">
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-orion" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD · ORION
-      <span class="what">Orion 패키지</span>
+      DOWNLOAD
+      <span class="what">확장 패키지</span>
     </a>
 
     <div class="note" lang="ko">
@@ -801,9 +801,10 @@
         재생이 시작될 때 광고가 붙지 않으면 성공입니다.</p>
       <p>피드에서 광고가 사라진 것만으로는 확인이 어렵습니다.<br>
         그쪽은 막는 방식이 달라서 웬만하면 잘 되기 때문입니다.</p>
-      <p><strong>이 버튼은 Orion 전용 파일을 받습니다.</strong> 아래 Chrome용과는 다른 파일이에요.
-        Orion은 크롬의 네트워크 차단 기능을 지원하지 않아서, 그 부분을 뺀 가벼운 빌드(276KB)입니다.
-        영상 차단은 그대로이고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
+      <p><strong>설치할 때 호환성 경고가 한 번 뜹니다 — 정상입니다.</strong>
+        아래 Chrome용과 같은 파일 하나를 쓰는데, Orion이 지원하지 않는 네트워크 차단
+        기능이 들어 있다고 알려주는 것뿐입니다. 계속을 누르면 설치되고,
+        영상 차단은 그대로 동작합니다. 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
       <p><strong>"Extensions Error / Something went wrong" 이 뜨면 파일 문제가 아닙니다.</strong>
         Orion 의 확장 설치는 아직 베타라 자주 실패합니다.</p>
       <p><strong>갓 받은 파일은 먼저 기기에 저장해 주세요.</strong> 실기기에서 갈린 것이
@@ -827,10 +828,11 @@
         If nothing runs before the video starts, it is working.</p>
       <p>Ads disappearing from the feed does not prove much.<br>
         Those are blocked a different way and almost always go.</p>
-      <p><strong>This button downloads the Orion build</strong> — a different file from the
-        Chrome one below. Orion does not implement Chrome's network blocking, so that part
-        is left out (276KB). Video blocking is unchanged; elsewhere ad requests go out
-        but the ad slots are still hidden.</p>
+      <p><strong>A compatibility warning appears once during install — that is normal.</strong>
+        It is the same single file as the Chrome one below, and Orion is telling you it
+        contains a network-blocking feature it does not implement. Tap continue and it
+        installs. Video blocking is unchanged; elsewhere ad requests go out but the ad
+        slots are still hidden.</p>
       <p><strong>"Extensions Error / Something went wrong" is not the file.</strong> Extension
         installation in Orion is still in beta and fails often. Chased to the end on a real
         device, one thing fixed it.</p>
@@ -886,8 +888,8 @@
 
     <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-chrome" data-size="1.5MB">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD · CHROME
-      <span class="what">Chrome · Edge 패키지</span>
+      DOWNLOAD
+      <span class="what">확장 패키지 — 위 Orion 버튼과 같은 파일</span>
     </a>
   </div>
 
@@ -906,10 +908,10 @@
           <tr><th>브라우저</th><th>받는 파일</th><th>영상</th><th>다른 사이트</th></tr>
         </thead>
         <tbody>
-          <tr><td>Orion (아이폰·아이패드·맥)</td><td>Orion zip</td><td class="yes">전부</td><td>숨김만</td></tr>
-          <tr><td>Chrome (데스크톱)</td><td>Chrome zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
-          <tr><td>Edge (데스크톱)</td><td>Chrome zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
-          <tr><td>Brave · Vivaldi 등</td><td>Chrome zip</td><td>될 것</td><td>될 것</td></tr>
+          <tr><td>Orion (아이폰·아이패드·맥)</td><td>같은 zip</td><td class="yes">전부</td><td>숨김만</td></tr>
+          <tr><td>Chrome (데스크톱)</td><td>같은 zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
+          <tr><td>Edge (데스크톱)</td><td>같은 zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
+          <tr><td>Brave · Vivaldi 등</td><td>같은 zip</td><td>될 것</td><td>될 것</td></tr>
           <tr><td>Safari</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
           <tr><td>Firefox</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
           <tr><td>안드로이드 Chrome</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
@@ -923,10 +925,10 @@
           <tr><th>Browser</th><th>Package</th><th>Video</th><th>Elsewhere</th></tr>
         </thead>
         <tbody>
-          <tr><td>Orion (iPhone · iPad · Mac)</td><td>Orion zip</td><td class="yes">all layers</td><td>hiding only</td></tr>
-          <tr><td>Chrome (desktop)</td><td>Chrome zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
-          <tr><td>Edge (desktop)</td><td>Chrome zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
-          <tr><td>Brave · Vivaldi · …</td><td>Chrome zip</td><td>should work</td><td>should work</td></tr>
+          <tr><td>Orion (iPhone · iPad · Mac)</td><td>the same zip</td><td class="yes">all layers</td><td>hiding only</td></tr>
+          <tr><td>Chrome (desktop)</td><td>the same zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
+          <tr><td>Edge (desktop)</td><td>the same zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
+          <tr><td>Brave · Vivaldi · …</td><td>the same zip</td><td>should work</td><td>should work</td></tr>
           <tr><td>Safari</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
           <tr><td>Firefox</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
           <tr><td>Chrome for Android</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
@@ -938,7 +940,7 @@
       <p><strong>Orion 에서는 "다른 사이트"가 숨김만 됩니다.</strong> Orion 이 크롬의 네트워크 차단
         기능을 구현하지 않아서, 광고 요청은 나가되 광고 자리는 보이지 않습니다. 영상 차단은
         아무것도 빠지지 않습니다.</p>
-      <p>Brave · Vivaldi 는 크로미움 계열이라 Chrome 과 같은 파일로 동작할 것으로 보지만,
+      <p>Brave · Vivaldi 는 크로미움 계열이라 같은 파일로 동작할 것으로 보지만,
         직접 확인하지는 않았습니다.</p>
       <p>Safari 는 확장을 앱으로 감싸 서명해야 해서 접었고, Firefox 는 매니페스트가 달라
         그대로는 안 됩니다. 안드로이드 Chrome 은 확장 자체를 지원하지 않습니다.</p>
@@ -948,7 +950,7 @@
       <p><strong>On Orion, "elsewhere" is hiding only.</strong> Orion does not implement Chrome's
         network blocking, so ad requests go out but the slots stay invisible. Nothing is missing
         from the video side.</p>
-      <p>Brave and Vivaldi are Chromium, so the Chrome package should work there — untested.</p>
+      <p>Brave and Vivaldi are Chromium, so the same package should work there — untested.</p>
       <p>Safari needs the extension wrapped in a signed app, which was dropped; Firefox has a
         different manifest; Chrome for Android supports no extensions at all.</p>
     </div>
@@ -1392,16 +1394,17 @@
       // markup stays as the fallback for a page that could not reach the API —
       // it is wrong in the same way the whole short form is, and it is better
       // than a button with no address at all.
-      // Matched by shape, because the names carry the version now — a fixed
-      // name is how a phone hands the browser a zip it downloaded weeks ago.
-      for (const [id, kind] of [
-        ['dl-orion', 'orion'],
-        ['dl-chrome', 'desktop'],
-      ]) {
+      // One package since v0.13.0 — both buttons hand out the same zip. The
+      // name is matched by shape because it carries the version; skipping
+      // '-orion-' keeps the page working while the newest release is still a
+      // two-asset one from before the merge.
+      const asset = release?.assets?.find(
+        (x) => x.name.endsWith('.zip') && !x.name.includes('-orion-'),
+      );
+      for (const id of ['dl-orion', 'dl-chrome']) {
         const a = document.getElementById(id);
         if (!a) continue;
-        const asset = release?.assets?.find((x) => x.name.includes(kind) && x.name.endsWith('.zip'));
-        const name = asset?.name ?? `oc-ad-bye-pass-${kind}.zip`;
+        const name = asset?.name ?? 'oc-ad-bye-pass.zip';
         /*
          * Our own copy first.
          *
