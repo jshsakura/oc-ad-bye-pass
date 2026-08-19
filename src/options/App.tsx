@@ -13,12 +13,7 @@ import {
 import { normalizeHost, removeFromAllowlist } from '../shared/sites.ts'
 import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
-import {
-  checkForUpdate,
-  downloadUrlFor,
-  packageForThisBuild,
-  type UpdateCheck,
-} from '../shared/update.ts'
+import { checkForUpdate, releasePageFor, type UpdateCheck } from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
 import { LANGS, LANG_LABEL, makeT } from '../shared/i18n.ts'
 
@@ -172,7 +167,9 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
       {update?.newer && update.latest && (
         <div className="banner update">
           <span>{t('opt.update.available', { latest: update.latest, current: update.current })}</span>
-          <a className="btn-primary" href={downloadUrlFor(packageForThisBuild(), update.latest)}>
+          {/* Just open the release page in the browser — the notice hands off, it
+              does not download or install anything itself. */}
+          <a className="btn-primary" href={releasePageFor(update.latest)} target="_blank" rel="noopener">
             <Icon name="download" />
             {t('opt.update.download')}
           </a>

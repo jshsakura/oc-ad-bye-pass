@@ -204,8 +204,22 @@ const SYNC_ITEM_BUDGET_BYTES = 7500
 /** Local is not unbounded either. This is ample for hand-written rules. */
 export const MAX_CUSTOM_RULES_CHARS = 20_000
 
+/**
+ * A storage read must not be able to hang the UI. On Orion, `storage.sync` is
+ * only partially implemented and a read of it sometimes never settles — and
+ * `loadSettings` awaits both areas on the popup's first open, so that hang is
+ * the "spins forever when I first open it". Time each read out and treat a slow
+ * area as absent; the other area (or the defaults) still answers.
+ */
+const STORAGE_READ_TIMEOUT_MS = 1500
+
 async function areaGet(area: AreaName, key: string): Promise<unknown> {
-  const got = await chrome.storage[area].get(key)
+  const got = await Promise.race([
+    chrome.storage[area].get(key),
+    new Promise<Record<string, unknown>>((_, reject) =>
+      setTimeout(() => reject(new Error(`storage.${area} read timed out`)), STORAGE_READ_TIMEOUT_MS),
+    ),
+  ])
   return got[key]
 }
 
