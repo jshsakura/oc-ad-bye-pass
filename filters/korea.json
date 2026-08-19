@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260818,
-  "updatedAt": "2026-08-18",
+  "version": 20260819,
+  "updatedAt": "2026-08-19",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
     "hide": {
@@ -640,9 +640,6 @@
         "div#exon",
         "div.insty"
       ],
-      "aniwolf.com": [
-        ".banner-area"
-      ],
       "aniya24.com": [
         ".popup-container"
       ],
@@ -701,6 +698,7 @@
       ],
       "arca.live": [
         ".ad",
+        "a.vrow.column.notice:not([href*=\"/b/\"]):not(.notice-unfilter)",
         "div#newsRank",
         "div.ad",
         "iframe[src^=\"/api/ads\"]"
@@ -1230,6 +1228,9 @@
         ".bFloatingBanner",
         "div[class*=\"_banner\"]"
       ],
+      "bosik.kr": [
+        "div.ad-template"
+      ],
       "boutique.chosun.com": [
         "#bo_main_modalWrap"
       ],
@@ -1686,6 +1687,9 @@
         "div.adhesion-block",
         "div.modernInContent",
         "div.oas_desktop_banner"
+      ],
+      "commi.kr": [
+        "div.ad"
       ],
       "communities.vmware.com": [
         "span.rotatoryBanner"
@@ -3102,6 +3106,9 @@
         "div.js_commerce-inset-permalink",
         "div.js_sticky-top-ad",
         "div.splashy-ad-container"
+      ],
+      "gj-senior.or.kr": [
+        "div[id^=\"dsp-ad-container\"]"
       ],
       "gmarket.co.kr": [
         "#login-banner-box",
@@ -5562,30 +5569,6 @@
         ".article_view ~ div[style^=\"text-align:\"].clean_banner +.h50",
         ".article_view ~ div[style^=\"text-align:\"].clean_banner ~ .wcms_banner + .h45",
         ".article_view ~ div[style^=\"width:\"].clean_banner ~ .wcms_banner ~ .h50"
-      ],
-      "m.nate.com": [
-        ".issueBn",
-        "a[href^=\"https://cyad1.nate.com/click.kti/mnate/\"]",
-        "div.issueBn",
-        "div.mainBn",
-        "div.mainBnFull",
-        "div.new_ad",
-        "div[id^=\"ad_\"]",
-        "iframe[src*=\"//m.nate.com/include4/adscript.html\"]"
-      ],
-      "m.naver.com": [
-        "#MM_AI_TAB_TOOLTIP",
-        "#MM_aside_smartad_container",
-        ".ISSUE-BANNER-AD",
-        "div#HOME_AD",
-        "div.ISSUE-BANNER-AD",
-        "div.grid_ad",
-        "div.id_nmap",
-        "div.id_uio_cd_fbanner",
-        "div[data-da]",
-        "div[data-panel-code=\"SHOP_VOGUE\"] ._MM_TREND_PICK",
-        "div[id$=\"_AD\"]",
-        "script#MM_search_disaster ~*"
       ]
     },
     "prune": [],
