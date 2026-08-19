@@ -1,6 +1,13 @@
 // Store screenshots, 1280×800, drawn from the real extension.
 //
-//   node scripts/make-shots.mjs   # writes assets/store/*.png
+//   node scripts/make-shots.mjs           # English → assets/store/*.png
+//   SHOT_LANG=ko node scripts/make-shots.mjs   # Korean → assets/store/ko/*.png
+//
+// The Chrome Web Store takes a screenshot set per listing language, so the
+// Korean pass writes the same three files into a ko/ subdirectory: the UI is
+// captured with the extension's own language switched, and the card copy comes
+// from the table below. Promo images and the store icon are English-only and
+// belong to the default pass.
 //
 // Two passes. First the UI itself is captured from a live extension at 2× so it
 // stays crisp; then each capture is laid onto a flat 1280×800 card with a
@@ -16,8 +23,57 @@ import path from 'node:path'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
 const EXT = path.join(ROOT, 'dist')
-const OUT = path.join(ROOT, 'assets', 'store')
+const LANG = process.env.SHOT_LANG === 'ko' ? 'ko' : 'en'
+const OUT = path.join(ROOT, 'assets', 'store', ...(LANG === 'ko' ? ['ko'] : []))
 mkdirSync(OUT, { recursive: true })
+
+// Card copy per listing language. Same three shots, same order.
+const COPY = {
+  en: [
+    {
+      title: 'Blocks ads on every site',
+      sub: 'Ad and tracker requests are stopped at the network level, before they load — on all the web, not just video.',
+    },
+    {
+      title: 'Control, layer by layer',
+      sub: 'On video sites, ads are stripped out of the player response before you see them. Turn each layer on or off.',
+    },
+    {
+      title: 'Yours to control',
+      sub: 'Filter lists that update on their own, your own hiding rules, a per-site off switch — in English or Korean.',
+    },
+    {
+      title: 'See what runs, site by site',
+      sub: 'Tap the counter to see exactly what is active on the current site — and exempt the whole site with one click.',
+    },
+    {
+      title: 'Write your own rules',
+      sub: 'Hide anything with one CSS selector per line. Rules are checked before they save, so a typo cannot break a page.',
+    },
+  ],
+  ko: [
+    {
+      title: '광고, 뜨기 전에 막습니다',
+      sub: '광고와 추적 요청을 불러오기 전에 네트워크에서 차단합니다. 동영상 사이트만이 아니라 웹 어디서나요.',
+    },
+    {
+      title: '유튜브 광고는 겹겹이 차단',
+      sub: '광고를 플레이어 응답에서 미리 걷어내 화면에 닿지 않게 합니다. 계층마다 스위치가 따로 있어 원하는 만큼만 켤 수 있습니다.',
+    },
+    {
+      title: '설정은 내 마음대로',
+      sub: '필터 목록은 알아서 갱신되고, 숨김 규칙은 직접 쓸 수 있고, 사이트별로 통째로 끌 수도 있습니다. 한국어와 영어를 지원합니다.',
+    },
+    {
+      title: '이 사이트엔 뭐가 적용 중일까',
+      sub: '차단 숫자를 누르면 지금 사이트에 적용 중인 차단이 그대로 보입니다. 클릭 한 번으로 이 사이트만 예외로 둘 수도 있습니다.',
+    },
+    {
+      title: '숨기고 싶은 건 직접 한 줄로',
+      sub: 'CSS 선택자 한 줄이면 거슬리는 요소를 숨길 수 있습니다. 저장 전에 형식을 검사하니 오타로 페이지가 망가질 걱정은 없습니다.',
+    },
+  ],
+}[LANG]
 
 // The brand wordmark font — the same Zen Tokyo Zoo the site sets on its title,
 // inlined so the wordmark on these cards matches the site instead of falling to
@@ -29,6 +85,14 @@ const FONT_FACE =
   `@font-face{font-family:'Zen Tokyo Zoo';font-style:normal;font-weight:400;` +
   `src:url(data:font/woff2;base64,${ZEN_B64}) format('woff2')}`
 const WORDMARK = "'Zen Tokyo Zoo', system-ui, sans-serif"
+
+// Card body face. The Korean pass names the CJK faces outright instead of
+// trusting system-ui fallback — the machine drawing these has Noto Sans CJK KR
+// installed, and NanumGothic stands in where it is the one present.
+const BODY_FONT =
+  LANG === 'ko'
+    ? "'Noto Sans CJK KR','Noto Sans KR','NanumGothic',system-ui,sans-serif"
+    : "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"
 
 const LIST_URL =
   'https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/filters/list.json'
@@ -55,7 +119,7 @@ function composeHtml({ title, sub, png, uiWidth }) {
     `*{margin:0;box-sizing:border-box}html,body{width:1280px;height:800px}` +
     `body{background:${BG};color:${INK};overflow:hidden;padding:0 92px;gap:56px;` +
     `display:flex;align-items:center;` +
-    `font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}` +
+    `font-family:${BODY_FONT}}` +
     `.copy{flex:1;max-width:440px}` +
     `.brand{display:inline-flex;align-items:center;gap:9px;margin-bottom:26px;` +
     `font-family:${WORDMARK};font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:${ACCENT}}` +
@@ -77,7 +141,7 @@ function composeHtml({ title, sub, png, uiWidth }) {
 const ext = await chromium.launchPersistentContext('', {
   channel: 'chromium',
   deviceScaleFactor: 2,
-  locale: 'en-US',
+  locale: LANG === 'ko' ? 'ko-KR' : 'en-US',
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--no-first-run'],
 })
 
@@ -91,7 +155,7 @@ await ext.route('https://raw.githubusercontent.com/**', (route) => {
     status: 200,
     contentType: 'application/json; charset=utf-8',
     body: isVersion
-      ? JSON.stringify({ version: '0.12.1' })
+      ? JSON.stringify({ version: JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version })
       : JSON.stringify({
           name: 'shot',
           version: 1,
@@ -105,11 +169,11 @@ let [sw] = ext.serviceWorkers()
 if (!sw) sw = await ext.waitForEvent('serviceworker')
 const extId = new URL(sw.url()).host
 
-// A populated, English state so the shots look lived-in.
-await sw.evaluate((url) => {
+// A populated state, in the listing's language, so the shots look lived-in.
+await sw.evaluate(({ url, lang }) => {
   const settings = {
     enabled: true,
-    lang: 'en',
+    lang,
     toggles: {
       videoAds: true,
       generalAds: true,
@@ -125,7 +189,12 @@ await sw.evaluate((url) => {
     },
     listEnabled: true,
     listUrl: url,
-    customRules: '',
+    // Two hand-written rules so the custom-rules shot and the per-site panel
+    // have something real to show. The comment line is part of the shot, so it
+    // speaks the listing's language.
+    customRules:
+      (lang === 'ko' ? '! 뉴스 사이트에 붙는 띠 배너' : '! sticky banner on a news site') +
+      '\n#banner-ad\n.sticky-ad',
     allowlist: [],
     savedAt: Date.now(),
   }
@@ -134,11 +203,11 @@ await sw.evaluate((url) => {
     chrome.storage.local.set({ settings, stats }),
     chrome.storage.sync.set({ settings }),
   ])
-}, LIST_URL)
+}, { url: LIST_URL, lang: LANG })
 
-async function popupCapture(tabUrl) {
+async function popupCapture(tabUrl, { openBlocked = false } = {}) {
   const p = await ext.newPage()
-  await p.setViewportSize({ width: 440, height: 980 })
+  await p.setViewportSize({ width: 440, height: openBlocked ? 1200 : 980 })
   await p.addInitScript((u) => {
     try {
       if (globalThis.chrome?.tabs) chrome.tabs.query = () => Promise.resolve([{ url: u, id: 1, active: true }])
@@ -146,19 +215,29 @@ async function popupCapture(tabUrl) {
   }, tabUrl)
   await p.goto(`chrome-extension://${extId}/popup.html`)
   await p.waitForSelector('.popup .stats')
+  if (openBlocked) {
+    await p.click('.stat-btn')
+    await p.waitForSelector('.blocked')
+  }
   await p.waitForTimeout(350)
   const buf = await p.locator('.popup').screenshot()
   await p.close()
   return buf.toString('base64')
 }
 
-async function optionsCapture() {
+async function optionsCapture({ scrollTo } = {}) {
   const p = await ext.newPage()
   await p.setViewportSize({ width: 760, height: 860 })
   await p.goto(`chrome-extension://${extId}/options.html`)
   await p.waitForSelector('.page .card')
+  if (scrollTo) {
+    // Bring the asked-for card to the top of the viewport before shooting.
+    await p.evaluate((sel) => {
+      document.querySelector(sel)?.closest('.card')?.scrollIntoView({ block: 'start' })
+    }, scrollTo)
+  }
   await p.waitForTimeout(450)
-  const buf = await p.screenshot() // viewport only — the top of the settings
+  const buf = await p.screenshot() // viewport only — one screenful of settings
   await p.close()
   return buf.toString('base64')
 }
@@ -168,22 +247,31 @@ const shots = [
     file: '01-network.png',
     ui: await popupCapture('https://www.naver.com/'),
     uiWidth: 344,
-    title: 'Blocks ads on every site',
-    sub: 'Ad and tracker requests are stopped at the network level, before they load — on all the web, not just video.',
+    ...COPY[0],
   },
   {
     file: '02-layers.png',
     ui: await popupCapture('https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
     uiWidth: 344,
-    title: 'Control, layer by layer',
-    sub: 'On video sites, ads are stripped out of the player response before you see them. Turn each layer on or off.',
+    ...COPY[1],
   },
   {
     file: '03-settings.png',
     ui: await optionsCapture(),
     uiWidth: 592,
-    title: 'Yours to control',
-    sub: 'Filter lists that update on their own, your own hiding rules, a per-site off switch — in English or Korean.',
+    ...COPY[2],
+  },
+  {
+    file: '04-per-site.png',
+    ui: await popupCapture('https://www.naver.com/', { openBlocked: true }),
+    uiWidth: 344,
+    ...COPY[3],
+  },
+  {
+    file: '05-custom-rules.png',
+    ui: await optionsCapture({ scrollTo: 'textarea' }),
+    uiWidth: 592,
+    ...COPY[4],
   },
 ]
 
@@ -202,7 +290,13 @@ for (const s of shots) {
 }
 
 // Promo images for the Chrome Web Store — the small tile shown in listings and
-// the wide marquee. English, flat, same palette as the shots.
+// the wide marquee. Promos and the icon are per-listing, not per-language, so
+// only the default English pass draws them.
+if (LANG === 'ko') {
+  await plain.close()
+  process.exit(0)
+}
+
 const head =
   `<meta charset="utf-8"><style>${FONT_FACE}*{margin:0;box-sizing:border-box}` +
   `body{background:${BG};color:${INK};overflow:hidden;` +
