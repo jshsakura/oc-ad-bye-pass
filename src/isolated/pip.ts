@@ -228,7 +228,7 @@ function ensureButton(video: WebkitVideo): void {
   // chip's dark fill used to, so it stays legible on a bright frame without
   // drawing a box in the corner of someone's video.
   button.innerHTML =
-    '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.2"' +
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' +
     ' style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))">' +
     '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>'
