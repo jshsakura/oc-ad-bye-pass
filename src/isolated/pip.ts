@@ -229,7 +229,7 @@ function ensureButton(video: WebkitVideo): void {
   // chip's dark fill used to, so it stays legible on a bright frame without
   // drawing a box in the corner of someone's video.
   button.innerHTML =
-    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2"' +
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' +
     ' style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))">' +
     '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>'
@@ -284,9 +284,15 @@ function watchPresentation(video: WebkitVideo | null): void {
 function place(): void {
   const button = document.getElementById(BUTTON_ID) as HTMLElement | null
   if (!button) return
-  watchPresentation(playerVideo())
-  const player = document.querySelector('#movie_player') ?? playerVideo()
-  const box = player?.getBoundingClientRect()
+  const video = playerVideo()
+  watchPresentation(video)
+  // Anchor to the <video> element, not #movie_player. The player container runs
+  // taller than the picture — a control strip and padding live below the video —
+  // so anchoring to it floated the button that hidden height above the frame,
+  // leaving the bottom gap roughly double the right one. The video box is the
+  // frame the viewer actually sees.
+  const anchor = video ?? document.querySelector<HTMLElement>('#movie_player')
+  const box = anchor?.getBoundingClientRect()
   const view = window.visualViewport
 
   const visibleTop = view?.offsetTop ?? 0
@@ -298,7 +304,6 @@ function place(): void {
     return
   }
 
-  const video = playerVideo()
   const floating = video ? isFloating(video) : false
   const label = floating ? '작은 화면 접기' : '화면 속 화면으로 보기'
   button.title = label
