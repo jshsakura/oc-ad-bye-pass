@@ -18,7 +18,9 @@ import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
-/** The hit area a thumb needs. The glyph inside is aligned to its bottom-right. */
+/** The hit area a thumb needs (kept at the 36px floor the placement spec sets).
+ *  The visible glyph is aligned to its bottom-right, so it jams into the corner
+ *  while this transparent target spills up and left where a thumb has room. */
 const BUTTON_SIZE = 36
 
 /** How long to wait before reading back what a presentation call did. */
@@ -216,12 +218,11 @@ function ensureButton(video: WebkitVideo): void {
   button.style.cssText = [
     'position:fixed', 'right:14px', 'bottom:104px', 'z-index:2147483647',
     `width:${BUTTON_SIZE}px`, `height:${BUTTON_SIZE}px`,
-    // Centre the glyph in the 36px tap target. Pinning it to the corner
-    // (place-items:end) looked flush on the right but gapped at the bottom,
-    // because the glyph does not fill its own box evenly — so it read as
-    // inconsistent. Centred, it sits an equal margin off both edges of the
-    // player corner, which is the consistent "floating in the corner" look.
-    'display:grid', 'place-items:center', 'padding:0', 'margin:0', 'border:none',
+    // Pin the glyph to the button's bottom-right so it jams into the corner,
+    // with the tap area spilling up and left. This only reads evenly because the
+    // svg viewBox below is cropped tight to the glyph — the earlier gap-at-the-
+    // bottom was that box carrying empty space under the icon.
+    'display:grid', 'place-items:end', 'padding:0', 'margin:0', 'border:none',
     'background:transparent', 'cursor:pointer', 'touch-action:manipulation',
     '-webkit-tap-highlight-color:transparent',
   ].join(';')
@@ -229,7 +230,7 @@ function ensureButton(video: WebkitVideo): void {
   // chip's dark fill used to, so it stays legible on a bright frame without
   // drawing a box in the corner of someone's video.
   button.innerHTML =
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2"' +
+    '<svg viewBox="0 2 24 19" width="22" height="17" fill="none" stroke="#fff" stroke-width="2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' +
     ' style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))">' +
     '<rect x="2" y="4" width="20" height="15" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="#fab387" stroke="none"/></svg>'
@@ -318,11 +319,10 @@ function place(): void {
     mark.setAttribute('y', floating ? '6' : '11')
   }
 
-  // Margin from the player/viewport edge. Bigger than it looks: the glyph is
-  // centred in a 36px tap target, so the visible gap is this plus ~10px. Kept
-  // clear of the edge so it does not hug the screen wall on a full-width mobile
-  // player, where the viewport clamp below is what decides the position.
-  const inset = 8
+  // Margin from the edge. Small, to tuck into the very corner: floated inward it
+  // sits on top of YouTube's own bottom-right controls (the fullscreen button).
+  // The glyph is centred in a 36px tap target, so the visible gap is this + ~7px.
+  const inset = 3
   const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
   const left = Math.min(box.right - BUTTON_SIZE - inset, visibleRight - BUTTON_SIZE - inset)
   button.style.display = 'grid'
