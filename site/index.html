@@ -256,6 +256,7 @@
     margin-bottom: 16px;
     box-shadow: inset 0 0 34px var(--vignette);
   }
+  .card.download { --accent: var(--mauve); --ink: var(--mauve-ink); border-color: var(--mauve); }
   .card.orion  { --accent: var(--mauve); --ink: var(--mauve-ink); border-color: var(--mauve); }
   .card.chrome { --accent: var(--blue);  --ink: var(--blue-ink); }
   .card.filter { --accent: var(--green); --ink: var(--green-ink); }
@@ -408,10 +409,18 @@
     transition: background-color .12s ease, border-color .12s ease, color .12s ease;
   }
   .btn svg { width: 15px; height: 15px; }
-  /* One package since v0.13.0 — both buttons hand out the same zip, and the
-     line under each button names the exact file so what lands in Files can be
-     checked against it. */
+  /* One package since v0.13.0, so one download button — the line under it
+     names the exact file so what lands in Files can be checked against it. */
   .btn { flex-wrap: wrap; }
+  /* The support range, spelled out where the button is. */
+  .supports {
+    list-style: none; display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 0; margin: 0 0 20px;
+  }
+  .supports li {
+    font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 999px;
+    background-color: var(--mantle); border: 1px solid var(--surface1); color: var(--text);
+  }
   .btn .what {
     flex-basis: 100%; margin-top: 5px; text-align: center;
     font-family: var(--body); font-size: 11px; font-weight: 500;
@@ -765,6 +774,36 @@
     </dl>
   </div>
 
+  <!-- ── 다운로드 ────────────────────────────────────── -->
+  <!-- One product, one file, one button. The per-browser cards below carry
+       only the install steps; since v0.13.0 they all install this same zip. -->
+  <div class="card download">
+    <div class="card-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      <h2 lang="ko">다운로드</h2>
+      <h2 lang="en">Download</h2>
+      <span class="chip">ONE ZIP</span>
+    </div>
+
+    <p class="lede" lang="ko"><strong>패키지는 하나입니다.</strong> 같은 zip 파일 하나가 아래 브라우저를 전부 지원합니다.<br>
+      받은 뒤의 설치 방법만 다르고, 그건 아래 카드에 브라우저별로 안내되어 있습니다.</p>
+    <p class="lede" lang="en"><strong>There is one package.</strong> The same single zip covers every browser below.<br>
+      Only the install steps differ — they are in the cards underneath.</p>
+
+    <ul class="supports">
+      <li>Chrome</li>
+      <li>Edge</li>
+      <li>Orion — iPhone · iPad · Mac</li>
+      <li>Brave · Vivaldi</li>
+    </ul>
+
+    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl" data-size="1.5MB">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      DOWNLOAD
+      <span class="what">확장 패키지</span>
+    </a>
+  </div>
+
   <!-- ── iPhone / iPad ───────────────────────────────── -->
   <div class="card orion">
     <div class="card-head">
@@ -779,22 +818,16 @@
 
     <ol lang="ko">
       <li>App Store에서 <strong>Orion Browser by Kagi</strong>를 설치해 주세요</li>
-      <li>아래 버튼을 눌러 <strong>확장 zip 파일</strong>을 내려받아 주세요</li>
+      <li>위의 다운로드 버튼으로 <strong>확장 zip 파일</strong>을 내려받아 주세요</li>
       <li>Orion 오른쪽 아래 <strong>•••</strong> 을 누르고 <strong>Extensions</strong> 로 들어가서 <strong>+</strong> 를 눌러 주세요</li>
       <li>내려받은 zip 파일을 선택하면 끝입니다 — 따로 권한을 허용할 것은 없습니다</li>
     </ol>
     <ol lang="en">
       <li>Install <strong>Orion Browser by Kagi</strong> from the App Store</li>
-      <li>Download the <strong>extension zip</strong> with the button below</li>
+      <li>Download the <strong>extension zip</strong> with the button above</li>
       <li>In Orion, tap <strong>•••</strong> at the bottom right, go to <strong>Extensions</strong>, then tap <strong>+</strong></li>
       <li>Pick the zip you downloaded — that is it, there is no permission to grant</li>
     </ol>
-
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-orion" data-size="1.5MB">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD
-      <span class="what">확장 패키지</span>
-    </a>
 
     <div class="note" lang="ko">
       <p><strong>잘 설치됐는지는 영상을 하나 재생해 보시면 알 수 있습니다.</strong><br>
@@ -863,13 +896,13 @@
     </div>
 
     <ol lang="ko">
-      <li>아래 버튼으로 <strong>확장 zip 파일</strong>을 받아 압축을 풀어 주세요</li>
+      <li>위의 다운로드 버튼으로 받은 <strong>zip 파일</strong>의 압축을 풀어 주세요</li>
       <li>주소창에 <code>chrome://extensions</code> 를 입력해 주세요</li>
       <li>오른쪽 위 <strong>개발자 모드</strong>를 켜 주세요</li>
       <li><strong>압축해제된 확장 프로그램을 로드</strong>를 누르고, 압축을 푼 폴더를 선택해 주세요</li>
     </ol>
     <ol lang="en">
-      <li>Download the <strong>extension zip</strong> with the button below and unzip it</li>
+      <li>Unzip the <strong>extension zip</strong> you downloaded with the button above</li>
       <li>Type <code>chrome://extensions</code> in the address bar</li>
       <li>Turn on <strong>Developer mode</strong>, top right</li>
       <li>Click <strong>Load unpacked</strong> and pick the folder you unzipped</li>
@@ -886,11 +919,6 @@
       <p>So do not use your Downloads folder.<br>That is the one you clear out without looking.</p>
     </div>
 
-    <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl-chrome" data-size="1.5MB">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD
-      <span class="what">확장 패키지 — 위 Orion 버튼과 같은 파일</span>
-    </a>
   </div>
 
 
@@ -1394,14 +1422,13 @@
       // markup stays as the fallback for a page that could not reach the API —
       // it is wrong in the same way the whole short form is, and it is better
       // than a button with no address at all.
-      // One package since v0.13.0 — both buttons hand out the same zip. The
-      // name is matched by shape because it carries the version; skipping
-      // '-orion-' keeps the page working while the newest release is still a
-      // two-asset one from before the merge.
+      // One package since v0.13.0, one button. The name is matched by shape
+      // because it carries the version; skipping '-orion-' keeps the page
+      // working if it ever points at a two-asset release from before the merge.
       const asset = release?.assets?.find(
         (x) => x.name.endsWith('.zip') && !x.name.includes('-orion-'),
       );
-      for (const id of ['dl-orion', 'dl-chrome']) {
+      for (const id of ['dl']) {
         const a = document.getElementById(id);
         if (!a) continue;
         const name = asset?.name ?? 'oc-ad-bye-pass.zip';
