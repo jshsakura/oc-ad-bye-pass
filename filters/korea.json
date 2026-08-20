@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260819,
-  "updatedAt": "2026-08-19",
+  "version": 20260820,
+  "updatedAt": "2026-08-20",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
     "hide": {
@@ -837,6 +837,7 @@
       "autopostkorea.com": [
         ".tagdiv-type .best_news_wrap_mo",
         ".td-pb-span4.td-main-sidebar",
+        "article.ad",
         "div.fastview_floating_ad",
         "div[class^=\"adsense_\"]",
         "div[class^=\"floating_ad_\"]"
@@ -1180,42 +1181,6 @@
       "booktoki167.com": [
         "div.basic-banner",
         "div.board-tail-banner"
-      ],
-      "booktoki469.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki470.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki471.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki472.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki473.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki474.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki475.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki476.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
-      ],
-      "booktoki477.com": [
-        "#hd_pop",
-        "img[src^=\"/tokinbtoki/\"]"
       ],
       "boredpanda.com": [
         "div.dfp-ad",
@@ -2538,9 +2503,11 @@
         "aside.ad_300x250",
         "aside.ad_300x600",
         "aside.ad_text",
+        "div#AnyMindavs",
         "div#BpromotionBanner",
         "div#FloatLayer1",
         "div#bannerPoint_right",
+        "div#banner_hns",
         "div#wingBanner",
         "div.ad",
         "div.ad_300x250",
@@ -2856,6 +2823,7 @@
         "div.ad-container"
       ],
       "fpn119.co.kr": [
+        "div.bn",
         "div[id^=\"ad_\"]"
       ],
       "fr.romwe.com": [
@@ -3358,7 +3326,6 @@
         "ins.dcmads"
       ],
       "hellven.net": [
-        "a[href^=\"http\"][target=\"_blank\"].thumbnail",
         "a[href^=\"https://hellven.net/bbs/adver_link.php\"]"
       ],
       "hentaifromhell.org": [
@@ -4154,6 +4121,7 @@
         "div.banner-section",
         "div.banner-top",
         "div[class*=\"_ad_\"]",
+        "div[class^=\"ad\"]",
         "div[class^=\"ad_\"]:not(.ad_lst)",
         "div[class^=\"banner-\"]",
         "iframe[src*=\"//adv.khan.co.kr/\"]",
@@ -4461,6 +4429,7 @@
         "div.top_banner_box",
         "div[class*=\"_ad\"]",
         "div[class*=\"_banner_\"]",
+        "div[class^=\"ad\"]",
         "div[class^=\"btm_ad_box\"]",
         "div[class^=\"center_ad_box\"]",
         "div[class^=\"middle_ad\"]",
@@ -4480,6 +4449,7 @@
         "div[class^=\"ad_\"]:not(.ad_lst)",
         "div[class^=\"head_right_ad\"]",
         "div[id$=\"_banner\"]",
+        "div[id^=\"svcad\"]",
         "ul.menu_ad_list",
         "ul.slideAdList"
       ],
@@ -4626,7 +4596,8 @@
         "[aria-label=\"광고 팝업\"]",
         "[data-ad-placement]",
         "a[target=\"_blank\"][data-href][data-banner-statics]",
-        "div.ad-bottom-m"
+        "div.ad-bottom-m",
+        "div[aria-label=\"광고\"]"
       ],
       "lol.ps": [
         "#AnyMindAvs",
@@ -5569,6 +5540,102 @@
         ".article_view ~ div[style^=\"text-align:\"].clean_banner +.h50",
         ".article_view ~ div[style^=\"text-align:\"].clean_banner ~ .wcms_banner + .h45",
         ".article_view ~ div[style^=\"width:\"].clean_banner ~ .wcms_banner ~ .h50"
+      ],
+      "m.nate.com": [
+        ".issueBn",
+        "a[href^=\"https://cyad1.nate.com/click.kti/mnate/\"]",
+        "div.issueBn",
+        "div.mainBn",
+        "div.mainBnFull",
+        "div.new_ad",
+        "div[id^=\"ad_\"]",
+        "iframe[src*=\"//m.nate.com/include4/adscript.html\"]"
+      ],
+      "m.naver.com": [
+        "#MM_AI_TAB_TOOLTIP",
+        "#MM_aside_smartad_container",
+        ".ISSUE-BANNER-AD",
+        "div#HOME_AD",
+        "div.ISSUE-BANNER-AD",
+        "div.grid_ad",
+        "div.id_nmap",
+        "div.id_uio_cd_fbanner",
+        "div[data-da]",
+        "div[data-panel-code=\"SHOP_VOGUE\"] ._MM_TREND_PICK",
+        "div[id$=\"_AD\"]",
+        "script#MM_search_disaster ~*"
+      ],
+      "m.news.nate.com": [
+        ".adtive",
+        ".divAdv",
+        "div#ad_innerView",
+        "div#ad_innerView2",
+        "div#big_banner",
+        "div.ad_banner",
+        "div.adbox",
+        "div.adtive",
+        "div.adtive_box",
+        "div.adv",
+        "div.float-adv-wrap",
+        "div[id^=\"sec_hangzhou_ad\"]",
+        "iframe[name=\"ad_big\"]",
+        "iframe[name=\"adtive\"]",
+        "iframe[src*=\"//m.news.nate.com/etc/AdTop\"]",
+        "iframe[src^=\"http://networkad.nate.com/nate/mobile_news.html\"]",
+        "iframe[title*=\"광고\"]"
+      ],
+      "m.news.naver.com": [
+        "div.ad_area",
+        "div.ad_box"
+      ],
+      "m.news.zum.com": [
+        "div.ad_slot",
+        "div.article_top_banner",
+        "div.bn_wrap",
+        "div.da_banner",
+        "section#bottom_shopping_box"
+      ],
+      "m.news1.kr": [
+        "div.ad_wrap_sw",
+        "div.ads_bizlife",
+        "div.ads_bottom_fixed",
+        "div.ads_clickinfo",
+        "div.ads_coupang",
+        "div.ads_livere",
+        "div.ads_seeninfo",
+        "div.ads_shoppingbox",
+        "div.ads_text_banner",
+        "div.ads_text_list1",
+        "div.banner01",
+        "div.das_article15_wrap",
+        "div.text_ad",
+        "div[class^=\"ads_\"]",
+        "div[class^=\"ads_article\"]",
+        "div[class^=\"banner\"]",
+        "div[class^=\"das_article\"][class$=\"_wrap\"]",
+        "div[data-widget_id=\"G7ZWPjlW\"]",
+        "iframe.ads_article_iframe",
+        "iframe[src^=\"/template/ads/\"]",
+        "p.ads_article2",
+        "p.ads_article3",
+        "p.ads_text_banner",
+        "ul.text_ad_list"
+      ],
+      "m.newsen.com": [
+        ".googlead",
+        "div[class^=\"ad\"]"
+      ],
+      "m.newspic.kr": [
+        "div#dionAdArea",
+        "div#dionAdArea2",
+        "div#naver-shoppingbox-div",
+        "div[data-widget=\"recommend\"].box"
+      ],
+      "m.newspim.com": [
+        "div.viewcontents div[style=\"overflow:hidden; text-align:center; width:100%; height:250px; margin:10px 0px 10px 0px !important;\"]",
+        "section#slideshow",
+        "section.ad-box",
+        "section.banbox_out"
       ]
     },
     "prune": [],
