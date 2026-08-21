@@ -121,8 +121,8 @@ const M = {
   },
   'toggle.autoCaptions.label': { ko: '현재 언어로 자막 자동 선택', en: 'Auto captions in your language' },
   'toggle.autoCaptions.hint': {
-    ko: '브라우저 언어의 자막을 고르고, 없으면 그 언어로 자동 번역을 켭니다. 영상마다 처음 한 번이고 직접 바꾼 선택은 그대로 둡니다',
-    en: 'Picks subtitles in the browser language, or auto-translates into it. Once per video, and your own changes stick',
+    ko: '외국어 영상일 때만 브라우저 언어의 자막을 고르고, 없으면 자동 번역을 켭니다. 내 언어 영상과 직접 바꾼 선택은 건드리지 않습니다',
+    en: 'On foreign-language videos, picks subtitles in the browser language or auto-translates. Videos already in your language, and your own changes, are left alone',
   },
 
   // — options / settings page —

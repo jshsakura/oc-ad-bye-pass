@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseCaptionSelection } from '../src/main/captions.ts'
+import { chooseCaptionSelection, videoLanguage } from '../src/main/captions.ts'
 
 const KO = { languageCode: 'ko' }
 
@@ -79,4 +79,15 @@ test('번역 대상은 목록의 첫 언어다', () => {
     languageCode: 'ja',
     translationLanguage: { languageCode: 'en' },
   })
+})
+
+test('videoLanguage 는 자동생성(asr) 트랙의 언어를 읽는다', () => {
+  assert.equal(
+    videoLanguage([{ languageCode: 'ko' }, { languageCode: 'en-US', kind: 'asr' }]),
+    'en',
+  )
+})
+
+test('asr 트랙이 없으면 영상 언어를 모른다고 답한다', () => {
+  assert.equal(videoLanguage([{ languageCode: 'ko' }]), null)
 })

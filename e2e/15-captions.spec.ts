@@ -113,3 +113,18 @@ test.describe('자막 자동 선택', () => {
     expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBeNull()
   })
 })
+
+test('내 언어로 말하는 영상에는 자막을 켜지 않는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  // asr 트랙의 언어가 곧 영상의 음성 언어다 (픽스처 로케일은 ko-KR)
+  await stubCaptionApi(page, [{ languageCode: 'ko', kind: 'asr' }, { languageCode: 'en' }], [])
+
+  await writeSettings(background, settingsWith(true))
+
+  await expect
+    .poll(() => page.getAttribute('html', 'data-oc-ad-bye-pass-captions'), { timeout: 8000 })
+    .toBe('native-language')
+  expect(await captionCalls(page)).toHaveLength(0)
+})

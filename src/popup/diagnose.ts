@@ -54,6 +54,7 @@ export interface PageFacts {
 /** What the caption picker did on this video. Set by src/main/captions.ts. */
 const CAPTION_STATES: Record<string, string> = {
   watching: '대기 중 (재생 시작이나 자막 목록을 기다림)',
+  'native-language': '영상이 이미 내 언어 (자막 안 켬)',
   matched: '현재 언어 자막 선택됨',
   translated: '자동 번역 켬',
   'no-match': '맞는 자막·번역 없음',
