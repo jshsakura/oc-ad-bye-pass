@@ -11,7 +11,7 @@
 // One slot, last writer wins. On a phone there is one page in front of you; on a
 // desktop the timestamp and URL say which one this was.
 
-import { INSTALLED_ATTR } from '../shared/messages.ts'
+import { CAPTIONS_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
 import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
@@ -64,6 +64,8 @@ export interface PageDiagnostics {
   presentationMode: string
   /** Whether the injection fallback was needed, and whether the page allowed it. */
   inject: string | null
+  /** The caption picker's outcome for this video, if the toggle ran here. */
+  captions: string | null
   /** The tail of what happened, including while the app was away. */
   log: string | null
   userAgent: string
@@ -106,6 +108,7 @@ export function reportDiagnostics(): void {
     visibilityState: document.visibilityState,
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     inject: document.documentElement.getAttribute(INJECT_ATTR),
+    captions: document.documentElement.getAttribute(CAPTIONS_ATTR),
     log: readLog(),
     userAgent: navigator.userAgent,
   }

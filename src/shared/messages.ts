@@ -19,10 +19,18 @@ export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
 
 
 
+/**
+ * Marker with the caption picker's outcome for the current video
+ * (korean / translated / no-korean / no-captions / set-failed), written by the
+ * MAIN world so diagnostics in ISOLATED can read it across the world boundary.
+ */
+export const CAPTIONS_ATTR = 'data-oc-ad-bye-pass-captions'
+
 /** The minimum the MAIN world actually needs to know. */
 export interface MainConfig {
   enabled: boolean
   videoAds: boolean
+  koreanCaptions: boolean
   prunePaths: string[]
 }
 

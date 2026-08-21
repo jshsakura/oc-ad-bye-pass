@@ -38,6 +38,7 @@ export interface PageFacts {
   visibilityState: string
   presentationMode: string
   inject: string | null
+  captions: string | null
   log: string | null
   userAgent: string
 }
@@ -50,6 +51,15 @@ export interface PageFacts {
  * other way, because the only other place it is reported is a console nobody
  * can open on a phone.
  */
+/** What the caption picker did on this video — set by src/main/captions.ts. */
+const CAPTION_STATES: Record<string, string> = {
+  korean: '한국어 자막 선택됨',
+  translated: '자동 번역(한국어) 켬',
+  'no-korean': '한국어 자막·번역 없음',
+  'no-captions': '자막 없는 영상',
+  'set-failed': '선택 실패 (플레이어가 거부)',
+}
+
 const INJECT_STATES: Record<string, string> = {
   'not-needed': '필요 없음 — 등록된 스크립트가 먼저 붙었습니다',
   injected: '주입함 — 아직 로드도 실패도 아닙니다',
@@ -134,6 +144,7 @@ export function format(report: Report): string {
       `전체화면 폴백: ${page.fullscreenFallback ? '있음' : '없음'}`,
       `표시 모드: ${page.presentationMode}`,
       `문서 상태: ${page.visibilityState}`,
+      `자막 선택: ${page.captions ? (CAPTION_STATES[page.captions] ?? page.captions) : '동작 안 함'}`,
     )
   } else {
     lines.push(`페이지: 읽지 못함 — ${report.pageError ?? '알 수 없음'}`)

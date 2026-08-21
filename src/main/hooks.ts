@@ -19,6 +19,7 @@
 // YouTube's own retry and streaming logic.
 
 import { NS, isBridgeMessage, type MainConfig } from '../shared/messages.ts'
+import { setCaptionPreference } from './captions.ts'
 import { deafenPlayer } from './deafenPlayer.ts'
 import { BUNDLED_PRUNE } from '../shared/selectors.ts'
 import { pruneAdFields } from './prune.ts'
@@ -30,6 +31,9 @@ import { pruneAdFields } from './prune.ts'
 const config: MainConfig = {
   enabled: true,
   videoAds: true,
+  // Unlike blocking, a caption preference is not block-first: it changes what
+  // plays on screen, so it stays off until the settings say otherwise.
+  koreanCaptions: false,
   prunePaths: BUNDLED_PRUNE,
 }
 
@@ -158,6 +162,8 @@ function listenForConfig() {
       const next = event.data.config
       config.enabled = next.enabled
       config.videoAds = next.videoAds
+      config.koreanCaptions = next.koreanCaptions === true
+      setCaptionPreference(config.enabled && config.koreanCaptions)
       if (Array.isArray(next.prunePaths) && next.prunePaths.length) config.prunePaths = next.prunePaths
     },
     false,
