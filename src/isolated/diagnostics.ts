@@ -178,3 +178,20 @@ function watchForLayer1(): void {
     attributeFilter: [INSTALLED_ATTR],
   })
 }
+
+let watchingCaptions = false
+
+/**
+ * Re-report when the caption picker moves — its states (watching → translated)
+ * change well after the load-time report, and a dump frozen at 대기 중 while
+ * the screen shows Korean sent one debugging session the wrong way.
+ * Stays attached: unlike layer 1 this attribute changes per video.
+ */
+export function watchCaptionOutcome(): void {
+  if (watchingCaptions || window.top !== window) return
+  watchingCaptions = true
+  new MutationObserver(() => reportDiagnostics()).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: [CAPTIONS_ATTR],
+  })
+}

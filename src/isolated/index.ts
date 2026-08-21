@@ -23,7 +23,7 @@ import {
 } from '../shared/settings.ts'
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
-import { reportDiagnostics } from './diagnostics.ts'
+import { reportDiagnostics, watchCaptionOutcome } from './diagnostics.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
@@ -109,6 +109,7 @@ function recompute(cache: FilterCache | null) {
   // Written after the layers are in place, so what it reports is the state the
   // user is actually in. Cheap enough to redo on every recompute.
   reportDiagnostics()
+  if (IS_YOUTUBE) watchCaptionOutcome()
 }
 
 async function refresh() {
