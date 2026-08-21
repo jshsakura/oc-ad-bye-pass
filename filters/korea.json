@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260820,
-  "updatedAt": "2026-08-20",
+  "version": 20260821,
+  "updatedAt": "2026-08-21",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
     "hide": {
@@ -698,7 +698,6 @@
       ],
       "arca.live": [
         ".ad",
-        "a.vrow.column.notice:not([href*=\"/b/\"]):not(.notice-unfilter)",
         "div#newsRank",
         "div.ad",
         "iframe[src^=\"/api/ads\"]"
@@ -1512,9 +1511,6 @@
         "div[class^=\"live_end_banner_container__\"]",
         "div[class^=\"popup_cheat_key_container__\"]"
       ],
-      "chzzkban.xyz": [
-        "div[id^=\"ad-\"]"
-      ],
       "cine21.com": [
         "div.banner_han_230x180",
         "div.banner_header",
@@ -2209,15 +2205,10 @@
         "ul.goods_banner"
       ],
       "dprime.kr": [
-        "[class*=\"_ad_\"]",
         "div#ad_view_right1",
         "div#mobile_top_banner",
         "div.ad_content_bottom",
-        "div.view_bottom_ad",
-        "div[class^=\"ad_\"]:not(.ad_lst)",
-        "div[id$=\"_banner\"]",
-        "div[id^=\"ad_\"]",
-        "div[style~=\"height:\"][style~=\"border-top:\"].relative"
+        "div.view_bottom_ad"
       ],
       "drive2.ru": [
         "div[id^=\"adfox_\"]"
@@ -2273,7 +2264,8 @@
         "[id$='top_banner']",
         "[id^='ad_mobile']",
         "[id^='slot']",
-        "div[style~=\"height:\"][style~=\"border-top:\"].relative"
+        "div[class$=\"_banner\"]",
+        "div[id$=\"_banner\"]"
       ],
       "e-himart.co.kr": [
         "div[id*=\"Banner\"]:not(:is(#mainNewBanner, .hm-main__slide-new))",
@@ -5636,6 +5628,10 @@
         "section#slideshow",
         "section.ad-box",
         "section.banbox_out"
+      ],
+      "m.newswave.kr": [
+        "div#bottom_src",
+        "div#top_src"
       ]
     },
     "prune": [],
