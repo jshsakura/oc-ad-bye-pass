@@ -49,6 +49,8 @@ interface CaptionPlayer extends Element {
   getVideoData?: () => { video_id?: string } | null
   /** 1 = playing. Absent on some builds; the gate is skipped there. */
   getPlayerState?: () => number
+  /** The player's loaded module names — the tell for "did loadModule take". */
+  getOptions?: () => unknown
 }
 
 export type CaptionSelection = CaptionTrack & {
@@ -205,10 +207,21 @@ function tick(): void {
   }
 
   if (!Array.isArray(tracks) || tracks.length === 0) {
-    report('watching(tracks=0)')
+    // Which modules the player actually has loaded — the difference between
+    // "captions module never loads on this build" (module absent) and "loaded
+    // but the list is empty" (a genuinely captionless video). A phone dump is
+    // the only place this answer can come from.
+    let mods = '?'
+    try {
+      const options = player.getOptions?.()
+      if (Array.isArray(options)) mods = options.join('+') || 'none'
+    } catch {
+      mods = 'throws'
+    }
+    report(`watching(tracks=0,mods=${mods})`)
     if (++tries >= MAX_TRIES) {
       appliedFor = id
-      report('no-captions')
+      report(`no-captions(mods=${mods})`)
     }
     return
   }
