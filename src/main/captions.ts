@@ -1,11 +1,14 @@
-// Picks subtitles in the user's UI language once per video: the matching track
+// Picks subtitles in the browser's language once per video: the matching track
 // when the video has one, auto-translation into that language when it only has
 // something else, nothing when it has no captions at all.
 //
+// The target is the browser locale (navigator.language), not the extension's
+// UI language: the UI speaks only ko/en, while captions should follow whatever
+// the user actually browses in.
+//
 // MAIN world only. The caption API hangs off the player element
 // (getOption / setOption / loadModule), which page scripts alone can call.
-// ISOLATED sends the target language through the config message; null means
-// the toggle is off.
+// ISOLATED flips this on and off through the config message.
 //
 // "Once per video" is the contract: after one attempt, applied or not, the
 // player is left alone for that video, so a caption choice the user makes by
@@ -79,7 +82,12 @@ export function chooseCaptionSelection(
  */
 const MAX_TRIES = 20
 
-let targetLang: string | null = null
+/** Primary subtag of the browser locale: 'ko-KR' → 'ko'. */
+function browserLang(): string {
+  return (navigator.language || 'en').split('-')[0].toLowerCase()
+}
+
+let enabled = false
 let timer: ReturnType<typeof setInterval> | null = null
 let appliedFor: string | null = null
 let moduleLoadedFor: string | null = null
@@ -100,7 +108,7 @@ function videoId(player: CaptionPlayer): string | null {
 }
 
 function tick(): void {
-  if (!targetLang) return
+  if (!enabled) return
   const player = document.getElementById('movie_player') as CaptionPlayer | null
   if (!player || typeof player.getOption !== 'function') return
 
@@ -145,7 +153,7 @@ function tick(): void {
   const selection = chooseCaptionSelection(
     tracks as CaptionTrack[],
     Array.isArray(translatable) ? (translatable as TranslationLanguage[]) : [],
-    targetLang,
+    browserLang(),
   )
 
   appliedFor = id // one attempt per video, applied or not; never fight the user
@@ -161,13 +169,10 @@ function tick(): void {
   }
 }
 
-/**
- * Config-driven switch: the language to pick, or null for off. Turning it off
- * leaves the current video as it is.
- */
-export function setCaptionPreference(lang: string | null): void {
-  targetLang = lang
-  if (lang) {
+/** Config-driven switch. Turning it off leaves the current video as it is. */
+export function setCaptionPreference(on: boolean): void {
+  enabled = on
+  if (on) {
     if (timer === null) timer = setInterval(tick, 1000)
   } else if (timer !== null) {
     clearInterval(timer)

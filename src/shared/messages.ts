@@ -30,8 +30,12 @@ export const CAPTIONS_ATTR = 'data-oc-ad-bye-pass-captions'
 export interface MainConfig {
   enabled: boolean
   videoAds: boolean
-  /** UI language to pick captions in, or null when the toggle is off. */
-  captionsLang: string | null
+  /**
+   * Whether to auto-select captions. The target language is not carried here:
+   * the MAIN world reads the browser locale itself (navigator.language), which
+   * is the language the user actually browses in.
+   */
+  autoCaptions: boolean
   prunePaths: string[]
 }
 

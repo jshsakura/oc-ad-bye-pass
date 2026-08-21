@@ -119,10 +119,10 @@ const M = {
     ko: '플레이어 오른쪽 아래에 버튼을 답니다 — 누르면 브라우저의 작은 화면이 열립니다',
     en: "Adds a button at the player's lower right — it opens the browser's floating window",
   },
-  'toggle.autoCaptions.label': { ko: '자막 자동 선택', en: 'Auto-select subtitles' },
+  'toggle.autoCaptions.label': { ko: '현재 언어로 자막 자동 선택', en: 'Auto captions in your language' },
   'toggle.autoCaptions.hint': {
-    ko: '영상마다 처음 한 번, 설정 언어의 자막을 고르고 없으면 자동 번역을 켭니다. 직접 바꾼 선택은 그대로 둡니다',
-    en: 'Once per video, picks subtitles in your language or turns on auto-translation. Your own changes stick',
+    ko: '브라우저 언어의 자막을 고르고, 없으면 그 언어로 자동 번역을 켭니다. 영상마다 처음 한 번이고 직접 바꾼 선택은 그대로 둡니다',
+    en: 'Picks subtitles in the browser language, or auto-translates into it. Once per video, and your own changes stick',
   },
 
   // — options / settings page —
