@@ -19,7 +19,7 @@
 // YouTube's own retry and streaming logic.
 
 import { NS, isBridgeMessage, type MainConfig } from '../shared/messages.ts'
-import { setCaptionPreference } from './captions.ts'
+import { captureCaptionData, setCaptionPreference } from './captions.ts'
 import { deafenPlayer } from './deafenPlayer.ts'
 import { BUNDLED_PRUNE } from '../shared/selectors.ts'
 import { pruneAdFields } from './prune.ts'
@@ -60,6 +60,13 @@ function report(count: number, source: string) {
 }
 
 function tryPrune(data: unknown, source: string) {
+  // Before the isActive gate: the caption picker works even with video-ad
+  // pruning off, and remembering the track list costs one property check.
+  try {
+    captureCaptionData(data)
+  } catch {
+    // A failed capture must never stop the page from working
+  }
   if (!isActive()) return
   try {
     report(pruneAdFields(data, config.prunePaths), source)

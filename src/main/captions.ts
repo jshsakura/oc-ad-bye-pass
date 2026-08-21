@@ -95,6 +95,73 @@ export function chooseCaptionSelection(
 }
 
 /**
+ * Caption tracks remembered from the player response JSON, as it flows
+ * through the layer-1 hooks (JSON.parse / Response.json / the global setter).
+ *
+ * This exists for the mobile web player: on m.youtube its captions module
+ * loads (getOptions lists it) but `getOption('captions', 'tracklist')` stays
+ * empty on videos that demonstrably have tracks — measured on the phone,
+ * v0.13.7 diagnostics. The response body has the same track list under
+ * captions.playerCaptionsTracklistRenderer, so it is captured in passing and
+ * used when the player's own list never fills.
+ */
+let fromResponse: {
+  videoId: string
+  tracks: CaptionTrack[]
+  translation: TranslationLanguage[]
+} | null = null
+
+/** simpleText or the first run — the two shapes YouTube uses for label text. */
+function labelText(name: unknown): string {
+  const n = name as { simpleText?: unknown; runs?: Array<{ text?: unknown }> } | undefined
+  const text = n?.simpleText ?? n?.runs?.[0]?.text
+  return typeof text === 'string' ? text : ''
+}
+
+/** Remember the track list of any player response passing through the hooks. */
+export function captureCaptionData(data: unknown): void {
+  const obj = data as {
+    videoDetails?: { videoId?: unknown }
+    captions?: {
+      playerCaptionsTracklistRenderer?: {
+        captionTracks?: Array<{
+          languageCode?: unknown
+          vssId?: unknown
+          kind?: unknown
+          isTranslatable?: unknown
+          name?: unknown
+        }>
+        translationLanguages?: Array<{ languageCode?: unknown; languageName?: unknown }>
+      }
+    }
+  } | null
+  const renderer = obj?.captions?.playerCaptionsTracklistRenderer
+  const videoId = obj?.videoDetails?.videoId
+  if (!renderer?.captionTracks?.length || typeof videoId !== 'string') return
+
+  // The same shape the player's own tracklist rows carry — setOption gets a
+  // row it recognises, not a bare {languageCode} (see CaptionTrack above).
+  fromResponse = {
+    videoId,
+    tracks: renderer.captionTracks.map((t) => ({
+      languageCode: typeof t.languageCode === 'string' ? t.languageCode : undefined,
+      languageName: labelText(t.name),
+      displayName: labelText(t.name),
+      kind: typeof t.kind === 'string' ? t.kind : '',
+      vss_id: typeof t.vssId === 'string' ? t.vssId : '',
+      name: '',
+      is_servable: true,
+      is_default: false,
+      is_translateable: t.isTranslatable === true,
+    })),
+    translation: (renderer.translationLanguages ?? []).map((l) => ({
+      languageCode: typeof l.languageCode === 'string' ? l.languageCode : undefined,
+      languageName: labelText(l.languageName),
+    })),
+  }
+}
+
+/**
  * The video's spoken language, from the auto-generated (asr) track: YouTube
  * transcribes in the language actually spoken, so its languageCode is the one
  * signal the player gives away. Null when there is no asr track — an unknown
@@ -207,6 +274,14 @@ function tick(): void {
   }
 
   if (!Array.isArray(tracks) || tracks.length === 0) {
+    // The mobile web player loads its captions module and still leaves the
+    // list empty (measured on the phone), so after a few seconds' grace the
+    // list remembered from the player response takes over. The grace keeps
+    // desktop on its own, richer rows while its module finishes loading.
+    if (tries >= 5 && fromResponse?.videoId === id && fromResponse.tracks.length > 0) {
+      decideAndApply(player, id, fromResponse.tracks, fromResponse.translation, ':data')
+      return
+    }
     // Which modules the player actually has loaded — the difference between
     // "captions module never loads on this build" (module absent) and "loaded
     // but the list is empty" (a genuinely captionless video). A phone dump is
@@ -226,17 +301,6 @@ function tick(): void {
     return
   }
 
-  // A video already in the viewer's language needs no captions, and forcing
-  // them on would be the extension overriding a person who never asked. Only a
-  // foreign-language video is acted on.
-  const langs = browserLangs()
-  const spoken = videoLanguage(tracks as CaptionTrack[])
-  if (spoken && langs.includes(spoken)) {
-    appliedFor = id
-    report('native-language')
-    return
-  }
-
   let translatable: unknown
   try {
     translatable = player.getOption('captions', 'translationLanguages')
@@ -244,19 +308,49 @@ function tick(): void {
     translatable = []
   }
 
-  const selection = chooseCaptionSelection(
+  decideAndApply(
+    player,
+    id,
     tracks as CaptionTrack[],
     Array.isArray(translatable) ? (translatable as TranslationLanguage[]) : [],
-    langs,
+    '',
   )
+}
+
+/**
+ * The shared back half: skip a native-language video, else pick and apply.
+ * `via` is ':data' when the rows came from the player response instead of the
+ * player itself — a response list is complete, so its no-match is final, and
+ * the marker rides along in the outcome so a phone dump says which path ran.
+ */
+function decideAndApply(
+  player: CaptionPlayer,
+  id: string,
+  tracks: CaptionTrack[],
+  translationLanguages: TranslationLanguage[],
+  via: '' | ':data',
+): void {
+  // A video already in the viewer's language needs no captions, and forcing
+  // them on would be the extension overriding a person who never asked. Only a
+  // foreign-language video is acted on.
+  const langs = browserLangs()
+  const spoken = videoLanguage(tracks)
+  if (spoken && langs.includes(spoken)) {
+    appliedFor = id
+    report('native-language')
+    return
+  }
+
+  const selection = chooseCaptionSelection(tracks, translationLanguages, langs)
 
   if (!selection) {
-    // The translation list loads after the track list on real pages, so "no
-    // match yet" and "no match" only separate when the budget runs out.
-    report('watching(no-match-yet)')
-    if (++tries >= MAX_TRIES) {
+    // The player's translation list loads after its track list, so that path
+    // only concludes when the budget runs out. The response list arrives whole.
+    if (via === ':data' || ++tries >= MAX_TRIES) {
       appliedFor = id
-      report('no-match')
+      report(`no-match${via}`)
+    } else {
+      report('watching(no-match-yet)')
     }
     return
   }
@@ -264,9 +358,9 @@ function tick(): void {
   appliedFor = id // one attempt per video, applied or not; never fight the user
   try {
     player.setOption?.('captions', 'track', selection)
-    report(selection.translationLanguage ? 'translated' : 'matched')
+    report((selection.translationLanguage ? 'translated' : 'matched') + via)
   } catch {
-    report('set-failed')
+    report(`set-failed${via}`)
   }
 }
 

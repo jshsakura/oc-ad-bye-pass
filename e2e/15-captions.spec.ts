@@ -128,3 +128,53 @@ test('내 언어로 말하는 영상에는 자막을 켜지 않는다', async ({
     .toBe('native-language')
   expect(await captionCalls(page)).toHaveLength(0)
 })
+
+test('플레이어 목록이 비면 응답 데이터의 트랙으로 적용한다 (모바일 경로)', async ({
+  context,
+  background,
+}) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  // 목록이 끝내 채워지지 않는 모바일 플레이어를 흉내낸다
+  await stubCaptionApi(page, [], [])
+  // 영상 응답이 JSON.parse 를 지나가며 캡처된다 — 1계층과 같은 길
+  await page.evaluate(() => {
+    JSON.parse(
+      JSON.stringify({
+        videoDetails: { videoId: 'fixture-video' },
+        captions: {
+          playerCaptionsTracklistRenderer: {
+            captionTracks: [
+              { languageCode: 'en', vssId: 'a.en', kind: 'asr', isTranslatable: true, name: { simpleText: 'English' } },
+            ],
+            translationLanguages: [{ languageCode: 'ko', languageName: { simpleText: '한국어' } }],
+          },
+        },
+      }),
+    )
+  })
+
+  await writeSettings(background, settingsWith(true))
+
+  // 5초의 유예(플레이어 목록 우선) 뒤에 응답 데이터 경로가 적용된다
+  await expect.poll(() => captionCalls(page), { timeout: 15000 }).toEqual([
+    {
+      module: 'captions',
+      option: 'track',
+      value: {
+        languageCode: 'en',
+        languageName: 'English',
+        displayName: 'English',
+        kind: 'asr',
+        vss_id: 'a.en',
+        name: '',
+        is_servable: true,
+        is_default: false,
+        is_translateable: true,
+        translationLanguage: { languageCode: 'ko', languageName: '한국어' },
+      },
+    },
+  ])
+  expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('translated:data')
+})
