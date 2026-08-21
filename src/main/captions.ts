@@ -243,7 +243,11 @@ function tick(): void {
   } catch {
     // Unreadable state: treat as playing rather than wait forever.
   }
-  if (state !== 1) {
+  // Playing (1) or paused (2) — paused means playback already began, so the
+  // player's own restore has run. This matters on the phone, where opening
+  // the popup pauses the video: gating on "playing" alone meant every
+  // diagnostics check found the picker eternally waiting.
+  if (state !== 1 && state !== 2) {
     report(`watching(state=${state})`)
     return
   }
