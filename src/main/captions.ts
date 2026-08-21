@@ -2,7 +2,7 @@
 // when the video has one, auto-translation into that language when it only has
 // something else, nothing when it has no captions at all.
 //
-// The target is the browser locale (navigator.language), not the extension's
+// The target is the browser locale (navigator.languages), not the extension's
 // UI language: the UI speaks only ko/en, while captions should follow whatever
 // the user actually browses in.
 //
@@ -10,10 +10,17 @@
 // (getOption / setOption / loadModule), which page scripts alone can call.
 // ISOLATED flips this on and off through the config message.
 //
+// Timing is most of this file. Three things arrive late and in no fixed order:
+// the player element, its caption module (whose track list reads empty until
+// loaded), and the translation-language list. And the player restores the
+// user's own saved caption state around playback start, which would overwrite
+// anything applied earlier — so nothing is applied until the video is actually
+// playing. Every state is reported through a documentElement attribute so the
+// 진단 panel can say how far it got on a device we cannot see.
+//
 // "Once per video" is the contract: after one attempt, applied or not, the
 // player is left alone for that video, so a caption choice the user makes by
-// hand is never fought. Re-asserting on a timer is exactly the mistake the
-// media-session work taught us to avoid.
+// hand is never fought.
 
 import { CAPTIONS_ATTR } from '../shared/messages.ts'
 
@@ -40,6 +47,8 @@ interface CaptionPlayer extends Element {
   setOption?: (module: string, option: string, value: unknown) => void
   loadModule?: (module: string) => void
   getVideoData?: () => { video_id?: string } | null
+  /** 1 = playing. Absent on some builds; the gate is skipped there. */
+  getPlayerState?: () => number
 }
 
 export type CaptionSelection = CaptionTrack & {
@@ -51,20 +60,28 @@ const matches = (code: string | undefined, lang: string) =>
 
 /**
  * What to hand `setOption('captions', 'track', …)` for these tracks, or null
- * when the language is unreachable. Pure, so the tests can enumerate the cases
- * without a player.
+ * when none of the languages is reachable. Pure, so the tests can enumerate
+ * the cases without a player.
+ *
+ * `langs` is the preference order: a direct track in an earlier language beats
+ * one in a later language, and the translation target is always the first.
  */
 export function chooseCaptionSelection(
   tracks: CaptionTrack[],
   translationLanguages: TranslationLanguage[],
-  lang: string,
+  langs: string[],
 ): CaptionSelection | null {
-  const direct = tracks.find((t) => matches(t.languageCode, lang))
-  if (direct?.languageCode) return { ...direct }
+  for (const lang of langs) {
+    const direct = tracks.find((t) => matches(t.languageCode, lang))
+    if (direct?.languageCode) return { ...direct }
+  }
 
   // The full row, not a hand-built {languageCode}: the player composes the
   // menu label ("영어 >> 한국어") from its languageName.
-  const translation = translationLanguages.find((l) => matches(l.languageCode, lang))
+  const target = langs[0]
+  const translation = target
+    ? translationLanguages.find((l) => matches(l.languageCode, target))
+    : undefined
   if (!translation) return null
 
   // An English base when there is one, since auto-translation reads best from
@@ -75,20 +92,22 @@ export function chooseCaptionSelection(
   return { ...base, translationLanguage: { ...translation } }
 }
 
+/** Primary subtags of the browser's language list, deduped: ko-KR → ko. */
+function browserLangs(): string[] {
+  const raw = navigator.languages?.length ? [...navigator.languages] : [navigator.language || 'en']
+  return [...new Set(raw.map((l) => l.split('-')[0].toLowerCase()).filter(Boolean))]
+}
+
 /**
- * The caption list often stays empty until the module is loaded, and loading is
- * asynchronous. A video gets this many one-second looks before it is declared
- * captionless and left alone.
+ * How many one-second looks a video gets in each waiting state (player API,
+ * track list, translation list) before the verdict is written and the video
+ * is left alone.
  */
 const MAX_TRIES = 20
 
-/** Primary subtag of the browser locale: 'ko-KR' → 'ko'. */
-function browserLang(): string {
-  return (navigator.language || 'en').split('-')[0].toLowerCase()
-}
-
 let enabled = false
 let timer: ReturnType<typeof setInterval> | null = null
+let currentVideo: string | null = null
 let appliedFor: string | null = null
 let moduleLoadedFor: string | null = null
 let tries = 0
@@ -97,9 +116,9 @@ function report(outcome: string): void {
   document.documentElement.setAttribute(CAPTIONS_ATTR, outcome)
 }
 
-function videoId(player: CaptionPlayer): string | null {
+function videoId(player: CaptionPlayer | null): string | null {
   try {
-    const id = player.getVideoData?.()?.video_id
+    const id = player?.getVideoData?.()?.video_id
     if (id) return id
   } catch {
     // Some player builds throw before the data is ready; the URL still answers.
@@ -110,17 +129,39 @@ function videoId(player: CaptionPlayer): string | null {
 function tick(): void {
   if (!enabled) return
   const player = document.getElementById('movie_player') as CaptionPlayer | null
-  if (!player || typeof player.getOption !== 'function') return
 
   const id = videoId(player)
   if (!id || id === appliedFor) return
+
+  if (currentVideo !== id) {
+    currentVideo = id
+    moduleLoadedFor = null
+    tries = 0
+    // From here the 진단 line can already distinguish "the toggle never
+    // reached the page" (no attribute at all) from "it is running".
+    report('watching')
+  }
+
+  // No player API, no feature — the answer the phone build has to give us.
+  if (!player || typeof player.getOption !== 'function') {
+    if (++tries >= MAX_TRIES) {
+      appliedFor = id
+      report('api-missing')
+    }
+    return
+  }
+
+  // The player restores the user's own saved caption state around playback
+  // start; applying before that is applying into a state about to be replaced.
+  // Waiting costs nothing and consumes no tries — a paused video just waits.
+  const state = typeof player.getPlayerState === 'function' ? player.getPlayerState() : 1
+  if (state !== 1) return
 
   // Turning captions on is loadModule's job; setOption alone picks a track the
   // display may never show when CC is off. It also makes the track list appear
   // on videos where the module has not loaded yet. Idempotent, once per video.
   if (moduleLoadedFor !== id) {
     moduleLoadedFor = id
-    tries = 0
     try {
       player.loadModule?.('captions')
     } catch {
@@ -153,14 +194,20 @@ function tick(): void {
   const selection = chooseCaptionSelection(
     tracks as CaptionTrack[],
     Array.isArray(translatable) ? (translatable as TranslationLanguage[]) : [],
-    browserLang(),
+    browserLangs(),
   )
 
-  appliedFor = id // one attempt per video, applied or not; never fight the user
   if (!selection) {
-    report('no-match')
+    // The translation list loads after the track list on real pages, so "no
+    // match yet" and "no match" only separate when the budget runs out.
+    if (++tries >= MAX_TRIES) {
+      appliedFor = id
+      report('no-match')
+    }
     return
   }
+
+  appliedFor = id // one attempt per video, applied or not; never fight the user
   try {
     player.setOption?.('captions', 'track', selection)
     report(selection.translationLanguage ? 'translated' : 'matched')
