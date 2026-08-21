@@ -1,4 +1,4 @@
-// 자막 한국어 우선 — the wiring from the toggle down to the player call.
+// 자막 자동 선택 — the wiring from the toggle down to the player call.
 //
 // The chooser's decisions are unit-tested; what only a browser can prove is
 // the path: storage write → ISOLATED recompute → config message → MAIN world
@@ -45,35 +45,36 @@ async function stubCaptionApi(page: Page, tracks: unknown[], translatable: unkno
 const captionCalls = (page: Page) =>
   page.evaluate(() => (window as unknown as { __captionCalls?: unknown[] }).__captionCalls ?? [])
 
-const settingsWith = (koreanCaptions: boolean): Settings => ({
+const settingsWith = (autoCaptions: boolean, lang: 'ko' | 'en' = 'ko'): Settings => ({
   ...DEFAULT_SETTINGS,
-  toggles: { ...DEFAULT_SETTINGS.toggles, koreanCaptions },
+  lang,
+  toggles: { ...DEFAULT_SETTINGS.toggles, autoCaptions },
 })
 
-test.describe('자막 한국어 우선', () => {
+test.describe('자막 자동 선택', () => {
   test.beforeEach(async ({ context }) => {
     await installYouTubeFixture(context)
   })
 
-  test('한국어 트랙이 있으면 그 트랙을 고른다', async ({ context, background }) => {
+  test('설정 언어의 트랙이 있으면 그 트랙을 고른다', async ({ context, background }) => {
     const page = await context.newPage()
     await page.goto(YOUTUBE_URL)
     await stubCaptionApi(page, [{ languageCode: 'en' }, { languageCode: 'ko' }], [])
 
-    await writeSettings(background, settingsWith(true))
+    await writeSettings(background, settingsWith(true, 'ko'))
 
     await expect.poll(() => captionCalls(page), { timeout: 8000 }).toEqual([
       { module: 'captions', option: 'track', value: { languageCode: 'ko' } },
     ])
-    expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('korean')
+    expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('matched')
   })
 
-  test('한국어가 없으면 자동 번역을 한국어로 켠다', async ({ context, background }) => {
+  test('맞는 트랙이 없으면 설정 언어로 자동 번역을 켠다', async ({ context, background }) => {
     const page = await context.newPage()
     await page.goto(YOUTUBE_URL)
     await stubCaptionApi(page, [{ languageCode: 'en' }], [{ languageCode: 'ko' }])
 
-    await writeSettings(background, settingsWith(true))
+    await writeSettings(background, settingsWith(true, 'ko'))
 
     await expect.poll(() => captionCalls(page), { timeout: 8000 }).toEqual([
       {
@@ -83,6 +84,18 @@ test.describe('자막 한국어 우선', () => {
       },
     ])
     expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('translated')
+  })
+
+  test('언어 설정이 영어면 영어 기준으로 고른다', async ({ context, background }) => {
+    const page = await context.newPage()
+    await page.goto(YOUTUBE_URL)
+    await stubCaptionApi(page, [{ languageCode: 'ko' }, { languageCode: 'en' }], [])
+
+    await writeSettings(background, settingsWith(true, 'en'))
+
+    await expect.poll(() => captionCalls(page), { timeout: 8000 }).toEqual([
+      { module: 'captions', option: 'track', value: { languageCode: 'en' } },
+    ])
   })
 
   test('같은 영상에는 한 번만 손댄다', async ({ context, background }) => {

@@ -30,7 +30,8 @@ export const CAPTIONS_ATTR = 'data-oc-ad-bye-pass-captions'
 export interface MainConfig {
   enabled: boolean
   videoAds: boolean
-  koreanCaptions: boolean
+  /** UI language to pick captions in, or null when the toggle is off. */
+  captionsLang: string | null
   prunePaths: string[]
 }
 

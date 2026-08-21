@@ -15,7 +15,7 @@ export const TOGGLE_KEYS = [
   'appPromo',
   'genericAds',
   'pipButton',
-  'koreanCaptions',
+  'autoCaptions',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -49,9 +49,9 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   // Nothing here makes leaving automatic — not possible for a web page on this
   // platform, and pretending otherwise was the whole of a very long detour.
   { key: 'pipButton' },
-  // Not a blocking layer either: picks the Korean caption track (or Korean
-  // auto-translation) once per video, then leaves the player alone.
-  { key: 'koreanCaptions' },
+  // Not a blocking layer either: picks the caption track in the UI language
+  // (or auto-translation into it) once per video, then leaves the player alone.
+  { key: 'autoCaptions' },
 ]
 
 export interface Settings {
@@ -122,9 +122,9 @@ export const DEFAULT_SETTINGS: Settings = {
      * only working way in was hidden behind a setting nobody had reason to find.
      */
     pipButton: true,
-    // Off: it changes what plays on screen for everyone who did not ask for
-    // Korean, and unlike blocking there is no harm in leaving it to opt in.
-    koreanCaptions: false,
+    // Off: it changes what plays on screen, and unlike blocking there is no
+    // harm in leaving it to opt in.
+    autoCaptions: false,
   },
   listEnabled: true,
   listUrl: DEFAULT_LIST_URL,

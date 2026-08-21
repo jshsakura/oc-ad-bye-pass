@@ -33,7 +33,7 @@ const config: MainConfig = {
   videoAds: true,
   // Unlike blocking, a caption preference is not block-first: it changes what
   // plays on screen, so it stays off until the settings say otherwise.
-  koreanCaptions: false,
+  captionsLang: null,
   prunePaths: BUNDLED_PRUNE,
 }
 
@@ -162,8 +162,8 @@ function listenForConfig() {
       const next = event.data.config
       config.enabled = next.enabled
       config.videoAds = next.videoAds
-      config.koreanCaptions = next.koreanCaptions === true
-      setCaptionPreference(config.enabled && config.koreanCaptions)
+      config.captionsLang = typeof next.captionsLang === 'string' ? next.captionsLang : null
+      setCaptionPreference(config.enabled ? config.captionsLang : null)
       if (Array.isArray(next.prunePaths) && next.prunePaths.length) config.prunePaths = next.prunePaths
     },
     false,

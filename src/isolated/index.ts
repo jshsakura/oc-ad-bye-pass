@@ -66,7 +66,7 @@ function detach() {
   disablePictureInPicture()
   // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
   if (IS_YOUTUBE) {
-    sendConfigToMain({ enabled: false, videoAds: false, koreanCaptions: false, prunePaths: rules.prune })
+    sendConfigToMain({ enabled: false, videoAds: false, captionsLang: null, prunePaths: rules.prune })
   }
 }
 
@@ -89,7 +89,7 @@ function recompute(cache: FilterCache | null) {
     sendConfigToMain({
       enabled: true,
       videoAds: settings.toggles.videoAds,
-      koreanCaptions: settings.toggles.koreanCaptions,
+      captionsLang: settings.toggles.autoCaptions ? settings.lang : null,
       prunePaths: rules.prune,
     })
     // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.

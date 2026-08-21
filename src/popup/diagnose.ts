@@ -51,11 +51,11 @@ export interface PageFacts {
  * other way, because the only other place it is reported is a console nobody
  * can open on a phone.
  */
-/** What the caption picker did on this video — set by src/main/captions.ts. */
+/** What the caption picker did on this video. Set by src/main/captions.ts. */
 const CAPTION_STATES: Record<string, string> = {
-  korean: '한국어 자막 선택됨',
-  translated: '자동 번역(한국어) 켬',
-  'no-korean': '한국어 자막·번역 없음',
+  matched: '설정 언어 자막 선택됨',
+  translated: '자동 번역 켬',
+  'no-match': '맞는 자막·번역 없음',
   'no-captions': '자막 없는 영상',
   'set-failed': '선택 실패 (플레이어가 거부)',
 }
