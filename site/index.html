@@ -409,8 +409,13 @@
     transition: background-color .12s ease, border-color .12s ease, color .12s ease;
   }
   .btn svg { width: 15px; height: 15px; }
-  /* One package since v0.13.0, so one download button — the line under it
-     names the exact file so what lands in Files can be checked against it. */
+  /* Two ways in, and they are not equals: the store installs and updates
+     itself, the zip is the fallback that iPhone happens to need. Same size,
+     different weight — filled accent against outlined. */
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .btns .btn { flex: 1 1 250px; margin-top: 0; }
+  /* The line under each button names what it hands over, so a file that lands
+     in Files can be checked against it. */
   .btn { flex-wrap: wrap; }
   /* The support range, spelled out where the button is. */
   .supports {
@@ -785,10 +790,10 @@
       <span class="chip">ONE ZIP</span>
     </div>
 
-    <p class="lede" lang="ko"><strong>패키지는 하나입니다.</strong> 같은 zip 파일 하나가 아래 브라우저를 전부 지원합니다.<br>
-      크롬·엣지는 zip 없이 <a href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">크롬 웹스토어</a>에서 설치하는 쪽이 더 쉽고, 자동 업데이트도 됩니다.</p>
-    <p class="lede" lang="en"><strong>There is one package.</strong> The same single zip covers every browser below.<br>
-      On Chrome and Edge the easier path is the <a href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">Chrome Web Store</a>, which also updates itself.</p>
+    <p class="lede" lang="ko"><strong>패키지는 하나입니다.</strong> 같은 확장 하나가 아래 브라우저를 전부 지원합니다.<br>
+      크롬·엣지는 스토어에서 한 번에 설치되고, 아이폰(Orion)은 zip 을 받아 넣습니다.</p>
+    <p class="lede" lang="en"><strong>There is one package.</strong> The same extension covers every browser below.<br>
+      Chrome and Edge install from the store in one click; on iPhone (Orion) you add the zip yourself.</p>
 
     <ul class="supports">
       <li>Chrome</li>
@@ -797,11 +802,19 @@
       <li>Brave · Vivaldi</li>
     </ul>
 
-    <a class="btn" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl" data-size="1.5MB">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      DOWNLOAD
-      <span class="what">확장 패키지</span>
-    </a>
+    <div class="btns">
+      <a class="btn" href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M12 3v5.4M4.2 16.7l4.7-2.7M19.8 16.7 15.1 14"/></svg>
+        CHROME WEB STORE
+        <span class="what" lang="ko">크롬 · 엣지 · 자동 업데이트</span>
+        <span class="what" lang="en">Chrome · Edge — updates itself</span>
+      </a>
+      <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl" data-size="1.5MB">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        DOWNLOAD ZIP
+        <span class="what">확장 패키지</span>
+      </a>
+    </div>
   </div>
 
   <!-- ── iPhone / iPad ───────────────────────────────── -->
@@ -818,13 +831,13 @@
 
     <ol lang="ko">
       <li>App Store에서 <strong>Orion Browser by Kagi</strong>를 설치해 주세요</li>
-      <li>위의 다운로드 버튼으로 <strong>확장 zip 파일</strong>을 내려받아 주세요</li>
+      <li>위의 <strong>DOWNLOAD ZIP</strong> 버튼으로 확장 파일을 내려받아 주세요</li>
       <li>Orion 오른쪽 아래 <strong>•••</strong> 을 누르고 <strong>Extensions</strong> 로 들어가서 <strong>+</strong> 를 눌러 주세요</li>
       <li>내려받은 zip 파일을 선택하면 끝입니다 — 따로 권한을 허용할 것은 없습니다</li>
     </ol>
     <ol lang="en">
       <li>Install <strong>Orion Browser by Kagi</strong> from the App Store</li>
-      <li>Download the <strong>extension zip</strong> with the button above</li>
+      <li>Download the extension with the <strong>DOWNLOAD ZIP</strong> button above</li>
       <li>In Orion, tap <strong>•••</strong> at the bottom right, go to <strong>Extensions</strong>, then tap <strong>+</strong></li>
       <li>Pick the zip you downloaded — that is it, there is no permission to grant</li>
     </ol>
@@ -835,7 +848,7 @@
       <p>피드에서 광고가 사라진 것만으로는 확인이 어렵습니다.<br>
         그쪽은 막는 방식이 달라서 웬만하면 잘 되기 때문입니다.</p>
       <p><strong>설치할 때 호환성 경고가 한 번 뜹니다. 정상입니다.</strong>
-        아래 Chrome용과 같은 파일 하나를 쓰는데, Orion이 지원하지 않는 네트워크 차단
+        크롬이 스토어에서 받는 것과 같은 패키지인데, Orion이 지원하지 않는 네트워크 차단
         기능이 들어 있다고 알려주는 것뿐입니다. 계속을 누르면 설치되고,
         영상 차단은 그대로 동작합니다. 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨집니다.</p>
       <p><strong>"Extensions Error / Something went wrong" 이 뜨면 파일 문제가 아닙니다.</strong>
@@ -862,7 +875,7 @@
       <p>Ads disappearing from the feed does not prove much.<br>
         Those are blocked a different way and almost always go.</p>
       <p><strong>A compatibility warning appears once during install — that is normal.</strong>
-        It is the same single file as the Chrome one below, and Orion is telling you it
+        It is the same package Chrome gets from the store, and Orion is telling you it
         contains a network-blocking feature it does not implement. Tap continue and it
         installs. Video blocking is unchanged; elsewhere ad requests go out but the ad
         slots are still hidden.</p>
@@ -885,32 +898,28 @@
       <h2>Chrome · Edge</h2>
       <span class="chip">READY</span>
     </div>
-    <p class="lede" lang="ko">데스크톱에서는 크롬 웹스토어에서 한 번에 설치합니다.<br>설치 후 새 버전도 브라우저가 알아서 업데이트합니다.</p>
-    <p class="lede" lang="en">On the desktop, install straight from the Chrome Web Store.<br>New versions update themselves after that.</p>
-
-    <a class="btn" href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M4.2 16.5l4.8-2.8M19.8 16.5 15 13.7"/></svg>
-      CHROME WEB STORE
-      <span class="what">스토어에서 바로 설치 · 자동 업데이트</span>
-    </a>
+    <p class="lede" lang="ko"><strong>위의 크롬 웹스토어 버튼</strong>으로 설치하시면 끝입니다.<br>
+      새 버전도 브라우저가 알아서 업데이트합니다.</p>
+    <p class="lede" lang="en">Install with the <strong>Chrome Web Store button above</strong> and you are done.<br>
+      New versions update themselves after that.</p>
 
     <div class="note" lang="ko">
-      <p>아래는 <strong>zip 수동 설치</strong> 방법입니다. 스토어를 쓸 수 없는 환경이나
+      <p>아래는 <strong>zip 수동 설치</strong>입니다. 스토어를 쓸 수 없는 환경이나
         실험 버전을 먼저 써보고 싶을 때의 예비 경로입니다.</p>
     </div>
     <div class="note" lang="en">
-      <p>The steps below are the <strong>manual zip install</strong> — a fallback for
+      <p>The steps below are the <strong>manual zip install</strong>, a fallback for
         environments without store access, or for trying an experimental build first.</p>
     </div>
 
     <ol lang="ko">
-      <li>위의 다운로드 버튼으로 받은 <strong>zip 파일</strong>의 압축을 풀어 주세요</li>
+      <li>위의 <strong>DOWNLOAD ZIP</strong> 버튼으로 받은 파일의 압축을 풀어 주세요</li>
       <li>주소창에 <code>chrome://extensions</code> 를 입력해 주세요</li>
       <li>오른쪽 위 <strong>개발자 모드</strong>를 켜 주세요</li>
       <li><strong>압축해제된 확장 프로그램을 로드</strong>를 누르고, 압축을 푼 폴더를 선택해 주세요</li>
     </ol>
     <ol lang="en">
-      <li>Unzip the <strong>extension zip</strong> you downloaded with the button above</li>
+      <li>Unzip what the <strong>DOWNLOAD ZIP</strong> button above gave you</li>
       <li>Type <code>chrome://extensions</code> in the address bar</li>
       <li>Turn on <strong>Developer mode</strong>, top right</li>
       <li>Click <strong>Load unpacked</strong> and pick the folder you unzipped</li>
