@@ -40,6 +40,21 @@ export function isNewer(a: string, b: string): boolean {
   return false
 }
 
+/**
+ * Whether this copy came from the Chrome Web Store. The store stamps an
+ * update_url into the manifest at packaging time; a sideloaded zip has none.
+ * A store copy updates itself, so the GitHub update check must stand down —
+ * both because it is redundant and because a store extension steering people
+ * to GitHub downloads reads as circumventing store updates.
+ */
+export function isStoreInstall(): boolean {
+  try {
+    return typeof chrome.runtime.getManifest().update_url === 'string'
+  } catch {
+    return false
+  }
+}
+
 const REPO = 'https://github.com/jshsakura/oc-ad-bye-pass'
 
 /**

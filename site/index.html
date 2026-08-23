@@ -786,9 +786,9 @@
     </div>
 
     <p class="lede" lang="ko"><strong>패키지는 하나입니다.</strong> 같은 zip 파일 하나가 아래 브라우저를 전부 지원합니다.<br>
-      받은 뒤의 설치 방법만 다르고, 그건 아래 카드에 브라우저별로 안내되어 있습니다.</p>
+      크롬·엣지는 zip 없이 <a href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">크롬 웹스토어</a>에서 설치하는 쪽이 더 쉽고, 자동 업데이트도 됩니다.</p>
     <p class="lede" lang="en"><strong>There is one package.</strong> The same single zip covers every browser below.<br>
-      Only the install steps differ — they are in the cards underneath.</p>
+      On Chrome and Edge the easier path is the <a href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">Chrome Web Store</a>, which also updates itself.</p>
 
     <ul class="supports">
       <li>Chrome</li>
@@ -885,14 +885,22 @@
       <h2>Chrome · Edge</h2>
       <span class="chip">READY</span>
     </div>
-    <p class="lede" lang="ko">데스크톱에서 쓰는 방법입니다.<br>지금은 압축을 푼 폴더를 직접 불러와서 사용합니다.</p>
-    <p class="lede" lang="en">For the desktop.<br>For now you load the unpacked folder yourself.</p>
+    <p class="lede" lang="ko">데스크톱에서는 크롬 웹스토어에서 한 번에 설치합니다.<br>설치 후 새 버전도 브라우저가 알아서 업데이트합니다.</p>
+    <p class="lede" lang="en">On the desktop, install straight from the Chrome Web Store.<br>New versions update themselves after that.</p>
+
+    <a class="btn" href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M4.2 16.5l4.8-2.8M19.8 16.5 15 13.7"/></svg>
+      CHROME WEB STORE
+      <span class="what">스토어에서 바로 설치 · 자동 업데이트</span>
+    </a>
 
     <div class="note" lang="ko">
-      <p>🕒 <strong>크롬 웹스토어 배포를 준비 중입니다.</strong> 심사가 끝나면 스토어에서 한 번에 설치할 수 있게 됩니다 — 그전까지는 아래 방법으로 설치해 주세요.</p>
+      <p>아래는 <strong>zip 수동 설치</strong> 방법입니다. 스토어를 쓸 수 없는 환경이나
+        실험 버전을 먼저 써보고 싶을 때의 예비 경로입니다.</p>
     </div>
     <div class="note" lang="en">
-      <p>🕒 <strong>A Chrome Web Store release is in the works.</strong> Once it's approved you'll be able to install in one click — until then, use the steps below.</p>
+      <p>The steps below are the <strong>manual zip install</strong> — a fallback for
+        environments without store access, or for trying an experimental build first.</p>
     </div>
 
     <ol lang="ko">
@@ -937,8 +945,8 @@
         </thead>
         <tbody>
           <tr><td>Orion (아이폰·아이패드·맥)</td><td>같은 zip</td><td class="yes">전부</td><td>숨김만</td></tr>
-          <tr><td>Chrome (데스크톱)</td><td>같은 zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
-          <tr><td>Edge (데스크톱)</td><td>같은 zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
+          <tr><td>Chrome (데스크톱)</td><td>스토어 · zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
+          <tr><td>Edge (데스크톱)</td><td>스토어 · zip</td><td class="yes">전부</td><td class="yes">차단 + 숨김</td></tr>
           <tr><td>Brave · Vivaldi 등</td><td>같은 zip</td><td>될 것</td><td>될 것</td></tr>
           <tr><td>Safari</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
           <tr><td>Firefox</td><td class="no">없음</td><td class="no">—</td><td class="no">—</td></tr>
@@ -954,8 +962,8 @@
         </thead>
         <tbody>
           <tr><td>Orion (iPhone · iPad · Mac)</td><td>the same zip</td><td class="yes">all layers</td><td>hiding only</td></tr>
-          <tr><td>Chrome (desktop)</td><td>the same zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
-          <tr><td>Edge (desktop)</td><td>the same zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
+          <tr><td>Chrome (desktop)</td><td>store · zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
+          <tr><td>Edge (desktop)</td><td>store · zip</td><td class="yes">all layers</td><td class="yes">blocked + hidden</td></tr>
           <tr><td>Brave · Vivaldi · …</td><td>the same zip</td><td>should work</td><td>should work</td></tr>
           <tr><td>Safari</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>
           <tr><td>Firefox</td><td class="no">none</td><td class="no">—</td><td class="no">—</td></tr>

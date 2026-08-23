@@ -30,7 +30,11 @@
 
 ### Chrome
 
-압축해제 로드로 쓴다.
+**크롬 웹스토어에서 설치하는 게 기본이다** (2026-08-23 게시). 자동 업데이트까지 따라온다.
+
+> https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam
+
+아래 압축해제 로드는 스토어를 못 쓰는 환경이나 실험 빌드용 예비 경로다.
 
 **압축 풀기까지는 명령어 한 줄로 끝난다.** 최신 zip 을 받아 고정된 위치에 풀고,
 크롬에 붙여넣을 경로를 찍어준다 (윈도우는 탐색기로 열고 클립보드에도 복사한다).
@@ -518,7 +522,31 @@ storage.sync                       Partial support ← 유일한 구멍
 git tag v0.2.0 && git push --tags
    → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
        oc-ad-bye-pass-vX_Y_Z.zip   Chrome · Edge · Orion 공용 (v0.13.0 부터 하나)
+   → 같은 zip 을 크롬 웹스토어에도 올려 심사 제출까지 한다 (아래 "스토어 자동 게시")
 ```
+
+### 스토어 자동 게시
+
+release.yml 마지막에 같은 zip 을 [크롬 웹스토어 리스팅](https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam)에
+올리고 심사 제출(`--auto-publish`)까지 하는 단계가 있다. 리포 시크릿 세 개가 전부
+있어야 동작하고, 없으면 건너뛴다 — 릴리스 자체는 영향받지 않는다.
+
+발급은 한 번만 하면 된다:
+
+1. [Google Cloud Console](https://console.cloud.google.com/) 에서 프로젝트 하나 만들고 **Chrome Web Store API** 를 켠다
+2. OAuth 동의 화면: External · 게시 상태는 Testing · 본인 계정을 테스트 사용자로 추가
+3. 사용자 인증 정보 → **OAuth 클라이언트 ID(데스크톱 앱)** 생성 → client id/secret 확보
+4. 데스크톱에서 `npx chrome-webstore-upload-keys` 를 돌리면 브라우저 로그인을 거쳐 refresh token 까지 뽑아준다
+5. 시크릿 등록:
+
+```bash
+gh secret set CWS_CLIENT_ID
+gh secret set CWS_CLIENT_SECRET
+gh secret set CWS_REFRESH_TOKEN
+```
+
+게시는 곧바로 공개가 아니라 심사 큐 제출이다. 업데이트 심사는 보통 최초 심사보다
+빠르지만, 그동안 스토어에는 이전 버전이 걸려 있다 — GitHub 릴리스가 항상 먼저다.
 
 사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은
 릴리스 API 가 알려주는 자산 주소를 가리키고, 푸터의 버전도 같은 응답에서

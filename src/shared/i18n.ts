@@ -149,6 +149,10 @@ const M = {
     ko: '이 확장은 스스로 업데이트하지 못합니다 — 파일로 설치한 확장을 다시 설치해 주는 API 가 브라우저에 없습니다. 대신 새 버전이 나왔는지 확인하고 받는 데까지는 해 드립니다. 받은 뒤에는 Extensions 에서 기존 것을 지우고 다시 넣으시면 됩니다.',
     en: "The extension can't update itself — browsers give a file-installed extension no API to reinstall itself. It can check for a new version and fetch it, though. After that, remove the old one in Extensions and add it again.",
   },
+  'opt.version.storeDesc': {
+    ko: '크롬 웹스토어에서 설치된 버전입니다. 새 버전이 나오면 브라우저가 알아서 업데이트하니 여기서 하실 일은 없습니다.',
+    en: 'Installed from the Chrome Web Store. The browser updates it by itself when a new version ships, so there is nothing to do here.',
+  },
   'opt.version.now': { ko: '지금 버전', en: 'Current' },
   'opt.version.latest': { ko: '최신 버전', en: 'Latest' },
   'opt.version.notChecked': { ko: '확인 전', en: 'Not checked' },

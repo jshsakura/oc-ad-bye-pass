@@ -13,7 +13,7 @@ import {
 import { normalizeHost, removeFromAllowlist } from '../shared/sites.ts'
 import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
-import { checkForUpdate, releasePageFor, type UpdateCheck } from '../shared/update.ts'
+import { checkForUpdate, isStoreInstall, releasePageFor, type UpdateCheck } from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
 import { LANGS, LANG_LABEL, makeT } from '../shared/i18n.ts'
 
@@ -60,12 +60,15 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
 
   const t = useMemo(() => makeT(settings.lang), [settings.lang])
 
+  const storeInstall = isStoreInstall()
+
   // Checked on open, once. The page is where someone goes when they want to
   // know, and a version banner they have to ask for is a version banner nobody
-  // sees.
+  // sees. A store copy never checks: the browser updates it, and pointing a
+  // store install at GitHub downloads is a policy risk besides.
   useEffect(() => {
-    void checkForUpdate().then(setUpdate)
-  }, [])
+    if (!storeInstall) void checkForUpdate().then(setUpdate)
+  }, [storeInstall])
 
   useEffect(() => {
     void loadSettings().then((s) => {
@@ -203,38 +206,44 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           <Icon name="version" />
           {t('opt.version')}
         </h2>
-        <p className="desc">{t('opt.version.desc')}</p>
+        <p className="desc">{storeInstall ? t('opt.version.storeDesc') : t('opt.version.desc')}</p>
 
         <dl className="kv">
           <dt>{t('opt.version.now')}</dt>
           <dd>v{chrome.runtime.getManifest().version}</dd>
-          <dt>{t('opt.version.latest')}</dt>
-          <dd>
-            {update === null
-              ? t('opt.version.notChecked')
-              : update.latest
-                ? update.newer
-                  ? `v${update.latest}` /* the banner above announces "new"; don't repeat it */
-                  : t('opt.version.upToDate', { v: update.latest })
-                : (update.error ?? t('opt.version.checkFail'))}
-          </dd>
+          {!storeInstall && (
+            <>
+              <dt>{t('opt.version.latest')}</dt>
+              <dd>
+                {update === null
+                  ? t('opt.version.notChecked')
+                  : update.latest
+                    ? update.newer
+                      ? `v${update.latest}` /* the banner above announces "new"; don't repeat it */
+                      : t('opt.version.upToDate', { v: update.latest })
+                    : (update.error ?? t('opt.version.checkFail'))}
+              </dd>
+            </>
+          )}
         </dl>
 
-        <div className="actions">
-          <button
-            type="button"
-            onClick={() => {
-              setChecking(true)
-              void checkForUpdate()
-                .then(setUpdate)
-                .finally(() => setChecking(false))
-            }}
-            disabled={checking}
-          >
-            <Icon name="refresh" />
-            {checking ? t('opt.version.checking') : t('opt.version.check')}
-          </button>
-        </div>
+        {!storeInstall && (
+          <div className="actions">
+            <button
+              type="button"
+              onClick={() => {
+                setChecking(true)
+                void checkForUpdate()
+                  .then(setUpdate)
+                  .finally(() => setChecking(false))
+              }}
+              disabled={checking}
+            >
+              <Icon name="refresh" />
+              {checking ? t('opt.version.checking') : t('opt.version.check')}
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="card">
