@@ -1,6 +1,6 @@
 // The icon set, such as it is.
 //
-// Inline paths rather than an icon font or a package: there are eleven of them,
+// Inline paths rather than an icon font or a package: there are a handful of them,
 // they never change, and a webfont would be a network request and a flash of
 // nothing for something the size of this file. They inherit currentColor, so a
 // button's own colour carries them.
@@ -25,6 +25,7 @@ export type IconName =
   | 'stethoscope'
   | 'close'
   | 'copy'
+  | 'external'
 
 const PATHS: Record<IconName, string> = {
   version: 'M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Z',
@@ -44,6 +45,7 @@ const PATHS: Record<IconName, string> = {
   stethoscope: 'M6 3v6a6 6 0 0 0 12 0V3M9 3H4M15 3h5M12 15v2a4 4 0 0 0 8 0v-1M20 12a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z',
   close: 'M18 6 6 18M6 6l12 12',
   copy: 'M9 9h12v12H9zM5 15V5a2 2 0 0 1 2-2h10',
+  external: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3',
 }
 
 interface Props {

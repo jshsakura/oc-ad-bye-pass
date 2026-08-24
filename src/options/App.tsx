@@ -13,7 +13,14 @@ import {
 import { normalizeHost, removeFromAllowlist } from '../shared/sites.ts'
 import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
-import { checkForUpdate, isStoreInstall, releasePageFor, type UpdateCheck } from '../shared/update.ts'
+import {
+  SOURCE_URL,
+  STORE_URL,
+  checkForUpdate,
+  isStoreInstall,
+  releasePageFor,
+  type UpdateCheck,
+} from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
 import { LANGS, LANG_LABEL, makeT } from '../shared/i18n.ts'
 
@@ -227,8 +234,16 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           )}
         </dl>
 
-        {!storeInstall && (
-          <div className="actions">
+        <div className="actions">
+          {storeInstall ? (
+            /* A store copy updates itself, so there is nothing to press here —
+               except the listing, which is the one page that can say what
+               version the store is handing out. */
+            <a className="btn-link" href={STORE_URL} target="_blank" rel="noopener">
+              <Icon name="external" />
+              {t('opt.version.store')}
+            </a>
+          ) : (
             <button
               type="button"
               onClick={() => {
@@ -242,8 +257,8 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
               <Icon name="refresh" />
               {checking ? t('opt.version.checking') : t('opt.version.check')}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </section>
 
       <section className="card">
@@ -412,6 +427,17 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           </button>
         </div>
       </section>
+
+      {/* The repo, on its own line and away from the version card. It is where
+          the code and the issues are — not an update route — and mixing it into
+          the update block is what made the two read as the same thing. */}
+      <div className="page-foot">
+        <span>{t('opt.foot.source')}</span>
+        <a href={SOURCE_URL} target="_blank" rel="noopener">
+          {t('opt.foot.sourceLink')}
+          <Icon name="external" />
+        </a>
+      </div>
     </div>
   )
 }

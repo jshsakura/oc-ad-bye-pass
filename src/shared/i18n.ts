@@ -167,6 +167,7 @@ const M = {
   'opt.version.check': { ko: '업데이트 확인', en: 'Check for updates' },
   'opt.version.checking': { ko: '확인 중…', en: 'Checking…' },
   'opt.version.getZip': { ko: '{file} 받기', en: 'Get {file}' },
+  'opt.version.store': { ko: '스토어에서 확인', en: 'Open the store listing' },
 
   'opt.list': { ko: '필터 리스트', en: 'Filter list' },
   'opt.list.desc': {
@@ -233,6 +234,9 @@ const M = {
   },
   'opt.stats.reset': { ko: '통계 초기화', en: 'Reset statistics' },
   'opt.stats.resetDone': { ko: '통계를 초기화했습니다.', en: 'Statistics reset.' },
+
+  'opt.foot.source': { ko: '소스 코드 · 문제 신고', en: 'Source code · report an issue' },
+  'opt.foot.sourceLink': { ko: 'GitHub 에서 보기', en: 'View on GitHub' },
 
   // — relative time (format.ts) —
   'time.never': { ko: '아직 없음', en: 'never' },

@@ -58,6 +58,21 @@ export function isStoreInstall(): boolean {
 const REPO = 'https://github.com/jshsakura/oc-ad-bye-pass'
 
 /**
+ * Where the source lives. Linked from the page itself rather than left to the
+ * store listing: someone who wants to read the code is already in the settings.
+ */
+export const SOURCE_URL = REPO
+
+/**
+ * The Chrome Web Store listing. A store copy has nothing to check here — the
+ * browser does it — but "nothing to do" reads as a dead end, so the version
+ * card hands over to the one page that can actually say what the store has.
+ * The id is the extension's, and it is stable across versions.
+ */
+export const STORE_URL =
+  'https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam'
+
+/**
  * The tagged release's page. The notice links here rather than at an asset:
  * since v0.13.0 there is a single package for every browser, and the page is
  * where its name and the install steps live.
