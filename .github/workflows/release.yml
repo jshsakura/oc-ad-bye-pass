@@ -159,14 +159,32 @@ jobs:
             > 차단 규칙만 바뀐 경우에는 재설치가 필요 없습니다 — 확장이 6시간마다
             > `filters/list.json` 을 알아서 받아갑니다.
 
+      # 릴리스가 만들어진 뒤에. 페이지는 최신 릴리스의 자산을 그대로 복사해 가므로
+      # 이 순서가 뒤집히면 한 버전 뒤진 것을 집어간다.
+      #
+      # GITHUB_TOKEN 이 만든 이벤트는 다른 워크플로를 트리거하지 못하지만
+      # workflow_dispatch 는 API 호출이라 동작한다 — pages.yml 이 release 를
+      # 듣지 못하는 이유가 그것이고, 이것이 그 우회다.
+      - name: 페이지가 이 릴리스를 집어가게 한다
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main || true
+
       # 같은 zip 을 크롬 웹스토어에도 올려 게시(심사 제출)까지 한다.
       #
       # 시크릿 세 개가 전부 있어야 동작한다 — 없으면 건너뛰고 릴리스는 그대로
       # 성공한다. 발급 방법은 README 의 "스토어 자동 게시" 절에 있다.
       # 게시는 곧바로 공개가 아니라 스토어 심사 큐에 들어가는 것이고, 업데이트
       # 심사는 보통 최초 심사보다 빠르다.
+      #
+      # **실패해도 릴리스를 막지 않는다** (`continue-on-error`). GitHub 릴리스가
+      # 정본이고 스토어는 그 사본이다 — 스토어 쪽 사정(심사 거절, API 장애,
+      # 토큰 만료)으로 zip 배포와 사이트 갱신까지 멈추면 안 된다. 그래서 이
+      # 단계는 페이지 트리거 뒤에 둔다. 실패는 런 요약에 주석으로 남는다.
       - name: 크롬 웹스토어에 올리고 게시한다
         if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
         env:
           EXTENSION_ID: aoehenpbglodadbbhaiaipmaklnkoeam
           CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
@@ -180,15 +198,3 @@ jobs:
           v="$(printf '%s' "$GITHUB_REF_NAME" | tr '.' '_')"
           npx --yes chrome-webstore-upload-cli@3 upload \
             --source "oc-ad-bye-pass-$v.zip" --auto-publish
-
-      # 릴리스가 만들어진 뒤에. 페이지는 최신 릴리스의 자산을 그대로 복사해 가므로
-      # 이 순서가 뒤집히면 한 버전 뒤진 것을 집어간다.
-      #
-      # GITHUB_TOKEN 이 만든 이벤트는 다른 워크플로를 트리거하지 못하지만
-      # workflow_dispatch 는 API 호출이라 동작한다 — pages.yml 이 release 를
-      # 듣지 못하는 이유가 그것이고, 이것이 그 우회다.
-      - name: 페이지가 이 릴리스를 집어가게 한다
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --ref main || true

@@ -1,12 +1,10 @@
 # OC Ad Bye-Pass
 
-### → **[설치 안내 · 다운로드 (jshsakura.github.io/oc-ad-bye-pass)](https://jshsakura.github.io/oc-ad-bye-pass/)**
+### → [설치 안내 · 다운로드](https://jshsakura.github.io/oc-ad-bye-pass/)
 
-광고 차단 확장 (Manifest V3). **Chrome · Edge 와 Orion(아이폰 포함)이 같은 zip 하나를 쓴다.**
+Manifest V3 광고 차단 확장입니다. Chrome, Edge, Orion(아이폰 포함)이 모두 같은 zip 하나를 씁니다.
 
-한 영상 사이트를 특별히 잘 막는다. 범용 차단기들이 거기서 고전하는 이유는 그 광고가
-광고망이 아니라 **본문과 같은 응답에 실려 오기 때문**인데, 여기서는 그 응답을 직접
-자른다. 그래서 계층이 나뉜다.
+한 영상 사이트를 특별히 잘 막는 것이 강점입니다. 범용 차단기가 이 사이트에서 고전하는 이유는 광고가 광고망을 통해 오는 게 아니라 본문과 같은 응답에 실려 오기 때문인데, 이 확장은 그 응답 자체를 잘라냅니다. 그래서 차단이 계층으로 나뉩니다.
 
 ```
   모든 사이트
@@ -21,23 +19,19 @@
   3계층  플레이어 폴백   그래도 뜬 광고를 건너뛴다
 ```
 
-**어느 사이트든 한 번의 클릭으로 끌 수 있다.** 확장 아이콘 → 그 사이트 스위치. 전역으로
-동작하는 이상 무엇이든 깨뜨릴 수 있고, 그때 확장을 통째로 지우는 것 말고 다른 선택지가
-없으면 사람들은 통째로 지운다. 하위 도메인까지 함께 꺼지고, 끄면 네트워크 차단과 요소
-숨김이 **둘 다** 멈춘다.
+사이트별로 끌 수도 있습니다. 확장 아이콘을 눌러 그 사이트의 스위치를 끄면 됩니다. 하위 도메인까지 함께 꺼지고, 네트워크 차단과 요소 숨김이 둘 다 멈춥니다. 전역으로 동작하는 확장은 무엇이든 깨뜨릴 수 있는데, 뭔가 깨졌을 때 선택지가 "확장 통째로 삭제"뿐이면 사람들은 실제로 지워 버립니다. 그래서 필요한 기능입니다.
 
 ## 설치
 
 ### Chrome
 
-**크롬 웹스토어에서 설치하는 게 기본이다** (2026-08-23 게시). 자동 업데이트까지 따라온다.
+기본은 크롬 웹스토어 설치입니다(2026-08-23 게시). 자동 업데이트가 따라옵니다.
 
 > https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam
 
-아래 압축해제 로드는 스토어를 못 쓰는 환경이나 실험 빌드용 예비 경로다.
+아래 압축해제 로드는 스토어를 못 쓰는 환경이나 실험 빌드용 예비 경로입니다.
 
-**압축 풀기까지는 명령어 한 줄로 끝난다.** 최신 zip 을 받아 고정된 위치에 풀고,
-크롬에 붙여넣을 경로를 찍어준다 (윈도우는 탐색기로 열고 클립보드에도 복사한다).
+압축 풀기까지는 명령 한 줄로 끝납니다. 최신 zip을 받아 고정된 위치에 풀고, 크롬에 붙여넣을 경로를 출력합니다(윈도우는 탐색기로 열고 클립보드에도 복사합니다).
 
 ```powershell
 # Windows (PowerShell)
@@ -49,18 +43,13 @@ irm https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/inst
 curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scripts/install.sh | bash
 ```
 
-그다음은 크롬에서 직접 해야 한다. **이 4단계는 자동화할 방법이 없다** — 크롬은 웹에서
-`chrome://extensions` 로 이동하는 것도, 개발자 모드를 켜는 것도 막아뒀다.
+나머지는 크롬에서 직접 해야 합니다. 크롬이 웹페이지에서의 `chrome://extensions` 이동과 개발자 모드 켜기를 막아 두어서, 이 부분은 자동화할 방법이 없습니다.
 
 1. 주소창에 `chrome://extensions` 입력
 2. 우측 상단 **개발자 모드** 켜기
-3. **압축해제된 확장 프로그램을 로드** → 위에서 찍어준 폴더 선택
+3. **압축해제된 확장 프로그램을 로드**에서 위에서 출력된 폴더 선택
 
-명령어를 쓰기 싫으면 [사이트](https://jshsakura.github.io/oc-ad-bye-pass/)나
-[Releases](../../releases) 에서 zip 을 받아 직접 풀어도 된다. 단 **푼 폴더를 지우면
-확장이 죽는다** — 크롬이 그 폴더를 계속 참조한다. 다운로드 폴더에 풀지 말 것.
-
-설치 스크립트가 고정 위치를 쓰는 이유가 이것이다.
+명령을 쓰고 싶지 않으면 [사이트](https://jshsakura.github.io/oc-ad-bye-pass/)나 [Releases](../../releases)에서 zip을 받아 직접 풀어도 됩니다. 단, 크롬이 푼 폴더를 계속 참조하므로 폴더를 지우면 확장이 죽습니다. 다운로드 폴더에 풀지 말 것. 설치 스크립트가 고정 위치를 쓰는 이유입니다.
 
 | OS | 설치 위치 |
 |---|---|
@@ -68,123 +57,83 @@ curl -fsSL https://raw.githubusercontent.com/jshsakura/oc-ad-bye-pass/main/scrip
 | macOS | `~/Library/Application Support/OcAdByePass` |
 | Linux | `~/.local/share/oc-ad-bye-pass` |
 
-코드가 바뀌었을 때는 **같은 명령을 다시 돌리고** `chrome://extensions` 에서 새로고침만
-누르면 된다. 경로가 그대로라 다시 로드할 필요가 없다.
+코드가 바뀌었을 때는 같은 명령을 다시 돌리고 `chrome://extensions`에서 새로고침만 누르면 됩니다. 경로가 그대로라 다시 로드할 필요는 없습니다.
 
 ### 아이폰 · 아이패드 (Orion)
 
-**아이폰에서 확장이 되는 브라우저는 Safari 와 [Orion](https://browser.kagi.com/) 둘뿐이고,
-Orion 은 크롬 확장을 zip 그대로 받는다.** Safari 처럼 앱으로 감쌀 필요도, 7일마다
-다시 서명할 일도 없다.
+아이폰에서 확장을 쓸 수 있는 브라우저는 Safari와 [Orion](https://browser.kagi.com/) 둘뿐이고, Orion은 크롬 확장 zip을 그대로 받습니다. Safari처럼 앱으로 감쌀 필요도, 7일마다 다시 서명할 일도 없습니다.
 
-1. App Store 에서 **Orion Browser by Kagi** 설치
-2. [Releases](../../releases) 에서 **`oc-ad-bye-pass-…zip`** 을 받는다 (Chrome 과 같은 파일이다)
+1. App Store에서 **Orion Browser by Kagi** 설치
+2. [Releases](../../releases)에서 `oc-ad-bye-pass-…zip`을 받는다 (Chrome과 같은 파일)
 3. Orion 우측 하단 **•••** → **Extensions** → **+** → 받은 zip 선택
-4. **호환성 경고가 한 번 뜬다 — 정상이다.** Orion 이 구현하지 않은 네트워크 차단
-   API(`declarativeNetRequest`)를 알리는 것뿐이고, 계속을 누르면 설치된다.
-   그 API 는 런타임에서 감지해 건너뛰므로 나머지는 전부 동작한다
+4. 호환성 경고가 한 번 뜨는데 정상입니다. Orion이 구현하지 않은 네트워크 차단 API(`declarativeNetRequest`)를 알리는 것뿐이고, 계속을 누르면 설치됩니다. 그 API는 런타임에서 감지해 건너뛰므로 나머지는 모두 동작합니다
 
-v0.13.0 전에는 Orion 전용 패키지를 따로 배포했다 — Orion 이 Chrome 패키지를
-거절한다고 봤기 때문인데, 2026-08-19 실기기에서 전체 패키지가 경고 후 정상
-설치·동작함을 확인하고 하나로 합쳤다. 전용 빌드는 `npm run build:orion` 으로
-여전히 만들 수 있는 예비용으로만 남아 있다. 기능 차이는 아래
-"Orion 에서 달라지는 것" 절에 있다.
+v0.13.0 전에는 Orion 전용 패키지를 따로 배포했습니다. Orion이 Chrome 패키지를 거절한다고 판단했었는데, 2026-08-19 실기기에서 전체 패키지가 경고 후 정상 설치·동작하는 것을 확인하고 하나로 합쳤습니다. 전용 빌드는 `npm run build:orion`으로 여전히 만들 수 있지만 예비용입니다. 기능 차이는 아래 "Orion에서 달라지는 것" 절에 있습니다.
 
-**"Extensions Error. Something went wrong." 이 나면 대개 패키지 문제가 아니다.** 2026-08-11 에
-실기기에서 끝까지 따라가 본 결과, 듣는 것은 하나였다.
+**"Extensions Error. Something went wrong."이 뜨면 대개 패키지 문제가 아닙니다.** 2026-08-11에 실기기에서 끝까지 따라가 본 결과, 효과가 있던 조치는 하나였습니다.
 
 ```
-Orion 설정에서 캐시를 지운다 → 기존 확장 삭제 → + 로 설치
+Orion 설정에서 캐시 지우기 → 기존 확장 삭제 → + 로 설치
 ```
 
-**캐시를 지우면 설치된다.** 그 전까지는 지우고 깔기도, 설치 시트를 한 번 띄웠다 닫는
-것도 될 때가 있고 안 될 때가 있었다 — 어느 쪽도 원인이 아니었고, 그래서 간헐적으로
-보였다. 받아둔 파일이 캐시에 남아 그것을 계속 집는 쪽으로 보인다. 같은 URL 로 새
-버전을 받을 때마다 재발한다.
+캐시를 지우면 설치됩니다. 그 전까지는 지우고 다시 깔기도, 설치 시트를 띄웠다 닫기도 될 때가 있고 안 될 때가 있었는데 어느 쪽도 원인이 아니었습니다. 받아 둔 파일이 캐시에 남아 계속 그것을 집는 것으로 보이고, 같은 URL로 새 버전을 받을 때마다 재현됩니다. 파일을 의심하기 전에 이것부터 하십시오. 버전을 오르내리며 zip을 비교해 봐야 답이 안 나옵니다. 실제로 두 번 비교했고 두 번 다 패키지는 같은 모양이었습니다. `tools/orion-install-probe.zip`이 그 판별용입니다.
 
-파일을 의심하기 전에 이것부터 한다. 버전을 오르내리며 zip 을 비교해봐야 답이 안
-나온다 — 실제로 두 번 그렇게 샜고, 두 번 다 패키지는 같은 모양이었다.
-`tools/orion-install-probe.zip` 이 그 판별용이다.
+그래도 실패하면 Orion 쪽 알려진 원인을 두 가지 더 확인합니다. 하나는 다운로드 폴더 북마크 만료로, 설정에서 다운로드 폴더를 지정 해제했다 다시 지정하면 풀립니다([orionfeedback #10475](https://orionfeedback.org/d/10475), [#10293](https://orionfeedback.org/d/10293-cant-install-extensions)). 다른 하나는 zip 위치로, iCloud Drive가 아니라 기기 안에 둬야 합니다. 아직 내려받지 않은 자리표시자를 고르면 실패합니다.
 
-그래도 계속 실패하면 Orion 쪽 알려진 원인 둘을 더 걷어낸다. 파일 선택 실패의 공개된
-근본 원인이 **다운로드 폴더 북마크가 만료되는 것**이라, 설정에서 다운로드 폴더를
-지정 해제했다 다시 지정하면 풀린다 ([orionfeedback #10475](https://orionfeedback.org/d/10475),
-[#10293](https://orionfeedback.org/d/10293-cant-install-extensions)). 그리고 zip 은
-iCloud Drive 가 아니라 기기 안에 둔다 — 아직 안 받아진 자리표시자를 고르면 실패한다.
-
-**파일로 깐 확장은 제자리 업데이트가 안 된다.** Orion 1.4.16 에 들어간 모바일 확장
-업데이트는 스토어에서 받은 것을 대상으로 하고, 직접 만든 zip 은 지우고 다시 까는
-것 말고 길이 없다. 그래서 **코드가 아니라 규칙만 바뀌었으면 재설치하지 않는다** —
-셀렉터·프루닝 경로는 원격 필터 목록으로 나가고 확장이 알아서 받아간다.
-
-업데이트는 두 갈래다.
+파일로 설치한 확장은 제자리 업데이트가 안 됩니다. Orion 1.4.16의 모바일 확장 업데이트는 스토어에서 받은 것만 대상으로 해서, 직접 넣은 zip은 지우고 다시 까는 방법뿐입니다. 대신 셀렉터나 프루닝 경로 같은 규칙은 원격 필터 목록으로 배포되고 확장이 알아서 받아 가므로, 규칙만 바뀌었을 때는 재설치가 필요 없습니다.
 
 | 바뀐 것 | 할 일 |
 |---|---|
-| 차단 규칙 (셀렉터·프루닝 경로) | **없음.** 그 사이트 탭을 열 때 확장이 알아서 확인한다 |
-| 확장 코드 (Chrome · Edge) | 새 zip 을 덮어쓰고 `chrome://extensions` 에서 새로고침 |
-| 확장 코드 (Orion) | 덮어쓰기가 안 된다. 지우고 위 순서로 다시 설치한다 |
+| 차단 규칙 (셀렉터·프루닝 경로) | 없음. 그 사이트 탭을 열 때 확장이 알아서 확인한다 |
+| 확장 코드 (Chrome · Edge) | 새 zip을 덮어쓰고 `chrome://extensions`에서 새로고침 |
+| 확장 코드 (Orion) | 덮어쓰기가 안 된다. 지우고 다시 설치 |
 
 ## 어떻게 막는가
 
-Android 의 [ReVanced](https://github.com/ReVanced/revanced-patches) 와
-[AdGuard](https://github.com/AdguardTeam/AdguardFilters) 가 쓰는 방식을 웹으로 옮겼다.
+Android [ReVanced](https://github.com/ReVanced/revanced-patches)와 [AdGuard](https://github.com/AdguardTeam/AdguardFilters)가 쓰는 방식을 웹으로 옮겼습니다.
 
 ### 0계층 — 네트워크 차단 (모든 사이트)
 
-`declarativeNetRequest` 정적 룰셋으로 광고망 요청 자체를 막는다. 요청이 안 나가므로
-광고가 그려질 일도 없고, 대역폭도 안 쓴다. **호스트 권한이 필요 없다** — 정적 룰셋은
-권한 경고를 늘리지 않는다.
+`declarativeNetRequest` 정적 룰셋으로 광고망 요청 자체를 막습니다. 요청이 나가지 않으니 광고가 그려질 일도 없고 대역폭도 쓰지 않습니다. 정적 룰셋은 호스트 권한이 필요 없어서 권한 경고도 늘지 않습니다.
 
-규칙은 공개 리스트(AdGuard DNS filter, EasyList, EasyPrivacy)에서 `scripts/build-rules.mjs`
-가 만든다. 여기서 전처리가 전부다.
+규칙은 공개 리스트(AdGuard DNS filter, EasyList, EasyPrivacy)에서 `scripts/build-rules.mjs`가 만듭니다. 전처리는 다음과 같습니다.
 
 | 단계 | 하는 일 |
 |---|---|
-| 파싱 | ABP 문법 중 **도메인 차단만** 정확히 옮긴다. 못 옮긴 규칙은 몇 개를 왜 버렸는지 보고한다 |
-| 보호 | `NEVER_BLOCK` — 한 줄만 잘못 들어와도 로그인·결제가 막힌다. 그건 "광고가 샜다"와 차원이 다르다 |
-| 고정 | 없으면 의미가 없는 광고망 40여 개는 목록에 없어도 **강제로 넣는다** |
-| 서브섬션 | `\|\|example.com^` 은 서브도메인까지 매칭한다 → 부모가 이미 차단된 도메인은 지운다 |
+| 파싱 | ABP 문법 중 도메인 차단만 정확히 옮긴다. 못 옮긴 규칙은 개수와 이유를 보고한다 |
+| 보호 | `NEVER_BLOCK` 목록으로 로그인·결제 도메인을 뺀다. 한 줄만 잘못 들어와도 로그인이 막히는데, 이건 광고가 새는 것과는 다른 문제다 |
+| 고정 | 목록에 없어도 없으면 의미가 없는 광고망 40여 개를 강제로 넣는다 |
+| 서브섹션 | `\|\|example.com^`은 서브도메인까지 매칭하므로, 부모가 이미 차단된 도메인은 지운다 |
 | 배치 | 도메인 하나당 룰 하나는 낭비다. `requestDomains` 배열로 1000개씩 묶는다 |
 
-마지막 두 줄이 결정적이다. 도메인 하나당 룰 하나로 하면 30,000개 한도에 걸려
-**166,682개 중 136,000개가 잘려나간다.** 그것도 알파벳순으로 — `0.avmarket.rs` 는 넣고
-`doubleclick.net` 은 버리는 식이라, 3만 개의 보호처럼 보이지만 아무것도 아니다.
-배치로 묶으면 **전부 들어가고 룰은 168개**로 끝난다.
+마지막 두 단계가 결과를 가릅니다. 도메인마다 룰을 하나씩 만들면 30,000개 룰 한도에 걸려 166,682개 중 136,000개가 잘리고, 잘리는 순서가 알파벳순이라 `0.avmarket.rs`는 들어가고 `doubleclick.net`은 빠지는 일이 벌어집니다. 3만 개를 지키는 것처럼 보이지만 실제로는 아닙니다. 배치로 묶으면 전부 들어가고 룰은 168개로 끝납니다.
 
 ### 1계층 — 응답 프루닝 (`src/main/`)
 
-ReVanced 의 `video-ads` 패치는 `PlayerResponseModel` 에서 광고 필드를 없애서 광고를
-"숨기는" 게 아니라 **애초에 만들어지지 않게** 한다. AdGuard 의 `json-prune` 스크립틀릿도
-같은 자리를 노린다. 여기서도 똑같이 한다.
+ReVanced의 `video-ads` 패치는 `PlayerResponseModel`에서 광고 필드를 지워서, 광고를 숨기는 게 아니라 애초에 만들어지지 않게 합니다. AdGuard의 `json-prune` 스크립틀릿도 같은 지점을 노립니다. 여기도 같은 방식입니다.
 
-MAIN world 콘텐츠 스크립트가 `document_start` 에 다음 필드를 응답에서 지운다.
+MAIN world 콘텐츠 스크립트가 `document_start`에 다음 필드를 응답에서 지웁니다.
 
 ```
 adPlacements  playerAds  adSlots  adBreakHeartbeatParams
 playerConfig.adConfig    auxiliaryUi.messageRenderers.upsellDialogRenderer
 ```
 
-후킹 지점은 셋뿐이다. 건드리는 네이티브가 많을수록 그 사이트가 깨질 확률이 올라간다.
+후킹 지점은 세 곳뿐입니다. 네이티브를 많이 건드릴수록 그 사이트가 깨질 확률이 올라가기 때문입니다.
 
-- `JSON.parse` — 그 사이트가 응답을 파싱하는 거의 모든 경로가 여기를 지난다
-- `Response.prototype.json` — 이것만 `JSON.parse` 를 거치지 않고 내부에서 파싱한다
-- `ytInitialPlayerResponse` / `ytInitialData` setter — 인라인 스크립트의 객체 리터럴이라
-  파싱 훅에 안 걸린다. **첫 재생 광고를 막는 데 이 훅이 결정적이다**
+- `JSON.parse` — 그 사이트가 응답을 파싱하는 대부분의 경로가 여기를 지남
+- `Response.prototype.json` — 이 경로만 `JSON.parse`를 거치지 않고 내부에서 파싱함
+- `ytInitialPlayerResponse` / `ytInitialData` setter — 인라인 스크립트의 객체 리터럴이라 파싱 훅에 안 걸림. 첫 재생 광고를 막는 데 결정적
 
-`fetch` 와 `XMLHttpRequest` 자체는 감싸지 않는다. 위 셋으로 이미 덮이고, 요청 계층까지
-건드리면 그 사이트의 재시도·스트리밍 로직과 부딪힌다.
+`fetch`와 `XMLHttpRequest` 자체는 감싸지 않습니다. 위 세 곳으로 이미 덮이고, 요청 계층까지 건드리면 그 사이트의 재시도·스트리밍 로직과 부딪힙니다.
 
-`frameworkUpdates` 는 일부러 프루닝하지 않는다 — 광고와 무관한 UI 갱신(구독·재생목록
-상태)이 같이 실려 와서 자르면 그 사이트가 깨진다.
+`frameworkUpdates`는 일부러 남겨 둡니다. 광고와 무관한 UI 갱신(구독, 재생목록 상태)이 같이 실려 와서 잘라 내면 그 사이트가 깨집니다.
 
 ### 2계층 — 컴포넌트 필터 (`src/isolated/cosmetic.ts`)
 
-ReVanced 의 `LithoFilterPatch` + `AdsFilter` 는 렌더 트리에서 광고 컴포넌트를 문자열
-매칭으로 걸러낸다. 웹에서는 `document_start` 에 스타일시트를 한 장 넣는 것으로 같은
-효과를 낸다 (광고가 그려졌다 사라지는 깜빡임이 없다).
+ReVanced의 `LithoFilterPatch` + `AdsFilter`는 렌더 트리에서 광고 컴포넌트를 문자열 매칭으로 걸러냅니다. 웹에서는 `document_start`에 스타일시트를 한 장 넣는 것으로 같은 효과를 냅니다. 광고가 그려졌다 사라지는 깜빡임도 없습니다.
 
-ReVanced 의 litho buffer string 을 웹 렌더러 태그로 옮긴 대응표:
+ReVanced의 litho buffer string을 웹 렌더러 태그로 옮긴 대응표입니다.
 
 | ReVanced | 웹 |
 |---|---|
@@ -197,260 +146,194 @@ ReVanced 의 litho buffer string 을 웹 렌더러 태그로 옮긴 대응표:
 | `cta_shelf_card` | `.ytp-suggested-action` |
 | `ShortsFilter` | `ytd-reel-video-renderer:has(ytd-ad-slot-renderer)` |
 
-광고 카드를 감싼 껍데기는 CSS `:has()` 로 같이 지운다 — 피드에 빈칸이 남지 않는다.
-MutationObserver 는 CSS 로 못 하는 것만 맡는다: 오버레이 닫기 버튼 클릭, 애드블록
-경고창 정리.
+광고 카드를 감싼 껍데기는 CSS `:has()`로 같이 지워서 피드에 빈칸이 남지 않게 합니다. MutationObserver는 CSS로 할 수 없는 것만 맡습니다. 오버레이 닫기 버튼 클릭과 애드블록 경고창 정리입니다.
 
-오탐 방지 원칙은 ReVanced 와 같다. 셀렉터는 **태그명 기준으로만** 쓰고 클래스 휴리스틱은
-쓰지 않는다. 일반 영상 카드를 건드리면 피드가 통째로 사라진다.
+오탐 방지 원칙도 ReVanced와 같습니다. 셀렉터는 태그명 기준으로만 쓰고 클래스 휴리스틱은 쓰지 않습니다. 일반 영상 카드를 건드리면 피드가 통째로 사라집니다.
 
 ### 3계층 — 플레이어 폴백 (`src/isolated/player.ts`)
 
-1계층이 뚫렸을 때만 발화한다. 광고가 떠 있으면 스킵 버튼을 누르고, 건너뛸 수 없는
-광고면 음소거 후 끝으로 감는다. 음소거는 **우리가 껐을 때만** 되돌린다 (사용자가 끈
-음소거를 켜버리면 안 된다).
+1계층이 뚫렸을 때만 동작합니다. 광고가 떠 있으면 스킵 버튼을 누르고, 건너뛸 수 없는 광고면 음소거한 뒤 끝으로 감습니다. 음소거는 확장이 껐을 때만 되돌립니다. 사용자가 직접 끈 음소거를 켜 버리면 안 되기 때문입니다.
 
-**모바일 웹은 이름이 다르다.** 데스크톱 셀렉터(`.ytp-ad-skip-button*`)만 들고 있던
-동안 아이폰에서는 건너뛰기 버튼이 화면에 떠 있는데도 눌리지 않았고, `ad-showing`
-클래스가 안 붙어서 애초에 "광고 중"이라고 판단하지도 못했다. 지금은 세 갈래로 찾는다.
+모바일 웹은 셀렉터 이름이 다릅니다. 데스크톱 셀렉터(`.ytp-ad-skip-button*`)만 쓰던 시절에는, 아이폰에서 건너뛰기 버튼이 화면에 있는데도 눌리지 않았고 `ad-showing` 클래스가 안 붙어서 "광고 중"이라는 판단 자체가 안 됐습니다. 지금은 세 갈래로 찾습니다.
 
 | | |
 |---|---|
 | 이름 | 데스크톱·모바일 클래스 (`SKIP_BUTTONS`) |
-| 모양 | `aria-label`·클래스에 skip 이 들어간 버튼 |
-| 글자 | 버튼에 적힌 말 (`건너뛰기`, `Skip`) — 사람이 실제로 읽고 누르는 것 |
+| 모양 | `aria-label`·클래스에 skip이 들어간 버튼 |
+| 글자 | 버튼에 적힌 문구 (`건너뛰기`, `Skip`) — 사람이 실제로 읽고 누르는 것 |
 
-광고 판단도 `ad-showing` 하나가 아니라 `AD_STATE_MARKERS` 여러 개를 본다. 이게 안 되면
-스킵 대신 "음소거하고 끝으로 감기" 로 빠지는데, 그동안 화면이 검게 남아 기다리게 된다 —
-아이폰에서 재생 전 검은 화면이 오래 뜨던 것이 이것이다.
+광고 판단도 `ad-showing` 하나가 아니라 `AD_STATE_MARKERS` 여러 개로 합니다. 판단에 실패하면 스킵 대신 "음소거 후 끝까지 감기"로 빠지는데, 그동안 화면이 검게 남아 사용자가 기다리게 됩니다. 아이폰에서 재생 전 검은 화면이 오래 떠 있던 것이 이 때문이었습니다.
 
 ## 앱으로 열기 유도 제거 (`appPromo`)
 
-광고는 아니지만 같은 이유로 막는다 — 모바일 웹에서 화면 위쪽을 계속 차지하고,
-**확장이 동작하지 않는 앱으로 사용자를 밀어낸다.** 종류가 둘이고 대응이 다르다.
+광고는 아니지만 같은 이유로 막습니다. 모바일 웹에서 화면 위쪽을 계속 차지하고, 확장이 동작하지 않는 앱으로 사용자를 밀어내기 때문입니다.
 
 | 무엇 | 누가 그리나 | 어떻게 막나 |
 |---|---|---|
-| 상단 스마트 앱 배너 | **iOS Safari 가 직접** | `<meta name="apple-itunes-app">` 를 지운다 |
-| "앱에서 보기" 배너·토스트, 앱 딥링크 | 그 사이트 (평범한 DOM) | 스타일시트 (`appPromo` 그룹) |
+| 상단 스마트 앱 배너 | iOS Safari가 직접 | `<meta name="apple-itunes-app">`를 지운다 |
+| "앱에서 보기" 배너·토스트, 앱 딥링크 | 그 사이트 (일반 DOM) | 스타일시트 (`appPromo` 그룹) |
 
-첫 줄이 함정이다. 스마트 앱 배너는 페이지가 아니라 **브라우저가** 그리므로 CSS 로는
-절대 안 없어진다. meta 태그를 파서보다 먼저 지우는 수밖에 없고, 그래서
-`src/isolated/appbanner.ts` 만 rAF 스로틀을 타지 않고 **동기적으로** 지운다
-(스로틀을 태우면 배너가 한 번 번쩍이고 사라진다). 비용은 `head` 의 childList 감시
-하나뿐이다 — `meta`/`link` 는 `head` 의 직계 자식이라 subtree 가 필요 없다.
+스마트 앱 배너에는 함정이 있습니다. 페이지가 아니라 브라우저가 직접 그리기 때문에 CSS로는 없어지지 않습니다. meta 태그를 파서보다 먼저 지우는 수밖에 없고, 그래서 `src/isolated/appbanner.ts`만 rAF 스로틀을 타지 않고 동기적으로 지웁니다. 스로틀을 태우면 배너가 한 번 번쩍였다 사라집니다. 비용은 `head`의 childList 감시 하나입니다. `meta`/`link`는 `head`의 직계 자식이라 subtree 감시가 필요 없습니다.
 
-설정을 기다리지 않고 먼저 지운다. storage 왕복 수백 ms 를 기다리면 이미 늦다.
-스타일시트와 같은 원칙이다 — 꺼둔 사람이 잠깐 덜 보는 쪽이 켠 사람이 보는 것보다 낫다.
+삭제는 설정을 기다리지 않고 먼저 합니다. storage 왕복에 수백 ms가 걸려 기다리면 이미 늦습니다. 꺼 둔 사람이 잠깐 덜 보는 쪽이, 켠 사람이 배너를 보는 것보다 낫다는 같은 원칙입니다.
 
-`appPromo` 그룹의 렌더러 태그는 **실기기 확인 전이다.** 그 사이트 모바일 웹은 실험군에
-따라 태그가 갈린다. 안 막히는 게 있으면 아래 "필터 리스트" 절의 순서대로 추가하면
-재설치 없이 반영된다.
+`appPromo` 그룹의 렌더러 태그는 실기기 확인 전입니다. 그 사이트 모바일 웹은 실험군에 따라 태그가 갈리는데, 안 막히는 게 있으면 아래 "필터 리스트" 절의 순서대로 추가하면 재설치 없이 반영됩니다.
 
-## MAIN world 에 어떻게 들어가나
+## MAIN world 진입
 
-1계층은 **페이지 컨텍스트(MAIN world)**에서 그 사이트보다 먼저 돌아야 한다. 들어가는 길이
-둘이고, 둘 다 남겨둔 데에는 각각 이유가 있다.
+1계층은 페이지 컨텍스트(MAIN world)에서 그 사이트의 스크립트보다 먼저 실행되어야 합니다. 진입 경로를 세 개 두고 있는데, 각각 남겨 둔 이유가 있습니다.
 
 | | 무엇 | 왜 |
 |---|---|---|
-| 빠른 길 | 매니페스트의 `"world": "MAIN"` 정적 선언 | Chrome 은 이걸 지킨다. 파서가 그 사이트 첫 인라인 스크립트에 닿기 전에 이미 들어가 있다 |
-| 덮는 길 | `background/mainWorld.ts` 의 `registerContentScripts` | **WebKit 계열은 정적 `world` 를 버전에 따라 조용히 무시한다.** Orion 이 그렇다 |
-| 최후 | `isolated/injectMain.ts` 의 `<script src>` 주입 | 등록마저 실패했을 때 |
+| 빠른 길 | 매니페스트의 `"world": "MAIN"` 정적 선언 | Chrome은 이걸 지킨다. 파서가 그 사이트의 첫 인라인 스크립트에 닿기 전에 이미 들어가 있다 |
+| 덮는 길 | `background/mainWorld.ts`의 `registerContentScripts` | WebKit 계열은 정적 `world`를 버전에 따라 조용히 무시한다. Orion이 그렇다 |
+| 최후 | `isolated/injectMain.ts`의 `<script src>` 주입 | 등록마저 실패했을 때 |
 
-무시되면 `main.js` 가 ISOLATED 로 실행된다. 이건 "안 도는 것"보다 나쁘다 — 훅이 페이지에
-안 걸린 채로 아무 오류 없이 성공한 척한다. 그래서 Orion 을 위해 **등록 경로가 항상 돈다.**
+정적 선언이 무시되면 `main.js`가 ISOLATED로 실행됩니다. 이건 안 도는 것보다 나쁩니다. 훅이 페이지에 걸리지 않은 채 오류 없이 성공한 것처럼 보이기 때문입니다. 그래서 Orion을 위해 등록 경로는 항상 돕니다.
 
-정적 선언만 지우고 등록에만 맡겨보는 것도 해봤는데 더 나빴다. script-inserted 스크립트는
-파서를 못 막아서, 1계층이 그 사이트 인라인 스크립트에 밀려 E2E 세 개가 깨졌다. 그래서 둘 다
-남긴다. 겹쳐서 두 번 들어와도 훅은 한 번만 걸린다 (`src/main/index.ts` 의 설치 가드).
+정적 선언을 지우고 등록에만 맡겨 보기도 했는데 더 나빴습니다. script-inserted 스크립트는 파서를 못 막아서 1계층이 그 사이트 인라인 스크립트에 밀렸고 E2E 세 개가 깨졌습니다. 그래서 둘 다 남깁니다. 겹쳐서 두 번 들어가도 훅은 `src/main/index.ts`의 설치 가드 덕분에 한 번만 걸립니다.
 
-주입 폴백은 등록보다 **느리다.** 콘솔에 `MAIN world 등록 실패` 경고가 보이면 그 길로
-돌고 있는 것이고, 첫 재생 광고가 샐 수 있다. 2·3계층은 그대로 동작한다.
+주입 폴백은 등록보다 느립니다. 콘솔에 `MAIN world 등록 실패` 경고가 보이면 이 경로로 돌고 있다는 뜻이고, 첫 재생 광고가 샐 수 있습니다. 2·3계층은 그대로 동작합니다.
 
-### 조용히 무너지는 것을 막는다
+### 조용히 무너지는 것 방지
 
-위 셋 중 무엇이 빠져도 **확장은 멀쩡해 보인다.** 그래서 검사가 따로 있다.
+위 세 경로 중 무엇이 빠져도 확장은 멀쩡해 보입니다. 그래서 별도 검사가 있습니다.
 
 ```bash
 npm run build && npm run verify
 ```
 
-정적 선언, 번들 안의 등록 코드와 주입 폴백, `web_accessible_resources` 의 `main.js`,
-`scripting` 권한, DNR 키 — 다섯 가지를 못 박는다 (`scripts/verify-build.mjs`).
-E2E `07-mainworld-paths` 는 한 걸음 더 간다: `dist/` 에서 정적 MAIN 선언만 뜯어낸
-사본을 실제 크로미움에 물려서, 등록 경로와 주입 폴백이 **정말로** 1계층을 살리는지 본다.
+정적 선언, 번들 안의 등록 코드와 주입 폴백, `web_accessible_resources`의 `main.js`, `scripting` 권한, DNR 키 다섯 가지를 확인합니다(`scripts/verify-build.mjs`). E2E `07-mainworld-paths`는 한 걸음 더 나가서, `dist/`에서 정적 MAIN 선언만 뜯어낸 사본을 실제 크로미움에 물어 등록 경로와 주입 폴백이 정말로 1계층을 살리는지 봅니다.
 
-### Safari 는 안 한다
+### Safari는 지원하지 않는다
 
-한때 `dist-safari/` 를 따로 뽑고, Xcode 로 앱을 감싸고, 서명한 IPA 를 홈서버에서
-`itms-services://` 로 내려주는 경로가 있었다. **2026-08-11 에 통째로 지웠다** — Orion 이
-크롬 확장 zip 을 그대로, 아이폰에서도 받기 때문이다. 앱도 서명도 서버도 필요가 없다.
+한때 `dist-safari/`를 따로 뽑고 Xcode로 앱을 감싸고, 서명한 IPA를 홈서버에서 `itms-services://`로 내려주는 경로가 있었습니다. 2026-08-11에 통째로 지웠습니다. Orion이 크롬 확장 zip을 아이폰에서도 그대로 받기 때문에 앱도 서명도 서버도 필요가 없어졌습니다.
 
-지운 것: `TARGET=safari` 빌드, `scripts/manifest.mjs` 의 매니페스트 변환,
-`__IS_SAFARI__` 빌드 상수, `safari.yml`, `ota-manifest.mjs`, `altstore-source.mjs`,
-그리고 그 파일들을 내려주던 nginx 스택과 터널 ingress.
+지운 것: `TARGET=safari` 빌드, `scripts/manifest.mjs`의 매니페스트 변환, `__IS_SAFARI__` 빌드 상수, `safari.yml`, `ota-manifest.mjs`, `altstore-source.mjs`, 그리고 이 파일들을 내려주던 nginx 스택과 터널 ingress.
 
-**남긴 것은 런타임 경로다.** 등록과 주입은 원래 Safari 때문에 만들었지만 지금은 Orion 을
-살리는 코드이고, 위 E2E 가 그대로 지킨다. 다시 필요해지면 `scripts/targets.mjs` 에
-타깃을 하나 더 적는 데서 시작한다.
+등록과 주입 코드는 원래 Safari 때문에 만들었지만 지금은 Orion을 살리는 코드이고, 위 E2E가 그대로 지킵니다. 다시 필요해지면 `scripts/targets.mjs`에 타깃을 하나 추가하는 것에서 시작합니다.
 
 ## 필터 리스트 — 규칙만 따로 업데이트
 
-그 사이트가 렌더러 태그를 바꿔도 재설치가 필요 없도록, 차단 규칙을 코드에서 분리해
-[`filters/video.json`](filters/video.json) 에 둔다. uBlock Origin / AdGuard 의 필터
-리스트 구독과 같은 모델이다.
+그 사이트가 렌더러 태그를 바꿔도 재설치가 필요 없도록, 차단 규칙을 코드에서 분리해 [`filters/video.json`](filters/video.json)에 둡니다. uBlock Origin / AdGuard의 필터 리스트 구독과 같은 모델입니다.
 
-**광고가 하나 안 막히면 이렇게 고친다.**
+광고가 하나 안 막힐 때는 이렇게 고칩니다.
 
 1. 개발자도구로 광고 요소를 찍어 셀렉터를 얻는다
 2. 확장 옵션의 **내 규칙**에 붙여넣어 바로 확인한다
-3. 잘 되면 `filters/video.json` 의 해당 그룹에 추가하고 **`version` 을 올려서** push
+3. 잘 되면 `filters/video.json`의 해당 그룹에 추가하고 `version`을 올려서 push
 4. 몇 시간 안에 이 확장을 쓰는 모두에게 반영된다
 
-`version` 을 안 올리면 확장이 거부한다 (롤백 방지). 번들 기본 규칙
-(`src/shared/selectors.ts`) 과는 **합집합**으로 병합되므로, JSON 에서 지워도 번들에
-있으면 계속 동작한다. 정말 끄고 싶으면 `allow` 에 넣는다.
+`version`을 안 올리면 확장이 갱신을 거부합니다(롤백 방지). 번들 기본 규칙(`src/shared/selectors.ts`)과는 합집합으로 병합되므로, JSON에서 지워도 번들에 있으면 계속 동작합니다. 끄고 싶으면 `allow`에 넣습니다.
 
-### 원격에서 오는 건 데이터뿐이다
+### 원격에서 오는 것은 데이터뿐
 
-MV3 는 원격 코드 실행을 금지하고, 보안상으로도 리스트 저장소가 털리면 그 사이트 세션에
-임의 코드가 도는 셈이 된다. 그래서 받아오는 건 셀렉터·경로 같은 **데이터뿐**이고,
-저장 전에 전부 검사한다.
+MV3는 원격 코드 실행을 금지하고, 보안상으로도 리스트 저장소가 털리면 그 사이트 세션에서 임의 코드가 도는 것과 같습니다. 그래서 받아오는 것은 셀렉터·경로 같은 데이터뿐이고, 저장 전에 전부 검사합니다.
 
-- `{` `}` `@` `<` `;` 주석 등 스타일시트를 탈출할 수 있는 문자 → 거부
+- `{`, `}`, `@`, `<`, `;`, 주석 등 스타일시트를 탈출할 수 있는 문자가 있으면 거부
 - 실제로 파싱되는 셀렉터만 통과
-- 프루닝 경로는 점으로 이은 식별자만 (`__proto__` / `constructor` / `prototype` 거부)
+- 프루닝 경로는 점으로 이은 식별자만 허용 (`__proto__`, `constructor`, `prototype` 거부)
 - 리스트 256KB, 그룹당 셀렉터 2000개, 총 8000개 상한
-- 받아오기 실패나 검증 실패 시 **기존 규칙을 그대로 유지**한다
+- 받기 실패나 검증 실패 시 기존 규칙 유지
 
-검사기는 `src/shared/filterlist.ts` 에 순수 함수로 있고 `tests/` 가 이 규칙들을 지킨다.
+검사기는 `src/shared/filterlist.ts`에 순수 함수로 있고 `tests/`가 이 규칙들을 지킵니다.
 
 ## 권한
 
 | 권한 | 왜 |
 |---|---|
 | `storage` | 설정·규칙 캐시 |
-| `declarativeNetRequest` | 광고망 요청 차단. **정적 룰셋은 호스트 권한이 필요 없다** |
-| `activeTab` | 팝업에서 "지금 이 사이트가 어디인가" 판단. 설치 경고가 늘지 않는다 |
-| `http://*/*`, `https://*/*` | 코스메틱 필터용 콘텐츠 스크립트. **이것이 설치 경고를 만든다** |
+| `declarativeNetRequest` | 광고망 요청 차단. 정적 룰셋은 호스트 권한이 필요 없다 |
+| `activeTab` | 팝업에서 현재 사이트 판단. 설치 경고가 늘지 않는다 |
+| `http://*/*`, `https://*/*` | 코스메틱 필터용 콘텐츠 스크립트. 설치 경고의 원인 |
 | `*://*.youtube.com/*` (MAIN world) | 1계층 훅. 그 사이트 밖으로 나가지 않는다 |
 | `https://raw.githubusercontent.com/*` | 필터 리스트 받기 (백그라운드 전용, 스크립트 주입 안 함) |
 
 ### 설치 경고에 대해
 
-전역 코스메틱 필터 때문에 **"방문하는 모든 웹사이트의 데이터 읽기 및 변경"** 경고가 뜬다.
-크롬에 "CSS 만 넣는 권한"이 없어서다 — 요소를 숨기려면 페이지 안에서 코드가 돌아야 하고,
-코드가 도는 순간 기술적으로는 모든 것에 접근할 수 있다. 브라우저는 그 둘을 구분하지 못한다.
+전역 코스메틱 필터 때문에 "방문하는 모든 웹사이트의 데이터 읽기 및 변경" 경고가 뜹니다. 크롬에는 "CSS만 넣는 권한"이 없습니다. 요소를 숨기려면 페이지 안에서 코드가 돌아야 하고, 코드가 도는 순간 기술적으로는 모든 것에 접근할 수 있습니다. 브라우저는 이 둘을 구분하지 못합니다.
 
-그래서 **범위를 좁히는 쪽으로 설계했다.**
+그래서 범위를 좁히는 방향으로 설계했습니다.
 
-- 1계층(`JSON.parse` 후킹)은 **그 사이트 밖으로 나가지 않는다.** 은행 사이트에서 `JSON.parse`
-  를 후킹할 이유가 없다.
-- 그 사이트 밖에서는 범용 셀렉터 그룹 하나만 내보낸다. `ytd-*` 는 애초에 매칭될 리 없지만,
-  안 내보내면 **모든 페이지에서** 스타일시트가 작아진다.
-- 그 사이트 밖에서는 MutationObserver 도 인터벌도 돌지 않는다. 다른 사이트에서 이 확장의
-  비용은 **스타일시트 한 장이 전부고 반복 작업은 없다.**
-- 그리고 사이트별로 끌 수 있다.
+- 1계층(`JSON.parse` 후킹)은 그 사이트 밖으로 나가지 않습니다. 은행 사이트의 `JSON.parse`를 후킹할 이유가 없습니다.
+- 그 사이트 밖에서는 범용 셀렉터 그룹 하나만 내보냅니다. `ytd-*`는 애초에 다른 사이트에서 매칭될 리 없지만, 이 그룹을 빼면 모든 페이지에서 스타일시트가 작아지므로 남겨 둡니다.
+- 그 사이트 밖에서는 MutationObserver도 인터벌도 돌지 않습니다. 다른 사이트에서 이 확장의 비용은 스타일시트 한 장이 전부고 반복 작업은 없습니다.
+- 사이트별로 끌 수 있습니다.
 
-`*.youtube.com` 에는 `www` / `m` / `music` 이 전부 포함되고,
-`youtube-nocookie.com` 은 다른 사이트에 박힌 임베드 영상용이다.
+`*.youtube.com`에는 `www`, `m`, `music`이 모두 포함되고, `youtube-nocookie.com`은 다른 사이트에 박힌 임베드 영상용입니다.
 
 ## 개발
 
 ```bash
 npm install
-npm run dev        # vite(팝업/옵션) + esbuild(콘텐츠/백그라운드) watch → dist/
-npm run build      # 프로덕션 빌드 → dist/ (배포되는 유일한 패키지)
-npm run build:orion # 예비용 Orion 전용 패키지 → dist-orion/ (v0.13.0 부터 미배포)
-npm run build:all  # 둘 다
-npm run verify     # 빌드 불변식 검사 (조용히 죽는 것들)
-npm run check      # tsc --noEmit
-npm test           # 검증기·프루너 단위 테스트
-npm run test:e2e   # 실제 Chromium 에 확장을 물려 광고 차단 검증
-npm run test:all   # check → 단위 → 빌드 → verify → E2E
-npm run zip        # dist/ 를 zip 으로 (verify 통과분만)
+npm run dev         # vite(팝업/옵션) + esbuild(콘텐츠/백그라운드) watch → dist/
+npm run build       # 프로덕션 빌드 → dist/ (배포되는 유일한 패키지)
+npm run build:orion # 예비용 Orion 전용 패키지 → dist-orion/ (v0.13.0부터 미배포)
+npm run build:all   # 둘 다
+npm run verify      # 빌드 불변식 검사 (조용히 죽는 것들)
+npm run check       # tsc --noEmit
+npm test            # 검증기·프루너 단위 테스트
+npm run test:e2e    # 실제 Chromium에 확장을 물어 광고 차단 검증
+npm run test:all    # check → 단위 → 빌드 → verify → E2E
+npm run zip         # dist/를 zip으로 (verify 통과분만)
 ```
 
-`chrome://extensions` 에서 `dist/` 를 한 번만 로드해 두면 `npm run dev` 로 계속 고칠 수 있다
-(콘텐츠 스크립트를 고치면 확장 새로고침 + 탭 새로고침이 필요하다).
+`chrome://extensions`에서 `dist/`를 한 번만 로드해 두면 `npm run dev`로 계속 고칠 수 있습니다. 콘텐츠 스크립트를 고치면 확장 새로고침과 탭 새로고침이 필요합니다.
 
 ### 빌드가 둘로 나뉜 이유
 
-`@crxjs/vite-plugin` 같은 도구는 콘텐츠 스크립트를 ESM 로더로 감싸 **비동기로** 실행한다.
-1계층은 그 사이트 스크립트보다 **먼저 동기적으로** `JSON.parse` 를 후킹해야 해서 그러면
-깨진다. 그래서 팝업/옵션(React)만 vite 가 맡고, 콘텐츠 스크립트와 서비스 워커는
-esbuild 가 단일 IIFE 로 뽑는다 (`scripts/build-content.mjs`).
+`@crxjs/vite-plugin` 같은 도구는 콘텐츠 스크립트를 ESM 로더로 감싸 비동기로 실행합니다. 1계층은 그 사이트 스크립트보다 먼저 동기적으로 `JSON.parse`를 후킹해야 해서 그러면 깨집니다. 그래서 팝업/옵션(React)만 vite가 맡고, 콘텐츠 스크립트와 서비스 워커는 esbuild가 단일 IIFE로 뽑습니다(`scripts/build-content.mjs`).
 
 ### 구조
 
 ```
 src/
-  main/       ← MAIN world. 1계층. chrome.* 못 씀
+  main/       ← MAIN world. 1계층. chrome.* 사용 불가
   isolated/   ← ISOLATED world. 2·3계층 + 설정 브리지 + 앱 배너 + MAIN 주입 폴백
   background/ ← 서비스 워커. 리스트 갱신, 통계/배지, MAIN world 런타임 등록
   shared/     ← 설정·셀렉터·필터 리스트 검증
   popup/ options/ ui/
 scripts/
-  targets.mjs    ← 타깃 정의 (출력 경로·다운레벨 타깃). vite/esbuild/manifest 가 전부 읽는다
-  manifest.mjs   ← public/manifest.json → 타깃별 manifest. vite 의 closeBundle 에서 불린다
+  targets.mjs    ← 타깃 정의 (출력 경로·다운레벨 타깃). vite/esbuild/manifest가 전부 읽는다
+  manifest.mjs   ← public/manifest.json → 타깃별 manifest. vite의 closeBundle에서 호출된다
 filters/video.json   ← 원격 필터 리스트 정본
 ```
 
-MAIN world 는 `chrome.storage` 를 못 읽어서 설정은 ISOLATED 가 `postMessage` 로 넘긴다.
-그 전 수백 ms 동안의 기본값은 "차단"이다 — 확장을 꺼둔 사람이 잠깐 더 차단되는 쪽이
-광고가 새는 것보다 낫다.
+MAIN world는 `chrome.storage`를 읽지 못해서 설정을 ISOLATED가 `postMessage`로 넘깁니다. 넘겨받기 전 수백 ms의 기본값은 "차단"입니다. 확장을 꺼 둔 사람이 잠깐 더 차단되는 쪽이 광고가 새는 것보다 낫다는 판단입니다.
 
-## 정말 막히는지 어떻게 아나 — Playwright E2E
+## 막히는지 확인하는 방법 — Playwright E2E
 
-"코드를 짰다"와 "광고가 막힌다"는 다른 말이다. `e2e/` 는 **빌드된 확장을 실제
-Chromium 에 물려서** 광고가 사라지는지 본다 (`npm run test:e2e`).
+코드를 짰다는 것과 광고가 막힌다는 것은 다른 말입니다. `e2e/`는 빌드된 확장을 실제 Chromium에 물어서 광고가 사라지는지 봅니다(`npm run test:e2e`).
 
-핵심 트릭은 Playwright 의 route 로 `https://www.youtube.com/**` 를 가로채 그 사이트의
-*구조*를 그대로 재현한 페이지를 돌려주는 것이다. 문서의 origin 이 진짜
-`https://www.youtube.com` 이라 확장의 `content_scripts` 매치가 그대로 걸린다 —
-네트워크·로그인·광고 노출 운에 기대지 않으면서, "그 사이트에서만 동작한다"는 조건까지
-같이 검증된다.
+핵심 트릭은 Playwright의 route로 `https://www.youtube.com/**`를 가로채, 그 사이트의 구조를 재현한 페이지를 돌려주는 것입니다. 문서의 origin이 진짜 `https://www.youtube.com`이라 확장의 `content_scripts` 매치가 그대로 걸립니다. 네트워크, 로그인, 광고 노출 운에 기대지 않으면서 "그 사이트에서만 동작한다"는 조건까지 같이 검증됩니다.
 
-**모든 계층에 대조군이 있다.** 확장 없이 같은 페이지를 열어 광고가 실제로 존재함을
-먼저 확인한다. 이게 없으면 "원래 광고가 없어서 통과"하는 헛도는 테스트가 된다.
+모든 계층에 대조군이 있습니다. 확장 없이 같은 페이지를 열어 광고가 실제로 존재하는지 먼저 확인합니다. 이 과정이 없으면 원래 광고가 없어서 통과하는 헛도는 테스트가 됩니다.
 
 | 무엇을 | 어떻게 확인하나 |
 |---|---|
-| 1계층 · 경로 A | 인라인 `var ytInitialPlayerResponse = {...}` 에서 `adPlacements` 가 사라지고 `videoDetails`·`streamingData` 는 남는지 |
+| 1계층 · 경로 A | 인라인 `var ytInitialPlayerResponse = {...}`에서 `adPlacements`가 사라지고 `videoDetails`·`streamingData`는 남는지 |
 | 1계층 · 경로 B | 페이지가 부른 `JSON.parse` 결과에서 광고 필드가 사라지는지 |
 | 1계층 · 경로 C | `fetch('/youtubei/v1/player')` → `res.json()` 응답에서 사라지는지 |
-| 위장 | `JSON.parse.toString()` 이 `[native code]` 로 보이는지 |
-| 2계층 | 광고 렌더러 6종이 안 보이고, **같은 태그를 쓰는 일반 영상 카드는 그대로 보이는지** (오탐 회귀) |
+| 위장 | `JSON.parse.toString()`이 `[native code]`로 보이는지 |
+| 2계층 | 광고 렌더러 6종이 안 보이고, 같은 태그를 쓰는 일반 영상 카드는 그대로 보이는지 (오탐 회귀) |
 | 2계층 | 나중에 삽입된 광고, 애드블록 경고창 제거 + 재생 재개, 닫기 버튼 자동 클릭 |
-| 3계층 | 진짜 미디어를 물려두고 스킵 버튼 클릭 / 음소거 후 끝까지 감기 / **광고가 끝나면 음소거 되돌리기** / 사용자가 끈 음소거는 안 건드리기 |
-| 범위 | 그 사이트가 아닌 사이트에서는 스크립트·스타일시트가 아예 없고 `JSON.parse` 도 원본인지 |
+| 3계층 | 진짜 미디어를 물려두고 스킵 버튼 클릭 / 음소거 후 끝까지 감기 / 광고가 끝나면 음소거 되돌리기 / 사용자가 끈 음소거는 안 건드리기 |
+| 범위 | 그 사이트가 아닌 사이트에서는 스크립트·스타일시트가 아예 없고 `JSON.parse`도 원본인지 |
 | 설정 | 토글을 끄면 새로고침 없이 광고가 되살아나는지, 마스터 스위치가 1계층까지 멈추는지 |
 | 필터 리스트 | 캐시에 들어온 원격 규칙이 페이지까지 닿는지, 번들 규칙과 합쳐지는지 |
 | 안전성 | `body { display: none }` 같은 탈출 시도가 스타일시트에 들어가지 못하는지 |
-| **로컬 설치** | `npm run zip` 산출물을 실제로 풀어서 로드했을 때 광고가 막히는지 |
-| **원격 갱신** | 옵션 페이지 버튼 클릭 → fetch → 검증 → 캐시 → **열려 있는 탭에 새로고침 없이 반영**까지 |
-| **갱신 실패** | 서버가 죽거나, 깨진 JSON 이 오거나, 예전 버전으로 되돌리려 해도 기존 규칙으로 계속 막는지 |
-| **자동 갱신** | 그 사이트 탭을 열면 낡은 규칙을 받아오는지, ETag 로 304 를 받는지 |
+| 로컬 설치 | `npm run zip` 산출물을 실제로 풀어 로드했을 때 광고가 막히는지 |
+| 원격 갱신 | 옵션 페이지 버튼 클릭 → fetch → 검증 → 캐시 → 열려 있는 탭에 새로고침 없이 반영까지 |
+| 갱신 실패 | 서버가 죽거나, 깨진 JSON이 오거나, 예전 버전으로 되돌리려 해도 기존 규칙으로 계속 막는지 |
+| 자동 갱신 | 그 사이트 탭을 열면 낡은 규칙을 받아오는지, ETag로 304를 받는지 |
 
-배포 모델(`e2e/06-install-and-update.spec.ts`)은 별도로 검증한다 — **"설치는 로컬로 한 번,
-이후는 버튼이든 자동이든"** 이 성립해야 제품이기 때문이다. 앞 스펙들이 `dist/` 를 직접
-물려서 차단 로직만 봤다면, 이쪽은 사용자가 실제로 받는 zip 을 풀어서 설치하고 옵션
-페이지 버튼을 진짜로 누른다.
+배포 모델(`e2e/06-install-and-update.spec.ts`)은 "설치는 로컬로 한 번, 이후는 버튼이든 자동이든"이 성립하는지 별도로 검증합니다. 앞 스펙들이 `dist/`를 직접 물어 차단 로직만 봤다면, 이쪽은 사용자가 실제로 받는 zip을 풀어 설치하고 옵션 페이지 버튼을 진짜로 누릅니다.
 
-원격 갱신 테스트는 네트워크를 타지 않는다. Playwright 의 route 가 **확장 서비스 워커가
-나가는 fetch 까지 가로채기 때문에**, 실제 `updateFilters()` 코드를 그대로 돌리면서
-응답만 우리가 정해준다. 그래서 "서버가 500 을 뱉을 때", "JSON 이 깨졌을 때",
-"공격자가 예전 버전을 다시 먹일 때" 같은 경우를 결정적으로 재현할 수 있다.
+원격 갱신 테스트는 네트워크를 타지 않습니다. Playwright의 route가 확장 서비스 워커가 나가는 fetch까지 가로채서, 실제 `updateFilters()` 코드를 그대로 돌리면서 응답만 정해 줍니다. 그래서 "서버가 500을 뱉을 때", "JSON이 깨졌을 때", "예전 버전을 다시 먹일 때" 같은 경우를 결정적으로 재현할 수 있습니다.
 
-3계층은 스텁을 쓰지 않는다. 콘텐츠 스크립트는 ISOLATED world 라 페이지에서
-`HTMLMediaElement.prototype` 을 갈아끼워도 보이지 않기 때문이다. 대신 무음 WAV 를
-`data:` URI 로 물려 **진짜 재생 가능한 미디어**를 만들고, 두 월드가 공유하는 실제 DOM
-상태(`currentTime` / `muted` / `paused`)로만 판정한다.
+3계층은 스텁을 쓰지 않습니다. 콘텐츠 스크립트는 ISOLATED world라 페이지에서 `HTMLMediaElement.prototype`을 갈아끼워도 보이지 않습니다. 대신 무음 WAV를 `data:` URI로 물려 실제 재생 가능한 미디어를 만들고, 두 월드가 공유하는 DOM 상태(`currentTime`, `muted`, `paused`)로만 판정합니다.
 
-`e2e/05-visual.spec.ts` 는 차단 전후 스크린샷을 `e2e/__screenshots__/` 에 남긴다.
-CI(`.github/workflows/ci.yml`)와 릴리스 워크플로 양쪽에서 돌아서, **광고가 실제로
-막히지 않는 빌드는 릴리스되지 않는다.**
+`e2e/05-visual.spec.ts`는 차단 전후 스크린샷을 `e2e/__screenshots__/`에 남깁니다. CI(`.github/workflows/ci.yml`)와 릴리스 워크플로 양쪽에서 돌아서, 광고가 실제로 막히지 않는 빌드는 릴리스되지 않습니다.
 
 ### 실사이트 스모크 (기본은 건너뜀)
 
@@ -458,85 +341,64 @@ CI(`.github/workflows/ci.yml`)와 릴리스 워크플로 양쪽에서 돌아서,
 E2E_LIVE=1 npm run test:e2e
 ```
 
-픽스처가 절대 못 잡는 것 둘을 실물로 확인한다.
+픽스처가 절대 못 잡는 두 가지를 실물로 확인합니다.
 
-**1. 그 사이트가 실제로 내려주는 광고 페이로드가 잘리는가.** 우리가 만든 가짜가 아니라.
-
-여기엔 함정이 있다. 아무 영상이나 열고 `adPlacements` 가 없는 걸 확인하면 **아무것도
-증명하지 못한다** — 애초에 광고가 안 붙는 영상이 흔하기 때문이다. 실측하면 이렇다.
+첫째, 그 사이트가 실제로 내려주는 광고 페이로드가 잘리는지입니다. 우리가 만든 가짜가 아니라 진짜 응답으로. 여기에는 함정이 있는데, 아무 영상이나 열어 `adPlacements`가 없는 것을 확인해도 아무것도 증명되지 않습니다. 원래 광고가 안 붙는 영상이 흔하기 때문입니다. 실측 결과는 이렇습니다.
 
 ```
-Big Buck Bunny   adPlacements 없음     ← 광고가 원래 안 붙는다
+Big Buck Bunny   adPlacements 없음   ← 광고가 원래 안 붙는다
 Me at the zoo    adPlacements 없음
-강남스타일        adPlacements 1        ← 진짜 광고
+강남스타일        adPlacements 1      ← 진짜 광고
 Despacito        adPlacements 1
 ```
 
-그래서 **확장 없이 먼저 열어 광고가 붙는 것을 확인한 뒤**, 같은 영상을 확장과 함께 연다.
-대조군에 광고가 없으면 증명이 성립하지 않으므로 테스트를 fail 이 아니라 skip 한다.
+그래서 확장 없이 먼저 열어 광고가 붙는 것을 확인한 뒤, 같은 영상을 확장과 함께 엽니다. 대조군에 광고가 없으면 증명이 성립하지 않으므로 fail이 아니라 skip합니다.
 
-**2. 확장이 그 사이트를 깨뜨리지 않는가.** `JSON.parse` 를 후킹하는 확장에서 제일 무서운
-실패는 "광고가 안 막힘"이 아니라 "그 사이트가 안 열림"이고, 그건 진짜 그 사이트에서만
-드러난다. 플레이어가 뜨는지, `videoDetails`·`streamingData` 가 살아 있는지, 페이지
-오류가 0건인지를 본다.
+둘째, 확장이 그 사이트를 깨뜨리지 않는지입니다. `JSON.parse`를 후킹하는 확장의 가장 무서운 실패는 "광고가 안 막힘"이 아니라 "그 사이트가 안 열림"이고, 이건 실제 사이트에서만 드러납니다. 플레이어가 뜨는지, `videoDetails`·`streamingData`가 살아 있는지, 페이지 오류가 0건인지 확인합니다.
 
-기본으로 안 도는 이유는 네트워크·지역·로그인 상태·그날의 실험군에 따라 광고 노출이
-달라져서다. 그래서 차단 로직의 상시 판정은 대조군이 있는 픽스처 테스트가 맡고,
-여기는 "진짜에서도 되더라"를 확인하는 자리다.
+기본으로 안 돌리는 이유는 광고 노출이 네트워크, 지역, 로그인 상태, 그날의 실험군에 따라 달라지기 때문입니다. 차단 로직의 상시 판정은 대조군이 있는 픽스처 테스트가 맡고, 여기는 "진짜에서도 된다"를 확인하는 자리입니다.
 
 ## Orion 브라우저
 
-[Orion](https://browser.kagi.com/) 은 WebKit 기반인데 **Chrome · Firefox · Safari 확장을
-전부 받는다.** 그리고 Chrome 웹스토어에서 원클릭 설치가 되고 자동 업데이트를 지원한다 —
-Chrome 과 Orion 을 하나의 확장으로 덮을 수 있다는 뜻이다.
+[Orion](https://browser.kagi.com/)은 WebKit 기반인데 Chrome, Firefox, Safari 확장을 모두 받습니다. Chrome 웹스토어에서 원클릭 설치가 되고 자동 업데이트도 지원해서, Chrome과 Orion을 하나의 확장으로 덮을 수 있습니다.
 
-문제는 Orion 이 WebExtensions API 를 **약 70%만** 구현했다는 것이다. 안 되는 API 를 쓰면
-**오류 없이 조용히 기능만 죽는다.** Chrome 에서는 멀쩡히 도니까 눈치채기가 어렵다.
+문제는 Orion이 WebExtensions API를 약 70%만 구현했다는 것입니다. 지원하지 않는 API를 쓰면 오류 없이 기능만 조용히 죽는데, Chrome에서는 멀쩡히 돌기 때문에 눈치채기 어렵습니다.
 
-그래서 Kagi 가 공개하는 지원 표에 우리가 호출하는 API 를 전부 대조한다
-(`npm run check:orion`, CI 에서도 돈다).
+그래서 Kagi가 공개하는 지원 표에 이 확장이 호출하는 API를 전부 대조합니다(`npm run check:orion`, CI에서도 돈다).
 
 ```
-scripting.registerContentScripts   Full support   ← 1계층이 Orion 에서 사는 근거
+scripting.registerContentScripts   Full support   ← 1계층이 Orion에서 사는 근거
 storage.local · alarms · action · permissions · runtime · tabs   Full support
 storage.sync                       Partial support ← 유일한 구멍
 ```
 
-`registerContentScripts` 가 되는 게 결정적이다. WebKit 계열은 정적 `content_scripts` 의
-`world` 를 못 믿는데, **런타임 등록 경로가 그 구멍을 덮는다** — 크롬 빌드에서도 항상
-돌기 때문에 Orion 을 위해 따로 만들 게 없다.
+`registerContentScripts` 지원이 결정적입니다. WebKit 계열은 정적 `content_scripts`의 `world`를 못 믿는데, 런타임 등록 경로가 그 구멍을 덮습니다. 크롬 빌드에서도 항상 돌기 때문에 Orion을 위해 따로 만든 것은 없습니다.
 
-`storage.sync` 만 Partial 이라 설정을 sync/local **양쪽에** 쓰고 읽을 때 sync 를 우선한다
-(`src/shared/settings.ts`). sync 에만 쓰면 조용히 저장이 안 돼서 사용자 눈에는 설정이
-매번 초기화되는 것처럼 보인다.
+`storage.sync`만 Partial라 설정을 sync/local 양쪽에 쓰고 읽을 때 sync를 우선합니다(`src/shared/settings.ts`). sync에만 쓰면 조용히 저장이 안 돼서 사용자 눈에는 설정이 매번 초기화되는 것처럼 보입니다.
 
-지원 표를 못 받으면(네트워크·시트 이동) 검사는 실패가 아니라 건너뛴다 — 남의 인프라에
-우리 CI 를 묶어두지 않는다.
+지원 표를 못 받으면(네트워크 장애, 시트 이동) 검사는 실패가 아니라 건너뜁니다. 남의 인프라에 이 리포의 CI를 묶어 두지 않기 위해서입니다.
 
-## 배포 — 릴리스가 정본이다
+## 배포 — 릴리스가 정본
 
-**사람들이 받는 것은 GitHub 릴리스에 붙은 zip 하나뿐이다.** 서버도, 손으로 돌리는
-배포 스크립트도 없다.
+사람들이 받는 것은 GitHub 릴리스에 붙은 zip 하나뿐입니다. 서버도, 손으로 돌리는 배포 스크립트도 없습니다.
 
 ```
 git tag v0.2.0 && git push --tags
-   → release.yml   check · 단위 · E2E 를 통과한 것만 빌드해서 릴리스에 첨부
-       oc-ad-bye-pass-vX_Y_Z.zip   Chrome · Edge · Orion 공용 (v0.13.0 부터 하나)
-   → 같은 zip 을 크롬 웹스토어에도 올려 심사 제출까지 한다 (아래 "스토어 자동 게시")
+   → release.yml   check · 단위 · E2E를 통과한 것만 빌드해서 릴리스에 첨부
+       oc-ad-bye-pass-vX_Y_Z.zip   Chrome · Edge · Orion 공용 (v0.13.0부터 하나)
+   → 같은 zip을 크롬 웹스토어에도 올려 심사 제출까지 한다 (아래 참고)
 ```
 
 ### 스토어 자동 게시
 
-release.yml 마지막에 같은 zip 을 [크롬 웹스토어 리스팅](https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam)에
-올리고 심사 제출(`--auto-publish`)까지 하는 단계가 있다. 리포 시크릿 세 개가 전부
-있어야 동작하고, 없으면 건너뛴다 — 릴리스 자체는 영향받지 않는다.
+release.yml 마지막에 같은 zip을 [크롬 웹스토어 리스팅](https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam)에 올리고 심사 제출(`--auto-publish`)까지 하는 단계가 있습니다. 리포 시크릿 세 개가 모두 있어야 동작하고, 없으면 건너뜁니다. 릴리스 자체에는 영향이 없습니다.
 
-발급은 한 번만 하면 된다:
+발급은 한 번만 하면 됩니다.
 
-1. [Google Cloud Console](https://console.cloud.google.com/) 에서 프로젝트 하나 만들고 **Chrome Web Store API** 를 켠다
-2. OAuth 동의 화면: External · 게시 상태는 Testing · 본인 계정을 테스트 사용자로 추가
-3. 사용자 인증 정보 → **OAuth 클라이언트 ID(데스크톱 앱)** 생성 → client id/secret 확보
-4. 데스크톱에서 `npx chrome-webstore-upload-keys` 를 돌리면 브라우저 로그인을 거쳐 refresh token 까지 뽑아준다
+1. [Google Cloud Console](https://console.cloud.google.com/)에서 프로젝트를 만들고 **Chrome Web Store API**를 켠다
+2. OAuth 동의 화면: External, 게시 상태는 Testing, 본인 계정을 테스트 사용자로 추가
+3. 사용자 인증 정보에서 **OAuth 클라이언트 ID(데스크톱 앱)**를 생성하고 client id/secret을 확보
+4. 데스크톱에서 `npx chrome-webstore-upload-keys`를 실행하면 브라우저 로그인을 거쳐 refresh token까지 뽑아 준다
 5. 시크릿 등록:
 
 ```bash
@@ -545,72 +407,54 @@ gh secret set CWS_CLIENT_SECRET
 gh secret set CWS_REFRESH_TOKEN
 ```
 
-게시는 곧바로 공개가 아니라 심사 큐 제출이다. 업데이트 심사는 보통 최초 심사보다
-빠르지만, 그동안 스토어에는 이전 버전이 걸려 있다 — GitHub 릴리스가 항상 먼저다.
+게시는 즉시 공개가 아니라 심사 큐 제출입니다. 업데이트 심사는 보통 최초 심사보다 빠르지만, 그동안 스토어에는 이전 버전이 걸려 있습니다. GitHub 릴리스가 항상 먼저입니다.
 
-사이트는 릴리스와 **연동되지 않는다.** 그럴 필요가 없다 — 버튼은
-릴리스 API 가 알려주는 자산 주소를 가리키고, 푸터의 버전도 같은 응답에서
-직접 읽는다. `pages.yml` 은 `site/` 나 필터가 바뀔 때만 돈다.
+사이트는 릴리스와 연동되지 않습니다. 버튼이 릴리스 API가 알려 주는 자산 주소를 가리키고 푸터의 버전도 같은 응답에서 읽기 때문에, 연동이 필요 없습니다. `pages.yml`은 `site/`나 필터가 바뀔 때만 돕니다.
 
-> `release: published` 트리거는 안 쓴다. **안 걸린다.** 릴리스를 만든 주체가
-> `GITHUB_TOKEN` 이면 GitHub 은 그 이벤트로 다른 워크플로를 시작하지 않는다.
+> `release: published` 트리거는 쓰지 않습니다. 릴리스를 만든 주체가 `GITHUB_TOKEN`이면 GitHub은 그 이벤트로 다른 워크플로를 시작하지 않아서, 트리거가 아예 걸리지 않습니다.
 
 | 어디 | 무엇 |
 |---|---|
-| [Releases](../../releases) | zip 정본. 파일 이름에 버전이 들어간다 — 고정 이름은 폰이 예전 zip 을 재사용하게 만든다 |
-| [사이트](https://jshsakura.github.io/oc-ad-bye-pass/) (`site/`) | 설치 안내. 다운로드 버튼은 위 주소를 가리킬 뿐 파일을 들고 있지 않다 |
-| `filters/video.json` | 규칙. 릴리스와 무관하게 갱신되고 확장이 알아서 받아간다 |
+| [Releases](../../releases) | zip 정본. 파일 이름에 버전이 들어간다. 고정 이름을 쓰면 폰이 예전 zip을 재사용하게 된다 |
+| [사이트](https://jshsakura.github.io/oc-ad-bye-pass/) (`site/`) | 설치 안내. 다운로드 버튼은 릴리스 주소를 가리킬 뿐 파일을 들고 있지 않다 |
+| `filters/video.json` | 규칙. 릴리스와 무관하게 갱신되고 확장이 알아서 받아 간다 |
 
-**에셋 이름은 계약이다.** 사이트 버튼도 `install.sh`/`install.ps1` 도 그 이름을 박아
-쓴다. 바꾸면 전부 404 가 되고, 아무도 오류를 못 본다 — 그냥 다운로드가 안 될 뿐이다.
+에셋 이름은 사이트 버튼과 `install.sh`/`install.ps1`이 그대로 박아 쓰므로 바꾸면 안 됩니다. 바꾸면 전부 404가 되는데 아무도 오류를 보지 못합니다. 다운로드만 조용히 안 될 뿐입니다.
 
-이전에는 홈서버 nginx(`adbyepass.opencourse.kr`)에 `deploy.sh` 로 손수 복사했다.
-그러면 **커밋과 사이트가 맞는 게 우연**이라, 배포를 잊으면 옛 빌드가 조용히 계속
-나갔다. 그래서 릴리스 기반으로 옮겼다.
+이전에는 홈서버 nginx(`adbyepass.opencourse.kr`)에 `deploy.sh`로 수동 복사했습니다. 이 방식은 커밋과 사이트가 일치하는 게 우연이었고, 배포를 잊으면 옛 빌드가 조용히 계속 나갔습니다. 그래서 릴리스 기반으로 옮겼습니다.
 
 ## 라이선스와 출처
 
 **GPLv3** ([LICENSE](LICENSE)).
 
-이 바닥이 거의 다 GPLv3 라서 맞췄다 — uBlock Origin, AdGuard, ReVanced 전부 GPLv3 다.
-같은 라이선스면 저쪽에서 코드든 필터 규칙이든 가져올 때 라이선스 문제가 생기지 않는다.
-MIT 로 갔다가 GPL 프로젝트의 규칙을 복사해 오면 그 순간 위반이 된다.
+이 분야가 uBlock Origin, AdGuard, ReVanced까지 거의 다 GPLv3이라 맞췄습니다. 같은 라이선스면 저쪽에서 코드든 필터 규칙이든 가져올 때 라이선스 문제가 생기지 않습니다. MIT로 갔다가 GPL 프로젝트의 규칙을 복사해 오는 순간 위반이 됩니다.
 
-### 무엇을 참조했나
+### 참조한 것
 
-지금까지 **코드를 복사한 곳은 없다.** 기법과 구조를 참조했고, 그건 저작권 대상이 아니다.
-다만 어디서 왔는지는 밝혀두는 게 맞다.
+지금까지 코드를 복사한 곳은 없습니다. 기법과 구조를 참조했고, 그건 저작권 대상이 아니지만 어디서 왔는지는 밝혀 둡니다.
 
 | 출처 | 참조한 것 |
 |---|---|
-| [ReVanced Patches](https://github.com/ReVanced/revanced-patches) (GPLv3) | `video-ads` 가 PlayerResponse 에서 광고를 없애는 접근. `AdsFilter`/`ShortsFilter` 의 litho buffer string 을 읽고 웹 렌더러 태그로 옮긴 것이 2계층 셀렉터의 출발점이다 (대응표는 위 "2계층" 절) |
-| [AdGuard](https://github.com/AdguardTeam/AdguardFilters) (GPLv3) | `json-prune` 스크립틀릿이 잘라내는 필드 목록, 코스메틱 규칙을 해당 호스트에만 적용하는 원칙 |
+| [ReVanced Patches](https://github.com/ReVanced/revanced-patches) (GPLv3) | `video-ads`가 PlayerResponse에서 광고를 없애는 접근. `AdsFilter`/`ShortsFilter`의 litho buffer string을 읽고 웹 렌더러 태그로 옮긴 것이 2계층 셀렉터의 출발점 (대응표는 위 2계층 절) |
+| [AdGuard](https://github.com/AdguardTeam/AdguardFilters) (GPLv3) | `json-prune` 스크립틀릿이 잘라 내는 필드 목록, 코스메틱 규칙을 해당 호스트에만 적용하는 원칙 |
 | SmartTube | 별도 클라이언트라서 인페이지 차단기처럼 깨지지 않는다는 구조적 교훈. 사이드로드 배포 모델도 여기와 같다 |
 
-### 규칙이 낡았는지 자동으로 감시한다
+### 규칙 낡음 자동 감시
 
-이 확장이 깨지는 방식은 하나뿐이다 — **그 사이트가 바뀌는 것.** 코드는 그대로인데 어느 날
-갑자기 안 막힌다. push 기반 CI 는 이걸 못 잡는다. 아무도 push 를 안 해도 깨지기 때문이다.
+이 확장이 깨지는 방식은 하나뿐입니다. 그 사이트가 바뀌는 것. 코드는 그대로인데 어느 날 갑자기 안 막는데, push 기반 CI는 아무도 push하지 않아도 깨지는 이 상황을 잡지 못합니다.
 
-그래서 `.github/workflows/audit.yml` 이 **매일** 진짜 그 사이트를 열어 실측한다
-(`node scripts/audit-ads.mjs`).
+그래서 `.github/workflows/audit.yml`이 매일 실제 그 사이트를 열어 실측합니다(`node scripts/audit-ads.mjs`).
 
-처음엔 "내 셀렉터가 매칭되는가"를 셌는데 그건 **틀린 질문**이었다. 실측해보니 번들
-셀렉터 57개 중 7개만 매칭됐는데, 그렇다고 광고가 새는 게 아니었다. 그 사이트가
-`ytd-*-renderer` 에서 `*-view-model` 체계로 옮겨갔지만 새 요소들이 전부 우리가 이미 잡는
-컨테이너 안에 있었다.
+처음에는 "내 셀렉터가 매칭되는가"를 셌는데 틀린 질문이었습니다. 실측해 보니 번들 셀렉터 57개 중 7개만 매칭됐는데도 광고는 새지 않았습니다. 그 사이트가 `ytd-*-renderer`에서 `*-view-model` 체계로 옮겨 갔지만, 새 요소가 전부 이미 잡고 있는 컨테이너 안에 있었던 것입니다.
 
 ```
 ad-badge-view-model < … < ytd-in-feed-ad-layout-renderer < ytd-ad-slot-renderer
                                                            └ 우리가 잡는 것
 ```
 
-그래서 질문을 바꿨다 — **확장을 켠 채로 광고성 요소가 화면에 보이는가.** 셀렉터 이름이
-뭐로 바뀌든 이 질문의 답은 항상 유효하다.
+그래서 질문을 바꿨습니다. 확장을 켠 채로 광고성 요소가 화면에 보이는가. 셀렉터 이름이 뭐로 바뀌든 이 질문의 답은 유효합니다.
 
-판정에는 대조군이 필요하다. "광고가 안 보인다"만으로는 아무것도 증명하지 못한다 —
-그 페이지에 원래 광고가 안 붙었을 수도 있다. 그래서 확장 없이 먼저 열어 광고가 실제로
-있는지 확인하고, 있을 때만 차단 여부를 따진다. 없으면 실패가 아니라 **판정 불가**다.
+판정에도 대조군이 필요합니다. "광고가 안 보인다"만으로는 그 페이지에 원래 광고가 안 붙었을 가능성을 배제할 수 없습니다. 확장 없이 먼저 열어 광고가 실제로 있는지 확인하고, 있을 때만 차단 여부를 따집니다. 없으면 실패가 아니라 판정 불가입니다.
 
 ```
 시청   대조군 1 → 실험군 0   OK
@@ -618,46 +462,31 @@ ad-badge-view-model < … < ytd-in-feed-ad-layout-renderer < ytd-ad-slot-rendere
 홈     대조군 0 → 실험군 0   판정 불가 (비로그인이라 광고가 안 붙었다)
 ```
 
-누출이 발견되면 이슈를 열고(이미 열려 있으면 댓글), 리포트를 artifact 로 남긴다.
-덤으로 **규칙이 모르는 광고성 태그**도 같이 보고한다 — 아직 안 새더라도 그 사이트가
-새 이름을 쓰기 시작했다는 신호다. 실제로 이 감사가
-`ytd-ads-engagement-panel-content-renderer` 를 찾아냈고 그렇게 규칙에 들어갔다.
+누출이 발견되면 이슈를 열고(이미 열려 있으면 댓글) 리포트를 artifact로 남깁니다. 규칙이 모르는 광고성 태그도 같이 보고합니다. 아직 안 새더라도 그 사이트가 새 이름을 쓰기 시작했다는 신호입니다. 실제로 이 감사가 `ytd-ads-engagement-panel-content-renderer`를 찾아 냈고, 그렇게 규칙에 들어갔습니다.
 
-오탐 방지로 `NOT_ADS` 목록을 둔다. `ytd-masthead` 는 이름에 masthead 가 들어가지만
-상단 네비게이션 바다 — 이런 걸 안 걸러내면 "UI 를 통째로 숨기자"는 제안이 나온다.
+오탐 방지로 `NOT_ADS` 목록을 둡니다. `ytd-masthead`는 이름에 masthead가 들어가지만 상단 네비게이션 바입니다. 이런 걸 걸러내지 않으면 "UI를 통째로 숨기자"는 잘못된 제안이 나옵니다.
 
 ### 앞으로 규칙을 가져올 때
 
-안 막히는 광고를 [uAssets](https://github.com/uBlockOrigin/uAssets) 나
-[AdguardFilters](https://github.com/AdguardTeam/AdguardFilters) 에서 퍼오는 일이 생길 텐데,
-**셀렉터 목록은 편집저작물로 보호될 수 있다.** 둘 다 GPLv3 이고 이 프로젝트도 GPLv3 이라
-가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/video.json` 의 해당 항목에
-주석으로 남긴다.
+안 막히는 광고를 [uAssets](https://github.com/uBlockOrigin/uAssets)나 [AdguardFilters](https://github.com/AdguardTeam/AdguardFilters)에서 가져오는 일이 생길 텐데, 셀렉터 목록은 편집저작물로 보호될 수 있습니다. 둘 다 GPLv3이고 이 프로젝트도 GPLv3이라 가져오는 것 자체는 문제없지만, 어디서 가져왔는지 `filters/video.json`의 해당 항목에 주석으로 남깁니다.
 
-## Orion 에서 달라지는 것
+## Orion에서 달라지는 것
 
-**Orion 은 `declarativeNetRequest` 를 지원하지 않는다.** Kagi 의 API 표에서 88개 항목이
-macOS·iOS 모두 미지원이다. 같은 패키지를 설치하되 0계층만 죽는다.
+Orion은 `declarativeNetRequest`를 지원하지 않습니다. Kagi의 API 표에서 관련 항목 88개가 macOS·iOS 모두 미지원입니다. 같은 패키지를 설치하지만 0계층만 죽습니다.
 
 | | Chrome / Edge | Orion |
 |---|---|---|
-| 0계층 네트워크 차단 | 동작 | **없음** |
-| 1계층 그 사이트 응답 프루닝 | 동작 | 동작 |
+| 0계층 네트워크 차단 | 동작 | 없음 |
+| 1계층 응답 프루닝 | 동작 | 동작 |
 | 2계층 코스메틱 | 동작 | 동작 |
 | 3계층 플레이어 폴백 | 동작 | 동작 |
 
-DNR 호출은 전부 API 존재 확인을 거치므로 없는 쪽에서도 조용히 넘어간다. 그 사이트는 그대로
-다 막히고, 다른 사이트에서는 광고 요청이 나가되 광고 자리는 숨겨진다.
+DNR 호출은 모두 API 존재 확인을 거치므로 Orion에서도 조용히 넘어갑니다. 그 사이트는 그대로 다 막히고, 다른 사이트에서는 광고 요청이 나가더라도 광고 자리는 숨겨집니다.
 
-**설치 자체를 거절한다.** 2026-08-11 아이폰에서 확인했다. Chrome 패키지를 고르면
-"Extensions Error. Something went wrong." 만 뜨고 이유는 없다. 그래서
-`TARGET=orion` 빌드가 있다 — `scripts/targets.mjs` 의 `strip` 목록이 무엇을 왜 빼는지
-말한다. 어느 항목이 진짜 원인이었는지는 모른다. 셋을 한꺼번에 뺐고, 깔리는 것이
-먼저였다.
+과거에는 Orion이 설치 자체를 거절했습니다(2026-08-11 아이폰 확인). Chrome 패키지를 고르면 "Extensions Error. Something went wrong."만 뜨고 이유를 알려 주지 않아서 `TARGET=orion` 빌드를 따로 만들었고, `scripts/targets.mjs`의 `strip` 목록에 무엇을 왜 빼는지 적혀 있습니다. 어느 항목이 진짜 원인이었는지는 끝내 못 찾았고, 셋을 한꺼번에 뺐더니 깔리는 것이 먼저였습니다.
 
 ## 한계
 
-- **서버가 스트림에 광고를 이어붙이는 경우**(server-side stitching)는 응답 프루닝으로
-  막을 수 없다. 3계층이 건너뛰지만 완벽하지는 않다.
-- 그 사이트는 차단을 계속 바꾼다. 안 막히는 게 생기면 위 "필터 리스트" 절의 순서대로 규칙을 더한다.
-- 자동 업데이트가 없다 (스토어 밖 확장의 한계). 코드가 바뀌면 zip 을 다시 받아야 한다.
+- 서버가 스트림에 광고를 이어 붙이는 경우(server-side stitching)는 응답 프루닝으로 막을 수 없습니다. 3계층이 건너뛰지만 완벽하지는 않습니다.
+- 그 사이트는 차단 우회를 계속 바꿉니다. 안 막히는 게 생기면 위 "필터 리스트" 절의 순서대로 규칙을 추가합니다.
+- 스토어 밖 확장에는 자동 업데이트가 없습니다. 코드가 바뀌면 zip을 다시 받아야 합니다.

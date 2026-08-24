@@ -409,11 +409,16 @@
     transition: background-color .12s ease, border-color .12s ease, color .12s ease;
   }
   .btn svg { width: 15px; height: 15px; }
-  /* Two ways in, and they are not equals: the store installs and updates
-     itself, the zip is the fallback that iPhone happens to need. Same size,
-     different weight — filled accent against outlined. */
-  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
-  .btns .btn { flex: 1 1 250px; margin-top: 0; }
+  /* Two channels, one shape. The store is the stable build and the zip is the
+     experimental one, so they get identical boxes and differ only in weight —
+     filled accent against outlined. Grid rather than flex because grid rows are
+     equal-height by construction: the zip's second line is written by script
+     and must not be able to make one button taller than the other. */
+  .btns {
+    display: grid; gap: 12px; margin-top: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .btns .btn { margin-top: 0; }
   /* The line under each button names what it hands over, so a file that lands
      in Files can be checked against it. */
   .btn { flex-wrap: wrap; }
@@ -436,7 +441,10 @@
     background-color: var(--mantle); color: var(--text); border-color: var(--surface1);
   }
   .btn-line:hover { background-color: var(--mantle); border-color: var(--accent); color: var(--ink); }
-  .btn + .btn { margin-top: 9px; }
+  /* Buttons no longer stack as bare siblings — the pair in the download card
+     is a grid with its own gap, and every other button stands alone. A
+     leftover `.btn + .btn { margin-top }` here silently shrank the second grid
+     item by that margin and bottom-aligned the pair. */
 
   .note {
     background-color: var(--mantle);
@@ -787,13 +795,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       <h2 lang="ko">다운로드</h2>
       <h2 lang="en">Download</h2>
-      <span class="chip">ONE ZIP</span>
+      <span class="chip">STABLE · TEST</span>
     </div>
 
-    <p class="lede" lang="ko"><strong>패키지는 하나입니다.</strong> 같은 확장 하나가 아래 브라우저를 전부 지원합니다.<br>
-      크롬·엣지는 스토어에서 한 번에 설치되고, 아이폰(Orion)은 zip 을 받아 넣습니다.</p>
-    <p class="lede" lang="en"><strong>There is one package.</strong> The same extension covers every browser below.<br>
-      Chrome and Edge install from the store in one click; on iPhone (Orion) you add the zip yourself.</p>
+    <p class="lede" lang="ko"><strong>같은 확장, 받는 곳이 둘입니다.</strong> 스토어에 올라가는 것이 정식 버전이고,
+      여기 zip 은 그보다 먼저 나오는 실험 버전입니다.<br>
+      크롬·엣지는 스토어 쪽이 편하고, 아이폰(Orion)은 zip 으로만 설치됩니다.</p>
+    <p class="lede" lang="en"><strong>One extension, two places to get it.</strong> The store carries the stable build;
+      the zip here is the experimental one that ships first.<br>
+      Chrome and Edge are easiest from the store, and on iPhone (Orion) the zip is the only way in.</p>
 
     <ul class="supports">
       <li>Chrome</li>
@@ -806,13 +816,14 @@
       <a class="btn" href="https://chromewebstore.google.com/detail/oc-ad-bye-pass/aoehenpbglodadbbhaiaipmaklnkoeam" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M12 3v5.4M4.2 16.7l4.7-2.7M19.8 16.7 15.1 14"/></svg>
         CHROME WEB STORE
-        <span class="what" lang="ko">크롬 · 엣지 · 자동 업데이트</span>
-        <span class="what" lang="en">Chrome · Edge — updates itself</span>
+        <span class="what" lang="ko">정식 버전 · 자동 업데이트</span>
+        <span class="what" lang="en">Stable · updates itself</span>
       </a>
       <a class="btn btn-line" href="https://github.com/jshsakura/oc-ad-bye-pass/releases" id="dl" data-size="1.5MB">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
         DOWNLOAD ZIP
-        <span class="what">확장 패키지</span>
+        <span class="what" lang="ko">실험 버전</span>
+        <span class="what" lang="en">Test build</span>
       </a>
     </div>
   </div>
@@ -1445,9 +1456,9 @@
       const asset = release?.assets?.find(
         (x) => x.name.endsWith('.zip') && !x.name.includes('-orion-'),
       );
-      for (const id of ['dl']) {
-        const a = document.getElementById(id);
-        if (!a) continue;
+      {
+        const a = document.getElementById('dl');
+        if (!a) return;
         const name = asset?.name ?? 'oc-ad-bye-pass.zip';
         /*
          * Our own copy first.
@@ -1465,9 +1476,15 @@
         } else if (release) {
           a.removeAttribute('download');
         }
+        // Version and size, not the file name: the name is long enough to wrap
+        // the button's second line, and the version is the part someone checks
+        // a downloaded file against.
         const size = asset ? humanSize(asset.size) : (a.dataset.size ?? '');
-        const what = a.querySelector('.what');
-        if (what) what.textContent = [name, `v${b.version}`, size].filter(Boolean).join(' · ');
+        const tail = [`v${b.version}`, size].filter(Boolean).join(' · ');
+        for (const [lang, prefix] of [['ko', '실험 버전'], ['en', 'Test build']]) {
+          const what = a.querySelector(`.what[lang="${lang}"]`);
+          if (what) what.textContent = `${prefix} ${tail}`;
+        }
       }
 
       const paint = () => { el.innerHTML = line[document.documentElement.dataset.lang] ?? line.ko; };
