@@ -22,8 +22,9 @@ import {
   type Settings,
 } from '../shared/settings.ts'
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
+import { translateComments } from './comments.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
-import { reportDiagnostics, watchCaptionOutcome } from './diagnostics.ts'
+import { noteTranslated, reportDiagnostics, watchCaptionOutcome } from './diagnostics.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
@@ -166,6 +167,10 @@ function sweep() {
   if (settings.toggles.antiAdblockNag) acted += dismissAdblockNag()
   if (settings.toggles.playerFallback) acted += handleAdState()
   if (acted) bumpStats({ skipped: acted })
+
+  // Not counted with the above: pressing a translate control is a convenience,
+  // not an ad that was skipped, and the popup's number means blocked ads.
+  if (settings.toggles.commentTranslate) noteTranslated(translateComments())
 }
 
 function onBannerRemoved(count: number) {

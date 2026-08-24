@@ -66,6 +66,8 @@ export interface PageDiagnostics {
   inject: string | null
   /** The caption picker's outcome for this video, if the toggle ran here. */
   captions: string | null
+  /** Comment translate controls pressed on this page so far. */
+  translated: number
   /** The tail of what happened, including while the app was away. */
   log: string | null
   userAgent: string
@@ -76,6 +78,17 @@ interface WebkitVideo extends HTMLVideoElement {
   webkitEnterFullscreen?: unknown
   webkitPresentationMode?: string
   webkitSupportsPresentationMode?: (mode: string) => boolean
+}
+
+let translatedCount = 0
+
+/**
+ * Count comment translate controls pressed. Reported rather than stored as a
+ * statistic: it answers "did the toggle do anything on this page", which is a
+ * question only a device dump can settle, and it is not an ad that was blocked.
+ */
+export function noteTranslated(count: number): void {
+  translatedCount += count
 }
 
 export function reportDiagnostics(): void {
@@ -109,6 +122,7 @@ export function reportDiagnostics(): void {
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     inject: document.documentElement.getAttribute(INJECT_ATTR),
     captions: document.documentElement.getAttribute(CAPTIONS_ATTR),
+    translated: translatedCount,
     log: readLog(),
     userAgent: navigator.userAgent,
   }

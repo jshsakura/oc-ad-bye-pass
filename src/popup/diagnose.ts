@@ -39,6 +39,7 @@ export interface PageFacts {
   presentationMode: string
   inject: string | null
   captions: string | null
+  translated: number
   log: string | null
   userAgent: string
 }
@@ -152,6 +153,7 @@ export function format(report: Report): string {
       `표시 모드: ${page.presentationMode}`,
       `문서 상태: ${page.visibilityState}`,
       `자막 선택: ${page.captions ? (CAPTION_STATES[page.captions] ?? page.captions) : '동작 안 함'}`,
+      `댓글 번역: ${page.translated ? `${page.translated}개 눌렀습니다` : '누른 것 없음'}`,
     )
   } else {
     lines.push(`페이지: 읽지 못함 — ${report.pageError ?? '알 수 없음'}`)
