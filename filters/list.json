@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260823,
-  "updatedAt": "2026-08-23",
+  "version": 20260824,
+  "updatedAt": "2026-08-24",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
     "hide": {
@@ -3785,6 +3785,9 @@
         "table.view_list+table.ad+table.ad+table.ad",
         "table.view_list~table[style=\"padding:10px 0px 20px 0px;text-align:center;\"][width=\"100%\"]"
       ],
+      "incheonation.kr": [
+        "div.side_banner"
+      ],
       "incheonilbo.com": [
         "div[class^=\"ad-\"]"
       ],
@@ -3963,6 +3966,7 @@
       ],
       "itcm.co.kr": [
         ".top-owl.owl-carousel",
+        "div.section_AD",
         "div[class$=\"_ad\"]"
       ],
       "item.gmarket.co.kr": [
@@ -3975,7 +3979,8 @@
       "itssa.co.kr": [
         "div.ad-bottom-g",
         "div.ad-top-g",
-        "div.ads-in-content"
+        "div.ads-in-content",
+        "div[class^=\"ad\"]"
       ],
       "itsupportguides.com": [
         "div.adblock_wrapper"
@@ -5704,10 +5709,6 @@
         "section#slideshow",
         "section.ad-box",
         "section.banbox_out"
-      ],
-      "m.newswave.kr": [
-        "div#bottom_src",
-        "div#top_src"
       ]
     },
     "prune": [

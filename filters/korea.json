@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260823,
-  "updatedAt": "2026-08-23",
+  "version": 20260824,
+  "updatedAt": "2026-08-24",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
     "hide": {
@@ -3710,6 +3710,9 @@
         "table.view_list+table.ad+table.ad+table.ad",
         "table.view_list~table[style=\"padding:10px 0px 20px 0px;text-align:center;\"][width=\"100%\"]"
       ],
+      "incheonation.kr": [
+        "div.side_banner"
+      ],
       "incheonilbo.com": [
         "div[class^=\"ad-\"]"
       ],
@@ -3888,6 +3891,7 @@
       ],
       "itcm.co.kr": [
         ".top-owl.owl-carousel",
+        "div.section_AD",
         "div[class$=\"_ad\"]"
       ],
       "item.gmarket.co.kr": [
@@ -3900,7 +3904,8 @@
       "itssa.co.kr": [
         "div.ad-bottom-g",
         "div.ad-top-g",
-        "div.ads-in-content"
+        "div.ads-in-content",
+        "div[class^=\"ad\"]"
       ],
       "itsupportguides.com": [
         "div.adblock_wrapper"
@@ -5629,10 +5634,6 @@
         "section#slideshow",
         "section.ad-box",
         "section.banbox_out"
-      ],
-      "m.newswave.kr": [
-        "div#bottom_src",
-        "div#top_src"
       ]
     },
     "prune": [],
