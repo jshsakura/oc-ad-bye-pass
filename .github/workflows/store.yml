@@ -1,0 +1,73 @@
+# 이미 나간 릴리스를 크롬 웹스토어에만 다시 올린다.
+#
+# release.yml 의 스토어 단계는 `continue-on-error` 다 — GitHub 릴리스가 정본이고
+# 스토어는 사본이라, 스토어 쪽 사정으로 zip 배포까지 멈추면 안 되기 때문이다.
+# 그래서 "릴리스는 나갔는데 스토어만 비었다" 는 상태가 정상적으로 생긴다.
+# v0.14.0 · v0.15.0 이 그랬다 (클라우드 프로젝트에서 Chrome Web Store API 가
+# 꺼져 있어 403).
+#
+# 그 상태를 되돌리는 데 새 태그를 파는 것은 과하다 — 코드가 안 바뀌었는데 버전만
+# 올라가고, 사용자가 받은 zip 과 스토어 버전이 어긋난다. 이 워크플로는 그 태그의
+# 릴리스에 이미 붙어 있는 zip 을 그대로 받아 올린다. 다시 빌드하지 않으므로
+# **스토어에 올라가는 바이트가 사람들이 받은 zip 과 같은 파일**이다.
+name: store
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '올릴 릴리스 태그 (예: v0.15.0)'
+        required: true
+        type: string
+      publish:
+        description: '심사 제출까지 한다 (끄면 초안으로만 올린다)'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      # 릴리스에 붙어 있는 자산을 그대로 받는다. 이름은 release.yml 이 정한
+      # 규칙 — 태그의 점을 언더바로 바꾼 것 — 을 따른다.
+      - name: 릴리스 zip 받기
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          v="$(printf '%s' "$TAG" | tr '.' '_')"
+          asset="oc-ad-bye-pass-$v.zip"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$asset"
+          ls -lh "$asset"
+          # 스토어가 거절하는 것을 여기서 먼저 잡는다. 예약된 `_` 이름이 들어간
+          # 패키지는 업로드는 되고 심사에서 죽는다.
+          unzip -l "$asset"
+          ! unzip -l "$asset" | grep -E ' _' | grep -v '_locales' | grep . || {
+            echo "::error::예약된 _ 이름이 zip 에 들어 있다"; exit 1; }
+          echo "ASSET=$asset" >> "$GITHUB_ENV"
+
+      - name: 크롬 웹스토어에 올린다
+        env:
+          EXTENSION_ID: aoehenpbglodadbbhaiaipmaklnkoeam
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$CLIENT_ID" ] || [ -z "$CLIENT_SECRET" ] || [ -z "$REFRESH_TOKEN" ]; then
+            echo "::error::스토어 시크릿이 없습니다 — CWS_CLIENT_ID · CWS_CLIENT_SECRET · CWS_REFRESH_TOKEN"
+            exit 1
+          fi
+          # 여기는 release.yml 과 달리 실패하면 실패다. 이 잡의 유일한 일이
+          # 스토어에 올리는 것이라, 초록으로 끝나면 거짓말이 된다.
+          # `[ … ] && args+=(…)` 로 쓰면 안 된다. 기본 셸이 `bash -e` 라
+          # 조건이 거짓일 때 그 줄의 종료 코드 1 이 그대로 스텝 실패가 된다.
+          args=(upload --source "$ASSET")
+          if [ "${{ inputs.publish }}" = "true" ]; then
+            args+=(--auto-publish)
+          fi
+          npx --yes chrome-webstore-upload-cli@3 "${args[@]}"
+          echo "✅ \`${{ inputs.tag }}\` 를 크롬 웹스토어에 올렸습니다 (publish=${{ inputs.publish }})" >> "$GITHUB_STEP_SUMMARY"

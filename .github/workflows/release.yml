@@ -181,7 +181,13 @@ jobs:
       # **실패해도 릴리스를 막지 않는다** (`continue-on-error`). GitHub 릴리스가
       # 정본이고 스토어는 그 사본이다 — 스토어 쪽 사정(심사 거절, API 장애,
       # 토큰 만료)으로 zip 배포와 사이트 갱신까지 멈추면 안 된다. 그래서 이
-      # 단계는 페이지 트리거 뒤에 둔다. 실패는 런 요약에 주석으로 남는다.
+      # 단계는 페이지 트리거 뒤에 둔다.
+      #
+      # 다만 조용히 실패하면 안 된다. `continue-on-error` 는 런 전체를 초록으로
+      # 만들기 때문에, 스토어에 아무것도 안 올라간 릴리스가 성공으로 보인다.
+      # v0.14.0 과 v0.15.0 이 실제로 그렇게 나갔다 (둘 다 403 — 클라우드
+      # 프로젝트에서 Chrome Web Store API 가 꺼져 있었다). 그래서 결과를
+      # ::warning:: 과 잡 요약에 남긴다. 둘 다 초록 런에서도 눈에 띈다.
       - name: 크롬 웹스토어에 올리고 게시한다
         if: startsWith(github.ref, 'refs/tags/v')
         continue-on-error: true
@@ -196,5 +202,16 @@ jobs:
             exit 0
           fi
           v="$(printf '%s' "$GITHUB_REF_NAME" | tr '.' '_')"
-          npx --yes chrome-webstore-upload-cli@3 upload \
-            --source "oc-ad-bye-pass-$v.zip" --auto-publish
+          if npx --yes chrome-webstore-upload-cli@3 upload \
+               --source "oc-ad-bye-pass-$v.zip" --auto-publish; then
+            echo "✅ 크롬 웹스토어 게시 제출: \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=스토어 게시 실패::$GITHUB_REF_NAME 이 크롬 웹스토어에 올라가지 않았습니다. GitHub 릴리스는 정상입니다. API 를 고친 뒤 store.yml 을 돌리면 새 태그 없이 다시 올릴 수 있습니다."
+            {
+              echo "⚠️ **크롬 웹스토어 게시 실패** — \`$GITHUB_REF_NAME\`"
+              echo ""
+              echo "GitHub 릴리스와 사이트는 정상입니다. 스토어에는 이전 버전이 그대로 걸려 있습니다."
+              echo "원인을 고친 뒤 \`store.yml\` 워크플로를 이 태그로 돌리면 새 태그 없이 다시 올라갑니다."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
