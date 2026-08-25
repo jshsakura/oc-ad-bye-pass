@@ -14,30 +14,32 @@
 웹을 쓰다 보면 읽으려던 것에 닿기까지 몇 번을 닫아야 합니다. 쿠키 동의창을 닫고, 구독하라는 창을 닫고, 앱으로 열라는 배너를 닫고, 누른 적도 없는데 열린 창을 닫습니다. 그러고 나면 광고가 자리를 잡고 있습니다.
 
 이 확장은 그것들이 아예 안 뜨게 합니다.
+화면에서 선택적으로 무엇을 치워야 할까에 집중했습니다.
 
-무엇을 치우나
-
-· 광고와 추적 요청을 주소 단계에서 막습니다. 요청이 나가지 않으니 그려질 것도 없고 데이터도 쓰지 않습니다.
-· 남은 광고 자리를 숨깁니다. 한국 사이트 규칙을 따로 싣고 있어서 국내 포털과 커뮤니티, 뉴스 사이트에서도 동작합니다.
+· 광고와 추적 요청을 주소 단계에서 막습니다.
+요청이 나가지 않으니 그려질 것도 없고 데이터도 쓰지 않습니다.
+· 남은 광고 자리를 숨깁니다.
+한국 사이트 규칙을 따로 싣고 있어서 국내 포털과 커뮤니티, 뉴스 사이트에서도 동작합니다.
 · 쿠키 동의창과 거기 딸려오는 구독·앱 설치 유도창을 숨깁니다.
-· 누르지도 않았는데 열리는 새 창을 막습니다. 직접 누른 링크와 버튼은 그대로 열립니다.
-· 영상 사이트에서는 광고가 재생되기 전에 응답에서 걷어냅니다. 건너뛸 것 자체가 남지 않습니다.
+· 누르지도 않았는데 열리는 새 창을 막습니다.
+직접 누른 링크와 버튼은 그대로 열립니다.
+· 영상 사이트에서는 광고가 재생되기 전에 응답에서 걷어냅니다.
+여러분이 건너뛸 것 자체가 남지 않습니다.
 
-안 사라지는 게 하나 있다면
+확장 아이콘을 누르고 "요소 고르기"를 고른 다음, 화면에서 셀렉터를 선택해 특정 요소만 제거도 가능합니다.
+F12로 개발자도구를 열 필요도, 셀렉터를 쓸 줄 알 필요도 없습니다.
+범위는 방향키로 넓히거나 좁힙니다.
 
-확장 아이콘을 누르고 "요소 고르기"를 고른 다음, 화면에서 그것을 누르면 됩니다. 개발자도구를 열 필요도, 셀렉터를 쓸 줄 알 필요도 없습니다. 범위는 방향키로 넓히거나 좁힙니다.
-
-뭔가 깨지면
-
-전역으로 도는 확장은 무엇이든 깨뜨릴 수 있습니다. 그래서 사이트별로 끌 수 있게 해 두었습니다. 확장 아이콘을 눌러 그 사이트의 스위치만 내리면 하위 도메인까지 함께 멈춥니다. 깨진 페이지를 만났을 때 선택지가 "확장 삭제"뿐이면 사람들은 실제로 지웁니다.
+전역으로 도는 확장은 무엇이든 깨뜨릴 수 있습니다.
+그래서 사이트별로 끌 수 있게 해 두었습니다. 확장 아이콘을 눌러 그 사이트의 스위치만 내리면 하위 도메인까지 함께 멈춥니다.
+깨진 페이지를 만났을 때 선택지가 "확장 삭제"뿐이면 사람들은 실제로 지웁니다.
 
 차단 규칙은 확장과 따로 갱신됩니다. 사이트가 화면을 바꿔도 다시 설치하실 필요가 없습니다.
 
 예외 사이트 목록과 직접 넣은 규칙은 파일 하나로 빼 두었다가 되돌릴 수 있습니다.
 
-데이터
-
-계정도 서버도 없습니다. 모든 처리가 브라우저 안에서 끝나고, 무엇을 보셨는지는 어디로도 나가지 않습니다. 받아오는 것은 차단 규칙 목록뿐이고, 그것도 셀렉터 같은 데이터일 뿐 실행되는 코드가 아닙니다.
+데이터는 여러분의 것입니다.
+이 확장에는 계정도 서버도 없습니다. 모든 처리가 브라우저 안에서 끝나고, 무엇을 보셨는지는 어디로도 나가지 않습니다. 받아오는 것은 차단 규칙 목록뿐이고, 그것도 셀렉터 같은 데이터일 뿐 실행되는 코드가 아닙니다.
 
 오픈소스입니다 (GPLv3). 코드는 github.com/jshsakura/oc-ad-bye-pass 에 있습니다.
 ```
@@ -48,28 +50,32 @@
 Getting to the thing you came for takes a few dismissals. Close the cookie wall, close the newsletter box, close the open-in-app banner, close the window you never clicked. By then the ads have settled in.
 
 This stops them arriving.
+The work went into one question: what should come off the screen, and what should not.
 
-What it clears
+· Ad and tracker requests, stopped at the address.
+Nothing is fetched, so nothing is drawn and nothing is spent in data.
+· Leftover ad slots, hidden.
+Korean site rules ship alongside the global ones, so domestic portals, forums and news sites are covered too.
+· Cookie consent walls, and the newsletter and app-install nags that come with them.
+· Windows that open out of nothing you pressed.
+Links and buttons you actually clicked still open.
+· On video sites, ads are cut out of the response before playback.
+There is nothing left for you to skip.
 
-· Ad and tracker requests, blocked at the address. Nothing is fetched, so nothing is drawn and nothing is paid for in data.
-· Leftover ad slots, hidden. Korean site rules ship alongside the global ones, so domestic portals and forums are covered too.
-· Cookie consent walls, and the newsletter and app-install nags that travel with them.
-· Windows that open out of nothing you pressed. Links and buttons you actually clicked still open.
-· On video sites, ads are cut out of the response before playback. There is nothing left to skip.
+Click the icon, choose "Pick element", and tap the thing on the page to take out that one thing.
+No F12, no DevTools, and no need to know what a selector is.
+Arrow keys widen or narrow what you picked.
 
-If something slips through
+An extension that runs everywhere can break anything.
+So it switches off per site. Click the icon and drop that site's switch, and subdomains stop with it.
+When the only recourse for a broken page is uninstalling, people uninstall.
 
-Click the icon, choose "Pick element", and tap the thing on the page. No DevTools, no need to know what a selector is. Arrow keys widen or narrow what you picked.
+Blocking rules update separately from the extension, so a site changing its markup does not mean reinstalling.
 
-If something breaks
+Your per-site exceptions and the rules you wrote yourself save to a file, and load back from it.
 
-An extension that runs everywhere can break anything, so it can be switched off per site — subdomains included. When the only recourse for a broken page is uninstalling, people uninstall.
-
-Blocking rules update separately from the extension, so a site changing its markup does not mean reinstalling. Your per-site exceptions and your own rules save to a file and load back from it.
-
-Data
-
-No account, no server. Everything happens inside your browser, and what you looked at goes nowhere. The only thing fetched is the rule list, and that is data — selectors — not code that runs.
+Your data stays yours.
+There is no account and no server. Everything happens inside your browser, and what you looked at goes nowhere. The only thing fetched is the rule list, and that is data — selectors — not code that runs.
 
 Open source, GPLv3: github.com/jshsakura/oc-ad-bye-pass
 ```
