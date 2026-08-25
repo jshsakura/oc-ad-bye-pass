@@ -11,14 +11,42 @@
 // across desktop and mobile layouts, so the label decides — never a class name
 // that ships different markup on m.youtube.
 
-/** Where a translate control can live. Broad on purpose; the label filters. */
+/**
+ * Where a translate control can live. Broad on purpose; the label filters.
+ *
+ * Anything pressable inside a comment is a candidate, because YouTube ships
+ * different markup on desktop and on m.youtube and changes both. The reply
+ * button and the like count come back too — and are dropped by their label,
+ * which is the one thing about the control that is stable.
+ */
 const CANDIDATES = [
   '#translate-button',
   'ytd-comment-view-model #translate-button',
   'ytd-comment-renderer #translate-button',
+  'ytd-comment-view-model yt-button-shape button',
+  'ytd-comment-view-model tp-yt-paper-button',
+  'ytd-comment-renderer yt-button-shape button',
   'ytm-comment-renderer button',
-  '#content-text + button',
+  'ytm-comment-renderer [role="button"]',
 ]
+
+/**
+ * The element that actually carries the click handler.
+ *
+ * `#translate-button` is not a button. On desktop it is the id of a
+ * `ytd-button-renderer`, a wrapper whose real `<button>` is nested inside it —
+ * and a click dispatched on the wrapper **bubbles up, never down**, so the
+ * handler never runs. The press was counted, the diagnostics said it worked,
+ * and nothing was translated.
+ *
+ * The e2e fixture hid this: it builds a bare `<button id="translate-button">`,
+ * which is the shape this code assumed rather than the shape YouTube ships.
+ */
+function pressTarget(node: Element): HTMLElement | null {
+  const inner = node.querySelector<HTMLElement>('button, [role="button"], a[href]')
+  if (inner) return inner
+  return node instanceof HTMLElement ? node : null
+}
 
 /** Marks a control this ran on, so a comment is never translated twice. */
 const CLICKED_ATTR = 'data-oc-abp-translated'
@@ -57,11 +85,34 @@ function nearViewport(el: Element): boolean {
 }
 
 /**
+ * What the last sweep saw.
+ *
+ * Two failures look identical from outside — YouTube offering no control at
+ * all, and a control that was found and pressed to no effect — and they need
+ * opposite fixes. Only a real page can tell them apart, so the sweep counts
+ * both and the 진단 panel reports them.
+ */
+export interface TranslateSweep {
+  /** Controls whose label said "translate" and that had not been pressed yet. */
+  found: number
+  /** Of those, how many were actually clicked. */
+  pressed: number
+}
+
+let lastFound = 0
+
+/** How many candidates the last sweep matched by label, pressed or not. */
+export function foundTranslateControls(): number {
+  return lastFound
+}
+
+/**
  * Press every unpressed translate control near the viewport.
  * Returns how many were pressed.
  */
 export function translateComments(): number {
   let pressed = 0
+  let found = 0
   const seen = new Set<Element>()
 
   for (const selector of CANDIDATES) {
@@ -76,18 +127,29 @@ export function translateComments(): number {
       if (seen.has(node) || node.hasAttribute(CLICKED_ATTR)) continue
       seen.add(node)
       if (!shouldClickTranslate(node.textContent ?? '')) continue
+      found += 1
       if (!nearViewport(node)) continue
+
+      const target = pressTarget(node)
+      if (!target) continue
+      // The wrapper and the button inside it are two different nodes and the
+      // selector list matches both, so a mark on the matched node alone lets
+      // the same control be pressed twice — which translates it and then puts
+      // it straight back to the original.
+      if (target.hasAttribute(CLICKED_ATTR)) continue
 
       // Marked before the click: if the click throws, or YouTube re-renders in
       // response, this control is still never pressed a second time.
       node.setAttribute(CLICKED_ATTR, '1')
+      target.setAttribute(CLICKED_ATTR, '1')
       try {
-        ;(node as HTMLElement).click()
+        target.click()
         pressed += 1
       } catch {
         // A control that refuses to be clicked is not worth retrying.
       }
     }
   }
+  lastFound += found
   return pressed
 }

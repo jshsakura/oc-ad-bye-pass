@@ -48,6 +48,42 @@ async function installComments(page: Page) {
   })
 }
 
+/**
+ * The desktop shape, which is not a button.
+ *
+ * `#translate-button` is the id of a `ytd-button-renderer` wrapper; the real
+ * `<button>` is nested inside it. A click dispatched on the wrapper bubbles up
+ * and never reaches the handler, so the press was counted and nothing was
+ * translated. The fixture above never caught it because it builds the bare
+ * button this code assumed rather than the wrapper YouTube ships.
+ */
+async function installWrappedComments(page: Page) {
+  await page.evaluate(() => {
+    const pressed: string[] = []
+    ;(window as unknown as { __pressed: string[] }).__pressed = pressed
+    const host = document.createElement('div')
+    host.id = 'comments'
+    for (const [id, label] of [
+      ['w1', '번역'],
+      ['w2', '답글'], // a decoy in the same shape
+    ]) {
+      const comment = document.createElement('ytd-comment-view-model')
+      // The wrapper carries the id; the handler is on the button inside it.
+      const wrapper = document.createElement('ytd-button-renderer')
+      wrapper.setAttribute('id', 'translate-button')
+      const shape = document.createElement('yt-button-shape')
+      const button = document.createElement('button')
+      button.textContent = label
+      button.addEventListener('click', () => pressed.push(id))
+      shape.append(button)
+      wrapper.append(shape)
+      comment.append(wrapper)
+      host.append(comment)
+    }
+    document.body.append(host)
+  })
+}
+
 const pressed = (page: Page) =>
   page.evaluate(() => (window as unknown as { __pressed?: string[] }).__pressed ?? [])
 
@@ -103,5 +139,18 @@ test.describe('댓글 자동 번역', () => {
     await page.waitForTimeout(1200)
 
     expect(await pressed(page)).toEqual([])
+  })
+
+  test('버튼이 래퍼 안에 들어 있어도 진짜 버튼을 누른다', async ({ context, background }) => {
+    const page = await context.newPage()
+    await page.goto(YOUTUBE_URL)
+    await installWrappedComments(page)
+
+    await writeSettings(background, settingsWith(true))
+    await nudge(page)
+
+    // 래퍼를 누르면 이벤트가 위로 갈 뿐 안쪽 핸들러에 안 닿는다. 실제 유튜브에서
+    // 아무것도 번역되지 않던 이유가 이것이다.
+    await expect.poll(() => pressed(page), { timeout: 8000 }).toEqual(['w1'])
   })
 })

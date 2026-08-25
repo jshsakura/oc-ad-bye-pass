@@ -12,6 +12,7 @@
 // desktop the timestamp and URL say which one this was.
 
 import { CAPTIONS_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
+import { foundTranslateControls } from './comments.ts'
 import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
@@ -68,6 +69,12 @@ export interface PageDiagnostics {
   captions: string | null
   /** Comment translate controls pressed on this page so far. */
   translated: number
+  /**
+   * Controls the sweep matched by label, pressed or not. `found` without
+   * `translated` means they were seen and not reachable; both at zero means
+   * YouTube offered none on this page, which is a different problem.
+   */
+  translateFound: number
   /** The tail of what happened, including while the app was away. */
   log: string | null
   userAgent: string
@@ -123,6 +130,7 @@ export function reportDiagnostics(): void {
     inject: document.documentElement.getAttribute(INJECT_ATTR),
     captions: document.documentElement.getAttribute(CAPTIONS_ATTR),
     translated: translatedCount,
+    translateFound: foundTranslateControls(),
     log: readLog(),
     userAgent: navigator.userAgent,
   }
