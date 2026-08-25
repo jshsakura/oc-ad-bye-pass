@@ -23,6 +23,7 @@
 // hand is never fought.
 
 import { CAPTIONS_ATTR } from '../shared/messages.ts'
+import { viewerLangs } from './viewerLangs.ts'
 
 /**
  * A row of getOption('captions', 'tracklist'). Only languageCode is read here,
@@ -172,12 +173,6 @@ export function videoLanguage(tracks: CaptionTrack[]): string | null {
   const asr = tracks.find((t) => t.kind === 'asr')
   const code = asr?.languageCode
   return code ? code.split('-')[0].toLowerCase() : null
-}
-
-/** Primary subtags of the browser's language list, deduped: ko-KR → ko. */
-function browserLangs(): string[] {
-  const raw = navigator.languages?.length ? [...navigator.languages] : [navigator.language || 'en']
-  return [...new Set(raw.map((l) => l.split('-')[0].toLowerCase()).filter(Boolean))]
 }
 
 /**
@@ -337,7 +332,7 @@ function decideAndApply(
   // A video already in the viewer's language needs no captions, and forcing
   // them on would be the extension overriding a person who never asked. Only a
   // foreign-language video is acted on.
-  const langs = browserLangs()
+  const langs = viewerLangs()
   const spoken = videoLanguage(tracks)
   if (spoken && langs.includes(spoken)) {
     appliedFor = id

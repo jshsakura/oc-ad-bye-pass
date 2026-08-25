@@ -31,6 +31,14 @@ export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
  */
 export const CAPTIONS_ATTR = 'data-oc-ad-bye-pass-captions'
 
+/**
+ * Marker with the audio-track pin's outcome for the current video, written by
+ * the MAIN world so diagnostics in ISOLATED can read it across the boundary.
+ * Same arrangement as CAPTIONS_ATTR, and for the same reason: on a phone there
+ * is no console to ask.
+ */
+export const AUDIO_ATTR = 'data-oc-ad-bye-pass-audio'
+
 /** The minimum the MAIN world actually needs to know. */
 export interface MainConfig {
   enabled: boolean
@@ -41,6 +49,12 @@ export interface MainConfig {
    * is the language the user actually browses in.
    */
   autoCaptions: boolean
+  /**
+   * Whether to pin the audio track to the viewer's language. The language is
+   * not carried here either — the MAIN world reads the browser's own list, the
+   * same one the caption picker uses.
+   */
+  audioLanguage: boolean
   prunePaths: string[]
   /** Whether to refuse `window.open` calls that no gesture asked for. */
   popups: boolean

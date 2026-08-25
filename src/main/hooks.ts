@@ -20,6 +20,7 @@
 
 import { NS, isBridgeMessage, type MainConfig } from '../shared/messages.ts'
 import { captureCaptionData, setCaptionPreference } from './captions.ts'
+import { setAudioPreference } from './audio.ts'
 import { deafenPlayer } from './deafenPlayer.ts'
 import { BUNDLED_PRUNE } from '../shared/selectors.ts'
 import { pruneAdFields } from './prune.ts'
@@ -34,6 +35,7 @@ const config: MainConfig = {
   // Unlike blocking, a caption preference is not block-first: it changes what
   // plays on screen, so it stays off until the settings say otherwise.
   autoCaptions: false,
+  audioLanguage: false,
   prunePaths: BUNDLED_PRUNE,
   // Owned by src/main/popups.ts, which keeps its own copy and its own listener
   // because it also runs where these hooks do not. Carried here so the shape is
@@ -175,6 +177,8 @@ function listenForConfig() {
       config.videoAds = next.videoAds
       config.autoCaptions = next.autoCaptions === true
       setCaptionPreference(config.enabled && config.autoCaptions)
+      config.audioLanguage = next.audioLanguage === true
+      setAudioPreference(config.enabled && config.audioLanguage)
       if (Array.isArray(next.prunePaths) && next.prunePaths.length) config.prunePaths = next.prunePaths
     },
     false,

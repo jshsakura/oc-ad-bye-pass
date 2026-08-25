@@ -76,6 +76,7 @@ function detach() {
     enabled: false,
     videoAds: false,
     autoCaptions: false,
+    audioLanguage: false,
     prunePaths: rules.prune,
     popups: false,
   })
@@ -105,6 +106,7 @@ function recompute(caches: FilterCaches) {
     enabled: true,
     videoAds: settings.toggles.videoAds,
     autoCaptions: settings.toggles.autoCaptions,
+    audioLanguage: settings.toggles.audioLanguage,
     prunePaths: rules.prune,
     popups: settings.toggles.popups,
   })
