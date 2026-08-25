@@ -101,7 +101,6 @@
         "[class*='ad'][id^='AD']:not([class*='add'])",
         "[class^='basic-banner'][id]",
         "[class^='happy-header']",
-        "[data-brs][data-br]",
         "[id^=\"div-gpt-ad\"]",
         "[id^='hd_pop']",
         "a[href*=\"//ad-api.enuri.info/\"]",
