@@ -282,8 +282,16 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   color: var(--fg-muted);
 }
 
-/* The pruned tile opens the per-site panel, so it reads as pressable. */
+/* The pruned tile opens the per-site panel, so it reads as pressable.
+
+   `display: block` is not decoration. This one is a <button>, which picks up
+   the shared control rule's `inline-flex` and centred items — so the number and
+   its label sat side by side while the tile beside it, a plain <div>, stacked
+   them. Two tiles of the same size, in a row, in two different shapes. */
 .stat-btn {
+  display: block;
+  width: 100%;
+  min-height: 0;
   text-align: left;
   cursor: pointer;
   font: inherit;

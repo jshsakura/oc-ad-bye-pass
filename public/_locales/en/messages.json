@@ -4,6 +4,7 @@
     "description": "The extension name. A brand, so it is the same in every locale."
   },
   "extDescription": {
-    "message": "An open-source ad blocker. It removes video ads before they play, and blocks ad and tracker requests on every other site."
+    "message": "The things you keep closing stop arriving: ads and trackers, cookie walls, pop-ups you never clicked, app-install nags.",
+    "description": "Shown under the name in the store and in the extensions list. Capped at 132 characters per locale, and the store refuses the upload rather than truncating — scripts/verify-build.mjs checks it. Written per language rather than translated: this one leads with what a reader keeps closing, which is the same complaint in both but not the same sentence."
   }
 }
