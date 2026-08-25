@@ -40,6 +40,17 @@ body {
   color: var(--fg);
   font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* Korean breaks between any two characters by default, because the engine
+     treats it like Chinese and Japanese — where that is correct. It is not
+     correct here: Korean is written with spaces, and breaking inside a word
+     gives "브라우 / 저에" and "업데이트 확 / 인", which is what a narrow phone
+     turns every button label into. `keep-all` moves the break to the spaces
+     that are already there.
+
+     The cost is that a token with no spaces in it cannot break at all, so
+     anything that holds a URL or a selector sets `overflow-wrap: anywhere`
+     back on for itself. */
+  word-break: keep-all;
 }
 
 a {
@@ -516,11 +527,25 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   outline-offset: 2px;
 }
 
+/* The bar at the bottom of the popup.
+   A grid, not a flex row: flex without wrap squeezes every button when one more
+   arrives — which is exactly what the element picker did, taking it from three
+   to four and crushing all four on a phone. Equal columns mean adding a button
+   changes the layout, never the shape of the buttons. */
 .foot {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--line);
+}
+
+.foot button {
+  /* A grid track is a fixed width, so a long label has to be allowed to sit on
+     two lines rather than push its way out of the button. */
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
 }
 
 button {
@@ -599,6 +624,10 @@ button.primary {
 .sub-name {
   font-size: 13px;
   font-weight: 600;
+  /* Before the first fetch this *is* the address — one long token with no
+     spaces, which on a phone pushes the switch off the panel and leaves the
+     delete button sitting on top of the text. */
+  overflow-wrap: anywhere;
 }
 
 .sub-meta,
@@ -672,6 +701,9 @@ button.primary {
   color: var(--fg-muted);
   margin: 0 0 14px;
   font-size: 12px;
+  /* Descriptions carry the odd URL and the odd selector. `keep-all` on body
+     cannot break those, so they get the escape hatch back. */
+  overflow-wrap: anywhere;
 }
 
 label.field {
@@ -783,4 +815,54 @@ input[type='text'] {
 .kv dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Phone ─────────────────────────────────────────────────────────────────
+   One breakpoint, and it is the popup sheet's width rather than a device.
+   Below it every row of buttons becomes two even columns: a phone gives a
+   four-button bar about 90px each, which is narrower than the words on them.
+   Halves that wrap are legible; quarters that squeeze are not. */
+@media (max-width: 460px) {
+  /* The desktop popup is sized by its own document, which is what this floor is
+     for — but a phone opens the popup as a sheet it has already sized, and a
+     floor wider than that sheet scrolls the whole panel sideways. Ten pixels of
+     horizontal scroll is not a layout anyone chose. */
+  body {
+    min-width: 0;
+  }
+
+  .foot {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Card actions get the same treatment. They are a wrapping flex row, which
+     leaves ragged rows of differently-sized buttons — tidy enough at three
+     across, visibly arbitrary once they wrap. */
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* An odd one out spans the width rather than sitting as a half with a gap
+     beside it. Guarded on there being a third item, so a card with a single
+     button — "통계 초기화" — keeps its own size instead of becoming a
+     full-width bar, which reads as a much bigger button than it is. */
+  .actions:has(> :nth-child(3)) > :last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+
+  .actions button,
+  .actions .btn-primary,
+  .actions .btn-link {
+    white-space: normal;
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  /* A text input has a default width of its own (~160px) that pays no attention
+     to the column it is in. Left alone it hangs over the button beside it. */
+  .actions input {
+    min-width: 0;
+    width: 100%;
+  }
 }

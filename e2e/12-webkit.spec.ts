@@ -312,3 +312,93 @@ test('아이폰 모양의 비디오에서 우리 판정 함수가 webkit 경로�
   )
   expect(decide.bare).toBe(hasStandard ? 'standard' : 'none')
 })
+
+/**
+ * The popup, laid out by a real WebKit at phone width.
+ *
+ * This is here because the bar at the bottom of the popup was a flex row with
+ * no wrap, and adding a fourth button to it — the element picker — squeezed all
+ * four until the labels no longer fit. Nothing caught it: every other test
+ * asserts on behaviour, and the layout only fails at a width no desktop run
+ * ever uses.
+ *
+ * The real popup is served rather than a hand-written stand-in, so the markup
+ * under test cannot drift away from the markup that ships. `chrome` is stubbed
+ * because WebKit has no extension to provide it.
+ */
+test('폰 폭에서 팝업 하단 버튼이 2×2 로 반반 나뉜다', async () => {
+  const server = createServer((req, res) => {
+    const rel = (req.url ?? '/').split('?')[0]
+    const file = join(import.meta.dirname, '..', 'dist', rel === '/' ? 'popup.html' : rel)
+    readFile(file, (err, body) => {
+      if (err) {
+        res.writeHead(404).end('not found')
+        return
+      }
+      const type = rel.endsWith('.js')
+        ? 'text/javascript'
+        : rel.endsWith('.css')
+          ? 'text/css'
+          : rel.endsWith('.png')
+            ? 'image/png'
+            : 'text/html; charset=utf-8'
+      res.writeHead(200, { 'content-type': type }).end(body)
+    })
+  })
+  await new Promise<void>((resolve) => server.listen(0, resolve))
+  const { port } = server.address() as { port: number }
+
+  const browser = await webkit.launch()
+  try {
+    // The narrowest phone still in use. If it holds here it holds everywhere.
+    const context = await browser.newContext({ viewport: { width: 320, height: 640 }, locale: 'ko-KR' })
+    await context.addInitScript(() => {
+      const store: Record<string, unknown> = { settings: { lang: 'ko', savedAt: Date.now() } }
+      const area = {
+        get: async (key: string) => (key in store ? { [key]: store[key] } : {}),
+        set: async (patch: Record<string, unknown>) => Object.assign(store, patch),
+        remove: async () => {},
+      }
+      ;(window as unknown as { chrome: unknown }).chrome = {
+        runtime: {
+          id: 'test',
+          getManifest: () => ({ version: '0.0.0', host_permissions: [] }),
+          sendMessage: async () => ({ ok: true, source: 'bundled', lists: [], dropped: 0 }),
+        },
+        storage: { sync: area, local: area, onChanged: { addListener() {}, removeListener() {} } },
+        permissions: { request: async () => false, contains: async () => true },
+        tabs: { query: async () => [{ id: 1, url: 'https://news.example.com/article' }] },
+        declarativeNetRequest: {},
+      }
+    })
+    const page = await context.newPage()
+    await page.goto(`http://127.0.0.1:${port}/popup.html`)
+    await page.waitForSelector('.foot button')
+
+    const layout = await page.evaluate(() => {
+      const buttons = [...document.querySelectorAll<HTMLElement>('.foot > button')]
+      return {
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+        rows: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().y))).size,
+        columns: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().x))).size,
+        widths: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().width))).size,
+        // A label wider than the box it is in has been cut off.
+        clipped: buttons
+          .filter((b) => b.scrollWidth > Math.ceil(b.getBoundingClientRect().width))
+          .map((b) => b.textContent?.trim()),
+      }
+    })
+
+    expect(layout.clipped, '버튼 안에서 글자가 잘렸다').toEqual([])
+    expect(layout.rows, '두 줄이어야 한다').toBe(2)
+    expect(layout.columns, '두 칸이어야 한다').toBe(2)
+    expect(layout.widths, '네 개가 같은 너비여야 한다 — 반반').toBe(1)
+    // A phone sheet is narrower than the desktop popup's floor; a floor wider
+    // than the sheet scrolls the whole panel sideways.
+    expect(layout.scrollWidth, '가로로 스크롤된다').toBe(layout.innerWidth)
+  } finally {
+    await browser.close()
+    server.close()
+  }
+})
