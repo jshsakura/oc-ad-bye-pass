@@ -39,8 +39,6 @@ export interface PageFacts {
   presentationMode: string
   inject: string | null
   captions: string | null
-  translated: number
-  translateFound: number
   log: string | null
   userAgent: string
 }
@@ -67,21 +65,6 @@ const CAPTION_STATES: Record<string, string> = {
   'no-captions': '자막 없는 영상',
   'api-missing': '플레이어가 자막 API 를 안 내놓음 (이 브라우저에선 불가)',
   'set-failed': '선택 실패 (플레이어가 거부)',
-}
-
-/**
- * The comment sweep, in a line.
- *
- * "눌렀습니다" alone was not enough to debug with: a control that is found and
- * pressed to no effect reported exactly the same as one that worked. The two
- * numbers separate the three cases — nothing offered, offered but out of reach,
- * pressed — and only a real page can say which it is.
- */
-function translateLine(page: { translated: number; translateFound?: number }): string {
-  const found = page.translateFound ?? 0
-  if (page.translated > 0) return `${page.translated}개 눌렀습니다 (찾은 것 ${found}개)`
-  if (found > 0) return `${found}개 찾았지만 누르지 못했습니다`
-  return '유튜브가 번역 버튼을 안 내놨습니다'
 }
 
 const INJECT_STATES: Record<string, string> = {
@@ -169,7 +152,6 @@ export function format(report: Report): string {
       `표시 모드: ${page.presentationMode}`,
       `문서 상태: ${page.visibilityState}`,
       `자막 선택: ${page.captions ? (CAPTION_STATES[page.captions] ?? page.captions) : '동작 안 함'}`,
-      `댓글 번역: ${translateLine(page)}`,
     )
   } else {
     lines.push(`페이지: 읽지 못함 — ${report.pageError ?? '알 수 없음'}`)

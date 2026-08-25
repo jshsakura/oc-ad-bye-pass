@@ -12,7 +12,6 @@
 // desktop the timestamp and URL say which one this was.
 
 import { CAPTIONS_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
-import { foundTranslateControls } from './comments.ts'
 import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
@@ -67,14 +66,6 @@ export interface PageDiagnostics {
   inject: string | null
   /** The caption picker's outcome for this video, if the toggle ran here. */
   captions: string | null
-  /** Comment translate controls pressed on this page so far. */
-  translated: number
-  /**
-   * Controls the sweep matched by label, pressed or not. `found` without
-   * `translated` means they were seen and not reachable; both at zero means
-   * YouTube offered none on this page, which is a different problem.
-   */
-  translateFound: number
   /** The tail of what happened, including while the app was away. */
   log: string | null
   userAgent: string
@@ -85,17 +76,6 @@ interface WebkitVideo extends HTMLVideoElement {
   webkitEnterFullscreen?: unknown
   webkitPresentationMode?: string
   webkitSupportsPresentationMode?: (mode: string) => boolean
-}
-
-let translatedCount = 0
-
-/**
- * Count comment translate controls pressed. Reported rather than stored as a
- * statistic: it answers "did the toggle do anything on this page", which is a
- * question only a device dump can settle, and it is not an ad that was blocked.
- */
-export function noteTranslated(count: number): void {
-  translatedCount += count
 }
 
 export function reportDiagnostics(): void {
@@ -129,8 +109,6 @@ export function reportDiagnostics(): void {
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     inject: document.documentElement.getAttribute(INJECT_ATTR),
     captions: document.documentElement.getAttribute(CAPTIONS_ATTR),
-    translated: translatedCount,
-    translateFound: foundTranslateControls(),
     log: readLog(),
     userAgent: navigator.userAgent,
   }

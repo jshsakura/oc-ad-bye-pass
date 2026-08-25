@@ -18,7 +18,6 @@ export const TOGGLE_KEYS = [
   'popups',
   'pipButton',
   'autoCaptions',
-  'commentTranslate',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -73,9 +72,6 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   // Not a blocking layer either: picks the caption track in the UI language
   // (or auto-translation into it) once per video, then leaves the player alone.
   { key: 'autoCaptions' },
-  // Presses YouTube's own translate control on foreign-language comments.
-  // Nothing is read or sent anywhere; see src/isolated/comments.ts.
-  { key: 'commentTranslate' },
 ]
 
 export interface Settings {
@@ -185,8 +181,6 @@ export const DEFAULT_SETTINGS: Settings = {
     // Off: it changes what plays on screen, and unlike blocking there is no
     // harm in leaving it to opt in.
     autoCaptions: false,
-    // Off for the same reason: it presses a button on the reader's behalf.
-    commentTranslate: false,
   },
   listEnabled: true,
   lists: DEFAULT_LISTS,

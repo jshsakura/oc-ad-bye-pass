@@ -131,11 +131,6 @@ const M = {
     ko: '플레이어 오른쪽 아래에 버튼을 답니다 — 누르면 브라우저의 작은 화면이 열립니다',
     en: "Adds a button at the player's lower right — it opens the browser's floating window",
   },
-  'toggle.commentTranslate.label': { ko: '댓글 자동 번역', en: 'Auto-translate comments' },
-  'toggle.commentTranslate.hint': {
-    ko: '다른 언어로 쓰인 댓글의 유튜브 번역 버튼을 대신 눌러 줍니다. 번역은 유튜브가 하고, 댓글 내용이 밖으로 나가지 않습니다',
-    en: "Presses YouTube's own translate control on foreign-language comments. YouTube does the translating, and no comment text leaves the page",
-  },
   'toggle.autoCaptions.label': { ko: '현재 언어로 자막 자동 선택', en: 'Auto captions in your language' },
   'toggle.autoCaptions.hint': {
     ko: '외국어 영상일 때만 브라우저 언어의 자막을 고르고, 없으면 자동 번역을 켭니다. 내 언어 영상과 직접 바꾼 선택은 건드리지 않습니다',
