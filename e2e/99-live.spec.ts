@@ -259,4 +259,71 @@ test.describe('실제 유튜브 (E2E_LIVE=1 일 때만)', () => {
       await context.close()
     }
   })
+
+  /**
+   * Does YouTube even offer a translate control?
+   *
+   * The comment feature presses YouTube's own button and nothing else, so
+   * "댓글 번역이 안 된다" has two very different causes: the button is there and
+   * we fail to press it, or YouTube never renders one. The first is ours; the
+   * second is not, and no fixture can tell them apart because a fixture is a
+   * comment section we wrote.
+   *
+   * A probe, not a judgement. It reports what a real comment section holds and
+   * only fails if the page gave us nothing to look at at all — the result
+   * shifts with sign-in state, region and whichever experiment group YouTube
+   * puts this session in, and a red test on any of those teaches nothing.
+   */
+  test('실제 댓글에 번역 버튼이 있는지 본다 (관찰용)', async ({ context }) => {
+    const page = await context.newPage()
+    await page.goto(watchUrl(AD_VIDEOS[0]), { waitUntil: 'domcontentloaded', timeout: 60_000 })
+
+    // Comments load on scroll, and lazily. Nudge, then give them time.
+    for (let i = 0; i < 6; i++) {
+      await page.mouse.wheel(0, 1400)
+      await page.waitForTimeout(1200)
+    }
+
+    const seen = await page.evaluate(() => {
+      const comments = document.querySelectorAll(
+        'ytd-comment-view-model, ytd-comment-renderer, ytm-comment-renderer',
+      )
+      const pressable = [
+        ...document.querySelectorAll(
+          'ytd-comment-view-model button, ytd-comment-view-model [role="button"],' +
+            ' ytd-comment-renderer button, ytd-comment-renderer [role="button"]',
+        ),
+      ]
+      const labels = new Map<string, number>()
+      for (const el of pressable) {
+        const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30)
+        if (text) labels.set(text, (labels.get(text) ?? 0) + 1)
+      }
+      // Anything at all on the page that says "translate", not just inside a
+      // comment — so "we looked in the wrong place" and "it is not there" are
+      // told apart.
+      const anywhere: string[] = []
+      for (const el of document.querySelectorAll('button, [role="button"], a, tp-yt-paper-button')) {
+        const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ')
+        if (text && text.length < 40 && /번역|translate/i.test(text)) {
+          anywhere.push(`${el.tagName.toLowerCase()}#${el.id || '-'}: ${text}`)
+        }
+      }
+
+      return {
+        comments: comments.length,
+        pressable: pressable.length,
+        withTranslateId: document.querySelectorAll('#translate-button').length,
+        labels: [...labels.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14),
+        translateAnywhere: [...new Set(anywhere)].slice(0, 10),
+        signedIn: !!document.querySelector('#avatar-btn, ytd-topbar-menu-button-renderer #avatar-btn'),
+        // What our own sweep thinks it did, read back off the page.
+        marked: document.querySelectorAll('[data-oc-abp-translated]').length,
+      }
+    })
+
+    console.log('실제 댓글 관찰:', JSON.stringify(seen, null, 1))
+
+    expect(seen.comments, '댓글이 하나도 안 떴다 — 로그인/봇 판정 문제라 관찰 자체가 불가').toBeGreaterThan(0)
+  })
 })
