@@ -1,9 +1,9 @@
-// Refreshing the remote filter list. This is the only place in the whole extension that touches the network.
+// Refreshing the remote filter lists. This is the only place in the whole extension that touches the network.
 
-import { loadCache, saveCache, type FilterCache } from '../shared/cache.ts'
+import { loadCaches, saveCaches, type FilterCache, type FilterCaches } from '../shared/cache.ts'
 import { MAX_LIST_BYTES, parseFilterList } from '../shared/filterlist.ts'
-import type { FilterStatus } from '../shared/messages.ts'
-import { loadSettings } from '../shared/settings.ts'
+import type { FilterStatus, ListStatus } from '../shared/messages.ts'
+import { loadSettings, type Settings, type Subscription } from '../shared/settings.ts'
 
 const FETCH_TIMEOUT_MS = 10_000
 
@@ -20,15 +20,41 @@ const FETCH_TIMEOUT_MS = 10_000
  */
 const MIN_INTERVAL_MS = 10 * 60 * 1000
 
-function statusOf(cache: FilterCache | null, error: string | null): FilterStatus {
+function rowOf(sub: Subscription, cache: FilterCache | undefined, error: string | null): ListStatus {
   return {
-    ok: error === null,
+    url: sub.url,
+    name: cache?.list.name ?? null,
     version: cache?.list.version ?? null,
     fetchedAt: cache?.fetchedAt ?? null,
-    source: cache ? 'remote' : 'bundled',
     error,
     dropped: cache?.dropped ?? 0,
+    enabled: sub.enabled,
   }
+}
+
+/**
+ * Roll the rows up into the one-line answer.
+ *
+ * A disabled subscription is not a failure and not a source — it is simply not
+ * participating, so it contributes nothing here while still appearing as a row.
+ */
+function rollUp(rows: ListStatus[]): FilterStatus {
+  const live = rows.filter((row) => row.enabled)
+  const fetched = live.filter((row) => row.fetchedAt !== null)
+  return {
+    ok: live.every((row) => row.error === null),
+    version: fetched.length ? Math.max(...fetched.map((row) => row.version ?? 0)) : null,
+    fetchedAt: fetched.length ? Math.max(...fetched.map((row) => row.fetchedAt ?? 0)) : null,
+    source: fetched.length ? 'remote' : 'bundled',
+    error: live.find((row) => row.error !== null)?.error ?? null,
+    dropped: live.reduce((n, row) => n + row.dropped, 0),
+    lists: rows,
+  }
+}
+
+/** Every list switched off, or the master switch off: bundled rules and nothing else. */
+function bundledOnly(settings: Settings): FilterStatus {
+  return rollUp(settings.lists.map((sub) => rowOf({ ...sub, enabled: false }, undefined, null)))
 }
 
 /**
@@ -131,91 +157,125 @@ async function hasPermissionFor(url: string): Promise<boolean> {
   }
 }
 
-export async function updateFilters(force = false): Promise<FilterStatus> {
-  const settings = await loadSettings()
-  const cached = await loadCache()
-
-  if (!settings.listEnabled) {
-    return { ok: true, version: null, fetchedAt: null, source: 'bundled', error: null, dropped: 0 }
+/**
+ * Refresh one subscription. Returns the cache entry to keep for it.
+ *
+ * Never throws and never returns nothing: on any failure the previously cached
+ * list stays in place with the error recorded beside it. A list that cannot be
+ * refreshed is still a list that works.
+ */
+async function refreshOne(
+  sub: Subscription,
+  cached: FilterCache | undefined,
+  force: boolean,
+): Promise<{ cache: FilterCache | undefined; error: string | null }> {
+  if (!force && cached && Date.now() - cached.fetchedAt < MIN_INTERVAL_MS) {
+    return { cache: cached, error: cached.error }
   }
 
-  const sameUrl = cached?.url === settings.listUrl
-  if (!force && sameUrl && Date.now() - cached.fetchedAt < MIN_INTERVAL_MS) {
-    return statusOf(cached, cached.error)
+  if (!(await hasPermissionFor(sub.url))) {
+    return { cache: cached, error: '이 주소에 접근할 권한이 없습니다. 설정에서 권한을 허용해 주세요.' }
   }
-
-  if (!(await hasPermissionFor(settings.listUrl))) {
-    const error = '이 주소에 접근할 권한이 없습니다. 설정에서 권한을 허용해 주세요.'
-    return statusOf(sameUrl ? cached : null, error)
-  }
-
-  // Only replay the ETag for the same URL — a different URL is a different list.
-  const etag = sameUrl ? cached.etag : null
 
   let text: string
   let nextEtag: string | null = null
   try {
-    const response = await fetch(settings.listUrl, {
+    const response = await fetch(sub.url, {
       // no-store takes the browser HTTP cache out of the picture so **we** own
       // the conditional request. With no-cache the browser intercepts the 304
       // and fills in the body, leaving us unable to tell whether anything
       // actually changed.
       cache: 'no-store',
       redirect: 'follow',
-      headers: etag ? { 'If-None-Match': etag } : undefined,
+      headers: cached?.etag ? { 'If-None-Match': cached.etag } : undefined,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
 
     // Nothing changed. There is no body, so nothing to parse or validate —
     // just bump fetchedAt to restart the clock until the next check.
     if (response.status === 304 && cached) {
-      const touched: FilterCache = { ...cached, fetchedAt: Date.now(), error: null }
-      await saveCache(touched)
-      return statusOf(touched, null)
+      return { cache: { ...cached, fetchedAt: Date.now(), error: null }, error: null }
     }
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     nextEtag = response.headers.get('etag')
     text = await readCapped(response, MAX_LIST_BYTES)
   } catch (e) {
-    // A failed fetch still leaves the existing cache doing its job
     const error = `가져오기 실패: ${(e as Error).message}`
-    if (sameUrl && cached) await saveCache({ ...cached, error })
-    return statusOf(sameUrl ? cached : null, error)
+    return { cache: cached ? { ...cached, error } : undefined, error }
   }
 
-  // Don't compare against the old version when the URL changed — it may be a different list
-  const result = parseFilterList(text, {
-    minVersion: sameUrl ? cached.list.version : undefined,
-  })
-
+  const result = parseFilterList(text, { minVersion: cached?.list.version })
   if (!result.ok) {
     const error = `검증 실패: ${result.error}`
-    if (sameUrl && cached) await saveCache({ ...cached, error })
-    return statusOf(sameUrl ? cached : null, error)
+    return { cache: cached ? { ...cached, error } : undefined, error }
   }
 
-  const next: FilterCache = {
-    url: settings.listUrl,
-    fetchedAt: Date.now(),
-    list: result.list,
-    dropped: result.dropped.length,
-    error: null,
-    etag: nextEtag,
-  }
-  await saveCache(next)
   if (result.dropped.length) {
-    console.warn('[oc-ad-bye-pass] 규칙 일부를 걸러냈습니다:', result.dropped)
+    console.warn(`[oc-ad-bye-pass] ${sub.url} 규칙 일부를 걸러냈습니다:`, result.dropped)
   }
-  return statusOf(next, null)
+
+  return {
+    cache: {
+      url: sub.url,
+      fetchedAt: Date.now(),
+      list: result.list,
+      dropped: result.dropped.length,
+      error: null,
+      etag: nextEtag,
+    },
+    error: null,
+  }
+}
+
+/**
+ * Refresh every enabled subscription.
+ *
+ * **Sequentially, not in parallel.** There are at most `MAX_LISTS` of them and
+ * each usually ends at a 304, so the wall-clock difference is nothing; what
+ * parallel would cost is a service worker holding several capped stream reads
+ * at once, on a phone, for a job nobody is waiting on.
+ *
+ * One list failing never touches another: each keeps its own cache entry and
+ * its own error, and the stylesheet is rebuilt from whatever is present.
+ */
+export async function updateFilters(force = false): Promise<FilterStatus> {
+  const settings = await loadSettings()
+  if (!settings.listEnabled) return bundledOnly(settings)
+
+  const caches = await loadCaches()
+  const next: FilterCaches = {}
+  const rows: ListStatus[] = []
+  let changed = false
+
+  for (const sub of settings.lists) {
+    if (!sub.enabled) {
+      // Keep the cache. Switching a list off is not the same as dropping it,
+      // and re-fetching a corpus because somebody toggled twice is wasteful.
+      if (caches[sub.url]) next[sub.url] = caches[sub.url]
+      rows.push(rowOf(sub, caches[sub.url], null))
+      continue
+    }
+    const { cache, error } = await refreshOne(sub, caches[sub.url], force)
+    if (cache) next[sub.url] = cache
+    if (cache !== caches[sub.url]) changed = true
+    rows.push(rowOf(sub, cache, error))
+  }
+
+  // A subscription that was removed leaves its cache behind; this is where it
+  // goes. Comparing keys rather than always writing keeps the storage listener
+  // — and therefore every content script's recompute — quiet when nothing moved.
+  if (Object.keys(next).length !== Object.keys(caches).length) changed = true
+  if (changed) await saveCaches(next)
+
+  return rollUp(rows)
 }
 
 export async function currentStatus(): Promise<FilterStatus> {
   const settings = await loadSettings()
-  if (!settings.listEnabled) {
-    return { ok: true, version: null, fetchedAt: null, source: 'bundled', error: null, dropped: 0 }
-  }
-  const cached = await loadCache()
-  if (!cached || cached.url !== settings.listUrl) return statusOf(null, null)
-  return statusOf(cached, cached.error)
+  if (!settings.listEnabled) return bundledOnly(settings)
+  const caches = await loadCaches()
+  return rollUp(
+    settings.lists.map((sub) => rowOf(sub, caches[sub.url], caches[sub.url]?.error ?? null)),
+  )
 }

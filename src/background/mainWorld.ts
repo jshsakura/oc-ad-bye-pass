@@ -24,6 +24,24 @@
 // If registration fails, isolated/injectMain.ts picks it up with a <script src> fallback.
 
 const SCRIPT_ID = 'oc-ad-bye-pass-main'
+
+/**
+ * The video site only, even though main.js now loads everywhere.
+ *
+ * Widening this looks like the better path — a registered MAIN script beats the
+ * `<script src>` fallback the pop-up guard otherwise takes on WebKit — but it
+ * risks the one thing that must not break. `registerContentScripts` throws when
+ * the matches exceed the granted host permissions, and this extension asks for
+ * every https origin optionally rather than up front. A widened registration that
+ * throws does not fall back to a narrower one: it takes the video site's
+ * registration down with it, and layer 1 drops to the injection fallback that
+ * can miss the first pre-roll.
+ *
+ * So the guaranteed-grantable set stays, and away from the video site the
+ * fallback in isolated/injectMain.ts does the work. It is late — after the
+ * parser rather than before it — which is fatal for a response hook and merely
+ * imperfect for a window that opens on interaction.
+ */
 const MATCHES = ['*://*.youtube.com/*', '*://*.youtube-nocookie.com/*']
 
 export async function ensureMainWorldScript(): Promise<void> {

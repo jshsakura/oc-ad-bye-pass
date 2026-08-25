@@ -13,7 +13,7 @@
 
 import { log } from '../shared/log.ts'
 import { buildStylesheet, resolveRules, type ResolvedRules } from '../shared/filterlist.ts'
-import { loadCache, watchCache, type FilterCache } from '../shared/cache.ts'
+import { listsFrom, loadCaches, watchCaches, type FilterCaches } from '../shared/cache.ts'
 import {
   DEFAULT_SETTINGS,
   loadSettings,
@@ -29,18 +29,21 @@ import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
+  listenForBlockedPopups,
   listenForPruneReports,
   requestFreshFilters,
   sendConfigToMain,
 } from './bridge.ts'
 import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
 import { injectMainWorldFallback } from './injectMain.ts'
+import { startPicker, stopPicker } from './picker.ts'
+import { PICKER_KEY, PICKER_TTL_MS, type PickerRequest } from '../shared/messages.ts'
 
 const SITE: SiteKind = siteKindFor(location.hostname)
 const IS_YOUTUBE = SITE === 'youtube'
 
 let settings: Settings = DEFAULT_SETTINGS
-let rules: ResolvedRules = resolveRules(null, [])
+let rules: ResolvedRules = resolveRules([], [])
 /** Set once the user's allowlist is known. Until then we act, per the block-first rule. */
 let standDown = false
 
@@ -65,13 +68,20 @@ function detach() {
     sweepTimer = null
   }
   disablePictureInPicture()
-  // Layer 1 lives in the other world and cannot be unloaded, so it is told to stand down.
-  if (IS_YOUTUBE) {
-    sendConfigToMain({ enabled: false, videoAds: false, autoCaptions: false, prunePaths: rules.prune })
-  }
+  stopPicker()
+  // The MAIN world cannot be unloaded, so it is told to stand down instead.
+  // Sent on every site, not just the video one: the pop-up guard lives there
+  // too now, and a site the user switched off has to get its windows back.
+  sendConfigToMain({
+    enabled: false,
+    videoAds: false,
+    autoCaptions: false,
+    prunePaths: rules.prune,
+    popups: false,
+  })
 }
 
-function recompute(cache: FilterCache | null) {
+function recompute(caches: FilterCaches) {
   standDown = isAllowlisted(location.hostname, settings.allowlist)
   const active = settings.enabled && !standDown
 
@@ -82,17 +92,34 @@ function recompute(cache: FilterCache | null) {
 
   attachObservers()
 
-  const remote = settings.listEnabled && cache?.url === settings.listUrl ? cache.list : null
-  rules = resolveRules(remote, parseCustomRules(settings.customRules))
+  const remotes = settings.listEnabled
+    ? listsFrom(
+        caches,
+        settings.lists.filter((sub) => sub.enabled).map((sub) => sub.url),
+      )
+    : []
+  rules = resolveRules(remotes, parseCustomRules(settings.customRules))
   applyStylesheet(buildStylesheet(rules, settings.toggles, SITE, location.hostname, settings.lang))
 
+  sendConfigToMain({
+    enabled: true,
+    videoAds: settings.toggles.videoAds,
+    autoCaptions: settings.toggles.autoCaptions,
+    prunePaths: rules.prune,
+    popups: settings.toggles.popups,
+  })
+
+  // Away from the video site the MAIN world is only wanted for the pop-up
+  // guard, so the injection fallback waits until the settings say it is on.
+  // On the video site it cannot wait — a hook installed after the first parse
+  // is a hook that missed the pre-roll — which is why that call is in `start`.
+  //
+  // On Chrome this costs nothing either way: the registered MAIN script has
+  // already run and the fallback returns immediately. It is WebKit, where
+  // `world: "MAIN"` is ignored, that actually injects here.
+  if (!IS_YOUTUBE && settings.toggles.popups) injectMainWorldFallback()
+
   if (IS_YOUTUBE) {
-    sendConfigToMain({
-      enabled: true,
-      videoAds: settings.toggles.videoAds,
-      autoCaptions: settings.toggles.autoCaptions,
-      prunePaths: rules.prune,
-    })
     // The smart app banner comes from a <meta> tag, beyond the reach of a stylesheet.
     if (settings.toggles.appPromo) watchAppBannerHints(onBannerRemoved)
     else stopWatchingAppBannerHints()
@@ -114,9 +141,9 @@ function recompute(cache: FilterCache | null) {
 }
 
 async function refresh() {
-  const [nextSettings, cache] = await Promise.all([loadSettings(), loadCache()])
+  const [nextSettings, caches] = await Promise.all([loadSettings(), loadCaches()])
   settings = nextSettings
-  recompute(cache)
+  recompute(caches)
 }
 
 // --- Watching the DOM ----------------------------------------------------------
@@ -206,11 +233,29 @@ function start() {
     listenForPruneReports((count) => bumpStats({ pruned: count }))
   }
 
+  // A refused window is an ad that never loaded, so it counts where the others
+  // do. Listened for on every site, because that is where pop-unders are.
+  listenForBlockedPopups((count) => bumpStats({ skipped: count }))
+
+  // The popup asks for the picker by writing a key; see PickerRequest.
+  //
+  // Only the top document answers. Every frame on the page runs this listener,
+  // and a picker opening inside an ad iframe as well as on the page is two
+  // overlays fighting over the same clicks.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes[PICKER_KEY] || window.top !== window) return
+    const request = changes[PICKER_KEY].newValue as PickerRequest | undefined
+    if (!request || request.url !== location.href) return
+    if (Date.now() - request.at > PICKER_TTL_MS) return
+    if (!settings.enabled || standDown) return
+    startPicker(settings.lang)
+  })
+
   watchSettings((next) => {
     settings = next
-    void loadCache().then(recompute)
+    void loadCaches().then(recompute)
   })
-  watchCache(recompute)
+  watchCaches(recompute)
 
   void refresh()
 }

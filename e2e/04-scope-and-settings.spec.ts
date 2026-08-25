@@ -173,7 +173,7 @@ test.describe('원격 필터 리스트', () => {
           },
         })
       },
-      { url: DEFAULT_SETTINGS.listUrl },
+      { url: DEFAULT_SETTINGS.lists[0].url },
     )
 
     await expect(page.locator('#normal-card'), '원격 규칙이 반영돼야 한다').toBeHidden()

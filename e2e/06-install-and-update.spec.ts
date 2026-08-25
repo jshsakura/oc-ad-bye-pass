@@ -130,17 +130,24 @@ async function serviceWorker(context: BrowserContext) {
   return context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'))
 }
 
+/**
+ * The default list's cache entry.
+ *
+ * `filterCache` is keyed by URL since subscriptions landed — one entry per
+ * subscribed list rather than one list. These tests are all about the default
+ * one, so they read it by name.
+ */
 async function readCache(context: BrowserContext) {
   const worker = await serviceWorker(context)
-  return worker.evaluate(async () => {
+  return worker.evaluate(async (url) => {
     const got = await chrome.storage.local.get('filterCache')
-    const cache = got.filterCache as
-      | { url: string; list: { version: number }; error: string | null }
-      | undefined
-    return cache
-      ? { url: cache.url, version: cache.list.version, error: cache.error }
-      : null
-  })
+    const caches = (got.filterCache ?? {}) as Record<
+      string,
+      { url: string; list: { version: number }; error: string | null }
+    >
+    const cache = caches[url]
+    return cache ? { url: cache.url, version: cache.list.version, error: cache.error } : null
+  }, LIST_URL)
 }
 
 /**
@@ -202,10 +209,10 @@ test.describe('설치 이후 원격 갱신', () => {
     await options.goto(`chrome-extension://${extensionId}/options.html`)
     await clickUpdateButton(options)
 
-    // The options status table updates (scoped to the dl so it does not collide with the toggle label)
+    // The rolled-up source line, and the version on the subscription's own row.
     const statusTable = options.locator('dl.kv')
     await expect(statusTable.getByText('원격 리스트', { exact: true })).toBeVisible()
-    await expect(statusTable.getByText('100', { exact: true })).toBeVisible()
+    await expect(options.locator('.subs .sub-meta').first()).toContainText('v100')
 
     // The validated list lands in the cache…
     await expect.poll(async () => (await readCache(context))?.version).toBe(100)
@@ -275,6 +282,18 @@ test.describe('설치 이후 원격 갱신', () => {
           status: 200,
           contentType: 'application/json; charset=utf-8',
           body: JSON.stringify({ version: '0.0.0' }),
+        })
+        return
+      }
+
+      // The annoyance list is the second default subscription and lives on the
+      // same host. It is served but never counted: this test is about whether
+      // *one* list re-fetches a body it already has.
+      if (route.request().url().endsWith('annoyances.json')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json; charset=utf-8',
+          body: JSON.stringify(remoteList({ version: 1, hide: [] })),
         })
         return
       }

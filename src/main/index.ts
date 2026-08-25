@@ -1,8 +1,10 @@
 // Layer 1 entry point — MAIN world, document_start.
 // The hooks must be in place before a single line of YouTube's script runs.
 
-import { INSTALLED_ATTR } from '../shared/messages.ts'
+import { INSTALLED_ATTR, isBridgeMessage } from '../shared/messages.ts'
 import { installHooks } from './hooks.ts'
+import { installPopupGuard, setPopupBlocking } from './popups.ts'
+import { siteKindFor } from '../shared/sites.ts'
 
 const FLAG = '__ocAdByePassInstalled'
 
@@ -48,8 +50,29 @@ if (!inPageWorld()) {
   // registration and the <script> injection succeed, the hooks install once
   // (installing twice would double-count pruning and double-wrap natives).
   window[FLAG] = true
-  installHooks()
-  // Tell the ISOLATED world that layer 1 is live. At document_start there may
-  // be no <head> yet, but documentElement already exists.
+
+  // The pop-up guard runs everywhere; the response hooks do not.
+  //
+  // Wrapping JSON.parse on a bank's website buys nothing and risks everything,
+  // and that asymmetry is why this file used to load on the video site alone.
+  // Pop-unders are the whole web, though, so the file loads everywhere now and
+  // the split moved in here — which keeps the promise the old arrangement made
+  // by construction: away from the video site nothing native is touched except
+  // the one function that opens windows.
+  installPopupGuard()
+  if (siteKindFor(location.hostname) === 'youtube') installHooks()
+
+  // The hooks keep their own copy of the config, but they are not installed
+  // away from the video site — and the guard has to hear about the switch
+  // everywhere. One more listener is cheaper than threading the config through
+  // a module that does not run here.
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return
+    if (!isBridgeMessage(event.data) || event.data.type !== 'config') return
+    setPopupBlocking(event.data.config.enabled && event.data.config.popups)
+  })
+
+  // Tell the ISOLATED world we reached the page's world. At document_start
+  // there may be no <head> yet, but documentElement already exists.
   document.documentElement?.setAttribute(INSTALLED_ATTR, '1')
 }

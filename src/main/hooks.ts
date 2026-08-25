@@ -35,6 +35,10 @@ const config: MainConfig = {
   // plays on screen, so it stays off until the settings say otherwise.
   autoCaptions: false,
   prunePaths: BUNDLED_PRUNE,
+  // Owned by src/main/popups.ts, which keeps its own copy and its own listener
+  // because it also runs where these hooks do not. Carried here so the shape is
+  // one object rather than two half-configs on the same channel.
+  popups: true,
 }
 
 const isActive = () => config.enabled && config.videoAds

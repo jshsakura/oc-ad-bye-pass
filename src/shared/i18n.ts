@@ -68,6 +68,8 @@ const M = {
   'popup.blocked.exempt': { ko: '이 사이트 예외처리 (끄기)', en: 'Turn off for this site' },
   'popup.blocked.unexempt': { ko: '예외 해제 (다시 켜기)', en: 'Re-enable on this site' },
   'popup.blocked.close': { ko: '닫기', en: 'Close' },
+  'popup.blocked.cookies': { ko: '쿠키 동의창 숨김', en: 'Cookie notices hidden' },
+  'popup.blocked.popups': { ko: '누르지 않은 팝업 차단', en: 'Unasked-for pop-ups blocked' },
   'popup.blocked.hint': {
     ko: '사이트가 깨지면 여기서 이 사이트만 꺼 두세요.',
     en: 'If a site breaks, switch it off here for that site only.',
@@ -113,6 +115,16 @@ const M = {
   'toggle.genericAds.hint': {
     ko: '영상 사이트 밖에서도 광고 자리를 숨깁니다',
     en: 'Hides ad slots away from video sites too',
+  },
+  'toggle.cookieBanners.label': { ko: '쿠키 동의창 숨김', en: 'Hide cookie notices' },
+  'toggle.cookieBanners.hint': {
+    ko: '쿠키 동의 배너와 함께 뜨는 구독·앱 설치 유도창을 숨깁니다. 배너를 눌러야만 넘어가는 사이트에서는 꺼 주세요',
+    en: 'Hides cookie consent walls and the newsletter or app-install nags that come with them. Turn it off on sites that only continue once the banner is answered',
+  },
+  'toggle.popups.label': { ko: '팝업·팝언더 차단', en: 'Block pop-ups' },
+  'toggle.popups.hint': {
+    ko: '누르지도 않았는데 열리는 새 창만 막습니다. 직접 누른 링크는 그대로 열립니다',
+    en: 'Blocks windows that open without you touching anything. A link you actually clicked still opens',
   },
   'toggle.pipButton.label': { ko: '작은 화면(PiP) 버튼', en: 'Picture-in-picture button' },
   'toggle.pipButton.hint': {
@@ -180,10 +192,23 @@ const M = {
     en: 'Off = only the built-in rules',
   },
   'opt.list.url': { ko: '리스트 주소', en: 'List URL' },
+  'opt.list.add': { ko: '리스트 추가', en: 'Add a list' },
+  'opt.list.addBtn': { ko: '추가하고 갱신', en: 'Add & refresh' },
+  'opt.list.remove': { ko: '이 리스트 제거', en: 'Remove this list' },
+  'opt.list.none': {
+    ko: '구독한 리스트가 없습니다. 확장에 내장된 규칙만 씁니다.',
+    en: 'No lists subscribed — the built-in rules are all that apply.',
+  },
+  'opt.list.subMeta': { ko: 'v{v} · {when}', en: 'v{v} · {when}' },
+  'opt.list.subNever': { ko: '아직 받지 않음', en: 'Not fetched yet' },
+  'opt.list.full': {
+    ko: '리스트는 {n}개까지 넣을 수 있습니다.',
+    en: 'Up to {n} lists.',
+  },
   'opt.list.savePerm': { ko: '권한 허용하고 저장', en: 'Grant permission & save' },
   'opt.list.save': { ko: '저장하고 갱신', en: 'Save & refresh' },
   'opt.list.updateNow': { ko: '지금 업데이트', en: 'Update now' },
-  'opt.list.default': { ko: '기본값으로', en: 'Reset to default' },
+  'opt.list.default': { ko: '기본 목록으로', en: 'Reset to defaults' },
   'opt.list.notGithub': {
     ko: 'GitHub 이 아닌 주소입니다. 리스트 제공자는 보고 있는 화면의 요소를 숨길 수 있으니 믿을 수 있는 곳만 쓰세요.',
     en: "This is not a GitHub address. A list provider can hide elements on the pages you view, so use only sources you trust.",
@@ -196,6 +221,10 @@ const M = {
   'opt.list.dropped': { ko: '걸러낸 규칙', en: 'Dropped rules' },
   'opt.list.droppedVal': { ko: '{n}개 (안전 검사 불통과)', en: '{n} (failed safety check)' },
   'opt.err.badUrl': { ko: '올바른 주소가 아닙니다.', en: 'Not a valid URL.' },
+  'opt.err.dupList': {
+    ko: '이미 들어 있는 주소입니다.',
+    en: "That list is already in the list.",
+  },
   'opt.err.noPerm': {
     ko: '이 주소를 쓸 권한을 얻지 못했습니다. 브라우저가 권한 요청을 지원하지 않는 경우도 있습니다 — 기본 주소나 jshsakura.github.io 주소는 권한 없이 바로 됩니다.',
     en: "Couldn't get permission for this address. Some browsers don't support permission requests — the default address and jshsakura.github.io work without one.",
@@ -207,8 +236,8 @@ const M = {
     en: 'One CSS selector per line. What you put here always applies and is never overwritten by a remote update.',
   },
   'opt.rules.desc.b': {
-    ko: '로 시작하는 줄은 주석입니다. 안 사라지는 광고를 직접 찍어 넣는 곳입니다 (개발자도구에서 요소 선택 → Copy selector).',
-    en: 'A line starting with it is a comment. This is where you point at an ad that will not go away (DevTools → select element → Copy selector).',
+    ko: '로 시작하는 줄은 주석입니다. 안 사라지는 광고를 직접 찍어 넣는 곳입니다. 셀렉터를 직접 쓰는 대신 팝업의 "요소 고르기" 로 눌러서 넣을 수도 있습니다.',
+    en: 'A line starting with it is a comment. This is where you point at an ad that will not go away — or use "Pick an element" in the popup and tap it instead of writing the selector.',
   },
   'opt.rules.save': { ko: '저장', en: 'Save' },
   'opt.rules.bad': { ko: '쓸 수 없는 셀렉터 {n}개: {list}', en: '{n} unusable selectors: {list}' },
@@ -227,6 +256,26 @@ const M = {
   'opt.siteOff.reenable': { ko: '다시 켜기', en: 'Re-enable' },
   'opt.siteOff.add': { ko: '추가', en: 'Add' },
 
+  'opt.backup': { ko: '설정 백업', en: 'Back up settings' },
+  'opt.backup.desc': {
+    ko: '예외 사이트 목록과 내 규칙처럼 직접 적어 넣은 것들을 파일 하나로 빼 둘 수 있습니다. 아이폰(Orion)은 업데이트가 삭제 후 재설치라 그때마다 설정이 날아가는데, 이 파일을 다시 넣으면 그대로 돌아옵니다. 통계와 받아 둔 리스트는 들어가지 않습니다.',
+    en: 'Puts everything you typed in yourself — the per-site exceptions, your own rules — into one file. On iPhone (Orion) an update means delete and reinstall, which takes the settings with it; this file brings them back. Statistics and downloaded lists are not included.',
+  },
+  'opt.backup.export': { ko: '파일로 내보내기', en: 'Save to a file' },
+  'opt.backup.copy': { ko: '복사', en: 'Copy' },
+  'opt.backup.copied': { ko: '설정을 복사했습니다.', en: 'Settings copied.' },
+  'opt.backup.copyFail': {
+    ko: '복사하지 못했습니다. 아래 붙여넣기 칸을 쓰세요.',
+    en: "Couldn't copy — use the paste box below.",
+  },
+  'opt.backup.exported': { ko: '설정 파일을 내려받았습니다.', en: 'Settings file downloaded.' },
+  'opt.backup.importFile': { ko: '파일에서 가져오기', en: 'Load from a file' },
+  'opt.backup.paste': { ko: '또는 내보낸 내용을 붙여넣기', en: 'Or paste an exported file' },
+  'opt.backup.importPaste': { ko: '붙여넣은 설정 적용', en: 'Apply pasted settings' },
+  'opt.backup.imported': {
+    ko: '설정을 가져왔습니다. 지금 설정을 전부 덮어썼습니다.',
+    en: 'Settings imported — everything here was replaced.',
+  },
   'opt.stats': { ko: '통계', en: 'Statistics' },
   'opt.stats.desc': {
     ko: '팝업에 표시되는 누적 차단 수입니다. 아이콘 배지에는 지금 보고 있는 탭에서 막은 광고 수가 실시간으로 뜹니다.',
@@ -237,6 +286,30 @@ const M = {
 
   'opt.foot.source': { ko: '소스 코드 · 문제 신고', en: 'Source code · report an issue' },
   'opt.foot.sourceLink': { ko: 'GitHub 에서 보기', en: 'View on GitHub' },
+
+  // — element picker —
+  'picker.hint': {
+    ko: '숨기고 싶은 것을 누르세요. 방향키로 범위를 넓히거나 좁히고, Enter 로 추가, Esc 로 취소합니다.',
+    en: 'Tap what you want gone. Arrow keys widen or narrow, Enter adds it, Esc cancels.',
+  },
+  'picker.matches': { ko: '이 페이지에서 {n}개와 일치', en: 'matches {n} on this page' },
+  'picker.noSelector': {
+    ko: '이 요소는 규칙으로 만들 수 없습니다. 조금 넓혀 보세요.',
+    en: 'No stable rule for this element. Try widening it.',
+  },
+  'picker.wider': { ko: '넓게', en: 'Wider' },
+  'picker.narrower': { ko: '좁게', en: 'Narrower' },
+  'picker.save': { ko: '내 규칙에 추가', en: 'Add to my rules' },
+  'picker.cancel': { ko: '취소', en: 'Cancel' },
+  'picker.full': {
+    ko: '내 규칙이 가득 찼습니다. 설정에서 정리해 주세요.',
+    en: 'Your rules are full — prune them in settings.',
+  },
+  'popup.foot.pick': { ko: '요소 고르기', en: 'Pick an element' },
+  'popup.pick.cannot': {
+    ko: '이 페이지에서는 요소를 고를 수 없습니다.',
+    en: "Can't pick on this page.",
+  },
 
   // — relative time (format.ts) —
   'time.never': { ko: '아직 없음', en: 'never' },

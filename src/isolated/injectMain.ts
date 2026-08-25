@@ -39,9 +39,21 @@ function mark(state: InjectState): void {
   reportDiagnostics()
 }
 
+/**
+ * Injected once per document.
+ *
+ * Away from the video site this is called from `recompute`, which runs again on
+ * every settings change and every filter-cache write. Without this the marker
+ * check is not enough: an injection already in flight has not set the attribute
+ * yet, so a second call inserts a second copy of the script.
+ */
+let attempted = false
+
 export function injectMainWorldFallback(): void {
-  // Nothing to do if the normal route already installed the hooks.
+  if (attempted) return
+  // Nothing to do if the normal route already reached the page's world.
   if (document.documentElement?.hasAttribute(INSTALLED_ATTR)) return mark('not-needed')
+  attempted = true
 
   // Not yet installed does not mean it failed — content script execution order
   // is not guaranteed, so MAIN may simply run after us. We inject anyway rather

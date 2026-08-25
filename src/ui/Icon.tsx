@@ -26,6 +26,7 @@ export type IconName =
   | 'close'
   | 'copy'
   | 'external'
+  | 'target'
 
 const PATHS: Record<IconName, string> = {
   version: 'M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Z',
@@ -46,6 +47,7 @@ const PATHS: Record<IconName, string> = {
   close: 'M18 6 6 18M6 6l12 12',
   copy: 'M9 9h12v12H9zM5 15V5a2 2 0 0 1 2-2h10',
   external: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3',
+  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12 2v3M12 19v3M2 12h3M19 12h3',
 }
 
 interface Props {

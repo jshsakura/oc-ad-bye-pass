@@ -751,10 +751,18 @@
       <dd>재생 전과 중간에 붙는 광고를 <strong>영상 데이터에서 미리 걷어냅니다.</strong> 플레이어가 광고를 아예 받지 않기 때문에, 건너뛸 것도 남지 않습니다.</dd>
       <dt>다른 사이트</dt>
       <dd>알려진 광고·추적 도메인으로 나가는 요청을 차단하고, 남은 광고 자리는 보이지 않게 숨깁니다.</dd>
+      <dt>쿠키 동의창</dt>
+      <dd>사이트마다 뜨는 쿠키 동의 배너와 거기 딸려오는 구독·앱 설치 유도창을 숨깁니다. 배너를 눌러야만 넘어가는 사이트가 있어서 따로 끌 수 있게 해 뒀습니다.</dd>
+      <dt>팝업·팝언더</dt>
+      <dd>누르지도 않은 것에서 열리는 새 창을 막습니다. <strong>직접 누른 링크와 버튼은 그대로 열립니다</strong> — 막는 것은 링크도 버튼도 아닌 곳을 누른 것을 창으로 바꾸는 경우뿐입니다.</dd>
+      <dt>안 막히는 게 있으면 직접</dt>
+      <dd>확장 아이콘 → <strong>요소 고르기</strong>를 누르고 화면에서 그것을 누르면 규칙이 됩니다. 개발자도구를 열 필요가 없습니다.</dd>
       <dt>사이트별 끄기</dt>
       <dd>화면이 깨지는 사이트가 있으면 확장 아이콘을 눌러 <strong>그 사이트만</strong> 끄실 수 있습니다. 하위 도메인도 함께 꺼집니다.</dd>
       <dt>규칙 자동 갱신</dt>
       <dd>차단 규칙은 확장과 따로 관리합니다. 사이트가 화면을 바꿔도 <strong>다시 설치하실 필요가 없습니다.</strong></dd>
+      <dt>설정 백업</dt>
+      <dd>예외 사이트 목록과 직접 넣은 규칙을 파일 하나로 빼 두고 다시 넣을 수 있습니다. 아이폰(Orion)은 업데이트가 삭제 후 재설치라 그때마다 설정이 날아가는데, 그때 쓰시면 됩니다.</dd>
       <dt>작은 화면(PiP) 버튼</dt>
       <dd>모바일 웹 플레이어에는 작은 화면 버튼이 없습니다. 그 버튼 하나를 플레이어 오른쪽
         아래에 답니다 — 누르면 브라우저의 작은 화면(그림 속 그림)이 열립니다. 그게 전부입니다.<br>
@@ -770,10 +778,18 @@
       <dd>Ads before and during a video are <strong>cut out of the response.</strong> The player never receives them, so there is nothing left to skip.</dd>
       <dt>Everywhere else</dt>
       <dd>Requests to known ad and tracking domains are blocked, and the leftover ad slots are hidden.</dd>
+      <dt>Cookie notices</dt>
+      <dd>Consent walls, and the newsletter and app-install nags that travel with them, are hidden. Some sites only continue once the banner is answered, so this one has its own switch.</dd>
+      <dt>Pop-ups and pop-unders</dt>
+      <dd>Windows that open out of nothing you pressed are refused. <strong>Links and buttons you actually clicked still open</strong> — what gets stopped is a press on something that is neither being turned into a window.</dd>
+      <dt>Point at what it missed</dt>
+      <dd>Click the icon, choose <strong>Pick an element</strong>, and tap the thing on the page. That becomes a rule. No DevTools.</dd>
       <dt>Off switch per site</dt>
       <dd>If a page breaks, click the icon and turn it off <strong>for that site only</strong> — subdomains included.</dd>
       <dt>Rules update themselves</dt>
       <dd>The blocking rules live apart from the extension. When a site changes its markup, the rules follow <strong>without a reinstall</strong>.</dd>
+      <dt>Settings back up to a file</dt>
+      <dd>Your per-site exceptions and your own rules save to one file and load back from it. On iPhone (Orion) an update means delete and reinstall, which takes them with it — this is for that.</dd>
       <dt>Picture-in-picture button</dt>
       <dd>The mobile web player ships no PiP control. This adds one, in the player's
         bottom-right corner — tap it and the browser's own picture-in-picture opens. That is

@@ -3,9 +3,15 @@ import { isSafeSelector } from '../shared/filterlist.ts'
 import type { FilterStatus, RuntimeRequest } from '../shared/messages.ts'
 import {
   DEFAULT_LIST_URL,
+  DEFAULT_LISTS,
   DEFAULT_SETTINGS,
+  MAX_LISTS,
   STATS_KEY,
+  backupFilename,
+  exportSettings,
+  isListUrl,
   loadSettings,
+  parseBackup,
   parseCustomRules,
   saveSettings,
   type Settings,
@@ -25,6 +31,21 @@ import { formatWhen } from '../ui/format.ts'
 import { LANGS, LANG_LABEL, makeT } from '../shared/i18n.ts'
 
 const GRANTED_BY_DEFAULT = ['https://raw.githubusercontent.com', 'https://gist.githubusercontent.com']
+
+/**
+ * A list URL as a person reads it. The host plus the filename is what
+ * distinguishes two subscriptions; the path between them never does, and at the
+ * width of this panel it pushes the part that matters off the end.
+ */
+function shortUrl(url: string): string {
+  try {
+    const { hostname, pathname } = new URL(url)
+    const file = pathname.split('/').filter(Boolean).pop()
+    return file ? `${hostname}/${file}` : hostname
+  } catch {
+    return url
+  }
+}
 
 function originOf(url: string): string | null {
   try {
@@ -64,6 +85,8 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
   const [hostDraft, setHostDraft] = useState('')
+  const [backupDraft, setBackupDraft] = useState('')
+  const [backupNote, setBackupNote] = useState<string | null>(null)
 
   const t = useMemo(() => makeT(settings.lang), [settings.lang])
 
@@ -80,7 +103,6 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
   useEffect(() => {
     void loadSettings().then((s) => {
       setSettings(s)
-      setUrlDraft(s.listUrl)
       setRulesDraft(s.customRules)
     })
     void ask({ type: 'filters:status' }).then(setStatus)
@@ -98,6 +120,40 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
     setSettings(await saveSettings(patch))
   }
 
+  /**
+   * Replace every setting with what the file holds.
+   *
+   * `saveSettings` merges a patch over what is stored, so handing it the whole
+   * object is what makes this a restore rather than an overlay — a list the
+   * backup does not have would otherwise survive the import and leave the user
+   * with a state that was never in either place.
+   */
+  const applyBackup = async (text: string) => {
+    const parsed = parseBackup(text)
+    if (!parsed.ok) {
+      setBackupNote(parsed.error)
+      return
+    }
+    await persist(parsed.settings)
+    setRulesDraft(parsed.settings.customRules)
+    setBackupDraft('')
+    setBackupNote(t('opt.backup.imported'))
+    setStatus(await ask({ type: 'filters:update', force: true }))
+  }
+
+  const download = () => {
+    const version = chrome.runtime.getManifest().version
+    const blob = new Blob([exportSettings(settings, version)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = backupFilename(version)
+    a.click()
+    // Same task is too early on WebKit — the click is queued, not done.
+    setTimeout(() => URL.revokeObjectURL(url), 10_000)
+    setBackupNote(t('opt.backup.exported'))
+  }
+
   const addHost = () => {
     const host = normalizeHost(hostDraft.trim().replace(/^https?:\/\//, '').split('/')[0])
     if (!host) return
@@ -105,9 +161,14 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
     void persist({ allowlist: [...new Set([...settings.allowlist, host])].sort() })
   }
 
-  const saveUrl = async () => {
-    if (!urlOrigin) {
+  const addList = async () => {
+    const url = urlDraft.trim()
+    if (!urlOrigin || !isListUrl(url)) {
       setNote(t('opt.err.badUrl'))
+      return
+    }
+    if (settings.lists.some((sub) => sub.url === url)) {
+      setNote(t('opt.err.dupList'))
       return
     }
     setBusy(true)
@@ -120,7 +181,8 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           return
         }
       }
-      await persist({ listUrl: urlDraft })
+      await persist({ lists: [...settings.lists, { url, enabled: true }] })
+      setUrlDraft('')
       setStatus(await ask({ type: 'filters:update', force: true }))
     } finally {
       setBusy(false)
@@ -280,8 +342,58 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           />
         </div>
 
-        <label className="field" htmlFor="listUrl">
-          {t('opt.list.url')}
+        {/* One row per subscription. The switch is the common action by far —
+            somebody wants the cookie rules off, not gone — so removal sits
+            behind the smaller control and the URL stays either way. */}
+        <ul className="subs">
+          {settings.lists.map((sub) => {
+            const row = status?.lists.find((l) => l.url === sub.url)
+            return (
+              <li key={sub.url} className={sub.enabled && settings.listEnabled ? '' : 'off'}>
+                <div className="sub-text">
+                  <span className="sub-name">{row?.name ?? shortUrl(sub.url)}</span>
+                  <span className="sub-meta">
+                    {row?.error
+                      ? row.error
+                      : row?.fetchedAt
+                        ? t('opt.list.subMeta', {
+                            v: row.version ?? '—',
+                            when: formatWhen(row.fetchedAt, t),
+                          })
+                        : t('opt.list.subNever')}
+                  </span>
+                  {/* Only when it adds something. Before the first fetch the
+                      name *is* the address, and printing it twice reads as a
+                      rendering bug. */}
+                  {row?.name && <span className="sub-url">{shortUrl(sub.url)}</span>}
+                </div>
+                <button
+                  type="button"
+                  className="sub-x"
+                  aria-label={t('opt.list.remove')}
+                  title={t('opt.list.remove')}
+                  onClick={() => void persist({ lists: settings.lists.filter((l) => l.url !== sub.url) })}
+                >
+                  <Icon name="trash" />
+                </button>
+                <Switch
+                  label={sub.url}
+                  checked={sub.enabled}
+                  disabled={!settings.listEnabled}
+                  onChange={(v) =>
+                    void persist({
+                      lists: settings.lists.map((l) => (l.url === sub.url ? { ...l, enabled: v } : l)),
+                    })
+                  }
+                />
+              </li>
+            )
+          })}
+          {settings.lists.length === 0 && <li className="sub-empty">{t('opt.list.none')}</li>}
+        </ul>
+
+        <label className="field" htmlFor="listUrl" style={{ marginTop: 14 }}>
+          {t('opt.list.add')}
         </label>
         <input
           id="listUrl"
@@ -293,25 +405,29 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
         />
 
         <div className="actions">
-          <button className="primary" onClick={() => void saveUrl()} disabled={busy || urlDraft === ''}>
-            <Icon name="save" />
-            {needsPermission && urlDraft !== settings.listUrl ? t('opt.list.savePerm') : t('opt.list.save')}
+          <button
+            className="primary"
+            onClick={() => void addList()}
+            disabled={busy || urlDraft === '' || settings.lists.length >= MAX_LISTS}
+          >
+            <Icon name="plus" />
+            {needsPermission ? t('opt.list.savePerm') : t('opt.list.addBtn')}
           </button>
           <button onClick={() => void updateNow()} disabled={busy || !settings.listEnabled}>
             <Icon name="refresh" />
             {t('opt.list.updateNow')}
           </button>
-          <button
-            onClick={() => {
-              setUrlDraft(DEFAULT_LIST_URL)
-              void persist({ listUrl: DEFAULT_LIST_URL })
-            }}
-            disabled={busy || urlDraft === DEFAULT_LIST_URL}
-          >
+          <button onClick={() => void persist({ lists: DEFAULT_LISTS })} disabled={busy}>
+            <Icon name="undo" />
             {t('opt.list.default')}
           </button>
         </div>
 
+        {settings.lists.length >= MAX_LISTS && (
+          <p className="status" style={{ marginTop: 10 }}>
+            {t('opt.list.full', { n: MAX_LISTS })}
+          </p>
+        )}
         {needsPermission && (
           <p className="status error" style={{ marginTop: 10 }}>
             {t('opt.list.notGithub')}
@@ -321,8 +437,6 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
         <dl className="kv" style={{ marginTop: 14 }}>
           <dt>{t('opt.list.source')}</dt>
           <dd>{status?.source === 'remote' ? t('opt.list.remote') : t('opt.list.builtin')}</dd>
-          <dt>{t('opt.list.version')}</dt>
-          <dd>{status?.version ?? '—'}</dd>
           <dt>{t('opt.list.lastUpdate')}</dt>
           <dd>{formatWhen(status?.fetchedAt ?? null, t)}</dd>
           {!!status?.dropped && (
@@ -426,6 +540,77 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
             {t('opt.stats.reset')}
           </button>
         </div>
+      </section>
+
+      {/* Between the browser that cannot update in place (Orion: delete, then
+          add) and the one that keeps a folder alive by hand, losing settings is
+          a routine part of using this thing rather than an accident. Two
+          buttons is a cheap answer to that. */}
+      <section className="card">
+        <h2>
+          <Icon name="save" />
+          {t('opt.backup')}
+        </h2>
+        <p className="desc">{t('opt.backup.desc')}</p>
+
+        <div className="actions">
+          <button className="primary" type="button" onClick={download}>
+            <Icon name="download" />
+            {t('opt.backup.export')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard
+                .writeText(exportSettings(settings, chrome.runtime.getManifest().version))
+                .then(() => setBackupNote(t('opt.backup.copied')))
+                .catch(() => setBackupNote(t('opt.backup.copyFail')))
+            }}
+          >
+            <Icon name="copy" />
+            {t('opt.backup.copy')}
+          </button>
+          {/* A bare file input is unreadable and unstyleable; the label is the
+              button and the input rides inside it. */}
+          <label className="btn-link">
+            <Icon name="undo" />
+            {t('opt.backup.importFile')}
+            <input
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(e) => {
+                const file = e.currentTarget.files?.[0]
+                // Clear it, or picking the same file twice fires no change event.
+                e.currentTarget.value = ''
+                if (file) void file.text().then(applyBackup)
+              }}
+            />
+          </label>
+        </div>
+
+        <label className="field" htmlFor="backupPaste" style={{ marginTop: 14 }}>
+          {t('opt.backup.paste')}
+        </label>
+        <textarea
+          id="backupPaste"
+          value={backupDraft}
+          spellCheck={false}
+          style={{ minHeight: 90 }}
+          onChange={(e) => setBackupDraft(e.currentTarget.value)}
+          placeholder={'{ "app": "oc-ad-bye-pass", … }'}
+        />
+        <div className="actions">
+          <button
+            type="button"
+            onClick={() => void applyBackup(backupDraft)}
+            disabled={backupDraft.trim() === ''}
+          >
+            <Icon name="save" />
+            {t('opt.backup.importPaste')}
+          </button>
+        </div>
+        {backupNote && <p className="status">{backupNote}</p>}
       </section>
 
       {/* The repo, on its own line and away from the version card. It is where

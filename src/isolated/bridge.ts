@@ -18,6 +18,25 @@ export function listenForPruneReports(onPruned: (count: number) => void): void {
   )
 }
 
+/**
+ * Blocked pop-ups, reported from the MAIN world.
+ *
+ * Batched by the caller like everything else — a page that fires a pop-under in
+ * a loop would otherwise wake the service worker on every attempt, which is a
+ * denial of service the ad network gets for free.
+ */
+export function listenForBlockedPopups(onBlocked: (count: number) => void): void {
+  window.addEventListener(
+    'message',
+    (event) => {
+      if (event.source !== window) return
+      if (!isBridgeMessage(event.data) || event.data.type !== 'popup-blocked') return
+      onBlocked(1)
+    },
+    false,
+  )
+}
+
 // Stats are batched. One message per blocked ad would keep waking the service worker.
 let pendingPruned = 0
 let pendingSkipped = 0

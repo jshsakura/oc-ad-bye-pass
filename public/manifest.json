@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "default_locale": "en",
   "name": "__MSG_extName__",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "description": "__MSG_extDescription__",
   "minimum_chrome_version": "120",
   "icons": {
@@ -26,8 +26,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.youtube.com/*",
-        "*://*.youtube-nocookie.com/*"
+        "http://*/*",
+        "https://*/*"
       ],
       "js": [
         "main.js"
@@ -74,8 +74,8 @@
         "main.js"
       ],
       "matches": [
-        "*://*.youtube.com/*",
-        "*://*.youtube-nocookie.com/*"
+        "http://*/*",
+        "https://*/*"
       ]
     }
   ]

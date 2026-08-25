@@ -8,11 +8,16 @@
 export const NS = 'oc-ad-bye-pass'
 
 /**
- * Marker set on documentElement once the MAIN world hooks are installed.
+ * Marker set on documentElement once the MAIN world entry point has run in the
+ * page's own world.
  *
  * ISOLATED cannot see the page's window but does share its DOM, so this one
- * attribute answers "did layer 1 really attach in the page context?" — which
- * is what decides whether Safari falls back to script injection.
+ * attribute answers "did we really reach the page context?" — which is what
+ * decides whether Safari falls back to script injection.
+ *
+ * On the video site that is the same question as "did layer 1 attach", because
+ * the hooks always install there. Away from it the entry point installs only
+ * the pop-up guard, and the marker means that much and no more.
  */
 export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
 
@@ -37,6 +42,8 @@ export interface MainConfig {
    */
   autoCaptions: boolean
   prunePaths: string[]
+  /** Whether to refuse `window.open` calls that no gesture asked for. */
+  popups: boolean
 }
 
 export interface ConfigMessage {
@@ -53,13 +60,51 @@ export interface PrunedMessage {
   source: string
 }
 
-export type BridgeMessage = ConfigMessage | PrunedMessage
+export interface PopupBlockedMessage {
+  ns: typeof NS
+  type: 'popup-blocked'
+  /** Where it wanted to go, truncated. For the log only. */
+  url: string
+}
+
+export type BridgeMessage = ConfigMessage | PrunedMessage | PopupBlockedMessage
+
+const BRIDGE_TYPES = new Set(['config', 'pruned', 'popup-blocked'])
 
 export function isBridgeMessage(data: unknown): data is BridgeMessage {
   if (typeof data !== 'object' || data === null) return false
   const m = data as Partial<BridgeMessage>
-  return m.ns === NS && (m.type === 'config' || m.type === 'pruned')
+  return m.ns === NS && typeof m.type === 'string' && BRIDGE_TYPES.has(m.type)
 }
+
+/**
+ * How the popup asks a page to start the element picker.
+ *
+ * Written to `chrome.storage.local`, not sent with `chrome.tabs.sendMessage`.
+ * Messaging a tab needs host permission for that tab, and this extension asks
+ * for host permissions **optionally** — so the obvious route works only after
+ * the user has granted a permission they were never prompted for, and fails
+ * silently when they have not. `activeTab` is supposed to cover it; on the
+ * WebKit build it is one more thing that is "partially supported", which is the
+ * category that has cost this project the most time.
+ *
+ * Storage needs no permission beyond the one already held, reaches the content
+ * script through the same `onChanged` channel every other setting travels on,
+ * and behaves the same everywhere.
+ *
+ * The page checks the URL and the timestamp, so a stale key cannot open a
+ * picker on a page nobody asked about.
+ */
+export interface PickerRequest {
+  /** The page that should start picking. */
+  url: string
+  at: number
+}
+
+export const PICKER_KEY = 'pickerRequest'
+
+/** How long a request stays good. Long enough to survive the popup closing. */
+export const PICKER_TTL_MS = 5000
 
 /** Runtime messages sent to the background service worker. */
 export type RuntimeRequest =
@@ -67,11 +112,37 @@ export type RuntimeRequest =
   | { type: 'filters:update'; force?: boolean }
   | { type: 'filters:status' }
 
-export interface FilterStatus {
-  ok: boolean
+/** One subscribed list's standing, as the options page shows it. */
+export interface ListStatus {
+  url: string
+  /** The name the list gives itself, once we have fetched it at least once. */
+  name: string | null
   version: number | null
   fetchedAt: number | null
-  source: 'remote' | 'bundled'
   error: string | null
   dropped: number
+  /** False when the user switched this subscription off. */
+  enabled: boolean
+}
+
+/**
+ * The filter layer's standing, rolled up.
+ *
+ * `lists` is the truth and the options page renders it row by row. The four
+ * flattened fields above it answer "is anything wrong" for the callers that
+ * only want that — the popup's diagnostics and the update button's one-line
+ * result — and are derived, never stored.
+ */
+export interface FilterStatus {
+  ok: boolean
+  /** Newest version across the lists, for a one-line answer. */
+  version: number | null
+  /** Newest successful fetch across the lists. */
+  fetchedAt: number | null
+  source: 'remote' | 'bundled'
+  /** The first error any list reported, or null when they all succeeded. */
+  error: string | null
+  /** Total entries validation threw away, across every list. */
+  dropped: number
+  lists: ListStatus[]
 }

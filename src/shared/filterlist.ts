@@ -59,14 +59,21 @@ const HOSTNAME = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?
 export interface FilterRules {
   hide: Partial<Record<ToggleKey, string[]>>
   /**
-   * Selectors that apply only on named hosts.
+   * Selectors that apply only on named hosts, grouped by the toggle that
+   * controls them.
    *
    * The Korean lists this mirrors are mostly domain-scoped — `dcinside.com##.ad`
    * — and flattening that scope is how a filter list breaks sites it was never
    * pointed at. So the scope survives into the format and is matched at runtime
    * against the page's own hostname.
+   *
+   * The grouping arrived with the annoyance list: cookie-wall rules are also
+   * domain-scoped, and folding them in with the ad rules would have put them
+   * under a switch that says "광고" and hidden them from the switch that says
+   * cookies. A bare `Record<host, string[]>` is still accepted and read as
+   * `genericAds`, which is every list written before this.
    */
-  domains?: Record<string, string[]>
+  domains?: Partial<Record<ToggleKey, Record<string, string[]>>>
   prune: string[]
   click: string[]
   /** Escape hatch for false positives: removed from the result by exact string match. */
@@ -77,6 +84,16 @@ export interface FilterList {
   name: string
   version: number
   updatedAt: string
+  /**
+   * The language this list's **domain** rules are for, if any.
+   *
+   * The Korean mirror names Korean portals and community sites; carrying those
+   * host rules for someone reading in English is a stylesheet on every page for
+   * sites they are not on. Declared by the list rather than inferred, so a list
+   * that is not language-bound simply omits it and applies to everyone. Generic
+   * (non-host) selectors are never language-gated — an ad slot is an ad slot.
+   */
+  lang?: Lang
   rules: FilterRules
 }
 
@@ -283,9 +300,13 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
    * plain hostname is dropped rather than normalised, because a host we guessed
    * at is a rule applied somewhere its author never named.
    */
-  const domains: Record<string, string[]> = {}
-  if (typeof r.domains === 'object' && r.domains !== null && !Array.isArray(r.domains)) {
-    for (const [host, value] of Object.entries(r.domains as Record<string, unknown>)) {
+  const domains: Partial<Record<ToggleKey, Record<string, string[]>>> = {}
+  let overflowed = false
+
+  const takeHosts = (group: ToggleKey, raw: unknown) => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return
+    for (const [host, value] of Object.entries(raw as Record<string, unknown>)) {
+      if (overflowed) return
       if (!HOSTNAME.test(host)) {
         dropped.push(`domains: 호스트가 아닙니다 "${host.slice(0, 60)}"`)
         continue
@@ -293,10 +314,29 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
       const list = sanitizeSelectors(value, canParse, dropped, `domains.${host}`)
       total += list.length
       if (total > MAX_SELECTORS_TOTAL) {
-        return { ok: false, error: `셀렉터 총량 상한(${MAX_SELECTORS_TOTAL}) 초과` }
+        overflowed = true
+        return
       }
-      if (list.length) domains[host] = list
+      if (!list.length) continue
+      const into = (domains[group] ??= {})
+      into[host] = into[host] ? [...new Set([...into[host], ...list])] : list
     }
+  }
+
+  if (typeof r.domains === 'object' && r.domains !== null && !Array.isArray(r.domains)) {
+    for (const [key, value] of Object.entries(r.domains as Record<string, unknown>)) {
+      // Grouped shape: the key is a toggle and the value is a host map. Anything
+      // else is the old flat shape, where the key is the host itself.
+      if ((TOGGLE_KEYS as readonly string[]).includes(key) && !Array.isArray(value)) {
+        takeHosts(key as ToggleKey, value)
+      } else {
+        takeHosts(DEFAULT_DOMAIN_GROUP, { [key]: value })
+      }
+      if (overflowed) break
+    }
+  }
+  if (overflowed) {
+    return { ok: false, error: `셀렉터 총량 상한(${MAX_SELECTORS_TOTAL}) 초과` }
   }
 
   // Remote lists never get click rules. See MAX_CLICK_SELECTORS above for why.
@@ -326,6 +366,7 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
       name: typeof obj.name === 'string' ? obj.name.slice(0, 200) : 'unnamed',
       version,
       updatedAt: typeof obj.updatedAt === 'string' ? obj.updatedAt.slice(0, 40) : '',
+      ...(obj.lang === 'ko' || obj.lang === 'en' ? { lang: obj.lang as Lang } : {}),
       rules: { hide, domains, prune, click, allow },
     },
   }
@@ -335,11 +376,28 @@ export function validateFilterList(raw: unknown, opts: ValidateOptions = {}): Va
 // Merging
 // ---------------------------------------------------------------------------
 
+/** One host's worth of selectors, with everything needed to decide if it applies. */
+export interface DomainRule {
+  host: string
+  /** The toggle that switches it off. */
+  group: ToggleKey
+  /** The UI language it is meant for, or null for every language. */
+  lang: Lang | null
+  selectors: string[]
+}
+
 export interface ResolvedRules {
   /** Hide selectors, grouped by the toggle that controls them. */
   hide: Partial<Record<ToggleKey, string[]>>
-  /** Hide selectors that apply only on the hosts that name them. */
-  domains: Record<string, string[]>
+  /**
+   * Host-scoped selectors, flattened out of every subscribed list.
+   *
+   * A flat array rather than a map: this is only ever iterated, and a map keyed
+   * by host would have to drop either the group or the language when two lists
+   * name the same site — which is exactly the case that matters, since a Korean
+   * portal has both ad rules and a cookie wall.
+   */
+  domains: DomainRule[]
   /** The user's own rules. Always applied, regardless of toggles. */
   custom: string[]
   click: string[]
@@ -361,22 +419,41 @@ function union(...lists: (string[] | undefined)[]): string[] {
  * remote and bundled sets but never to the user's own rules — what the user
  * typed always wins.
  */
-export function resolveRules(remote: FilterList | null, customRules: string[]): ResolvedRules {
-  const allow = new Set(remote?.rules.allow ?? [])
+export function resolveRules(remotes: FilterList[], customRules: string[]): ResolvedRules {
+  // `allow` is every list's escape hatch pooled together. A list that names a
+  // false positive gets it dropped from the others too — which is the point:
+  // the person seeing the broken site does not know which list broke it.
+  const allow = new Set(remotes.flatMap((list) => list.rules.allow))
   // Re-run isSafeSelector here. The service worker that validated the list on
   // arrival has no document, so it could not check that a selector really parses.
   const keep = (list: string[]) => list.filter((s) => !allow.has(s) && isSafeSelector(s))
 
   const hide: Partial<Record<ToggleKey, string[]>> = {}
   for (const key of TOGGLE_KEYS) {
-    const merged = keep(union(BUNDLED_HIDE[key], remote?.rules.hide[key]))
+    const merged = keep(union(BUNDLED_HIDE[key], ...remotes.map((list) => list.rules.hide[key])))
     if (merged.length) hide[key] = merged
   }
 
-  const domains: Record<string, string[]> = {}
-  for (const [host, list] of Object.entries(remote?.rules.domains ?? {})) {
-    const kept = keep(list)
-    if (kept.length) domains[host] = kept
+  const domains: DomainRule[] = []
+  for (const list of remotes) {
+    for (const [key, value] of Object.entries(list.rules.domains ?? {})) {
+      // Both shapes reach here, and not only from old files. `validateFilterList`
+      // normalises on the way in, but the cache is written by whichever build
+      // fetched the list — so on the first run after an upgrade this is reading
+      // the flat map an older build stored. Iterating it as if it were grouped
+      // hands `keep` a host name instead of a selector array, and the whole
+      // stylesheet dies with it.
+      const grouped = !Array.isArray(value) && (TOGGLE_KEYS as readonly string[]).includes(key)
+      const group = (grouped ? key : DEFAULT_DOMAIN_GROUP) as ToggleKey
+      const hosts = grouped ? (value as Record<string, string[]>) : { [key]: value as string[] }
+      for (const [host, selectors] of Object.entries(hosts)) {
+        if (!Array.isArray(selectors)) continue
+        const kept = keep(selectors)
+        if (kept.length) {
+          domains.push({ host, group, lang: list.lang ?? null, selectors: kept })
+        }
+      }
+    }
   }
 
   return {
@@ -386,7 +463,7 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
     // Bundled only — a cache written by an older build may still hold remote
     // click rules, so this is enforced here too, not just at validation time.
     click: keep(BUNDLED_CLICK).slice(0, MAX_CLICK_SELECTORS),
-    prune: union(BUNDLED_PRUNE, remote?.rules.prune),
+    prune: union(BUNDLED_PRUNE, ...remotes.map((list) => list.rules.prune)),
   }
 }
 
@@ -398,7 +475,10 @@ export function resolveRules(remote: FilterList | null, customRules: string[]): 
  * page on the web — which is the difference between a cost paid once and a cost
  * paid everywhere.
  */
-const GENERIC_GROUP: ToggleKey = 'genericAds'
+const GENERIC_GROUPS: readonly ToggleKey[] = ['genericAds', 'cookieBanners']
+
+/** Where a list's host rules land when it does not say which group they belong to. */
+export const DEFAULT_DOMAIN_GROUP: ToggleKey = 'genericAds'
 
 /**
  * Build the stylesheet from the enabled groups only.
@@ -418,22 +498,25 @@ export function buildStylesheet(
   hostname = '',
   lang: Lang = 'ko',
 ): string {
-  const groups = kind === 'youtube' ? TOGGLE_KEYS : [GENERIC_GROUP]
+  const groups = kind === 'youtube' ? TOGGLE_KEYS : GENERIC_GROUPS
 
   const selectors = new Set<string>()
   for (const key of groups) {
     if (!toggles[key]) continue
     for (const s of rules.hide[key] ?? []) selectors.add(s)
   }
-  // The domain-scoped selectors are the mirrored Korean lists — they name
-  // Korean portals and community sites. In English there is no reason to carry
-  // them: the person is not on those sites, and it is a stylesheet on every page
-  // for nothing. So they ride the general-ad switch *and* a Korean UI. Generic
-  // ad hiding (the group above) stays for everyone; only the KR series drops.
-  if (toggles[GENERIC_GROUP] && hostname && lang === 'ko') {
-    for (const [domain, list] of Object.entries(rules.domains)) {
-      if (!hostMatches(hostname, domain)) continue
-      for (const s of list) selectors.add(s)
+  // Host-scoped rules, each answering to its own switch and its own language.
+  // A list that declares a language carries rules for that language's sites —
+  // the Korean mirror names Korean portals and community sites — and applying
+  // those for someone reading in English is a stylesheet on every page for
+  // sites they will never open. Generic (non-host) selectors above are never
+  // language-gated: an ad slot is an ad slot.
+  if (hostname) {
+    for (const rule of rules.domains) {
+      if (!toggles[rule.group]) continue
+      if (rule.lang !== null && rule.lang !== lang) continue
+      if (!hostMatches(hostname, rule.host)) continue
+      for (const s of rule.selectors) selectors.add(s)
     }
   }
   // The user's own rules are theirs — they apply wherever they put them.

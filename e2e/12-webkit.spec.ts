@@ -193,7 +193,7 @@ test('2계층 스타일시트가 WebKit 에서 실제로 광고를 숨긴다', a
   // 전부 이 스타일시트 한 장에 달려 있고, 그 셀렉터들은 :has() 같은 최신 문법을
   // 쓴다 — 크로미움이 이해한다고 WebKit 이 이해한다는 보장이 없다. 하나라도
   // 버려지면 그 규칙만 조용히 죽는다.
-  const css = buildStylesheet(resolveRules(null, []), DEFAULT_SETTINGS.toggles, 'youtube')
+  const css = buildStylesheet(resolveRules([], []), DEFAULT_SETTINGS.toggles, 'youtube')
   expect(css, '스타일시트가 비어 있다').not.toBe('')
 
   const result = await wk.evaluate((sheet) => {

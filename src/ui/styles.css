@@ -403,6 +403,15 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   flex: none;
 }
 
+/* Layer 0 is the network one — the request never happens. Given its own colour
+   rather than sharing with layer 1, because "never asked for it" and "asked and
+   threw the answer away" are the two things a reader is trying to tell apart. */
+.layer.l0 {
+  color: #f38ba8;
+  border-color: rgba(243, 139, 168, 0.45);
+  background: rgba(243, 139, 168, 0.10);
+}
+
 .layer.l1 {
   color: #a6e3a1;
   border-color: rgba(166, 227, 161, 0.45);
@@ -548,6 +557,75 @@ button.primary {
 .page .lede {
   color: var(--fg-muted);
   margin: 0 0 28px;
+}
+
+/* Subscribed filter lists. A row is name, standing, address — three lines that
+   answer "what is this and is it working" without opening anything. */
+.subs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subs li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.subs li.off { opacity: .55; }
+
+.subs li.sub-empty {
+  display: block;
+  color: var(--fg-muted);
+  font-size: 12px;
+  border-style: dashed;
+}
+
+.sub-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sub-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sub-meta,
+.sub-url {
+  font-size: 11px;
+  color: var(--fg-muted);
+  /* An address is one long token with no spaces, so it has to be told to break
+     or it stretches the row and pushes the switch off the panel. */
+  overflow-wrap: anywhere;
+}
+
+.sub-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  opacity: .75;
+}
+
+.sub-x {
+  min-height: 30px;
+  padding: 0 8px;
+  border-color: transparent;
+  background: none;
+  color: var(--fg-muted);
+}
+
+.sub-x:hover {
+  border-color: var(--line);
+  color: var(--fg);
 }
 
 /* The one link that is not a setting: quiet, below everything, and clearly

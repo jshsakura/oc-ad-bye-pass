@@ -135,7 +135,7 @@ test('번들 규칙과 원격 규칙을 합치고 allow 로 뺀다', () => {
       allow: ['#masthead-ad'],
     },
   }
-  const resolved = resolveRules(remote, ['my-own-ad-thing'])
+  const resolved = resolveRules([remote], ['my-own-ad-thing'])
 
   assert.ok(resolved.hide.generalAds?.includes('ytd-brand-new-ad-renderer'), '원격 규칙이 들어와야 한다')
   assert.ok(resolved.hide.generalAds?.includes('ytd-ad-slot-renderer'), '번들 규칙이 남아야 한다')
@@ -145,12 +145,12 @@ test('번들 규칙과 원격 규칙을 합치고 allow 로 뺀다', () => {
 })
 
 test('원격 리스트가 없어도 번들 규칙만으로 동작한다', () => {
-  const resolved = resolveRules(null, [])
+  const resolved = resolveRules([], [])
   assert.deepEqual(resolved.hide.generalAds, BUNDLED_HIDE.generalAds)
 })
 
 test('켜진 그룹만, 셀렉터 하나당 규칙 하나로 스타일시트를 만든다', () => {
-  const resolved = resolveRules(null, ['my-custom-ad'])
+  const resolved = resolveRules([], ['my-custom-ad'])
   const toggles = { ...DEFAULT_SETTINGS.toggles }
   for (const key of TOGGLE_KEYS) toggles[key] = false
   toggles.shortsAds = true
@@ -210,7 +210,7 @@ test('resolved click rules come only from the bundle', () => {
       allow: [],
     },
   }
-  const resolved = resolveRules(remote, [])
+  const resolved = resolveRules([remote], [])
   assert.ok(!resolved.click.includes('#danger'))
   assert.ok(!resolved.click.includes('.something-close-button'), 'remote rule must not leak in')
   assert.deepEqual(resolved.click, BUNDLED_CLICK)
@@ -241,5 +241,5 @@ test('selectors that blank the page are rejected even without touching the root'
 test('전부 꺼져 있고 내 규칙도 없으면 빈 스타일시트', () => {
   const toggles = { ...DEFAULT_SETTINGS.toggles }
   for (const key of TOGGLE_KEYS) toggles[key] = false
-  assert.equal(buildStylesheet(resolveRules(null, []), toggles), '')
+  assert.equal(buildStylesheet(resolveRules([], []), toggles), '')
 })

@@ -10,9 +10,9 @@ import {
   watchSettings,
   type Settings,
   type Stats,
-  type ToggleKey,
 } from '../shared/settings.ts'
 import { makeT } from '../shared/i18n.ts'
+import { PICKER_KEY, type PickerRequest } from '../shared/messages.ts'
 import {
   addToAllowlist,
   hostFromUrl,
@@ -26,8 +26,6 @@ import { App as SettingsView } from '../options/App.tsx'
 import { collect, format, type Report } from './diagnose.ts'
 import { formatCount } from '../ui/format.ts'
 
-/** Toggles that only mean anything on a video site we have all three layers for. */
-const YOUTUBE_KEYS: ToggleKey[] = TOGGLE_META.map((m) => m.key).filter((k) => k !== 'genericAds')
 
 /** Network (DNR) blocking ships only in the Chrome/Edge package, not Orion. */
 const HAS_NETWORK_BLOCKING = typeof chrome.declarativeNetRequest !== 'undefined'
@@ -94,7 +92,7 @@ export function App() {
   const visibleToggles = TOGGLE_META.filter((meta) => {
     if (showAll) return true
     // Lead with what applies here; the rest is one click away.
-    return onYouTube ? YOUTUBE_KEYS.includes(meta.key) : meta.key === 'genericAds'
+    return onYouTube ? !meta.everywhere : !!meta.everywhere
   })
 
   const blocked = stats.pruned + stats.skipped
@@ -201,6 +199,8 @@ export function App() {
                 {settings.lang === 'ko' && settings.toggles.genericAds && (
                   <li>{t('popup.blocked.krlist')}</li>
                 )}
+                {settings.toggles.cookieBanners && <li>{t('popup.blocked.cookies')}</li>}
+                {settings.toggles.popups && <li>{t('popup.blocked.popups')}</li>}
                 {parseCustomRules(settings.customRules).length > 0 && (
                   <li>
                     {t('popup.blocked.custom', {
@@ -233,7 +233,9 @@ export function App() {
               <span className="label">{t(`toggle.${meta.key}.label`)}</span>
               <span className="hint">{t(`toggle.${meta.key}.hint`)}</span>
             </span>
-            {meta.layer ? (
+            {/* `meta.layer ?` would be wrong: layer 0 is a real layer — it is
+                the network one in the README's own diagram — and falsy. */}
+            {meta.layer !== undefined ? (
               <span className={`layer l${meta.layer}`} title={t('layer.nTitle', { n: meta.layer })}>
                 L{meta.layer}
               </span>
@@ -258,6 +260,25 @@ export function App() {
         <button onClick={() => setShowAll((v) => !v)}>
           <Icon name="layers" />
           {showAll ? t('popup.foot.thisSiteOnly') : t('popup.foot.allItems')}
+        </button>
+        <button
+          disabled={!host}
+          title={host ? undefined : t('popup.pick.cannot')}
+          onClick={() => {
+            // The picker draws on the page, so the popup gets out of the way.
+            void chrome.tabs
+              .query({ active: true, currentWindow: true })
+              .then(([tab]) => {
+                if (!tab?.url) return
+                const request: PickerRequest = { url: tab.url, at: Date.now() }
+                return chrome.storage.local.set({ [PICKER_KEY]: request })
+              })
+              .catch(() => {})
+              .finally(() => window.close())
+          }}
+        >
+          <Icon name="target" />
+          {t('popup.foot.pick')}
         </button>
         <button onClick={() => setShowSettings(true)}>
           <Icon name="settings" />
