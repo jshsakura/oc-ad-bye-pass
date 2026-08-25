@@ -39,7 +39,6 @@ export interface PageFacts {
   presentationMode: string
   inject: string | null
   captions: string | null
-  audio: string | null
   translated: number
   log: string | null
   userAgent: string
@@ -67,35 +66,6 @@ const CAPTION_STATES: Record<string, string> = {
   'no-captions': '자막 없는 영상',
   'api-missing': '플레이어가 자막 API 를 안 내놓음 (이 브라우저에선 불가)',
   'set-failed': '선택 실패 (플레이어가 거부)',
-}
-
-/**
- * What the audio pin did on this video. Set by src/main/audio.ts.
- *
- * `api-missing` is the one that decides whether the feature exists at all on a
- * given build — the mobile player is a different player, and no amount of
- * reading from a desk answers whether it carries the audio methods.
- */
-const AUDIO_STATES: Record<string, string> = {
-  'watching(no-api)': '대기 중 (플레이어 오디오 API 를 기다림)',
-  'watching(throws)': '대기 중 (오디오 목록 호출이 예외)',
-  'watching(tracks=0)': '대기 중 (오디오 목록이 빔)',
-  'single-track': '음성이 하나뿐인 영상 (더빙 없음)',
-  'no-match': '내 언어 음성이 없는 영상 (그대로 둠)',
-  'no-tracks': '오디오 목록을 못 읽음',
-  'set-failed': '전환 실패 (플레이어가 거부)',
-  'api-missing': '플레이어가 오디오 API 를 안 내놓음 (이 브라우저에선 불가)',
-}
-
-/** `already(ko)` / `switched(ko)` carry the language, so they are matched by prefix. */
-function audioState(raw: string): string {
-  const known = AUDIO_STATES[raw]
-  if (known) return known
-  const m = /^(already|switched)\(([a-z]{2,3}|\?)\)$/.exec(raw)
-  if (m) return m[1] === 'switched' ? `${m[2]} 음성으로 전환함` : `이미 ${m[2]} 음성`
-  const w = /^watching\(state=(-?\d+)\)$/.exec(raw)
-  if (w) return `대기 중 (재생 시작 기다림, state=${w[1]})`
-  return raw
 }
 
 const INJECT_STATES: Record<string, string> = {
@@ -183,7 +153,6 @@ export function format(report: Report): string {
       `표시 모드: ${page.presentationMode}`,
       `문서 상태: ${page.visibilityState}`,
       `자막 선택: ${page.captions ? (CAPTION_STATES[page.captions] ?? page.captions) : '동작 안 함'}`,
-      `음성 고정: ${page.audio ? audioState(page.audio) : '동작 안 함'}`,
       `댓글 번역: ${page.translated ? `${page.translated}개 눌렀습니다` : '누른 것 없음'}`,
     )
   } else {

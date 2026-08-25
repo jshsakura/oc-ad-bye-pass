@@ -131,11 +131,6 @@ const M = {
     ko: '플레이어 오른쪽 아래에 버튼을 답니다 — 누르면 브라우저의 작은 화면이 열립니다',
     en: "Adds a button at the player's lower right — it opens the browser's floating window",
   },
-  'toggle.audioLanguage.label': { ko: '음성을 내 언어로 고정', en: 'Pin audio to your language' },
-  'toggle.audioLanguage.hint': {
-    ko: '더빙된 영상이면 브라우저 언어의 음성으로 맞춥니다. 그 언어 음성이 없으면 그대로 둡니다',
-    en: "On dubbed videos, switches the audio to your browser's language. Videos without one are left alone",
-  },
   'toggle.commentTranslate.label': { ko: '댓글 자동 번역', en: 'Auto-translate comments' },
   'toggle.commentTranslate.hint': {
     ko: '다른 언어로 쓰인 댓글의 유튜브 번역 버튼을 대신 눌러 줍니다. 번역은 유튜브가 하고, 댓글 내용이 밖으로 나가지 않습니다',

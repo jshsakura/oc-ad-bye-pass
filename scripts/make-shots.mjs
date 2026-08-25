@@ -214,7 +214,6 @@ await sw.evaluate(({ url, lang }) => {
       popups: true,
       pipButton: true,
       autoCaptions: true,
-      audioLanguage: true,
       commentTranslate: true,
     },
     listEnabled: true,

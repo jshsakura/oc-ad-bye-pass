@@ -11,7 +11,7 @@
 // One slot, last writer wins. On a phone there is one page in front of you; on a
 // desktop the timestamp and URL say which one this was.
 
-import { AUDIO_ATTR, CAPTIONS_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
+import { CAPTIONS_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
 import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
@@ -66,7 +66,6 @@ export interface PageDiagnostics {
   inject: string | null
   /** The caption picker's outcome for this video, if the toggle ran here. */
   captions: string | null
-  audio: string | null
   /** Comment translate controls pressed on this page so far. */
   translated: number
   /** The tail of what happened, including while the app was away. */
@@ -123,7 +122,6 @@ export function reportDiagnostics(): void {
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     inject: document.documentElement.getAttribute(INJECT_ATTR),
     captions: document.documentElement.getAttribute(CAPTIONS_ATTR),
-    audio: document.documentElement.getAttribute(AUDIO_ATTR),
     translated: translatedCount,
     log: readLog(),
     userAgent: navigator.userAgent,
@@ -208,9 +206,6 @@ export function watchCaptionOutcome(): void {
   watchingCaptions = true
   new MutationObserver(() => reportDiagnostics()).observe(document.documentElement, {
     attributes: true,
-    // The audio pin writes its own marker on the same element and on its own
-    // schedule, so it rides the same observer. Two observers on documentElement
-    // for two attributes would be two of everything for no gain.
-    attributeFilter: [CAPTIONS_ATTR, AUDIO_ATTR],
+    attributeFilter: [CAPTIONS_ATTR],
   })
 }
