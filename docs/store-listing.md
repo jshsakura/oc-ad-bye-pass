@@ -85,3 +85,112 @@ Open source, GPLv3: github.com/jshsakura/oc-ad-bye-pass
 **어투는 하나로 갑니다.** 전부 합니다체입니다.
 
 **기능 나열로 시작하지 않습니다.** 첫 문단은 읽는 사람이 어제 겪은 일이어야 합니다. 무엇을 하는 확장인지는 그다음에 와도 늦지 않습니다.
+
+---
+
+# 권한 정당화 (Privacy practices)
+
+대시보드 **항목 → 개인정보 보호 관행**에 있는 입력란들입니다. 선언한 권한마다 사유를 한 문단씩 적어야 하고, 비어 있으면 심사가 반려됩니다. 이것도 대시보드에만 있는 값이라 여기에 정본을 둡니다.
+
+**심사자는 영어로 읽습니다.** 그래서 문안은 영어로 씁니다.
+
+문안을 쓸 때 지킨 것: 권한마다 **무엇을 하려고 쓰는지**와 **무엇을 하지 않는지**를 같이 적습니다. 뒤쪽이 실제로 심사를 통과시키는 절반입니다. "이 확장은 요청 내용을 읽지 않는다"는 문장이 있는 것과 없는 것은 다릅니다.
+
+## 무엇을 요구하고 있나
+
+| 선언 | 값 |
+|---|---|
+| `permissions` | `storage`, `activeTab`, `declarativeNetRequest`, `scripting` |
+| `host_permissions` | `raw.githubusercontent.com`, `gist.githubusercontent.com` |
+| `optional_host_permissions` | 모든 https 오리진 (요청할 때만) |
+| `content_scripts` | 모든 http/https 사이트, ISOLATED 와 MAIN 둘 다 |
+
+**v0.16.0 에서 바뀐 것은 마지막 줄입니다.** ISOLATED 스크립트는 전부터 모든 사이트에 있었지만(그게 다른 사이트 광고 숨김의 전부입니다), MAIN 월드 스크립트는 영상 사이트에만 있었습니다. 팝업 차단 때문에 그것도 전 사이트가 됐습니다. 예전 정당화 문구에 "페이지 컨텍스트 주입은 영상 사이트에서만" 같은 표현이 남아 있으면 지금은 사실이 아닙니다.
+
+## 붙여넣을 문안
+
+### storage
+
+```
+Stores the user's own settings — which blocking layers are on, the sites they
+have switched the extension off on, and any hiding rules they wrote themselves —
+and caches the filter lists the extension downloads. Both sync and local areas
+are used because sync is unreliable on some browsers this package supports, and
+losing a hand-written rule list is not recoverable. Nothing in storage is sent
+anywhere.
+```
+
+### activeTab
+
+```
+Reads the hostname of the tab the user opened the popup on, so the popup can
+name the site it is acting on and offer a per-site off switch for it. Used only
+in response to the user invoking the extension. The broader "tabs" permission is
+not requested, and no browsing history is read.
+```
+
+### declarativeNetRequest
+
+```
+Blocks requests to known advertising and tracking hosts using a static ruleset
+bundled inside the package, and adds dynamic allow rules for the sites the user
+has switched the extension off on. Declarative only: the extension never sees
+the URLs or contents of the requests it blocks, and does not use the
+declarativeNetRequestFeedback permission.
+```
+
+### scripting
+
+```
+Registers the MAIN-world content script at runtime with
+scripting.registerContentScripts. Chrome honours world:"MAIN" on the static
+declaration, but WebKit-based browsers that install this same package ignore it,
+and the ad-removal in the video player response must run in the page's own
+context to work at all. The script registered is a file inside the package; no
+code is ever fetched, generated, or evaluated.
+```
+
+### 호스트 권한 (raw.githubusercontent.com, gist.githubusercontent.com)
+
+```
+The filter lists the extension subscribes to are JSON files hosted on these two
+origins. They carry CSS selectors and JSON field paths — data, never code — and
+every entry is validated against a schema before it is used. Access to any other
+origin is declared as optional and requested only if the user points the
+extension at a filter list of their own.
+```
+
+### 모든 사이트에 콘텐츠 스크립트를 넣는 이유
+
+```
+The extension hides advertising on whatever site the user is reading, so its
+content script runs on all of them. Two scripts are declared.
+
+The isolated-world script applies a stylesheet that hides ad slots. It also
+draws the element picker, but only after the user opens the popup and asks for
+it. Away from video sites it does nothing else: no observers, no timers.
+
+The page-world script installs one guard on window.open, which refuses windows
+that open out of a press on something that is not a link or a button — the
+pop-under pattern that browsers permit because it rides a real click. On video
+sites, and only there, it also filters advertising out of the player's response
+before playback.
+
+Both stand down entirely on any site the user has switched the extension off on.
+No page content is read, collected, or transmitted.
+```
+
+### 단일 목적 (Single purpose)
+
+```
+Blocking advertising, and the interruptions that arrive with it — cookie consent
+walls, unasked-for pop-up windows, and app-install prompts.
+```
+
+### 원격 코드 사용 (Are you using remote code?)
+
+**아니오.** 받아오는 것은 필터 리스트 JSON 뿐이고 그것은 데이터입니다. 이 답이 흔들리면 심사가 길어집니다. 원격 스크립틀릿(`##+js(...)`)을 끝내 넣지 않은 이유 중 하나가 이것입니다.
+
+### 데이터 사용
+
+수집하는 것 없음. 개인정보처리방침: https://jshsakura.github.io/oc-ad-bye-pass/privacy.html
