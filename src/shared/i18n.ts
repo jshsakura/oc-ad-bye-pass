@@ -305,7 +305,7 @@ const M = {
     ko: '내 규칙이 가득 찼습니다. 설정에서 정리해 주세요.',
     en: 'Your rules are full — prune them in settings.',
   },
-  'popup.foot.pick': { ko: '요소 고르기', en: 'Pick an element' },
+  'popup.foot.pick': { ko: '요소 고르기', en: 'Pick element' },
   'popup.pick.cannot': {
     ko: '이 페이지에서는 요소를 고를 수 없습니다.',
     en: "Can't pick on this page.",

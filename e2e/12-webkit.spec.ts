@@ -14,7 +14,7 @@
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs'
 import { join } from 'node:path'
-import { expect, test as base, webkit } from '@playwright/test'
+import { chromium, expect, test as base, webkit } from '@playwright/test'
 import { buildStylesheet, resolveRules } from '../src/shared/filterlist.ts'
 import { DEFAULT_SETTINGS } from '../src/shared/settings.ts'
 import { chooseEntry } from '../src/isolated/pip.ts'
@@ -314,30 +314,32 @@ test('아이폰 모양의 비디오에서 우리 판정 함수가 webkit 경로�
 })
 
 /**
- * The popup, laid out by a real WebKit at phone width.
+ * The popup, laid out by real engines at the widths it is really opened at.
  *
  * This is here because the bar at the bottom of the popup was a flex row with
- * no wrap, and adding a fourth button to it — the element picker — squeezed all
- * four until the labels no longer fit. Nothing caught it: every other test
- * asserts on behaviour, and the layout only fails at a width no desktop run
- * ever uses.
+ * no wrap, which was fine at three buttons and crushed all four when the
+ * element picker arrived. Nothing caught it: every other test asserts on
+ * behaviour, and a layout only fails at a size and in a language that the
+ * person writing it is not looking at.
+ *
+ * So it sweeps all three axes, and each one has already caught something the
+ * others did not:
+ *
+ *   width   a four-column bar passed at 320 and folded labels onto three lines
+ *           at 512, which is where a desktop popup actually opens
+ *   language  Korean fits everywhere; English is a third longer
+ *   engine  WebKit and Chromium disagree about how wide a string is, and
+ *           "Pick an element" fit 320px in one and not the other
  *
  * The real popup is served rather than a hand-written stand-in, so the markup
- * under test cannot drift away from the markup that ships. `chrome` is stubbed
- * because WebKit has no extension to provide it.
- */
-/**
- * The widths this popup is actually opened at.
- *
- * 320 is the narrowest phone still in use. 512 is what a desktop Chrome popup
- * opens at — a popup is sized by its own document, and this one's toggle rows
- * ask for about that much. It is above any sensible mobile breakpoint, which is
- * how a four-column bar survived a fix aimed at phones and went on folding
- * "전체 항목 보기" onto three lines on every PC.
+ * under test cannot drift from the markup that ships. `chrome` is stubbed
+ * because neither engine has an extension to provide it.
  */
 const POPUP_WIDTHS = [320, 390, 512, 560]
+const POPUP_LANGS = ['ko', 'en'] as const
+const ENGINES = [webkit, chromium]
 
-test('팝업 하단 버튼은 어느 폭에서도 2×2 로 반반 나뉜다', async () => {
+test('팝업 하단 버튼은 어느 폭·언어·엔진에서도 2×2 로 반반 나뉜다', async () => {
   const server = createServer((req, res) => {
     const rel = (req.url ?? '/').split('?')[0]
     const file = join(import.meta.dirname, '..', 'dist', rel === '/' ? 'popup.html' : rel)
@@ -359,63 +361,79 @@ test('팝업 하단 버튼은 어느 폭에서도 2×2 로 반반 나뉜다', as
   await new Promise<void>((resolve) => server.listen(0, resolve))
   const { port } = server.address() as { port: number }
 
-  const browser = await webkit.launch()
   try {
-    for (const width of POPUP_WIDTHS) {
-    const context = await browser.newContext({ viewport: { width, height: 640 }, locale: 'ko-KR' })
-    await context.addInitScript(() => {
-      const store: Record<string, unknown> = { settings: { lang: 'ko', savedAt: Date.now() } }
-      const area = {
-        get: async (key: string) => (key in store ? { [key]: store[key] } : {}),
-        set: async (patch: Record<string, unknown>) => Object.assign(store, patch),
-        remove: async () => {},
-      }
-      ;(window as unknown as { chrome: unknown }).chrome = {
-        runtime: {
-          id: 'test',
-          getManifest: () => ({ version: '0.0.0', host_permissions: [] }),
-          sendMessage: async () => ({ ok: true, source: 'bundled', lists: [], dropped: 0 }),
-        },
-        storage: { sync: area, local: area, onChanged: { addListener() {}, removeListener() {} } },
-        permissions: { request: async () => false, contains: async () => true },
-        tabs: { query: async () => [{ id: 1, url: 'https://news.example.com/article' }] },
-        declarativeNetRequest: {},
-      }
-    })
-    const page = await context.newPage()
-    await page.goto(`http://127.0.0.1:${port}/popup.html`)
-    await page.waitForSelector('.foot button')
+    for (const engine of ENGINES) {
+      const browser = await engine.launch()
+      const label = engine === webkit ? 'webkit' : 'chromium'
+      try {
+        for (const width of POPUP_WIDTHS) {
+          for (const lang of POPUP_LANGS) {
+            const context = await browser.newContext({ viewport: { width, height: 640 } })
+            await context.addInitScript((uiLang) => {
+              const store: Record<string, unknown> = { settings: { lang: uiLang, savedAt: Date.now() } }
+              const area = {
+                get: async (key: string) => (key in store ? { [key]: store[key] } : {}),
+                set: async (patch: Record<string, unknown>) => Object.assign(store, patch),
+                remove: async () => {},
+              }
+              ;(window as unknown as { chrome: unknown }).chrome = {
+                runtime: {
+                  id: 'test',
+                  getManifest: () => ({ version: '0.0.0', host_permissions: [] }),
+                  sendMessage: async () => ({ ok: true, source: 'bundled', lists: [], dropped: 0 }),
+                },
+                storage: { sync: area, local: area, onChanged: { addListener() {}, removeListener() {} } },
+                permissions: { request: async () => false, contains: async () => true },
+                tabs: { query: async () => [{ id: 1, url: 'https://www.youtube.com/watch?v=x' }] },
+                declarativeNetRequest: {},
+              }
+            }, lang)
 
-    const layout = await page.evaluate(() => {
-      const buttons = [...document.querySelectorAll<HTMLElement>('.foot > button')]
-      return {
-        scrollWidth: document.documentElement.scrollWidth,
-        innerWidth: window.innerWidth,
-        rows: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().y))).size,
-        columns: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().x))).size,
-        widths: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().width))).size,
-        tallest: Math.max(...buttons.map((b) => Math.round(b.getBoundingClientRect().height))),
-        // A label wider than the box it is in has been cut off.
-        clipped: buttons
-          .filter((b) => b.scrollWidth > Math.ceil(b.getBoundingClientRect().width))
-          .map((b) => b.textContent?.trim()),
-      }
-    })
+            const page = await context.newPage()
+            await page.goto(`http://127.0.0.1:${port}/popup.html`)
+            await page.waitForSelector('.foot button')
 
-    expect(layout.clipped, `${width}px: 버튼 안에서 글자가 잘렸다`).toEqual([])
-    expect(layout.rows, `${width}px: 두 줄이어야 한다`).toBe(2)
-    expect(layout.columns, `${width}px: 두 칸이어야 한다`).toBe(2)
-    expect(layout.widths, `${width}px: 네 개가 같은 너비여야 한다 — 반반`).toBe(1)
-    // The longest label has to fit on one line, or the bar is two lines taller
-    // than it looks in a mockup and the buttons stop reading as a row.
-    expect(layout.tallest, `${width}px: 라벨이 두 줄로 접혔다`).toBeLessThanOrEqual(40)
-    // A phone sheet is narrower than the desktop popup's floor; a floor wider
-    // than the sheet scrolls the whole panel sideways.
-    expect(layout.scrollWidth, `${width}px: 가로로 스크롤된다`).toBe(layout.innerWidth)
-    await context.close()
+            const layout = await page.evaluate(() => {
+              const buttons = [...document.querySelectorAll<HTMLElement>('.foot > button')]
+              const box = (b: HTMLElement) => b.getBoundingClientRect()
+              return {
+                scrollWidth: document.documentElement.scrollWidth,
+                innerWidth: window.innerWidth,
+                rows: new Set(buttons.map((b) => Math.round(box(b).y))).size,
+                columns: new Set(buttons.map((b) => Math.round(box(b).x))).size,
+                widths: new Set(buttons.map((b) => Math.round(box(b).width))).size,
+                heights: new Set(buttons.map((b) => Math.round(box(b).height))).size,
+                tallest: Math.max(...buttons.map((b) => Math.round(box(b).height))),
+                // A label wider than the box it sits in has been cut off.
+                clipped: buttons
+                  .filter((b) => b.scrollWidth > Math.ceil(box(b).width))
+                  .map((b) => b.textContent?.trim()),
+              }
+            })
+
+            const at = `${label} ${width}px/${lang}`
+            expect(layout.clipped, `${at}: 버튼 안에서 글자가 잘렸다`).toEqual([])
+            expect(layout.rows, `${at}: 두 줄이어야 한다`).toBe(2)
+            expect(layout.columns, `${at}: 두 칸이어야 한다`).toBe(2)
+            expect(layout.widths, `${at}: 네 개가 같은 너비여야 한다 — 반반`).toBe(1)
+            // If a label ever does wrap, all four grow together rather than
+            // leaving one row short — the unevenness nobody sees in Korean.
+            expect(layout.heights, `${at}: 버튼 높이가 제각각이다`).toBe(1)
+            // And it should not wrap at all: a two-line bar is taller than the
+            // design and the four stop reading as one row of peers.
+            expect(layout.tallest, `${at}: 라벨이 두 줄로 접혔다`).toBeLessThanOrEqual(40)
+            // A phone sheet is narrower than the desktop popup's floor, and a
+            // floor wider than the sheet scrolls the whole panel sideways.
+            expect(layout.scrollWidth, `${at}: 가로로 스크롤된다`).toBe(layout.innerWidth)
+
+            await context.close()
+          }
+        }
+      } finally {
+        await browser.close()
+      }
     }
   } finally {
-    await browser.close()
     server.close()
   }
 })

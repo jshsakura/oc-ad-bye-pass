@@ -542,6 +542,12 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 .foot {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  /* Every button the same height, whatever the language.
+     Korean fits on one line at every width; English does not at 320px, where
+     "Pick an element" needs two. Without this the top row is 47px and the
+     bottom row 34px, which reads as a mistake rather than as a longer label —
+     and it is a mistake nobody would see while working in Korean. */
+  grid-auto-rows: 1fr;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--line);
@@ -553,6 +559,10 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   white-space: normal;
   line-height: 1.25;
   text-align: center;
+  /* Narrower than the shared 14px. These four are the only buttons whose width
+     is decided by a column rather than by their own text, so the padding is
+     what a longer translation has to come out of. */
+  padding: 6px 10px;
 }
 
 button {
@@ -844,6 +854,21 @@ input[type='text'] {
   .actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    /* Same reason as the bar at the bottom: a longer translation wraps one
+       button and leaves the one beside it short. "Check for updates" and
+       "Apply pasted settings" do exactly that in English at this width, and in
+       Korean nothing wraps at all — so the unevenness is invisible to whoever
+       is doing the layout. Equal rows make a wrapped label read as a longer
+       label. */
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+  }
+
+  /* Everything in an actions row is a button except the odd status line and the
+     one text field. Those keep their own height and sit on the centre line. */
+  .actions > .status,
+  .actions > input {
+    align-self: center;
   }
 
   /* An odd one out spans the width rather than sitting as a half with a gap
