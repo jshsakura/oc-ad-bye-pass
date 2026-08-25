@@ -95,6 +95,34 @@ export function chooseCaptionSelection(
 }
 
 /**
+ * Is the player showing the selection we asked for?
+ *
+ * Compared by language rather than by object identity: the player hands back a
+ * row of its own making, not the one it was given, and for a translation the
+ * pair (base language, target language) is the whole of what was chosen.
+ *
+ * Returns null when the current track cannot be read at all. That is a third
+ * answer, not a false one, and the caller must treat it as "leave it alone" —
+ * correcting on a guess is how an extension starts fighting its user.
+ */
+export function isSelectionApplied(
+  current: unknown,
+  chosen: CaptionSelection,
+): boolean | null {
+  if (typeof current !== 'object' || current === null) return null
+  const now = current as CaptionSelection
+  // An empty languageCode is unreadable, not different. `?? null` alone lets
+  // '' through, and '' !== 'ko' would report a drift that never happened.
+  const lang = (t: CaptionSelection | undefined) => {
+    const code = t?.languageCode
+    return typeof code === 'string' && code ? code.toLowerCase() : null
+  }
+  if (lang(now) === null) return null
+  if (lang(now) !== lang(chosen)) return false
+  return lang(now.translationLanguage) === lang(chosen.translationLanguage)
+}
+
+/**
  * Caption tracks remembered from the player response JSON, as it flows
  * through the layer-1 hooks (JSON.parse / Response.json / the global setter).
  *
@@ -191,6 +219,29 @@ let enabled = false
 let timer: ReturnType<typeof setInterval> | null = null
 let currentVideo: string | null = null
 let appliedFor: string | null = null
+
+/**
+ * What was applied, and how long to keep an eye on it.
+ *
+ * Applying once and walking away was the rule, and it was wrong in one ordinary
+ * case: pressing the CC button. YouTube answers that by restoring the caption
+ * state **it** has saved — English, for most people — over whatever was just
+ * chosen. Left alone the picker looked perfect; anyone impatient enough to reach
+ * for the button got English and no way to know why.
+ *
+ * Pressing CC is not choosing a language, so correcting it is not fighting the
+ * user. Opening the track menu and picking one **is**, which is why the window
+ * is short and the count is small: past it, whatever is on screen is the user's.
+ */
+let appliedSelection: CaptionSelection | null = null
+let correctUntil = 0
+let corrections = 0
+
+/** How long after applying a drifted track is still put back. */
+const CORRECT_WINDOW_MS = 20_000
+
+/** And how many times, in case something on the page is undoing it in a loop. */
+const MAX_CORRECTIONS = 3
 let moduleLoadedFor: string | null = null
 let tries = 0
 
@@ -213,12 +264,18 @@ function tick(): void {
   const player = document.getElementById('movie_player') as CaptionPlayer | null
 
   const id = videoId(player)
-  if (!id || id === appliedFor) return
+  if (!id) return
+  if (id === appliedFor) {
+    if (player) keepSelection(player)
+    return
+  }
 
   if (currentVideo !== id) {
     currentVideo = id
     moduleLoadedFor = null
     tries = 0
+    appliedSelection = null
+    corrections = 0
   }
 
   // No player API, no feature — the answer the phone build has to give us.
@@ -362,9 +419,41 @@ function decideAndApply(
   appliedFor = id // one attempt per video, applied or not; never fight the user
   try {
     player.setOption?.('captions', 'track', selection)
+    appliedSelection = selection
+    correctUntil = Date.now() + CORRECT_WINDOW_MS
     report((selection.translationLanguage ? 'translated' : 'matched') + via)
   } catch {
     report(`set-failed${via}`)
+  }
+}
+
+/**
+ * Put the choice back if something replaced it, briefly.
+ *
+ * Runs on the ticks after the one that applied. Three things have to be true to
+ * act: we are still inside the window, we have not already corrected too often,
+ * and the player **positively reports** a different track. An unreadable track
+ * is not a drifted one — where the answer cannot be read, nothing is done.
+ */
+function keepSelection(player: CaptionPlayer): void {
+  const chosen = appliedSelection
+  if (!chosen || corrections >= MAX_CORRECTIONS || Date.now() > correctUntil) return
+
+  let current: unknown
+  try {
+    current = player.getOption?.('captions', 'track')
+  } catch {
+    return
+  }
+
+  if (isSelectionApplied(current, chosen) !== false) return
+
+  corrections += 1
+  try {
+    player.setOption?.('captions', 'track', chosen)
+    report(`${chosen.translationLanguage ? 'translated' : 'matched'}:kept`)
+  } catch {
+    report('set-failed:kept')
   }
 }
 

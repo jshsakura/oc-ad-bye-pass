@@ -42,6 +42,45 @@ async function stubCaptionApi(page: Page, tracks: unknown[], translatable: unkno
   )
 }
 
+/**
+ * A player that remembers what it was told, and can be made to forget.
+ *
+ * The stub above answers `getOption('captions','track')` with nothing, which is
+ * the "cannot read" case — correct for the tests that assert we do not touch a
+ * video twice. This one tracks the current selection, so pressing CC can be
+ * simulated: YouTube answers that button by restoring the caption state it has
+ * saved, over whatever was just chosen.
+ */
+async function stubStatefulCaptionApi(page: Page, tracks: unknown[], translatable: unknown[]) {
+  await page.evaluate(
+    ([trackList, translationList]) => {
+      const calls: unknown[] = []
+      ;(window as unknown as { __captionCalls: unknown[] }).__captionCalls = calls
+      let current: unknown = null
+      ;(window as unknown as { __pressCC: () => void }).__pressCC = () => {
+        // What the button really does: the player's own saved state wins.
+        current = { languageCode: 'en' }
+      }
+      Object.assign(document.getElementById('movie_player') as object, {
+        getVideoData: () => ({ video_id: 'fixture-video' }),
+        loadModule: () => {},
+        getOption: (module: string, option: string) => {
+          if (module !== 'captions') return undefined
+          if (option === 'tracklist') return trackList
+          if (option === 'translationLanguages') return translationList
+          if (option === 'track') return current
+          return undefined
+        },
+        setOption: (module: string, option: string, value: unknown) => {
+          calls.push({ module, option, value })
+          if (option === 'track') current = value
+        },
+      })
+    },
+    [tracks, translatable] as [unknown[], unknown[]],
+  )
+}
+
 const captionCalls = (page: Page) =>
   page.evaluate(() => (window as unknown as { __captionCalls?: unknown[] }).__captionCalls ?? [])
 
@@ -177,4 +216,45 @@ test('플레이어 목록이 비면 응답 데이터의 트랙으로 적용한�
     },
   ])
   expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('translated:data')
+
+})
+
+test('CC 버튼이 영어로 되돌려 놓으면 다시 내 언어로 맞춘다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await stubStatefulCaptionApi(page, [{ languageCode: 'en' }, { languageCode: 'ko' }], [])
+
+  await writeSettings(background, settingsWith(true))
+  await expect.poll(() => captionCalls(page), { timeout: 8000 }).toHaveLength(1)
+
+  // 성질 급해서 CC 를 직접 누른 경우. 유튜브가 자기가 저장해 둔 영어를 복원한다.
+  await page.evaluate(() => (window as unknown as { __pressCC: () => void }).__pressCC())
+
+  await expect.poll(() => captionCalls(page), { timeout: 8000 }).toEqual([
+    { module: 'captions', option: 'track', value: { languageCode: 'ko' } },
+    { module: 'captions', option: 'track', value: { languageCode: 'ko' } },
+  ])
+  await expect.poll(() => page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('matched:kept')
+})
+
+test('직접 고른 언어와는 싸우지 않는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await stubStatefulCaptionApi(page, [{ languageCode: 'en' }, { languageCode: 'ko' }], [])
+
+  await writeSettings(background, settingsWith(true))
+  await expect.poll(() => captionCalls(page), { timeout: 8000 }).toHaveLength(1)
+
+  // 되돌리기는 횟수가 정해져 있다. 한도까지 쓰고 나면 화면에 있는 것이
+  // 사용자의 선택이고, 그 뒤로는 손대지 않는다.
+  for (let i = 0; i < 5; i++) {
+    await page.evaluate(() => (window as unknown as { __pressCC: () => void }).__pressCC())
+    await page.waitForTimeout(1200)
+  }
+
+  const calls = await captionCalls(page)
+  expect(calls.length, '되돌리기가 무한히 반복되면 안 된다').toBeLessThanOrEqual(4)
+  expect(await page.evaluate(() => (window as unknown as { __captionCalls: unknown[] }).__captionCalls.length)).toBe(calls.length)
 })

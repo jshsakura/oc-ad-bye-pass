@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { chooseCaptionSelection, videoLanguage } from '../src/main/captions.ts'
+import { chooseCaptionSelection, isSelectionApplied, videoLanguage } from '../src/main/captions.ts'
 
 const KO = { languageCode: 'ko' }
 
@@ -90,4 +90,43 @@ test('videoLanguage 는 자동생성(asr) 트랙의 언어를 읽는다', () => 
 
 test('asr 트랙이 없으면 영상 언어를 모른다고 답한다', () => {
   assert.equal(videoLanguage([{ languageCode: 'ko' }]), null)
+})
+
+// ── 적용한 선택이 유지되는가 ────────────────────────────────────────────────
+//
+// CC 버튼을 누르면 유튜브가 자기가 저장해 둔 자막 상태를 복원합니다. 대부분
+// 영어입니다. 한 번 적용하고 손을 떼는 규칙에서는 그게 그대로 남았고, 가만히
+// 두면 잘 되는데 성질 급해서 버튼을 누르면 영어가 되는 증상이 그것이었습니다.
+//
+// 되돌려 놓아도 되는 이유는 CC 를 누르는 것이 언어를 고르는 행위가 아니기
+// 때문입니다. 언어를 직접 고른 사람과는 싸우면 안 되고, 그 경계가 아래 세 번째
+// 케이스입니다.
+
+test('플레이어가 다른 언어를 보여 주고 있으면 되돌릴 대상이다', () => {
+  const chosen = { languageCode: 'ko' }
+  assert.equal(isSelectionApplied({ languageCode: 'en' }, chosen), false)
+  assert.equal(isSelectionApplied({ languageCode: 'ko' }, chosen), true)
+  // 지역 변종은 같은 언어로 본다.
+  assert.equal(isSelectionApplied({ languageCode: 'KO' }, chosen), true)
+})
+
+test('자동 번역은 원본과 대상 언어가 둘 다 맞아야 유지된 것이다', () => {
+  const chosen = { languageCode: 'en', translationLanguage: { languageCode: 'ko' } }
+  assert.equal(isSelectionApplied({ ...chosen }, chosen), true)
+  // 번역이 풀리고 원본 영어만 남은 상태 — 되돌려야 한다.
+  assert.equal(isSelectionApplied({ languageCode: 'en' }, chosen), false)
+  // 다른 언어로 번역돼 있는 상태.
+  assert.equal(
+    isSelectionApplied({ languageCode: 'en', translationLanguage: { languageCode: 'ja' } }, chosen),
+    false,
+  )
+})
+
+test('읽을 수 없으면 틀렸다고 하지 않는다', () => {
+  // null 은 "다르다" 가 아니라 "모르겠다" 다. 모르는 채로 되돌리는 것이
+  // 사용자와 싸우기 시작하는 방법이다.
+  const chosen = { languageCode: 'ko' }
+  for (const unreadable of [undefined, null, 'ko', 42, {}, { languageCode: '' }]) {
+    assert.equal(isSelectionApplied(unreadable, chosen), null, String(unreadable))
+  }
 })
