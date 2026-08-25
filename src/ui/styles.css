@@ -530,11 +530,18 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 /* The bar at the bottom of the popup.
    A grid, not a flex row: flex without wrap squeezes every button when one more
    arrives — which is exactly what the element picker did, taking it from three
-   to four and crushing all four on a phone. Equal columns mean adding a button
-   changes the layout, never the shape of the buttons. */
+   to four and crushing all four. Equal columns mean adding a button changes the
+   layout, never the shape of the buttons.
+
+   **Two columns at every width, with no breakpoint.** Four across was tried and
+   is wrong everywhere it fits: a desktop popup is sized by its own content and
+   opens around 512px, which gives each button ~120px and folds "전체 항목 보기"
+   onto three lines. Two columns is 250px there and 180px on a phone, and the
+   longest label fits on one line in both. A breakpoint would only decide which
+   width gets the bad version. */
 .foot {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--line);
@@ -819,9 +826,9 @@ input[type='text'] {
 
 /* ── Phone ─────────────────────────────────────────────────────────────────
    One breakpoint, and it is the popup sheet's width rather than a device.
-   Below it every row of buttons becomes two even columns: a phone gives a
-   four-button bar about 90px each, which is narrower than the words on them.
-   Halves that wrap are legible; quarters that squeeze are not. */
+   Below it a card's row of buttons becomes two even columns, the same shape the
+   bar at the bottom already has at every width. Above it they stay a wrapping
+   flex row, where the extra room means each button can be its own size. */
 @media (max-width: 460px) {
   /* The desktop popup is sized by its own document, which is what this floor is
      for — but a phone opens the popup as a sheet it has already sized, and a
@@ -829,10 +836,6 @@ input[type='text'] {
      horizontal scroll is not a layout anyone chose. */
   body {
     min-width: 0;
-  }
-
-  .foot {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   /* Card actions get the same treatment. They are a wrapping flex row, which

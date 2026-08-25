@@ -326,7 +326,18 @@ test('아이폰 모양의 비디오에서 우리 판정 함수가 webkit 경로�
  * under test cannot drift away from the markup that ships. `chrome` is stubbed
  * because WebKit has no extension to provide it.
  */
-test('폰 폭에서 팝업 하단 버튼이 2×2 로 반반 나뉜다', async () => {
+/**
+ * The widths this popup is actually opened at.
+ *
+ * 320 is the narrowest phone still in use. 512 is what a desktop Chrome popup
+ * opens at — a popup is sized by its own document, and this one's toggle rows
+ * ask for about that much. It is above any sensible mobile breakpoint, which is
+ * how a four-column bar survived a fix aimed at phones and went on folding
+ * "전체 항목 보기" onto three lines on every PC.
+ */
+const POPUP_WIDTHS = [320, 390, 512, 560]
+
+test('팝업 하단 버튼은 어느 폭에서도 2×2 로 반반 나뉜다', async () => {
   const server = createServer((req, res) => {
     const rel = (req.url ?? '/').split('?')[0]
     const file = join(import.meta.dirname, '..', 'dist', rel === '/' ? 'popup.html' : rel)
@@ -350,8 +361,8 @@ test('폰 폭에서 팝업 하단 버튼이 2×2 로 반반 나뉜다', async ()
 
   const browser = await webkit.launch()
   try {
-    // The narrowest phone still in use. If it holds here it holds everywhere.
-    const context = await browser.newContext({ viewport: { width: 320, height: 640 }, locale: 'ko-KR' })
+    for (const width of POPUP_WIDTHS) {
+    const context = await browser.newContext({ viewport: { width, height: 640 }, locale: 'ko-KR' })
     await context.addInitScript(() => {
       const store: Record<string, unknown> = { settings: { lang: 'ko', savedAt: Date.now() } }
       const area = {
@@ -383,6 +394,7 @@ test('폰 폭에서 팝업 하단 버튼이 2×2 로 반반 나뉜다', async ()
         rows: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().y))).size,
         columns: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().x))).size,
         widths: new Set(buttons.map((b) => Math.round(b.getBoundingClientRect().width))).size,
+        tallest: Math.max(...buttons.map((b) => Math.round(b.getBoundingClientRect().height))),
         // A label wider than the box it is in has been cut off.
         clipped: buttons
           .filter((b) => b.scrollWidth > Math.ceil(b.getBoundingClientRect().width))
@@ -390,13 +402,18 @@ test('폰 폭에서 팝업 하단 버튼이 2×2 로 반반 나뉜다', async ()
       }
     })
 
-    expect(layout.clipped, '버튼 안에서 글자가 잘렸다').toEqual([])
-    expect(layout.rows, '두 줄이어야 한다').toBe(2)
-    expect(layout.columns, '두 칸이어야 한다').toBe(2)
-    expect(layout.widths, '네 개가 같은 너비여야 한다 — 반반').toBe(1)
+    expect(layout.clipped, `${width}px: 버튼 안에서 글자가 잘렸다`).toEqual([])
+    expect(layout.rows, `${width}px: 두 줄이어야 한다`).toBe(2)
+    expect(layout.columns, `${width}px: 두 칸이어야 한다`).toBe(2)
+    expect(layout.widths, `${width}px: 네 개가 같은 너비여야 한다 — 반반`).toBe(1)
+    // The longest label has to fit on one line, or the bar is two lines taller
+    // than it looks in a mockup and the buttons stop reading as a row.
+    expect(layout.tallest, `${width}px: 라벨이 두 줄로 접혔다`).toBeLessThanOrEqual(40)
     // A phone sheet is narrower than the desktop popup's floor; a floor wider
     // than the sheet scrolls the whole panel sideways.
-    expect(layout.scrollWidth, '가로로 스크롤된다').toBe(layout.innerWidth)
+    expect(layout.scrollWidth, `${width}px: 가로로 스크롤된다`).toBe(layout.innerWidth)
+    await context.close()
+    }
   } finally {
     await browser.close()
     server.close()
