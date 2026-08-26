@@ -1,6 +1,7 @@
 name: audit
 
-# 진짜 유튜브에 대고 "광고가 아직 보이는가"를 주기적으로 실측한다.
+# 진짜 유튜브에 대고 두 가지를 주기적으로 실측한다 — 광고가 아직 보이는가,
+# 그리고 확장이 기대는 것들이 아직 거기 있는가.
 #
 # 이 확장이 깨지는 방식은 하나뿐이다 — 유튜브가 바뀌는 것. 코드는 그대로인데
 # 어느 날 갑자기 안 막힌다. push 기반 CI 는 이걸 절대 못 잡는다. 아무도 push 를
@@ -39,11 +40,27 @@ jobs:
         continue-on-error: true
         run: node scripts/audit-ads.mjs --json audit-report.json
 
+      # The other half. audit-ads asks whether ads still get through; this asks
+      # whether the things the rest of the extension hangs off are still there —
+      # the player's caption API, the response shape layer 1 reads, the video
+      # element the PiP button attaches to — and it asks on m.youtube too, which
+      # nothing else here looks at.
+      #
+      # It fails only on a contract that provably broke. Anything it cannot
+      # observe from a signed-out headless browser is reported as unobservable
+      # and passes, because a monitor that cries wolf gets muted.
+      - name: 기능 계약 실측
+        id: features
+        continue-on-error: true
+        run: node scripts/audit-features.mjs --json feature-report.json
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: audit-report
-          path: audit-report.json
+          path: |
+            audit-report.json
+            feature-report.json
           retention-days: 30
 
       # 누출이 있으면 이슈로 알린다. 이미 열려 있으면 댓글만 단다 —
@@ -65,9 +82,28 @@ jobs:
             gh issue create --title "$title" --body "$body"
           fi
 
+      # 기능 쪽은 따로 알린다. 광고 누출과 원인도 고치는 법도 다르다 —
+      # 저쪽은 셀렉터를 더하면 되고, 이쪽은 코드가 기대던 것이 사라진 것이다.
+      - name: 깨진 계약을 이슈로 알린다
+        if: steps.features.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="기능 계약 깨짐 — 코드 수정 필요"
+          body="$(printf '유튜브가 바뀌어서 확장이 기대던 것이 사라졌습니다. 셀렉터를 더해서 될 일이 아니라 코드를 고쳐야 합니다.\n\n실행: %s\n\n```json\n%s\n```\n' \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "$(cat feature-report.json)")"
+
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+
       # 리포트가 없거나 스크립트 자체가 터진 경우도 조용히 넘기지 않는다
       - name: 결과 반영
-        if: steps.audit.outcome == 'failure'
+        if: steps.audit.outcome == 'failure' || steps.features.outcome == 'failure'
         run: |
-          echo "광고 누출이 감지되었습니다. 위 이슈를 확인하세요." >&2
+          echo "감사에서 문제가 나왔습니다. 위 이슈를 확인하세요." >&2
           exit 1

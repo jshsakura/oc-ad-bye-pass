@@ -20,7 +20,8 @@
     "audit": "npm run build && node scripts/audit-ads.mjs",
     "verify": "node scripts/verify-build.mjs",
     "og": "node scripts/build-og.mjs",
-    "filters": "node scripts/build-filters.mjs && node scripts/verify-filters.mjs"
+    "filters": "node scripts/build-filters.mjs && node scripts/verify-filters.mjs",
+    "audit:features": "npm run build && node scripts/audit-features.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
