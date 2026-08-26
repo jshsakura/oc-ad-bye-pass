@@ -62,99 +62,95 @@ const IPHONE = {
  * the issue needs in order to know where to look — never just "false".
  */
 const CONTRACTS = `() => {
-  const out = []
-  const add = (id, what, verdict, detail) => out.push({ id, what, verdict, detail })
-
   const player = document.getElementById('movie_player')
-  if (!player) {
-    // Everything below hangs off it, so this is reported once and the rest are
-    // unobservable rather than broken — the page may simply not have finished.
-    add('player', '플레이어 요소 #movie_player', 'broken', '없음')
-    return out
-  }
-  add('player', '플레이어 요소 #movie_player', 'ok', player.tagName.toLowerCase())
+  const attr = (name) => document.documentElement.getAttribute(name)
 
-  // Layer 1 — the fields the pruner cuts out of the player response.
-  const r = window.ytInitialPlayerResponse
-  if (!r || typeof r !== 'object') {
-    add('playerResponse', 'ytInitialPlayerResponse 전역', 'unknown', '아직 없음')
-  } else {
-    const keys = Object.keys(r)
-    add('playerResponse', 'ytInitialPlayerResponse 전역', 'ok', keys.length + '개 필드')
-    // Not "ads are present" — whether the shape we prune still exists at all.
-    const shape = ['streamingData', 'videoDetails', 'captions'].filter((k) => k in r)
-    add(
-      'responseShape',
-      '응답 구조 (streamingData/videoDetails/captions)',
-      shape.length >= 2 ? 'ok' : 'broken',
-      shape.join(',') || '하나도 없음',
-    )
-  }
+  /**
+   * Every check, each answering ['ok' | 'broken' | 'unknown', detail].
+   *
+   * Run one at a time behind a catch, because they were one expression and one
+   * of them threw: JSON.stringify(undefined) is undefined, and .slice on it
+   * took all eighteen checks down with it. A monitor that reports nothing is
+   * indistinguishable from a monitor nobody wired up.
+   */
+  const CHECKS = [
+    ['player', '플레이어 요소 #movie_player', () =>
+      player ? ['ok', player.tagName.toLowerCase()] : ['broken', '없음']],
 
-  // The caption picker's whole surface.
-  const api = ['getOption', 'setOption', 'loadModule'].filter(
-    (m) => typeof player[m] === 'function',
-  )
-  add(
-    'captionApi',
-    '자막 API (getOption/setOption/loadModule)',
-    api.length === 3 ? 'ok' : 'broken',
-    api.length ? '있는 것: ' + api.join(',') : '하나도 없음',
-  )
+    ['playerResponse', 'ytInitialPlayerResponse 전역', () => {
+      const r = window.ytInitialPlayerResponse
+      if (!r || typeof r !== 'object') return ['unknown', '아직 없음']
+      return ['ok', Object.keys(r).length + '개 필드']
+    }],
 
-  if (api.length === 3) {
-    let tracks
-    try {
-      player.loadModule('captions')
-      tracks = player.getOption('captions', 'tracklist')
-    } catch (e) {
-      tracks = { error: String(e) }
-    }
-    if (Array.isArray(tracks)) {
-      // An empty list is not a broken contract — plenty of videos have no
-      // captions, and the module also fills in late.
-      add(
-        'captionTracks',
-        "getOption('captions','tracklist')",
-        'ok',
-        tracks.length + '개 트랙',
+    ['responseShape', '응답 구조 (streamingData/videoDetails/captions)', () => {
+      const r = window.ytInitialPlayerResponse
+      if (!r || typeof r !== 'object') return ['unknown', '응답이 아직 없음']
+      const shape = ['streamingData', 'videoDetails', 'captions'].filter((k) => k in r)
+      return [shape.length >= 2 ? 'ok' : 'broken', shape.join(',') || '하나도 없음']
+    }],
+
+    ['captionApi', '자막 API (getOption/setOption/loadModule)', () => {
+      if (!player) return ['unknown', '플레이어가 없음']
+      const api = ['getOption', 'setOption', 'loadModule'].filter(
+        (m) => typeof player[m] === 'function',
       )
-    } else {
-      add('captionTracks', "getOption('captions','tracklist')", 'unknown', '배열이 아님: ' + JSON.stringify(tracks).slice(0, 80))
+      return [
+        api.length === 3 ? 'ok' : 'broken',
+        api.length ? '있는 것: ' + api.join(',') : '하나도 없음',
+      ]
+    }],
+
+    ['captionTracks', "getOption('captions','tracklist')", () => {
+      if (!player || typeof player.getOption !== 'function') return ['unknown', '자막 API 가 없음']
+      let tracks
+      try {
+        if (typeof player.loadModule === 'function') player.loadModule('captions')
+        tracks = player.getOption('captions', 'tracklist')
+      } catch (e) {
+        return ['unknown', '호출이 예외: ' + String(e).slice(0, 60)]
+      }
+      // An empty list is not a broken contract: plenty of videos carry no
+      // captions, and the module also fills in late.
+      if (Array.isArray(tracks)) return ['ok', tracks.length + '개 트랙']
+      return ['unknown', '배열이 아님: ' + String(JSON.stringify(tracks)).slice(0, 60)]
+    }],
+
+    ['video', '<video> 요소', () => {
+      const video = document.querySelector('video')
+      return video ? ['ok', '있음'] : ['unknown', '아직 없음']
+    }],
+
+    ['layer1', '1계층 주입 마커', () => {
+      return attr('data-oc-ad-bye-pass') ? ['ok', 'set'] : ['broken', '없음']
+    }],
+
+    ['inject', '주입 폴백 상태', () => {
+      const state = attr('data-oc-abp-inject')
+      return [state === 'blocked' ? 'broken' : 'ok', state || 'not-needed']
+    }],
+
+    ['captionOutcome', '자막 선택기 결과', () => {
+      const outcome = attr('data-oc-ad-bye-pass-captions')
+      // "watching(…)" is not a pass. Sitting in it forever is precisely how
+      // this feature fails, so a picker still waiting when we looked is
+      // unobservable rather than working. Only a verdict counts as one.
+      if (!outcome || outcome.indexOf('watching') === 0) return ['unknown', outcome || '아직 없음']
+      const dead = ['api-missing', 'set-failed', 'set-failed:data']
+      return [dead.indexOf(outcome) >= 0 ? 'broken' : 'ok', outcome]
+    }],
+  ]
+
+  return CHECKS.map(function (entry) {
+    var id = entry[0], what = entry[1], run = entry[2]
+    try {
+      var r = run()
+      return { id: id, what: what, verdict: r[0], detail: r[1] }
+    } catch (e) {
+      // A check that cannot run is not a contract that broke.
+      return { id: id, what: what, verdict: 'unknown', detail: '검사 실패: ' + String(e).slice(0, 80) }
     }
-  }
-
-  // The picture-in-picture button attaches to the video element's box.
-  const video = document.querySelector('video')
-  add('video', '<video> 요소', video ? 'ok' : 'unknown', video ? '있음' : '아직 없음')
-
-  // Layer 1 marks the document once it has reached the page's own world.
-  const layer1 = document.documentElement.getAttribute('data-oc-ad-bye-pass')
-  add('layer1', '1계층 주입 마커', layer1 ? 'ok' : 'broken', layer1 ? 'set' : '없음')
-
-  const inject = document.documentElement.getAttribute('data-oc-abp-inject')
-  add('inject', '주입 폴백 상태', inject === 'blocked' ? 'broken' : 'ok', inject ?? 'not-needed')
-
-  // What the caption picker actually concluded on this video.
-  //
-  // "watching(…)" is not a pass. Sitting in it forever is precisely how this
-  // feature fails — a phone once spent an afternoon frozen there — so a picker
-  // still waiting when we looked is unobservable, not working. Only a verdict
-  // counts as one.
-  const captions = document.documentElement.getAttribute('data-oc-ad-bye-pass-captions')
-  const dead = ['api-missing', 'set-failed', 'set-failed:data']
-  add(
-    'captionOutcome',
-    '자막 선택기 결과',
-    !captions || captions.startsWith('watching')
-      ? 'unknown'
-      : dead.includes(captions)
-        ? 'broken'
-        : 'ok',
-    captions ?? '아직 없음',
-  )
-
-  return out
+  })
 }`
 
 const args = process.argv.slice(2)
