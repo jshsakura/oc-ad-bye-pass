@@ -38,8 +38,14 @@ import { chromium } from '@playwright/test'
 
 const DIST = path.resolve(import.meta.dirname, '..', 'dist')
 
-/** Videos with captions and a normal player, confirmed while signed out. */
-const VIDEO = 'kJQP7kiw5Fk'
+/**
+ * Videos with captions and a normal player, confirmed while signed out.
+ *
+ * `AUDIT_VIDEO=<id>` points it at another one — which is how a report from a
+ * device gets checked. "자막이 안 잡힌다" is two different findings depending on
+ * whether that video has captions at all, and only measuring says which.
+ */
+const VIDEO = process.env.AUDIT_VIDEO || 'kJQP7kiw5Fk'
 
 const SURFACES = [
   { id: 'desktop', url: `https://www.youtube.com/watch?v=${VIDEO}`, mobile: false },

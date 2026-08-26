@@ -594,7 +594,7 @@ ad-badge-view-model < … < ytd-in-feed-ad-layout-renderer < ytd-ad-slot-rendere
 
 `watching(…)` 도 통과가 아닙니다. 거기서 영원히 멈추는 것이 자막 선택기의 실패 방식이고(폰이 하루 종일 대기 중에 얼어 있던 적이 있습니다), 우리가 봤을 때 아직 기다리는 중이면 그건 동작이 아니라 관측불가입니다.
 
-손으로 돌려볼 때는 `npm run audit:features`.
+손으로 돌려볼 때는 `npm run audit:features`. **기기에서 온 보고를 확인할 때는 그 영상으로 겨눕니다** — `AUDIT_VIDEO=<id> npm run audit:features`. "자막이 안 잡힌다" 는 그 영상에 자막이 있느냐 없느냐에 따라 완전히 다른 이야기이고, 재보기 전에는 어느 쪽인지 알 수 없습니다. 실제로 2026-08-26 에 올라온 `no-captions(mods=captions)` 는 그 영상의 트랙이 0개라 맞는 판정이었습니다.
 
 ### 앞으로 규칙을 가져올 때
 

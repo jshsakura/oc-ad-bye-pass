@@ -77,6 +77,27 @@ const INJECT_STATES: Record<string, string> = {
   blocked: '주입이 차단됨 — 이 페이지에 1계층이 없습니다',
 }
 
+/**
+ * The injection state, cross-checked against whether layer 1 is actually there.
+ *
+ * `injected` is meant to be transient: the script was inserted and neither
+ * event has fired yet. On a real Orion dump it stuck there for a whole session
+ * while layer 1 was demonstrably alive — WebKit does not reliably fire `load`
+ * for a script inserted into documentElement before there is a `<head>`.
+ *
+ * On its own that reads as "the fallback may have failed", which on the one
+ * platform that depends on the fallback is the worst thing this panel can say
+ * wrongly. The installed marker settles it, so it is consulted here rather than
+ * left for a reader to combine two lines by eye.
+ */
+function injectLine(page: { inject: string | null; layer1: boolean }): string {
+  if (!page.inject) return '기록 없음'
+  if (page.inject === 'injected' && page.layer1) {
+    return '주입함 — 로드 이벤트는 없었지만 1계층은 살아 있습니다'
+  }
+  return INJECT_STATES[page.inject] ?? page.inject
+}
+
 export interface Report {
   extension: ExtensionFacts
   page: PageFacts | null
@@ -145,7 +166,7 @@ export function format(report: Report): string {
       `페이지: ${page.url}`,
       `보고 시각: ${new Date(page.at).toLocaleTimeString()}`,
       `1계층 설치됨: ${page.layer1 ? '예' : '아니오'}`,
-      `1계층 주입: ${page.inject ? (INJECT_STATES[page.inject] ?? page.inject) : '기록 없음'}`,
+      `1계층 주입: ${injectLine(page)}`,
       `비디오: ${page.videos}개`,
       `PiP: ${page.pip === 'none' ? '없음' : page.pip}`,
       // The API existing and this video being allowed to use it are different
