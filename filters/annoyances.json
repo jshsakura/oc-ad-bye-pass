@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260825,
-  "updatedAt": "2026-08-25",
+  "version": 20260826,
+  "updatedAt": "2026-08-26",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -2713,6 +2713,9 @@
         "ames-surgery.com": [
           "#cookie-consent-container"
         ],
+        "amibeingpwned.com": [
+          "div[aria-label=\"Cookie consent\"]"
+        ],
         "amicidicasa.it": [
           "#G_info"
         ],
@@ -4515,6 +4518,9 @@
         ],
         "askspot.io": [
           "#silktide-wrapper"
+        ],
+        "asktoai.com": [
+          ".fixed.bottom-0"
         ],
         "aslanmax.com": [
           "#unileverCookiePopup"
@@ -6997,6 +7003,9 @@
         "belpost.by": [
           "app-cookies-accept-popup"
         ],
+        "beltelecom.by": [
+          ".jqmWindow"
+        ],
         "belteriajtok.hu": [
           "#CLayer"
         ],
@@ -7143,6 +7152,9 @@
         ],
         "bes.media": [
           ".ck__modal"
+        ],
+        "besamex.de": [
+          "#CybotCookiebotDialogWrapper"
         ],
         "bescore.com": [
           ".cookie-modal"
@@ -9864,21 +9876,6 @@
         ],
         "brightonandhovealbion.com": [
           ".cookie-popup-visible"
-        ],
-        "brightree.com": [
-          ".notice"
-        ],
-        "brightwork.com": [
-          ".bottom-4"
-        ],
-        "briju.pl": [
-          ".CookiePopup"
-        ],
-        "brilledirekt.de": [
-          ".cookiebox-wrapper"
-        ],
-        "brillen-sehhilfen.de": [
-          "#datenschutzhinweis"
         ]
       }
     },
