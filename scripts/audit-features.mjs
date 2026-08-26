@@ -66,6 +66,21 @@ const CONTRACTS = `() => {
   const attr = (name) => document.documentElement.getAttribute(name)
 
   /**
+   * Were we served a real page?
+   *
+   * A signed-out headless browser is often not. YouTube answers it with a
+   * stripped player response — no videoDetails, no captions, four or five
+   * fields — and every content check then looks broken while nothing is.
+   * The first CI run raised exactly that false alarm.
+   *
+   * videoDetails is the tell: it is on every genuine watch response and on no
+   * degraded one. Without it, the content checks below report unobservable,
+   * which is the truth. **Being bot-flagged is not a contract we lost.**
+   */
+  const response = window.ytInitialPlayerResponse
+  const served = !!(response && typeof response === 'object' && response.videoDetails)
+
+  /**
    * Every check, each answering ['ok' | 'broken' | 'unknown', detail].
    *
    * Run one at a time behind a catch, because they were one expression and one
@@ -77,16 +92,19 @@ const CONTRACTS = `() => {
     ['player', '플레이어 요소 #movie_player', () =>
       player ? ['ok', player.tagName.toLowerCase()] : ['broken', '없음']],
 
-    ['playerResponse', 'ytInitialPlayerResponse 전역', () => {
-      const r = window.ytInitialPlayerResponse
-      if (!r || typeof r !== 'object') return ['unknown', '아직 없음']
-      return ['ok', Object.keys(r).length + '개 필드']
+    // Never 'broken'. This says whether the run could observe anything at all,
+    // and a session YouTube declined to serve is not a regression to report.
+    ['served', '진짜 재생 응답을 받았는가', () => {
+      if (!response || typeof response !== 'object') return ['unknown', '응답 없음']
+      const fields = Object.keys(response).length
+      return served
+        ? ['ok', fields + '개 필드']
+        : ['unknown', '축약된 응답 (' + fields + '개 필드) — 봇 판정으로 보입니다']
     }],
 
     ['responseShape', '응답 구조 (streamingData/videoDetails/captions)', () => {
-      const r = window.ytInitialPlayerResponse
-      if (!r || typeof r !== 'object') return ['unknown', '응답이 아직 없음']
-      const shape = ['streamingData', 'videoDetails', 'captions'].filter((k) => k in r)
+      if (!served) return ['unknown', '재생 응답을 못 받아 판정 불가']
+      const shape = ['streamingData', 'videoDetails', 'captions'].filter((k) => k in response)
       return [shape.length >= 2 ? 'ok' : 'broken', shape.join(',') || '하나도 없음']
     }],
 
@@ -102,6 +120,7 @@ const CONTRACTS = `() => {
     }],
 
     ['captionTracks', "getOption('captions','tracklist')", () => {
+      if (!served) return ['unknown', '재생 응답을 못 받아 판정 불가']
       if (!player || typeof player.getOption !== 'function') return ['unknown', '자막 API 가 없음']
       let tracks
       try {
@@ -131,6 +150,7 @@ const CONTRACTS = `() => {
     }],
 
     ['captionOutcome', '자막 선택기 결과', () => {
+      if (!served) return ['unknown', '재생 응답을 못 받아 판정 불가']
       const outcome = attr('data-oc-ad-bye-pass-captions')
       // "watching(…)" is not a pass. Sitting in it forever is precisely how
       // this feature fails, so a picker still waiting when we looked is
