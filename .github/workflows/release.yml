@@ -31,6 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Tags, so the store step can tell whether this one is the newest.
+          # The default shallow checkout has none of them.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -188,8 +192,31 @@ jobs:
       # v0.14.0 과 v0.15.0 이 실제로 그렇게 나갔다 (둘 다 403 — 클라우드
       # 프로젝트에서 Chrome Web Store API 가 꺼져 있었다). 그래서 결과를
       # ::warning:: 과 잡 요약에 남긴다. 둘 다 초록 런에서도 눈에 띈다.
-      - name: 크롬 웹스토어에 올리고 게시한다
+      # Is this the newest tag in the repository?
+      #
+      # Re-pushing an old tag re-runs this whole workflow, and the store step
+      # would then offer the store a build older than the one already on it.
+      # The store refuses a lower version, so the damage is noise rather than a
+      # downgrade — but noise on a green run is how a real warning gets ignored,
+      # and there is no reason to ask at all.
+      #
+      # Tag moves happen: a filter-mirror commit landing between a push and a
+      # tag means a rebase, and the tag is left behind on the old commit.
+      - name: 이 태그가 최신인지 확인한다
         if: startsWith(github.ref, 'refs/tags/v')
+        id: newest
+        run: |
+          newest="$(git tag --list 'v*' --sort=-v:refname | head -1)"
+          echo "저장소에서 가장 높은 태그: $newest / 지금: $GITHUB_REF_NAME"
+          if [ "$newest" = "$GITHUB_REF_NAME" ]; then
+            echo "newest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "newest=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$GITHUB_REF_NAME 은 최신 태그가 아니라($newest) 스토어에는 올리지 않습니다. 릴리스 자산은 그대로 갱신됩니다."
+          fi
+
+      - name: 크롬 웹스토어에 올리고 게시한다
+        if: startsWith(github.ref, 'refs/tags/v') && steps.newest.outputs.newest == 'true'
         continue-on-error: true
         env:
           EXTENSION_ID: aoehenpbglodadbbhaiaipmaklnkoeam
