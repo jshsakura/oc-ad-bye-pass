@@ -50,6 +50,13 @@ const VIDEO = process.env.AUDIT_VIDEO || 'kJQP7kiw5Fk'
 const SURFACES = [
   { id: 'desktop', url: `https://www.youtube.com/watch?v=${VIDEO}`, mobile: false },
   { id: 'mobile', url: `https://m.youtube.com/watch?v=${VIDEO}`, mobile: true },
+  // Everything above is the video site. The pop-up guard and the element picker
+  // run on the rest of the web and had nobody watching them at all.
+  //
+  // example.com because it is a stable page maintained for exactly this and
+  // carries no advertising of its own — pointing a daily job at somebody's real
+  // site to test our own code is not ours to do.
+  { id: 'generic', url: 'https://example.com/', mobile: false, generic: true },
 ]
 
 const IPHONE = {
@@ -179,6 +186,93 @@ const CONTRACTS = `() => {
   })
 }`
 
+/**
+ * Away from the video site, two of the three features are behaviour rather than
+ * structure, so they are measured by doing the thing rather than by looking for
+ * a hook. That is the better test anyway: it stays true however the code is
+ * arranged, and it is exactly what a user would notice going wrong.
+ */
+const GENERIC_CONTRACTS = `() => {
+  const attr = (name) => document.documentElement.getAttribute(name)
+  const CHECKS = [
+    ['stylesheet', '2계층 스타일시트', () => {
+      const style = document.getElementById('oc-ad-bye-pass')
+      if (!style) return ['broken', '없음']
+      // Empty is legitimate: this page may match no rule at all.
+      return ['ok', (style.textContent || '').length + '자']
+    }],
+
+    // The pop-up guard lives in the page's world, so this is also the check
+    // that the MAIN world was reached on a site that is not the video site.
+    ['layer1', 'MAIN world 도달', () => {
+      return attr('data-oc-ad-bye-pass') ? ['ok', 'set'] : ['broken', '없음']
+    }],
+
+    ['inject', '주입 폴백 상태', () => {
+      const state = attr('data-oc-abp-inject')
+      return [state === 'blocked' ? 'broken' : 'ok', state || 'not-needed']
+    }],
+  ]
+
+  return CHECKS.map(function (entry) {
+    try {
+      var r = entry[2]()
+      return { id: entry[0], what: entry[1], verdict: r[0], detail: r[1] }
+    } catch (e) {
+      return { id: entry[0], what: entry[1], verdict: 'unknown', detail: '검사 실패: ' + String(e).slice(0, 80) }
+    }
+  })
+}`
+
+/**
+ * Does a window nobody asked for still get refused?
+ *
+ * Fired from a page script on a timer so no user activation precedes it, which
+ * is the case the guard exists for. Driven from here rather than from the
+ * contract block because it needs to wait, and because a window that does open
+ * has to be closed again.
+ */
+async function checkPopupGuard(page) {
+  try {
+    const opened = await page.evaluate(async () => {
+      const script = document.createElement('script')
+      script.textContent =
+        'setTimeout(function () { window.__auditOpened = window.open("https://example.com/?audit-popunder") }, 50)'
+      document.documentElement.appendChild(script)
+      await new Promise((r) => setTimeout(r, 600))
+      const w = window.__auditOpened
+      if (w && typeof w.close === 'function') {
+        try {
+          w.close()
+        } catch (e) {
+          /* nothing to do */
+        }
+      }
+      return w === undefined ? 'never-ran' : w === null ? 'blocked' : 'opened'
+    })
+    if (opened === 'never-ran') return { verdict: 'unknown', detail: '주입한 스크립트가 실행되지 않음' }
+    return opened === 'blocked'
+      ? { verdict: 'ok', detail: 'null 을 돌려줌' }
+      : { verdict: 'broken', detail: '창이 열렸습니다' }
+  } catch (e) {
+    return { verdict: 'unknown', detail: String(e).slice(0, 80) }
+  }
+}
+
+/** Does the picker still draw when the popup asks for it? */
+async function checkPicker(page, worker) {
+  try {
+    await worker.evaluate(
+      (target) => chrome.storage.local.set({ pickerRequest: { url: target, at: Date.now() } }),
+      page.url(),
+    )
+    await page.waitForSelector('#oc-ad-bye-pass-picker', { state: 'attached', timeout: 5000 })
+    return { verdict: 'ok', detail: '오버레이가 붙었습니다' }
+  } catch (e) {
+    return { verdict: 'broken', detail: '요청 후에도 오버레이가 없습니다' }
+  }
+}
+
 const args = process.argv.slice(2)
 const jsonAt = args.indexOf('--json')
 const out = jsonAt >= 0 ? args[jsonAt + 1] : null
@@ -234,13 +328,24 @@ for (const surface of SURFACES) {
     // The caption picker waits for playback before it concludes, and the player
     // fills its track list late. Give both a chance rather than measuring a
     // page that has not finished starting.
-    // The picker waits for playback and the track list fills late; mobile is
-    // slower to start than desktop. Long enough that "still waiting" means
-    // something, short enough that a daily job stays cheap.
-    await page.waitForTimeout(20_000)
-    // An IIFE, because `evaluate` given a string evaluates it as an expression
-    // and hands back the function rather than calling it.
-    checks = (await page.evaluate(`(${CONTRACTS})()`)) ?? []
+    if (surface.generic) {
+      // Nothing to wait for a player on: the content scripts run at
+      // document_start, so the stylesheet is in place by the time load settles.
+      await page.waitForTimeout(3_000)
+      checks = (await page.evaluate(`(${GENERIC_CONTRACTS})()`)) ?? []
+      const popup = await checkPopupGuard(page)
+      checks.push({ id: 'popupGuard', what: '팝업 차단 (제스처 없는 window.open)', ...popup })
+      const picker = await checkPicker(page, worker)
+      checks.push({ id: 'picker', what: '요소 선택기', ...picker })
+    } else {
+      // The picker waits for playback and the track list fills late; mobile is
+      // slower to start than desktop. Long enough that "still waiting" means
+      // something, short enough that a daily job stays cheap.
+      await page.waitForTimeout(20_000)
+      // An IIFE, because `evaluate` given a string evaluates it as an expression
+      // and hands back the function rather than calling it.
+      checks = (await page.evaluate(`(${CONTRACTS})()`)) ?? []
+    }
   } catch (e) {
     error = String(e).slice(0, 200)
   } finally {
