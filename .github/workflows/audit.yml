@@ -72,7 +72,7 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           title="광고 누출 감지 — 필터 규칙 갱신 필요"
-          body="$(printf '유튜브가 바뀌어서 광고가 새고 있습니다.\n\n실행: %s\n\n```json\n%s\n```\n\n고치는 법: `filters/youtube.json` 의 해당 그룹에 셀렉터를 추가하고 `version` 을 올려 push 하면 됩니다. 재설치는 필요 없습니다.\n' \
+          body="$(printf '유튜브가 바뀌어서 광고가 새고 있습니다.\n\n실행: %s\n\n```json\n%s\n```\n\n고치는 법: 팝업의 "요소 고르기" 로 그 요소를 짚어 셀렉터를 얻은 뒤, `filters/video.json` 의 해당 그룹에 넣고 `version` 을 올려 push 하면 됩니다. 재설치는 필요 없습니다 — 확장이 알아서 받아 갑니다.\n' \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "$(cat audit-report.json)")"
 

@@ -478,7 +478,7 @@ export function resolveRules(remotes: FilterList[], customRules: string[]): Reso
 const GENERIC_GROUPS: readonly ToggleKey[] = ['genericAds', 'cookieBanners']
 
 /** Where a list's host rules land when it does not say which group they belong to. */
-export const DEFAULT_DOMAIN_GROUP: ToggleKey = 'genericAds'
+const DEFAULT_DOMAIN_GROUP: ToggleKey = 'genericAds'
 
 /**
  * Build the stylesheet from the enabled groups only.
