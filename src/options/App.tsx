@@ -618,7 +618,9 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           the update block is what made the two read as the same thing. */}
       <div className="page-foot">
         <span>{t('opt.foot.source')}</span>
+        {/* The mark says where it goes; the arrow says it leaves. */}
         <a href={SOURCE_URL} target="_blank" rel="noopener">
+          <Icon name="github" />
           {t('opt.foot.sourceLink')}
           <Icon name="external" />
         </a>

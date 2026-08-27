@@ -27,6 +27,7 @@ export type IconName =
   | 'copy'
   | 'external'
   | 'target'
+  | 'github'
 
 const PATHS: Record<IconName, string> = {
   version: 'M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Z',
@@ -48,6 +49,16 @@ const PATHS: Record<IconName, string> = {
   copy: 'M9 9h12v12H9zM5 15V5a2 2 0 0 1 2-2h10',
   external: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3',
   target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12 2v3M12 19v3M2 12h3M19 12h3',
+  // The one filled path in the set, and the one that is not ours to draw.
+  //
+  // Everything above is a stroked glyph on the same grid at the same weight,
+  // which is what keeps the set looking drawn rather than assembled. This
+  // breaks that on purpose: it is a brand mark, and an outline version of
+  // somebody's trademark in our own line weight would be both worse to look at
+  // and worse to publish. It is also the point of the icon — a reader knows
+  // the cat before they have read the words beside it.
+  github:
+    'M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.2 4.7 18.2 5 18.2 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z',
 }
 
 interface Props {
@@ -55,13 +66,23 @@ interface Props {
   className?: string
 }
 
+/**
+ * The icons drawn as a solid shape rather than a stroked outline.
+ *
+ * Listed rather than inferred, because getting it wrong is silent: a filled
+ * path rendered with `fill: none` shows nothing at all, and a stroked path
+ * rendered filled becomes an inkblot.
+ */
+const FILLED = new Set<IconName>(['github'])
+
 export function Icon({ name, className }: Props) {
+  const filled = FILLED.has(name)
   return (
     <svg
       className={className}
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke={filled ? 'none' : 'currentColor'}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
