@@ -39,6 +39,7 @@ export interface PageFacts {
   presentationMode: string
   inject: string | null
   captions: string | null
+  captionsDetail: string | null
   log: string | null
   userAgent: string
 }
@@ -68,6 +69,44 @@ const CAPTION_STATES: Record<string, string> = {
   'no-captions': '자막 없는 영상',
   'api-missing': '플레이어가 자막 API 를 안 내놓음 (이 브라우저에선 불가)',
   'set-failed': '선택 실패 (플레이어가 거부)',
+}
+
+/** Field names as the picker writes them, in the words a reader needs. */
+const EVIDENCE_LABELS: Record<string, string> = {
+  want: '내 언어',
+  tracks: '플레이어 트랙',
+  resp: '응답 트랙',
+  spoken: '영상 언어',
+  picked: '고른 것',
+  tr: '번역 가능 언어',
+  via: '경로',
+  mods: '로드된 모듈',
+  note: '비고',
+}
+
+/**
+ * The evidence line under the verdict.
+ *
+ * A verdict on its own is not answerable. `native-language` and `no-captions`
+ * are each correct on one video and wrong on another, and telling which used to
+ * mean opening that video and measuring it separately — a round trip per
+ * report, and only for whoever had the tooling. The numbers that produced the
+ * decision travel with it now.
+ *
+ * Unknown keys are printed as they come. A future field is better shown raw
+ * than dropped for not being in a table here.
+ */
+export function captionEvidence(raw: string): string {
+  return raw
+    .split(' ')
+    .filter(Boolean)
+    .map((pair) => {
+      const at = pair.indexOf('=')
+      if (at < 0) return pair
+      const key = pair.slice(0, at)
+      return `${EVIDENCE_LABELS[key] ?? key} ${pair.slice(at + 1)}`
+    })
+    .join(' · ')
 }
 
 const INJECT_STATES: Record<string, string> = {
@@ -176,6 +215,7 @@ export function format(report: Report): string {
       `표시 모드: ${page.presentationMode}`,
       `문서 상태: ${page.visibilityState}`,
       `자막 선택: ${page.captions ? (CAPTION_STATES[page.captions] ?? page.captions) : '동작 안 함'}`,
+      ...(page.captionsDetail ? [`  ↳ ${captionEvidence(page.captionsDetail)}`] : []),
     )
   } else {
     lines.push(`페이지: 읽지 못함 — ${report.pageError ?? '알 수 없음'}`)

@@ -11,7 +11,7 @@
 // One slot, last writer wins. On a phone there is one page in front of you; on a
 // desktop the timestamp and URL say which one this was.
 
-import { CAPTIONS_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
+import { CAPTIONS_ATTR, CAPTIONS_DETAIL_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
 import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
@@ -66,6 +66,8 @@ export interface PageDiagnostics {
   inject: string | null
   /** The caption picker's outcome for this video, if the toggle ran here. */
   captions: string | null
+  /** What it was looking at when it decided — the evidence for that outcome. */
+  captionsDetail: string | null
   /** The tail of what happened, including while the app was away. */
   log: string | null
   userAgent: string
@@ -109,6 +111,7 @@ export function reportDiagnostics(): void {
     presentationMode: video?.webkitPresentationMode ?? 'inline',
     inject: document.documentElement.getAttribute(INJECT_ATTR),
     captions: document.documentElement.getAttribute(CAPTIONS_ATTR),
+    captionsDetail: document.documentElement.getAttribute(CAPTIONS_DETAIL_ATTR),
     log: readLog(),
     userAgent: navigator.userAgent,
   }
@@ -192,6 +195,6 @@ export function watchCaptionOutcome(): void {
   watchingCaptions = true
   new MutationObserver(() => reportDiagnostics()).observe(document.documentElement, {
     attributes: true,
-    attributeFilter: [CAPTIONS_ATTR],
+    attributeFilter: [CAPTIONS_ATTR, CAPTIONS_DETAIL_ATTR],
   })
 }

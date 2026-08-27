@@ -258,3 +258,50 @@ test('직접 고른 언어와는 싸우지 않는다', async ({ context, backgro
   expect(calls.length, '되돌리기가 무한히 반복되면 안 된다').toBeLessThanOrEqual(4)
   expect(await page.evaluate(() => (window as unknown as { __captionCalls: unknown[] }).__captionCalls.length)).toBe(calls.length)
 })
+
+/**
+ * The verdict has to arrive with its evidence.
+ *
+ * A dump saying `native-language` was not answerable on its own: it is correct
+ * on a Korean video and wrong on an English one, and telling which meant
+ * opening that video and measuring it separately. The numbers that produced the
+ * decision travel with it now, so one dump settles it.
+ */
+test('판정 옆에 근거가 함께 남는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await stubCaptionApi(page, [{ languageCode: 'en' }, { languageCode: 'ko' }], [])
+
+  await writeSettings(background, settingsWith(true))
+  await expect.poll(() => page.getAttribute('html', 'data-oc-ad-bye-pass-captions'), {
+    timeout: 8000,
+  }).toBe('matched')
+
+  const evidence = await page.getAttribute('html', 'data-oc-ad-bye-pass-captions-detail')
+  // Every decision below follows from the browser's language list, and nothing
+  // else in a dump shows what that list was — so it is the one field that must
+  // always be there.
+  expect(evidence, '근거가 없다').toContain('want=ko')
+  expect(evidence).toContain('tracks=2')
+  expect(evidence).toContain('picked=ko')
+})
+
+test('안 켜기로 한 판정에도 근거가 남는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  // 한국어 자동 생성 트랙만 있는 한국어 영상 — 손대지 않는 것이 맞다.
+  await stubCaptionApi(page, [{ languageCode: 'ko', kind: 'asr' }], [])
+
+  await writeSettings(background, settingsWith(true))
+  await expect.poll(() => page.getAttribute('html', 'data-oc-ad-bye-pass-captions'), {
+    timeout: 8000,
+  }).toBe('native-language')
+
+  // 아무것도 안 한 판정이야말로 근거가 가장 필요하다. 무엇을 보고 물러났는지가
+  // 없으면 "왜 자막이 안 켜지냐" 는 물음에 답할 수가 없다.
+  const evidence = await page.getAttribute('html', 'data-oc-ad-bye-pass-captions-detail')
+  expect(evidence).toContain('spoken=ko')
+  expect(evidence).toContain('want=ko')
+})

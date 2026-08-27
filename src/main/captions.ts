@@ -22,7 +22,7 @@
 // player is left alone for that video, so a caption choice the user makes by
 // hand is never fought.
 
-import { CAPTIONS_ATTR } from '../shared/messages.ts'
+import { CAPTIONS_ATTR, CAPTIONS_DETAIL_ATTR } from '../shared/messages.ts'
 
 /**
  * A row of getOption('captions', 'tracklist'). Only languageCode is read here,
@@ -249,6 +249,31 @@ function report(outcome: string): void {
   document.documentElement.setAttribute(CAPTIONS_ATTR, outcome)
 }
 
+/**
+ * What the picker was looking at when it decided, as `k=v` pairs.
+ *
+ * Written on every conclusion, because a verdict without its evidence costs a
+ * round trip per report: `native-language` and `no-captions` are both correct
+ * on the right video and both wrong on the wrong one, and the dump could not
+ * tell them apart. Now it can.
+ *
+ * `want` is here for a reason that is easy to miss: every decision below
+ * follows from the browser's language list, and nothing else in a diagnostics
+ * dump shows what that list actually was.
+ */
+function detail(parts: Record<string, string | number | null | undefined>): void {
+  const text = Object.entries(parts)
+    .filter(([, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => `${k}=${v}`)
+    .join(' ')
+  document.documentElement.setAttribute(CAPTIONS_DETAIL_ATTR, text)
+}
+
+/** The rows remembered from the player response for this video, if any. */
+function responseCount(id: string): number {
+  return fromResponse?.videoId === id ? fromResponse.tracks.length : 0
+}
+
 function videoId(player: CaptionPlayer | null): string | null {
   try {
     const id = player?.getVideoData?.()?.video_id
@@ -284,6 +309,7 @@ function tick(): void {
     if (++tries >= MAX_TRIES) {
       appliedFor = id
       report('api-missing')
+      detail({ want: browserLangs().join(','), resp: responseCount(id) })
     }
     return
   }
@@ -330,6 +356,7 @@ function tick(): void {
     if (++tries >= MAX_TRIES) {
       appliedFor = id
       report('api-missing')
+      detail({ want: browserLangs().join(','), resp: responseCount(id), note: 'getOption-throws' })
     }
     return
   }
@@ -358,6 +385,9 @@ function tick(): void {
     if (++tries >= MAX_TRIES) {
       appliedFor = id
       report(`no-captions(mods=${mods})`)
+      // resp=0 beside tracks=0 is "this video has no captions"; resp>0 is the
+      // mobile wall, and the two need opposite responses from whoever reads it.
+      detail({ want: browserLangs().join(','), tracks: 0, resp: responseCount(id), mods })
     }
     return
   }
@@ -396,9 +426,20 @@ function decideAndApply(
   // foreign-language video is acted on.
   const langs = browserLangs()
   const spoken = videoLanguage(tracks)
+  const seen = {
+    want: langs.join(','),
+    tracks: tracks.length,
+    resp: responseCount(id),
+    spoken: spoken ?? '?',
+    via: via || 'player',
+  }
+
   if (spoken && langs.includes(spoken)) {
     appliedFor = id
     report('native-language')
+    // The one verdict that is a decision not to act, so the evidence for it
+    // matters most: which language the video was taken to be, and against what.
+    detail(seen)
     return
   }
 
@@ -410,6 +451,7 @@ function decideAndApply(
     if (via === ':data' || ++tries >= MAX_TRIES) {
       appliedFor = id
       report(`no-match${via}`)
+      detail({ ...seen, tr: translationLanguages.length })
     } else {
       report('watching(no-match-yet)')
     }
@@ -422,8 +464,15 @@ function decideAndApply(
     appliedSelection = selection
     correctUntil = Date.now() + CORRECT_WINDOW_MS
     report((selection.translationLanguage ? 'translated' : 'matched') + via)
+    detail({
+      ...seen,
+      picked: selection.translationLanguage
+        ? `${selection.languageCode}>${selection.translationLanguage.languageCode}`
+        : selection.languageCode,
+    })
   } catch {
     report(`set-failed${via}`)
+    detail(seen)
   }
 }
 

@@ -31,6 +31,19 @@ export const INSTALLED_ATTR = 'data-oc-ad-bye-pass'
  */
 export const CAPTIONS_ATTR = 'data-oc-ad-bye-pass-captions'
 
+/**
+ * What the caption picker **saw**, beside what it decided.
+ *
+ * The outcome alone was not enough to answer a report with. A dump saying
+ * `native-language` or `no-captions` is a verdict without its evidence, and
+ * checking it meant opening the same video separately and measuring — which is
+ * a round trip per report, and only possible for whoever has the tooling.
+ *
+ * Kept in its own attribute rather than folded into the outcome so the verdict
+ * stays a single stable token: one is what happened, the other is why.
+ */
+export const CAPTIONS_DETAIL_ATTR = 'data-oc-ad-bye-pass-captions-detail'
+
 /** The minimum the MAIN world actually needs to know. */
 export interface MainConfig {
   enabled: boolean
