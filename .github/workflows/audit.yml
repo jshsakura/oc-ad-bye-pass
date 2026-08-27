@@ -69,6 +69,7 @@ jobs:
         if: steps.audit.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           title="광고 누출 감지 — 필터 규칙 갱신 필요"
           body="$(printf '유튜브가 바뀌어서 광고가 새고 있습니다.\n\n실행: %s\n\n```json\n%s\n```\n\n고치는 법: `filters/youtube.json` 의 해당 그룹에 셀렉터를 추가하고 `version` 을 올려 push 하면 됩니다. 재설치는 필요 없습니다.\n' \
@@ -79,7 +80,19 @@ jobs:
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
-            gh issue create --title "$title" --body "$body"
+            # Assigned, not merely opened.
+            #
+            # An issue from github-actions[bot] with nobody on it reaches the
+            # owner only through repository watching, which is a setting that
+            # can be turned off and that buries a real alert among everything
+            # else the repo does. An assignment notifies regardless and lands
+            # in "Assigned to you", which is a list short enough to read.
+            #
+            # The fallback matters: `gh issue create` fails outright on an
+            # assignee it cannot resolve, and losing the whole alert because of
+            # the name on it would be worse than an unassigned one.
+            gh issue create --title "$title" --body "$body" --assignee "$OWNER" \
+              || gh issue create --title "$title" --body "$body"
           fi
 
       # 기능 쪽은 따로 알린다. 광고 누출과 원인도 고치는 법도 다르다 —
@@ -88,6 +101,7 @@ jobs:
         if: steps.features.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           title="기능 계약 깨짐 — 코드 수정 필요"
           body="$(printf '유튜브가 바뀌어서 확장이 기대던 것이 사라졌습니다. 셀렉터를 더해서 될 일이 아니라 코드를 고쳐야 합니다.\n\n실행: %s\n\n```json\n%s\n```\n' \
@@ -98,7 +112,19 @@ jobs:
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
-            gh issue create --title "$title" --body "$body"
+            # Assigned, not merely opened.
+            #
+            # An issue from github-actions[bot] with nobody on it reaches the
+            # owner only through repository watching, which is a setting that
+            # can be turned off and that buries a real alert among everything
+            # else the repo does. An assignment notifies regardless and lands
+            # in "Assigned to you", which is a list short enough to read.
+            #
+            # The fallback matters: `gh issue create` fails outright on an
+            # assignee it cannot resolve, and losing the whole alert because of
+            # the name on it would be worse than an unassigned one.
+            gh issue create --title "$title" --body "$body" --assignee "$OWNER" \
+              || gh issue create --title "$title" --body "$body"
           fi
 
       # 리포트가 없거나 스크립트 자체가 터진 경우도 조용히 넘기지 않는다
