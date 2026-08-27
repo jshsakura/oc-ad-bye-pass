@@ -132,20 +132,52 @@ const CONTRACTS = `() => {
       ]
     }],
 
-    ['captionTracks', "getOption('captions','tracklist')", () => {
+    // Two sources, compared — because one alone lies.
+    //
+    // Reading the player's list said "0개 트랙" on a video whose response
+    // plainly carries one, and reported it as fine. Two causes look the same
+    // that way: a video with no captions, and the mobile player leaving its
+    // list empty on a video that has them. The second is the wall the ':data'
+    // fallback exists for, and a check that cannot see it is not watching the
+    // thing most likely to break.
+    //
+    // loadModule is called only if the first read is unusable. Calling it
+    // unconditionally is what emptied the list in the first place — the picker
+    // has already loaded the module by the time this runs.
+    ['captionTracks', '자막 트랙 (플레이어 vs 응답)', () => {
       if (!served) return ['unknown', '재생 응답을 못 받아 판정 불가']
       if (!player || typeof player.getOption !== 'function') return ['unknown', '자막 API 가 없음']
-      let tracks
+
+      var inResponse = 0
       try {
-        if (typeof player.loadModule === 'function') player.loadModule('captions')
+        var renderer = response.captions && response.captions.playerCaptionsTracklistRenderer
+        inResponse = (renderer && renderer.captionTracks && renderer.captionTracks.length) || 0
+      } catch (e) {
+        inResponse = 0
+      }
+
+      var tracks
+      try {
         tracks = player.getOption('captions', 'tracklist')
+        if (!Array.isArray(tracks) && typeof player.loadModule === 'function') {
+          player.loadModule('captions')
+          tracks = player.getOption('captions', 'tracklist')
+        }
       } catch (e) {
         return ['unknown', '호출이 예외: ' + String(e).slice(0, 60)]
       }
-      // An empty list is not a broken contract: plenty of videos carry no
-      // captions, and the module also fills in late.
-      if (Array.isArray(tracks)) return ['ok', tracks.length + '개 트랙']
-      return ['unknown', '배열이 아님: ' + String(JSON.stringify(tracks)).slice(0, 60)]
+
+      if (!Array.isArray(tracks)) {
+        return ['unknown', '플레이어가 배열을 안 줌 · 응답에는 ' + inResponse + '개']
+      }
+      if (tracks.length > 0) return ['ok', '플레이어 ' + tracks.length + '개 · 응답 ' + inResponse + '개']
+      if (inResponse > 0) {
+        // Expected on mobile, and handled — the picker falls back to the rows it
+        // captured from the response. Recorded so a change in where it happens
+        // is visible.
+        return ['ok', '플레이어 목록은 비었고 응답에 ' + inResponse + '개 — 폴백 경로']
+      }
+      return ['ok', '자막 없는 영상 (양쪽 다 0개)']
     }],
 
     ['video', '<video> 요소', () => {
