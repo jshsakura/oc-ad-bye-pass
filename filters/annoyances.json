@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260826,
-  "updatedAt": "2026-08-26",
+  "version": 20260827,
+  "updatedAt": "2026-08-27",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "agendatrad.org": [
+          "#consent"
+        ],
         "agendavivasp.com.br": [
           ".transition-transform.duration-300"
         ],
@@ -6844,6 +6847,9 @@
         "beiersdorf.de": [
           ".bdf-cookie-policy-popup"
         ],
+        "beiks.com.pl": [
+          ".x13eucookies__backdrop"
+        ],
         "beingbetter-bose.co.il": [
           ".otCookiesNotification"
         ],
@@ -8085,9 +8091,6 @@
         ],
         "bitfeed.co": [
           ".cookiebanner"
-        ],
-        "bitget.com": [
-          ".micro-cookie-dialog"
         ],
         "bithub.pl": [
           "#cmpButton"
@@ -9873,9 +9876,6 @@
         ],
         "brightlands.com": [
           "#cookiesjsr"
-        ],
-        "brightonandhovealbion.com": [
-          ".cookie-popup-visible"
         ]
       }
     },
