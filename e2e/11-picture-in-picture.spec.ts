@@ -206,3 +206,44 @@ test('다시 끄면 버튼이 사라진다', async ({ context, background }) => 
   await setPip(background, false)
   await expect(page.locator(BUTTON)).toHaveCount(0)
 })
+
+/**
+ * The button belongs to the thing you are watching.
+ *
+ * Reported from a phone: on a search result list, where previews autoplay, the
+ * button attached to one of them and — being fixed, on a screen that scrolls —
+ * ended up over the search field and over YouTube's own mute control. The
+ * symptom was "the sound cannot be turned on", because the tap was landing on
+ * our button.
+ *
+ * The site navigates without reloading, so this checks both directions on the
+ * same document. Attaching correctly once is not enough; it has to come off.
+ */
+test('검색 화면에는 붙지 않고, 시청 화면으로 가면 붙는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  await setPip(background, true)
+
+  const page = await context.newPage()
+  await page.goto('https://www.youtube.com/results?search_query=test')
+  // 미리보기가 자동재생되는 목록을 흉내낸다 — 붙일 만한 영상은 있는 상태다.
+  await page.evaluate(() => {
+    const video = document.createElement('video')
+    video.style.cssText = 'width:360px;height:220px'
+    document.body.appendChild(video)
+  })
+
+  await page.waitForTimeout(1500)
+  expect(await page.locator(BUTTON).count(), '검색 화면에 붙으면 안 된다').toBe(0)
+
+  // 같은 문서에서 시청 화면으로 이동 (SPA).
+  await page.evaluate(() => history.pushState({}, '', '/watch?v=testvideo'))
+  await page.evaluate(() => document.body.appendChild(document.createElement('div')))
+
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(1)
+
+  // 그리고 돌아가면 다시 떨어져야 한다.
+  await page.evaluate(() => history.pushState({}, '', '/results?search_query=test'))
+  await page.evaluate(() => document.body.appendChild(document.createElement('div')))
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(0)
+})
+

@@ -49,16 +49,61 @@ let reportedWithVideo = false
  * Scored by liveness — playing, positioned, loaded — with width only breaking
  * ties.
  */
-export function playerVideo(): WebkitVideo | null {
-  const videos = [...document.querySelectorAll<WebkitVideo>('video')]
-  if (videos.length === 0) return null
-  const score = (v: WebkitVideo) =>
-    (!v.paused && !v.ended ? 4 : 0) + (v.currentTime > 0 ? 2 : 0) + (v.readyState >= 2 ? 1 : 0)
-  return videos.reduce((best, v) => {
-    const gap = score(v) - score(best)
-    if (gap !== 0) return gap > 0 ? v : best
-    return v.clientWidth > best.clientWidth ? v : best
+/** What the scoring below needs, so it can be exercised without a page. */
+export interface VideoState {
+  playing: boolean
+  started: boolean
+  ready: boolean
+  /** How much of it the viewer can actually see, in pixels of height. */
+  visibleHeight: number
+  width: number
+}
+
+/**
+ * How much this video looks like the one being watched.
+ *
+ * **Visibility outweighs everything.** It was not in the score at all, and on a
+ * page with several videos — a search result list, where previews autoplay —
+ * the winner could be one scrolled off the screen. The button then anchored to
+ * a box nobody could see, which is how it ended up over the search field. A
+ * single video on the page always scored right, which is exactly what was
+ * reported: fine with one, wrong with several.
+ */
+export function videoScore(v: VideoState): number {
+  return (
+    (v.visibleHeight >= MIN_VIDEO_HEIGHT ? 16 : 0) +
+    (v.playing ? 4 : 0) +
+    (v.started ? 2 : 0) +
+    (v.ready ? 1 : 0)
+  )
+}
+
+/** Pick the best of them; ties go to the wider box. Pure, for the tests. */
+export function pickVideo<T>(items: T[], state: (item: T) => VideoState): T | null {
+  if (items.length === 0) return null
+  return items.reduce((best, item) => {
+    const gap = videoScore(state(item)) - videoScore(state(best))
+    if (gap !== 0) return gap > 0 ? item : best
+    return state(item).width > state(best).width ? item : best
   })
+}
+
+function stateOf(v: WebkitVideo): VideoState {
+  const box = v.getBoundingClientRect()
+  const view = window.visualViewport
+  const top = view?.offsetTop ?? 0
+  const bottom = top + (view?.height ?? window.innerHeight)
+  return {
+    playing: !v.paused && !v.ended,
+    started: v.currentTime > 0,
+    ready: v.readyState >= 2,
+    visibleHeight: Math.max(0, Math.min(box.bottom, bottom) - Math.max(box.top, top)),
+    width: v.clientWidth,
+  }
+}
+
+export function playerVideo(): WebkitVideo | null {
+  return pickVideo([...document.querySelectorAll<WebkitVideo>('video')], stateOf)
 }
 
 /** Say it on the screen. A phone has no console, and this has to be debuggable there. */
@@ -277,6 +322,61 @@ function watchPresentation(video: WebkitVideo | null): void {
   }
 }
 
+/** The rectangles `placeButton` reasons about, so it can be tested without a page. */
+export interface Rect {
+  top: number
+  bottom: number
+  left: number
+  right: number
+  height: number
+}
+
+/**
+ * Margin from the video's edge. Small, to tuck into the very corner: floated
+ * inward it sits on top of YouTube's own bottom-right controls. The glyph is
+ * centred in a 36px tap target, so the visible gap is this + ~7px.
+ */
+const INSET = 3
+
+/** Below this the box is a thumbnail or a stray element, not the picture. */
+const MIN_VIDEO_HEIGHT = 80
+
+/**
+ * Where the button goes, or null when it must not be shown at all.
+ *
+ * **The button belongs to the video, and it is never moved off it.** It used to
+ * be clamped into the viewport instead — `Math.max(visibleTop + inset, top)` —
+ * which meant a video scrolled almost out of sight still passed the visibility
+ * test, and the clamp then parked a fixed 36px button at the top of the screen.
+ * On m.youtube that is the search field, and on the way there it crosses
+ * YouTube's own mute control: reported as "the sound cannot be turned on",
+ * because the tap was landing on our button.
+ *
+ * So there is no clamping. The corner is where it is, and if the whole button
+ * does not fit on the video **and** inside what the viewer can see, it is
+ * hidden. A button parked away from its video is worse than no button: it
+ * covers controls that belong to somebody else.
+ */
+export function placeButton(
+  box: Rect | null,
+  view: { top: number; bottom: number; left: number; right: number },
+  size = BUTTON_SIZE,
+): { top: number; left: number } | null {
+  if (!box || box.height < MIN_VIDEO_HEIGHT) return null
+
+  const top = box.bottom - size - INSET
+  const left = box.right - size - INSET
+
+  // On the video.
+  if (top < box.top || left < box.left) return null
+  // And wholly within what the viewer can actually see. On iOS the visible
+  // viewport is not the layout viewport, which is why this is passed in.
+  if (top < view.top || top + size > view.bottom) return null
+  if (left < view.left || left + size > view.right) return null
+
+  return { top, left }
+}
+
 /**
  * Where the button goes: the player's bottom-right corner, inset, in
  * visual-viewport coordinates (on iOS the layout viewport is not the visible
@@ -300,7 +400,13 @@ function place(): void {
   const visibleBottom = visibleTop + (view?.height ?? window.innerHeight)
   const visibleRight = (view?.offsetLeft ?? 0) + (view?.width ?? window.innerWidth)
 
-  if (!box || box.height < 80 || box.bottom < visibleTop + 40 || box.top > visibleBottom - 40) {
+  const spot = placeButton(box ?? null, {
+    top: visibleTop,
+    bottom: visibleBottom,
+    left: view?.offsetLeft ?? 0,
+    right: visibleRight,
+  })
+  if (!spot) {
     button.style.display = 'none'
     return
   }
@@ -319,15 +425,9 @@ function place(): void {
     mark.setAttribute('y', floating ? '6' : '11')
   }
 
-  // Margin from the edge. Small, to tuck into the very corner: floated inward it
-  // sits on top of YouTube's own bottom-right controls (the fullscreen button).
-  // The glyph is centred in a 36px tap target, so the visible gap is this + ~7px.
-  const inset = 3
-  const top = Math.min(box.bottom - BUTTON_SIZE - inset, visibleBottom - BUTTON_SIZE - inset)
-  const left = Math.min(box.right - BUTTON_SIZE - inset, visibleRight - BUTTON_SIZE - inset)
   button.style.display = 'grid'
-  button.style.top = `${Math.max(visibleTop + inset, top)}px`
-  button.style.left = `${Math.max(inset, left)}px`
+  button.style.top = `${spot.top}px`
+  button.style.left = `${spot.left}px`
   button.style.right = 'auto'
   button.style.bottom = 'auto'
 }
@@ -344,6 +444,30 @@ function placementSignals(): [EventTarget, string][] {
   return signals
 }
 
+/**
+ * Is this a page where one video is being watched?
+ *
+ * The button is for the thing you are watching. On a search page or a feed the
+ * previews autoplay, and offering to pop one of those into a floating window is
+ * not something anyone wants — it also put a fixed button on a screen full of
+ * boxes that scroll, which is how it ended up over the search field and over
+ * YouTube's own mute control.
+ *
+ * The path decides, not the number of `<video>` elements on the page: a watch
+ * page can carry a second one held in reserve, and a feed can be down to one
+ * after scrolling, so counting gets both cases wrong. Shorts is deliberately
+ * out — it is a feed of videos wearing a player's clothes.
+ */
+export function isWatchPage(url: string): boolean {
+  try {
+    const { hostname, pathname } = new URL(url)
+    if (!/(^|\.)(youtube\.com|youtube-nocookie\.com)$/i.test(hostname)) return false
+    return pathname === '/watch' || pathname.startsWith('/embed/')
+  } catch {
+    return false
+  }
+}
+
 function sweep(): void {
   const video = playerVideo()
   if (!video) return
@@ -357,9 +481,14 @@ function sweep(): void {
     reportDiagnostics()
   }
 
-  if (wantButton) {
+  // Re-checked on every sweep rather than once at start: the site navigates
+  // without reloading, so a button attached on a watch page has to come off
+  // again when the same document becomes a search result list.
+  if (wantButton && isWatchPage(location.href)) {
     ensureButton(video)
     place()
+  } else {
+    document.getElementById(BUTTON_ID)?.remove()
   }
 }
 
