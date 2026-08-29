@@ -209,10 +209,16 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
    the desktop rendered the phone's stacked layout at every width. Labels wrapped
    to three lines and the hostname truncated on a screen with room to spare.
 
-   560 is the panel's own design width, already the cap below. */
+   560 is the panel's own design width, already the cap below.
+
+   `max-width` stays, and it has to: a window narrower than 560 cannot give the
+   popup 560, and without the clamp the panel hangs off the edge and scrolls
+   sideways. It costs nothing here — a percentage max-width is ignored while the
+   browser computes the preferred minimum width it sizes the popup by, so the
+   number above still decides what the popup opens at. */
 .on-desktop .popup {
   width: 560px;
-  max-width: none;
+  max-width: 100%;
 }
 
 .page {
