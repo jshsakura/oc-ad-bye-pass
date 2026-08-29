@@ -30,11 +30,10 @@
 
 body {
   margin: 0;
-  /* The width a desktop popup opens at — a popup has no window to fill, so its
-     document decides. 320 was cramped once a toggle row carries a label, a hint,
-     a layer badge and a switch; 400 gives them room. On a phone this is under
-     the sheet's width and does nothing. (.popup caps at 560, so there is still
-     headroom.) */
+  /* A floor for the options page, which is a tab and can be dragged narrow.
+     The popup no longer relies on it: .popup carries its own width, because a
+     floor here decided the desktop popup's width without knowing what the
+     breakpoint below expected of it. */
   min-width: 400px;
   background: var(--bg);
   color: var(--fg);
@@ -194,15 +193,26 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 }
 
 .popup {
-  /* Fluid. The panel takes whatever it is given and centres itself past a
-     comfortable reading width.
-     What sets "whatever it is given" differs by browser: a desktop popup is
-     sized by its document, so body's min-width below decides it there; a phone
-     opens the popup as a full-width sheet, and the sheet decides. Neither needs
-     a number here. */
+  /* Fluid: a phone opens the popup as a sheet the system has already sized, so
+     the panel takes that width and centres itself past a comfortable reading
+     width. The desktop overrides this below, keyed on the screen rather than on
+     this width — see src/ui/device.ts for why the width cannot answer it. */
   width: 100%;
   max-width: 560px;
   margin-inline: auto;
+}
+
+/* A desktop popup has no window to fill, so the browser sizes it from the
+   document: this number *is* the width it opens at. It has to clear the 460px
+   phone breakpoint at the bottom of this file, and until 0.18.1 it did not —
+   body's 400px floor decided it, four hundred is less than four sixty, and so
+   the desktop rendered the phone's stacked layout at every width. Labels wrapped
+   to three lines and the hostname truncated on a screen with room to spare.
+
+   560 is the panel's own design width, already the cap below. */
+.on-desktop .popup {
+  width: 560px;
+  max-width: none;
 }
 
 .page {
@@ -848,10 +858,9 @@ input[type='text'] {
    bar at the bottom already has at every width. Above it they stay a wrapping
    flex row, where the extra room means each button can be its own size. */
 @media (max-width: 460px) {
-  /* The desktop popup is sized by its own document, which is what this floor is
-     for — but a phone opens the popup as a sheet it has already sized, and a
-     floor wider than that sheet scrolls the whole panel sideways. Ten pixels of
-     horizontal scroll is not a layout anyone chose. */
+  /* A phone sheet is narrower than the floor above, and a floor wider than its
+     sheet scrolls the whole panel sideways. Ten pixels of horizontal scroll is
+     not a layout anyone chose. */
   body {
     min-width: 0;
   }

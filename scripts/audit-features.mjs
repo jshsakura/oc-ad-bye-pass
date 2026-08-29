@@ -102,8 +102,13 @@ const CONTRACTS = `() => {
    * indistinguishable from a monitor nobody wired up.
    */
   const CHECKS = [
-    ['player', '플레이어 요소 #movie_player', () =>
-      player ? ['ok', player.tagName.toLowerCase()] : ['broken', '없음']],
+    // A missing player is a regression only on a page we were given. This one
+    // shipped without the 'served' guard every other check has, and on
+    // 2026-08-29 it called a bot-walled run a broken contract.
+    ['player', '플레이어 요소 #movie_player', () => {
+      if (player) return ['ok', player.tagName.toLowerCase()]
+      return served ? ['broken', '없음'] : ['unknown', '재생 응답을 못 받아 판정 불가']
+    }],
 
     // Never 'broken'. This says whether the run could observe anything at all,
     // and a session YouTube declined to serve is not a regression to report.
