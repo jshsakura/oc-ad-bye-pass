@@ -43,7 +43,8 @@ interface TranslationLanguage {
 }
 
 interface CaptionPlayer extends Element {
-  getOption?: (module: string, option: string) => unknown
+  /** The third argument is the options bag; `tracklist` needs it — see below. */
+  getOption?: (module: string, option: string, args?: unknown) => unknown
   setOption?: (module: string, option: string, value: unknown) => void
   loadModule?: (module: string) => void
   getVideoData?: () => { video_id?: string } | null
@@ -245,8 +246,20 @@ const MAX_CORRECTIONS = 3
 let moduleLoadedFor: string | null = null
 let tries = 0
 
+/**
+ * Only when it changed.
+ *
+ * setAttribute fires the observers watching this attribute even when the value
+ * is identical, and diagnostics watches it to re-report. A video that never
+ * reaches a playing state writes the same `watching(state=3)` every second
+ * forever, and each of those was a storage read and write on a phone. The
+ * waiting states deliberately do not spend the retry budget, so there is no
+ * count to end it either.
+ */
 function report(outcome: string): void {
-  document.documentElement.setAttribute(CAPTIONS_ATTR, outcome)
+  const root = document.documentElement
+  if (root.getAttribute(CAPTIONS_ATTR) === outcome) return
+  root.setAttribute(CAPTIONS_ATTR, outcome)
 }
 
 /**
@@ -266,7 +279,9 @@ function detail(parts: Record<string, string | number | null | undefined>): void
     .filter(([, v]) => v !== null && v !== undefined && v !== '')
     .map(([k, v]) => `${k}=${v}`)
     .join(' ')
-  document.documentElement.setAttribute(CAPTIONS_DETAIL_ATTR, text)
+  const root = document.documentElement
+  if (root.getAttribute(CAPTIONS_DETAIL_ATTR) === text) return
+  root.setAttribute(CAPTIONS_DETAIL_ATTR, text)
 }
 
 /** The rows remembered from the player response for this video, if any. */
@@ -349,7 +364,13 @@ function tick(): void {
 
   let tracks: unknown
   try {
-    tracks = player.getOption('captions', 'tracklist')
+    // `includeAsr` is not optional. Without it the player leaves the
+    // auto-generated track out of the list it hands back, and a video whose
+    // only captions are auto-generated then reads as a video with none. That is
+    // the whole of the `no-captions(mods=captions)` verdict reported from the
+    // phone on a video that demonstrably had an English asr track and Korean in
+    // its translation list.
+    tracks = player.getOption('captions', 'tracklist', { includeAsr: true })
   } catch {
     // A throwing caption module is a waiting state too, not a dead tick.
     report('watching(option-throws)')

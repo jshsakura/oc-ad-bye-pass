@@ -27,9 +27,18 @@ async function stubCaptionApi(page: Page, tracks: unknown[], translatable: unkno
       Object.assign(document.getElementById('movie_player') as object, {
         getVideoData: () => ({ video_id: 'fixture-video' }),
         loadModule: () => {},
-        getOption: (module: string, option: string) => {
+        // Like the real player: `tracklist` leaves the auto-generated track out
+        // unless it is asked for. Reproducing that here is the point — with a
+        // stub that always hands back everything, the caller can forget to ask
+        // and every test still passes, which is how a video whose only captions
+        // are auto-generated came to read as a video with none.
+        getOption: (module: string, option: string, args?: { includeAsr?: boolean }) => {
           if (module !== 'captions') return undefined
-          if (option === 'tracklist') return trackList
+          if (option === 'tracklist') {
+            return args?.includeAsr
+              ? trackList
+              : (trackList as Array<{ kind?: string }>).filter((t) => t.kind !== 'asr')
+          }
           if (option === 'translationLanguages') return translationList
           return undefined
         },
@@ -125,6 +134,27 @@ test.describe('자막 자동 선택', () => {
     expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('translated')
   })
 
+
+  test('자동 생성 자막밖에 없는 영상도 번역해서 켠다', async ({ context, background }) => {
+    const page = await context.newPage()
+    await page.goto(YOUTUBE_URL)
+    // The shape reported from the phone: one track, English, auto-generated,
+    // with Korean among the translation languages. The player hides that track
+    // from `tracklist` unless includeAsr is asked for, so before v0.18.2 this
+    // came back empty and the verdict was no-captions on a video that has them.
+    await stubCaptionApi(page, [{ languageCode: 'en', kind: 'asr' }], [{ languageCode: 'ko' }])
+
+    await writeSettings(background, settingsWith(true))
+
+    await expect.poll(() => captionCalls(page), { timeout: 8000 }).toEqual([
+      {
+        module: 'captions',
+        option: 'track',
+        value: { languageCode: 'en', kind: 'asr', translationLanguage: { languageCode: 'ko' } },
+      },
+    ])
+    expect(await page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('translated')
+  })
 
   test('같은 영상에는 한 번만 손댄다', async ({ context, background }) => {
     const page = await context.newPage()

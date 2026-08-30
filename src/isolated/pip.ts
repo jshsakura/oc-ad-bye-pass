@@ -468,6 +468,27 @@ export function isWatchPage(url: string): boolean {
   }
 }
 
+/**
+ * One sweep per frame, however many mutations arrive.
+ *
+ * The observer below watches childList and the `src` attribute across the whole
+ * document, and mobile YouTube changes those constantly — measured at about
+ * seven callbacks a second while sitting still on a watch page, against 2.4 once
+ * coalesced. Each uncoalesced one reached place(), which reads a bounding box
+ * and then writes styles: the read-write-read shape that forces layout. This is
+ * the same lesson src/isolated/index.ts already learned; pip.ts missed it.
+ */
+let scheduled = false
+
+function scheduleSweep(): void {
+  if (scheduled) return
+  scheduled = true
+  requestAnimationFrame(() => {
+    scheduled = false
+    sweep()
+  })
+}
+
 function sweep(): void {
   const video = playerVideo()
   if (!video) return
@@ -501,7 +522,7 @@ export function enablePictureInPicture(options: { button: boolean }): void {
   // The site replaces the player wholesale on navigation, taking the button with
   // it, so this watches rather than running once — and watches the opt-out
   // attribute, which the site puts back on the same element.
-  observer = new MutationObserver(() => sweep())
+  observer = new MutationObserver(scheduleSweep)
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,

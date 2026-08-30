@@ -36,6 +36,7 @@ import {
 import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
 import { injectMainWorldFallback } from './injectMain.ts'
 import { startPicker, stopPicker } from './picker.ts'
+import { stopWatchingStalls, watchForStalls } from './stall.ts'
 import { PICKER_KEY, PICKER_TTL_MS, type PickerRequest } from '../shared/messages.ts'
 
 const SITE: SiteKind = siteKindFor(location.hostname)
@@ -67,6 +68,7 @@ function detach() {
     sweepTimer = null
   }
   disablePictureInPicture()
+  stopWatchingStalls()
   stopPicker()
   // The MAIN world cannot be unloaded, so it is told to stand down instead.
   // Sent on every site, not just the video one: the pop-up guard lives there
@@ -129,6 +131,10 @@ function recompute(caches: FilterCaches) {
     if (settings.toggles.pipButton) enablePictureInPicture({ button: true })
     else disablePictureInPicture()
 
+    // Records how long the main thread was blocked, when it was. Costs one
+    // timer, and only here — a freeze on the video site is the one that has
+    // been reported and the one there is no other way to see.
+    watchForStalls()
   }
 
   sweep()
