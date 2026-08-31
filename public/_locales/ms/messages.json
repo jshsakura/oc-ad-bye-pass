@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "Yang anda asyik tutup berhenti datang: iklan dan penjejak, dinding kuki, tetingkap timbul, ajakan pasang apl.",
+    "description": "Store listing description. Max 132 characters — the store rejects the upload rather than truncating."
+  }
+}

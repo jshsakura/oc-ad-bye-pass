@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "যা বারবার বন্ধ করেন তা আর আসে না: বিজ্ঞাপন ও নজরদারি, কুকির দেয়াল, পপ-আপ, অ্যাপ বসানোর তাগাদা।",
+    "description": "Store listing description. Max 132 characters — the store rejects the upload rather than truncating."
+  }
+}

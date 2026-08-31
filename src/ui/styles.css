@@ -308,7 +308,7 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   display: block;
   width: 100%;
   min-height: 0;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   font: inherit;
   transition: border-color .12s ease;
@@ -365,13 +365,14 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 }
 .diag.blocked .blk-list li {
   position: relative;
-  padding: 3px 0 3px 16px;
+  padding-block: 3px;
+  padding-inline: 16px 0;
   font-size: 12px;
 }
 .diag.blocked .blk-list li::before {
   content: '';
   position: absolute;
-  left: 2px;
+  inset-inline-start: 2px;
   top: 9px;
   width: 6px;
   height: 6px;
@@ -530,7 +531,7 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
   content: '';
   position: absolute;
   top: 2px;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -543,7 +544,13 @@ h2 svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
 }
 
 .switch input:checked + .track::after {
+  /* Away from where it started, which is the other way round in Arabic and
+     Hebrew. A bare translateX would send the knob off the left edge there. */
   transform: translateX(14px);
+}
+
+[dir='rtl'] .switch input:checked + .track::after {
+  transform: translateX(-14px);
 }
 
 .switch input:focus-visible + .track {
@@ -781,7 +788,8 @@ textarea {
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 8px 32px 8px 10px;
+  padding-block: 8px;
+  padding-inline: 10px 32px;
   min-height: 34px;
   cursor: pointer;
   /* Room for a long endonym without stretching to the width of the card, and a
@@ -794,7 +802,12 @@ textarea {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2363676f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 11px center;
+  /* Logical position is not supported for background-position; flip it. */
   background-size: 11px 8px;
+}
+
+[dir='rtl'] .lang-select {
+  background-position: left 11px center;
 }
 
 /* The arrow is drawn in a fixed colour, so it needs the dark one spelled out. */

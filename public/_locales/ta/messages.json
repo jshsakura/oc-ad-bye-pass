@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "நீங்கள் அடிக்கடி மூடுவது வருவதே நின்றுவிடும்: விளம்பரம், கண்காணிப்பு, குக்கீ சுவர், திடீர்ச் சாளரம், செயலி வற்புறுத்தல்.",
+    "description": "Store listing description. Max 132 characters — the store rejects the upload rather than truncating."
+  }
+}

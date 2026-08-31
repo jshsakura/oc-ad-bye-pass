@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "Prestane chodiť to, čo stále zatvárate: reklamy a sledovanie, steny so súhlasom pre cookie, vyskakovacie okná, ponuky aplikácií.",
+    "description": "Store listing description. Max 132 characters — the store rejects the upload rather than truncating."
+  }
+}

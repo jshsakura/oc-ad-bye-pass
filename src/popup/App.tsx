@@ -11,7 +11,7 @@ import {
   type Settings,
   type Stats,
 } from '../shared/settings.ts'
-import { makeT } from '../shared/i18n.ts'
+import { applyLangToDocument, makeT } from '../shared/i18n.ts'
 import { PICKER_KEY, type PickerRequest } from '../shared/messages.ts'
 import {
   addToAllowlist,
@@ -68,6 +68,9 @@ export function App() {
   }, [])
 
   const t = useMemo(() => makeT(settings.lang), [settings.lang])
+  // `lang` and `dir` belong to the document, and the document outlives every
+  // render — an Arabic UI laid out left to right is the whole language wasted.
+  useEffect(() => applyLangToDocument(settings.lang), [settings.lang])
 
   const update = (patch: Partial<Settings>) => {
     setSettings((prev) => ({ ...prev, ...patch }))

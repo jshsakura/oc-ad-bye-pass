@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "Kile unachofunga kila mara huacha kufika: matangazo na wafuatiliaji, kuta za vidakuzi, madirisha ibukizi, shinikizo la programu.",
+    "description": "Store listing description. Max 132 characters — the store rejects the upload rather than truncating."
+  }
+}

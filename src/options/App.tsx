@@ -28,7 +28,7 @@ import {
   type UpdateCheck,
 } from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
-import { LANGS, LANG_LABEL, type Lang, makeT } from '../shared/i18n.ts'
+import { LANGS, LANG_LABEL, applyLangToDocument, type Lang, makeT } from '../shared/i18n.ts'
 
 const GRANTED_BY_DEFAULT = ['https://raw.githubusercontent.com', 'https://gist.githubusercontent.com']
 
@@ -89,6 +89,9 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
   const [backupNote, setBackupNote] = useState<string | null>(null)
 
   const t = useMemo(() => makeT(settings.lang), [settings.lang])
+  // `lang` and `dir` belong to the document, and the document outlives every
+  // render — an Arabic UI laid out left to right is the whole language wasted.
+  useEffect(() => applyLangToDocument(settings.lang), [settings.lang])
 
   const storeInstall = isStoreInstall()
 

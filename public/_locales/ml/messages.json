@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "OC Ad Bye-Pass",
+    "description": "The extension name. A brand, so it is the same in every locale."
+  },
+  "extDescription": {
+    "message": "നിങ്ങൾ എപ്പോഴും അടയ്ക്കുന്നത് വരാതാകും: പരസ്യം, ട്രാക്കർ, കുക്കി ഭിത്തി, പോപ്പ്-അപ്പ്, ആപ്പ് നിർബന്ധം.",
+    "description": "Store listing description. Max 132 characters — the store rejects the upload rather than truncating."
+  }
+}

@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   BASE_LANG,
+  langDir,
   CATALOGS_FOR_TESTS as CATALOGS,
   LANGS,
   LANG_LABEL,
@@ -93,4 +94,19 @@ test('은퇴한 언어가 설정에 남아 있어도 죽지 않는다', () => {
   // A setting outlives the version that wrote it.
   const t = makeT('xx' as never)
   assert.equal(t('popup.foot.settings'), en['popup.foot.settings'])
+})
+
+
+test('오른쪽에서 왼쪽으로 쓰는 언어는 dir 이 rtl 이다', () => {
+  // Without this the whole layout is mirrored the wrong way: every label, every
+  // switch and every full stop lands on the side the reader does not start from.
+  for (const lang of ['ar', 'fa', 'he', 'ur']) assert.equal(langDir(lang), 'rtl', lang)
+  for (const lang of ['en', 'ko', 'ja', 'ru', 'hi', 'th']) assert.equal(langDir(lang), 'ltr', lang)
+  // By primary subtag, so a regional tag inherits its script.
+  assert.equal(langDir('ar-EG'), 'rtl')
+  assert.equal(langDir('pt-BR'), 'ltr')
+})
+
+test('모든 언어에 방향이 정해져 있다', () => {
+  for (const lang of LANGS) assert.match(langDir(lang), /^(rtl|ltr)$/)
 })
