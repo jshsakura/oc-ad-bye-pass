@@ -28,7 +28,7 @@ import {
   type UpdateCheck,
 } from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
-import { LANGS, LANG_LABEL, makeT } from '../shared/i18n.ts'
+import { LANGS, LANG_LABEL, type Lang, makeT } from '../shared/i18n.ts'
 
 const GRANTED_BY_DEFAULT = ['https://raw.githubusercontent.com', 'https://gist.githubusercontent.com']
 
@@ -255,18 +255,25 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
           {t('opt.lang')}
         </h2>
         <p className="desc">{t('opt.lang.desc')}</p>
+        {/* A select, not a row of buttons. Buttons were fine for two languages
+            and stop being fine somewhere around five: they wrap into a block
+            that grows with every locale shipped, and the one the reader is
+            looking for is somewhere in the middle of it. A select is a fixed
+            amount of space however long the list gets, and it is the control
+            every platform already gives a "pick one of many" to. */}
         <div className="actions">
-          {LANGS.map((code) => (
-            <button
-              key={code}
-              type="button"
-              className={settings.lang === code ? 'primary' : ''}
-              aria-pressed={settings.lang === code}
-              onClick={() => void persist({ lang: code })}
-            >
-              {LANG_LABEL[code]}
-            </button>
-          ))}
+          <select
+            className="lang-select"
+            aria-label={t('opt.lang')}
+            value={settings.lang}
+            onChange={(event) => void persist({ lang: event.target.value as Lang })}
+          >
+            {LANGS.map((code) => (
+              <option key={code} value={code}>
+                {LANG_LABEL[code]}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
 

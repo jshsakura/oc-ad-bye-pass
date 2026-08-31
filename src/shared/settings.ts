@@ -1,7 +1,7 @@
 // Settings definitions and all chrome.storage access, in one place.
 // The MAIN world cannot use chrome.*, so it never imports this module.
 
-import { type Lang, detectLang } from './i18n.ts'
+import { BASE_LANG, LANGS, type Lang, detectLang } from './i18n.ts'
 
 export const TOGGLE_KEYS = [
   'videoAds',
@@ -142,9 +142,10 @@ const LEGACY_LIST_URLS = new Set([
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
-  // Overwritten from the browser locale on first seed; 'ko' is the fallback
-  // when nothing has been stored yet.
-  lang: 'ko',
+  // Overwritten from the browser locale on first seed. The base locale is the
+  // fallback until then, because a default is what a reader gets when nothing
+  // is known about them, and that must not be one particular reader's language.
+  lang: BASE_LANG,
   toggles: {
     videoAds: true,
     generalAds: true,
@@ -261,7 +262,9 @@ function mergeSettings(stored: unknown): Settings {
   }
   return {
     enabled: typeof s.enabled === 'boolean' ? s.enabled : DEFAULT_SETTINGS.enabled,
-    lang: s.lang === 'ko' || s.lang === 'en' ? s.lang : DEFAULT_SETTINGS.lang,
+    // Against the shipped list, not a pair written out here. A hardcoded
+    // `'ko' || 'en'` silently discards every language added after it.
+    lang: LANGS.includes(s.lang as Lang) ? (s.lang as Lang) : DEFAULT_SETTINGS.lang,
     toggles,
     listEnabled: typeof s.listEnabled === 'boolean' ? s.listEnabled : DEFAULT_SETTINGS.listEnabled,
     lists: mergeLists(s),

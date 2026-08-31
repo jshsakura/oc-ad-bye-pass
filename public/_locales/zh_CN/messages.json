@@ -1,0 +1,4 @@
+{
+  "extName": { "message": "OC Ad Bye-Pass", "description": "The extension name. A brand, so it is the same in every locale." },
+  "extDescription": { "message": "你总在关掉的东西不再出现：广告与追踪、Cookie 同意墙、没点过却弹出的窗口、催你装应用的提示。", "description": "Store listing description. Max 132 characters." }
+}

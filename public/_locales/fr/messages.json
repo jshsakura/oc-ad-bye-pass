@@ -1,0 +1,4 @@
+{
+  "extName": { "message": "OC Ad Bye-Pass", "description": "The extension name. A brand, so it is the same in every locale." },
+  "extDescription": { "message": "Ce que vous fermez sans cesse cesse d'arriver : publicités, traceurs, murs de cookies, fenêtres surgissantes, appels d'app.", "description": "Store listing description. Max 132 characters." }
+}

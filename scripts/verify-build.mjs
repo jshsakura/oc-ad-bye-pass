@@ -17,7 +17,7 @@
 // Both firing is fine; the guard in main/index.ts installs the hooks once. What
 // is not fine is neither firing.
 
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 const ROOT = dirname(import.meta.dirname)
@@ -40,8 +40,15 @@ const orion = existsSync(join(ROOT, 'dist-orion', 'manifest.json'))
 // The Chrome Web Store caps the manifest description at 132 characters, per
 // locale, and rejects the upload rather than truncating. The description is
 // localized, so check every messages.json — the store counts each one.
-for (const loc of ['en', 'ko']) {
-  const file = join(ROOT, 'dist', '_locales', loc, 'messages.json')
+//
+// Read from the directory rather than a list written here. This said
+// `['en', 'ko']`, so the eight locales added in 0.19.0 would have shipped
+// unchecked and the store would have refused the upload with no local warning.
+const localeDir = join(ROOT, 'dist', '_locales')
+const locales = existsSync(localeDir) ? readdirSync(localeDir) : []
+check('_locales 에 로케일이 있다', locales.length > 0, 'dist/_locales 가 비었다')
+for (const loc of locales) {
+  const file = join(localeDir, loc, 'messages.json')
   if (!existsSync(file)) continue
   const len = (JSON.parse(readFileSync(file, 'utf8')).extDescription?.message ?? '').length
   check(

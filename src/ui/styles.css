@@ -772,8 +772,48 @@ textarea {
   resize: vertical;
 }
 
+/* The language picker. Borrows the field styling above rather than the button
+   styling beside it, because it is a field: it holds a value the reader chose,
+   and a control that looks like a button reads as one that does something. */
+.lang-select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 32px 8px 10px;
+  min-height: 34px;
+  cursor: pointer;
+  /* Room for a long endonym without stretching to the width of the card, and a
+     floor so a short one does not shrink to nothing. */
+  min-width: 180px;
+  max-width: 100%;
+  /* The platform arrow, drawn rather than inherited: a select styled at all
+     loses its native one in WebKit and would otherwise read as a text field. */
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2363676f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 11px 8px;
+}
+
+/* The arrow is drawn in a fixed colour, so it needs the dark one spelled out. */
+@media (prefers-color-scheme: dark) {
+  .lang-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%239aa0aa' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  }
+}
+
+/* The list itself is drawn by the platform and does not inherit the page's
+   colours in every engine — name them so a dark UI does not open a white menu. */
+.lang-select option {
+  color: var(--fg);
+  background: var(--bg);
+}
+
 input:focus,
-textarea:focus {
+textarea:focus,
+.lang-select:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
   border-color: transparent;
