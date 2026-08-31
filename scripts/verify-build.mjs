@@ -82,6 +82,26 @@ check(
   '등록이 실패한 브라우저에서 주입 폴백까지 죽는다',
 )
 
+// The injected element must be async, and this is a tripwire rather than a
+// style note.
+//
+// A script-inserted <script async=false> joins the document's execute-in-order
+// list, and everything the page inserts after it waits. YouTube builds its
+// player that way, so a request of ours that never resolves stops the player
+// from ever initialising. That happened on 2026-08-12, `550edc0` fixed it, and
+// `01cc36f` reset src/ to an older release to recover playback and took the fix
+// with it. Nine months of releases went out with it gone, because this path
+// never runs on Chrome — only where `world: "MAIN"` is ignored, which is the
+// browser this reaches a phone through, so no test and no reviewer ever saw it.
+//
+// Reading the bundle is the only check that survives that kind of revert.
+const isolatedBundle = readFileSync(join(ROOT, 'dist', 'isolated.js'), 'utf8')
+check(
+  '주입 스크립트가 async 다',
+  isolatedBundle.includes('.async=!0') && !isolatedBundle.includes('.async=!1'),
+  'async=false 는 페이지의 스크립트를 붙잡아 플레이어를 죽인다 (550edc0 참조)',
+)
+
 check(
   'scripting 권한이 있다',
   (manifest.permissions ?? []).includes('scripting'),

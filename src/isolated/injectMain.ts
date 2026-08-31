@@ -49,20 +49,44 @@ function mark(state: InjectState): void {
  */
 let attempted = false
 
+/** How long the injected element gets to answer before it is taken back out. */
+const SETTLE_MS = 4000
+
 export function injectMainWorldFallback(): void {
   if (attempted) return
   // Nothing to do if the normal route already reached the page's world.
   if (document.documentElement?.hasAttribute(INSTALLED_ATTR)) return mark('not-needed')
   attempted = true
+  inject()
+}
 
-  // Not yet installed does not mean it failed — content script execution order
-  // is not guaranteed, so MAIN may simply run after us. We inject anyway rather
-  // than wait: a hook installed late is worthless, and main/index.ts's guard
-  // stops the double run.
+function inject(): void {
   const script = document.createElement('script')
   script.src = chrome.runtime.getURL('main.js')
-  // script-inserted elements default to async=true; false keeps insertion order.
-  script.async = false
+
+  /*
+   * Async. It was `false` here, to keep insertion order, and that is the single
+   * most expensive line this extension has ever shipped.
+   *
+   * A script-inserted element with async=false joins the document's
+   * execute-in-order list, and everything script-inserted *after* it waits for
+   * this one. YouTube builds its player that way. So a request of ours that
+   * neither loads nor fails does not merely delay layer 1 — it stops the page's
+   * own scripts from running, for as long as the request is open. The player
+   * never initialises and the tab is dead in the water.
+   *
+   * That is not a theory. It happened on 2026-08-12, it was diagnosed, and
+   * `550edc0` fixed it exactly here. Then `01cc36f` reset src/ to an older
+   * release to recover playback and this fix went with it — "Everything else
+   * from today is gone" — and nobody noticed, because the path never runs on
+   * Chrome. It only runs where `world: "MAIN"` is ignored, which is the browser
+   * this extension is on a phone through.
+   *
+   * Nothing here needs to run in step with the page's scripts. It needs to run
+   * early, and it must never be able to hold them up.
+   */
+  script.async = true
+
   script.addEventListener('load', () => {
     mark('loaded')
     script.remove()
@@ -72,6 +96,22 @@ export function injectMainWorldFallback(): void {
     console.warn('[oc-ad-bye-pass] main.js 주입이 차단되었습니다 — 1계층이 동작하지 않습니다')
     script.remove()
   })
+
+  /*
+   * And it does not get to stay forever.
+   *
+   * Neither event is guaranteed — the phone reported exactly that, injected and
+   * then silence — and an element we put in the page's <head> on the strength of
+   * a request that never resolves is ours to clean up. The verdict is read off
+   * layer 1's own marker rather than assumed: the script may well have run and
+   * simply not fired `load`, and calling that `차단됨` would be the false
+   * negative the panel exists to avoid.
+   */
+  setTimeout(() => {
+    if (!script.isConnected) return
+    mark(document.documentElement?.hasAttribute(INSTALLED_ATTR) ? 'loaded' : 'blocked')
+    script.remove()
+  }, SETTLE_MS)
 
   // Marked before insertion, not after: the load event can arrive during the
   // insert, and marking afterwards wrote `injected` over the `loaded` that had
