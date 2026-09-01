@@ -69,6 +69,8 @@ export const sw = {
   'toggle.pipButton.hint': 'Huweka kitufe chini kulia kwenye kicheza — hufungua dirisha linaloelea la kivinjari',
   'toggle.autoCaptions.label': 'Manukuu ya kiotomatiki kwa lugha yako',
   'toggle.autoCaptions.hint': 'Kwenye video za lugha ngeni huchagua manukuu kwa lugha ya kivinjari au huyatafsiri kiotomatiki. Video zilizo tayari kwa lugha yako, na mabadiliko yako mwenyewe, huachwa kama yalivyo',
+  'toggle.sponsorSkip.label': 'Ruka sehemu za udhamini',
+  'toggle.sponsorSkip.hint': 'Huruka tangazo la kulipwa linalosomwa ndani ya video, kwa kutumia sehemu walizoweka alama watazamaji wengine. Huuliza SponsorBlock, seva isiyo yetu; video haitajwi kamwe, hutumwa tu alama fupi inayogusa video nyingi kwa pamoja',
 
   // — options / settings page —
   'opt.title': 'Mipangilio ya OC Ad Bye-Pass',

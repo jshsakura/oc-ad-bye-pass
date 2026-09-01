@@ -80,6 +80,8 @@ export const en = {
   'toggle.pipButton.hint': 'Adds a button at the player\'s lower right — it opens the browser\'s floating window',
   'toggle.autoCaptions.label': 'Auto captions in your language',
   'toggle.autoCaptions.hint': 'On foreign-language videos, picks subtitles in the browser language or auto-translates. Videos already in your language, and your own changes, are left alone',
+  'toggle.sponsorSkip.label': 'Skip sponsor segments',
+  'toggle.sponsorSkip.hint': 'Skips the paid promotion read inside a video, using the spots other viewers marked. Asks SponsorBlock, a server we do not run — the video is never named, only a hash covering many at once',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass Settings',

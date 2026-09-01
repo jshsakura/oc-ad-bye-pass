@@ -36,6 +36,7 @@ import {
 import { stopWatchingAppBannerHints, watchAppBannerHints } from './appbanner.ts'
 import { injectMainWorldFallback } from './injectMain.ts'
 import { startPicker, stopPicker } from './picker.ts'
+import { setSponsorSkip } from './sponsorskip.ts'
 import { stopWatchingStalls, watchForStalls } from './stall.ts'
 import { PICKER_KEY, PICKER_TTL_MS, type PickerRequest } from '../shared/messages.ts'
 
@@ -68,6 +69,7 @@ function detach() {
     sweepTimer = null
   }
   disablePictureInPicture()
+  setSponsorSkip(false)
   stopWatchingStalls()
   stopPicker()
   // The MAIN world cannot be unloaded, so it is told to stand down instead.
@@ -130,6 +132,10 @@ function recompute(caches: FilterCaches) {
     // on this platform and cost more than it saved.
     if (settings.toggles.pipButton) enablePictureInPicture({ button: true })
     else disablePictureInPicture()
+
+    // Crowd-sourced sponsor segments. Its own switch because it is the one
+    // feature that asks a server we do not run.
+    setSponsorSkip(settings.toggles.sponsorSkip)
 
     // Records how long the main thread was blocked, when it was. Costs one
     // timer, and only here — a freeze on the video site is the one that has

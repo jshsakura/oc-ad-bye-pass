@@ -69,6 +69,8 @@ export const hu = {
   'toggle.pipButton.hint': 'Gombot tesz a lejátszó jobb alsó sarkába — az nyitja meg a böngésző lebegő ablakát',
   'toggle.autoCaptions.label': 'Automatikus felirat a saját nyelveden',
   'toggle.autoCaptions.hint': 'Idegen nyelvű videóknál a böngésző nyelvén választ feliratot, vagy automatikusan fordíttat. A már a te nyelveden lévő videókhoz és a saját módosításaidhoz nem nyúl',
+  'toggle.sponsorSkip.label': 'Szponzorált szakaszok átugrása',
+  'toggle.sponsorSkip.hint': 'Átugorja a videón belül felolvasott fizetett hirdetést, azokat a helyeket használva, amelyeket más nézők megjelöltek. A SponsorBlockot kérdezi, ami nem a mi kiszolgálónk; a videó neve sosem megy el, csak egy sok videót lefedő lenyomat',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass beállítások',

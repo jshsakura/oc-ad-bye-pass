@@ -69,6 +69,8 @@ export const lt = {
   'toggle.pipButton.hint': 'Prideda mygtuką grotuvo apačioje dešinėje — jis atveria plaukiojantį naršyklės langą',
   'toggle.autoCaptions.label': 'Automatiniai subtitrai jūsų kalba',
   'toggle.autoCaptions.hint': 'Užsienio kalba įrašuose parenka subtitrus naršyklės kalba arba juos automatiškai išverčia. Įrašai, kurie jau yra jūsų kalba, ir jūsų pačių pakeitimai lieka neliesti',
+  'toggle.sponsorSkip.label': 'Praleisti remiamas atkarpas',
+  'toggle.sponsorSkip.hint': 'Praleidžia mokamą reklamą, skaitomą vaizdo įraše, pagal vietas, kurias pažymėjo kiti žiūrovai. Klausia SponsorBlock — tai ne mūsų serveris; įrašas niekada neįvardijamas, siunčiama tik maiša, apimanti daugelį',
 
   // — options / settings page —
   'opt.title': '„OC Ad Bye-Pass“ nustatymai',

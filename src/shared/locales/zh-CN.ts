@@ -69,6 +69,8 @@ export const zhCN = {
   'toggle.pipButton.hint': '在播放器右下角加一个按钮，用来打开浏览器的悬浮窗口',
   'toggle.autoCaptions.label': '按你的语言自动选字幕',
   'toggle.autoCaptions.hint': '在外语视频上选择浏览器语言的字幕，或自动翻译。已经是你的语言的视频，以及你自己的改动，都不会被碰',
+  'toggle.sponsorSkip.label': '跳过口播广告',
+  'toggle.sponsorSkip.hint': '跳过视频里念的赞助广告，位置来自其他观众的标记。向 SponsorBlock 询问，那不是我们的服务器；不会告诉它是哪个视频，只发一段覆盖许多视频的哈希前缀',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass 设置',

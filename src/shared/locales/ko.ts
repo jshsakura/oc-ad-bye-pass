@@ -72,6 +72,8 @@ export const ko = {
   'toggle.pipButton.hint': '플레이어 오른쪽 아래에 버튼을 답니다 — 누르면 브라우저의 작은 화면이 열립니다',
   'toggle.autoCaptions.label': '현재 언어로 자막 자동 선택',
   'toggle.autoCaptions.hint': '외국어 영상일 때만 브라우저 언어의 자막을 고르고, 없으면 자동 번역을 켭니다. 내 언어 영상과 직접 바꾼 선택은 건드리지 않습니다',
+  'toggle.sponsorSkip.label': '스폰서 구간 건너뛰기',
+  'toggle.sponsorSkip.hint': '영상 안에서 읽는 유료 광고 구간을 건너뜁니다. 다른 시청자들이 표시해둔 위치를 SponsorBlock 서버에서 받아옵니다. 우리가 운영하는 서버가 아니며, 어떤 영상인지는 보내지 않고 여러 영상에 걸치는 해시 조각만 나갑니다',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass 설정',

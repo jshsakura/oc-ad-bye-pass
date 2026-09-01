@@ -69,6 +69,8 @@ export const sl = {
   'toggle.pipButton.hint': 'Doda gumb spodaj desno v predvajalniku — odpre lebdeče okno brskalnika',
   'toggle.autoCaptions.label': 'Samodejni podnapisi v vašem jeziku',
   'toggle.autoCaptions.hint': 'Pri videih v tujem jeziku izbere podnapise v jeziku brskalnika ali jih samodejno prevede. Videi, ki so že v vašem jeziku, in vaše lastne spremembe ostanejo nedotaknjeni',
+  'toggle.sponsorSkip.label': 'Preskoči sponzorirane odseke',
+  'toggle.sponsorSkip.hint': 'Preskoči plačano oglaševanje, ki se bere znotraj videa, po mestih, ki so jih označili drugi gledalci. Vpraša SponsorBlock, strežnik, ki ni naš; video ni nikoli poimenovan, pošlje se le zgoščena vrednost, ki zajema mnoge',
 
   // — options / settings page —
   'opt.title': 'Nastavitve OC Ad Bye-Pass',

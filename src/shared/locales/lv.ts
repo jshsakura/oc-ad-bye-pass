@@ -69,6 +69,8 @@ export const lv = {
   'toggle.pipButton.hint': 'Pieliek pogu atskaņotāja apakšā pa labi — tā atver pārlūka peldošo logu',
   'toggle.autoCaptions.label': 'Automātiski subtitri jūsu valodā',
   'toggle.autoCaptions.hint': 'Svešvalodu video izvēlas subtitrus pārlūka valodā vai liek tos automātiski tulkot. Video, kas jau ir jūsu valodā, un jūsu pašu izmaiņas paliek neaiztiktas',
+  'toggle.sponsorSkip.label': 'Izlaist sponsorētos posmus',
+  'toggle.sponsorSkip.hint': 'Izlaiž apmaksāto reklāmu, ko nolasa video iekšienē, izmantojot vietas, kuras atzīmējuši citi skatītāji. Jautā SponsorBlock — serverim, kas nav mūsu; video nekad netiek nosaukts, tikai jaucējkods, kas aptver daudzus',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass iestatījumi',

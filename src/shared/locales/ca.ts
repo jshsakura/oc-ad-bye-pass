@@ -69,6 +69,8 @@ export const ca = {
   'toggle.pipButton.hint': 'Afegeix un botó a baix a la dreta del reproductor: obre la finestra flotant del navegador',
   'toggle.autoCaptions.label': 'Subtítols automàtics en la teva llengua',
   'toggle.autoCaptions.hint': 'En vídeos en una altra llengua tria subtítols en la llengua del navegador o els fa traduir automàticament. Els vídeos que ja són en la teva llengua, i els canvis que facis tu, es deixen com estan',
+  'toggle.sponsorSkip.label': 'Salta els trams patrocinats',
+  'toggle.sponsorSkip.hint': 'Salta la publicitat pagada que es llegeix dins del vídeo, amb els trams que han marcat altres espectadors. Pregunta a SponsorBlock, un servidor que no és nostre; mai no es diu quin vídeo és, només un resum que en cobreix molts',
 
   // — options / settings page —
   'opt.title': 'Configuració de l\'OC Ad Bye-Pass',

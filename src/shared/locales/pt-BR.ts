@@ -69,6 +69,8 @@ export const ptBR = {
   'toggle.pipButton.hint': 'Adiciona um botão no canto inferior direito do player que abre a janela flutuante do navegador',
   'toggle.autoCaptions.label': 'Legendas automáticas no seu idioma',
   'toggle.autoCaptions.hint': 'Em vídeos em outro idioma, escolhe legendas no idioma do navegador ou traduz automaticamente. Vídeos que já estão no seu idioma, e as mudanças que você fizer, ficam como estão',
+  'toggle.sponsorSkip.label': 'Pular trechos patrocinados',
+  'toggle.sponsorSkip.hint': 'Pula o merchandising lido dentro do vídeo, usando os trechos que outros espectadores marcaram. Pergunta ao SponsorBlock, um servidor que não é nosso; o vídeo nunca é nomeado, só um hash que cobre muitos',
 
   // — options / settings page —
   'opt.title': 'Configurações do OC Ad Bye-Pass',

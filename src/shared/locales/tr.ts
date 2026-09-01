@@ -69,6 +69,8 @@ export const tr = {
   'toggle.pipButton.hint': 'Oynatıcının sağ altına bir düğme ekler — tarayıcının yüzen penceresini açar',
   'toggle.autoCaptions.label': 'Kendi dilinizde otomatik altyazı',
   'toggle.autoCaptions.hint': 'Yabancı dildeki videolarda tarayıcı dilindeki altyazıyı seçer ya da otomatik çevirtir. Zaten sizin dilinizde olan videolara ve sizin yaptığınız değişikliklere dokunulmaz',
+  'toggle.sponsorSkip.label': 'Sponsorlu bölümleri atla',
+  'toggle.sponsorSkip.hint': 'Videonun içinde okunan ücretli reklamı, başka izleyicilerin işaretlediği yerlere göre atlar. SponsorBlock\'a sorar; o bizim sunucumuz değil. Hangi video olduğu hiç gönderilmez, yalnızca bir seferde birçok videoyu kapsayan bir özet gider',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass ayarları',

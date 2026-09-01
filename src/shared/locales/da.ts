@@ -69,6 +69,8 @@ export const da = {
   'toggle.pipButton.hint': 'Sætter en knap nederst til højre i afspilleren — den åbner browserens svævende vindue',
   'toggle.autoCaptions.label': 'Automatiske undertekster på dit sprog',
   'toggle.autoCaptions.hint': 'På videoer på fremmede sprog vælges undertekster på browserens sprog, eller de oversættes automatisk. Videoer, der allerede er på dit sprog, og dine egne ændringer bliver ladt i fred',
+  'toggle.sponsorSkip.label': 'Spring sponsorafsnit over',
+  'toggle.sponsorSkip.hint': 'Springer den betalte reklame inde i videoen over, ud fra de steder andre seere har markeret. Spørger SponsorBlock, en server vi ikke driver; videoen nævnes aldrig, kun et hash der dækker mange på én gang',
 
   // — options / settings page —
   'opt.title': 'Indstillinger for OC Ad Bye-Pass',

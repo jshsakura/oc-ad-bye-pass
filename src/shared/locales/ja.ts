@@ -69,6 +69,8 @@ export const ja = {
   'toggle.pipButton.hint': 'プレーヤーの右下にボタンを追加します。ブラウザーのフローティング再生を開きます',
   'toggle.autoCaptions.label': '自分の言語で字幕を自動選択',
   'toggle.autoCaptions.hint': '外国語の動画で、ブラウザーの言語の字幕を選ぶか自動翻訳します。すでに自分の言語の動画と、自分で変更した設定には手を触れません',
+  'toggle.sponsorSkip.label': 'スポンサー区間を飛ばす',
+  'toggle.sponsorSkip.hint': '動画の中で読み上げられる有料広告の区間を飛ばします。ほかの視聴者が印をつけた位置を SponsorBlock のサーバーから取ってきます。私たちの運営ではなく、どの動画かは送らず、多数の動画にまたがるハッシュの断片だけを送ります',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass の設定',

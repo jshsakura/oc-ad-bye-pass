@@ -69,6 +69,8 @@ export const am = {
   'toggle.pipButton.hint': 'በአጫዋቹ ታችኛው ቀኝ ጥግ አዝራር ይጨምራል — የአሳሹን ተንሳፋፊ መስኮት ይከፍታል',
   'toggle.autoCaptions.label': 'በቋንቋዎ ራስ-ሰር የትርጉም ጽሑፍ',
   'toggle.autoCaptions.hint': 'በባዕድ ቋንቋ ቪዲዮዎች ላይ በአሳሹ ቋንቋ የትርጉም ጽሑፍ ይመርጣል ወይም ራስ-ሰር ያስተረጉማል። አስቀድሞ በቋንቋዎ ያሉ ቪዲዮዎችንና እርስዎ ያደረጓቸውን ለውጦች አይነካም',
+  'toggle.sponsorSkip.label': 'የስፖንሰር ክፍሎችን ዝለል',
+  'toggle.sponsorSkip.hint': 'በቪዲዮው ውስጥ የሚነበበውን የተከፈለበት ማስታወቂያ ይዘላል፣ ሌሎች ተመልካቾች ባመለከቷቸው ቦታዎች መሠረት። SponsorBlock ን ይጠይቃል፤ የእኛ አገልጋይ አይደለም። የትኛው ቪዲዮ እንደሆነ በፍጹም አይላክም፣ ብዙዎችን በአንድ ጊዜ የሚሸፍን ሃሽ ብቻ ነው የሚሄደው',
 
   // — options / settings page —
   'opt.title': 'የOC Ad Bye-Pass ቅንብሮች',

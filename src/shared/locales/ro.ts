@@ -69,6 +69,8 @@ export const ro = {
   'toggle.pipButton.hint': 'Adaugă un buton în dreapta jos a playerului — deschide fereastra plutitoare a browserului',
   'toggle.autoCaptions.label': 'Subtitrări automate în limba ta',
   'toggle.autoCaptions.hint': 'La videoclipurile în limbi străine alege subtitrări în limba browserului sau le traduce automat. Videoclipurile deja în limba ta, și schimbările făcute de tine, rămân neatinse',
+  'toggle.sponsorSkip.label': 'Sari peste secvențele sponsorizate',
+  'toggle.sponsorSkip.hint': 'Sare peste reclama plătită citită în video, folosind secvențele marcate de alți spectatori. Întreabă SponsorBlock, un server care nu e al nostru; videoul nu este numit niciodată, doar un hash care acoperă multe',
 
   // — options / settings page —
   'opt.title': 'Setările OC Ad Bye-Pass',

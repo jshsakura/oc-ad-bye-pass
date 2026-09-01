@@ -69,6 +69,8 @@ export const zhTW = {
   'toggle.pipButton.hint': '在播放器右下角加一個按鈕，用來開啟瀏覽器的浮動視窗',
   'toggle.autoCaptions.label': '依你的語言自動選字幕',
   'toggle.autoCaptions.hint': '在外語影片上選擇瀏覽器語言的字幕，或自動翻譯。已經是你的語言的影片，以及你自己的改動，都不會被碰',
+  'toggle.sponsorSkip.label': '略過口播廣告',
+  'toggle.sponsorSkip.hint': '略過影片裡念的贊助廣告，位置來自其他觀眾的標記。向 SponsorBlock 詢問，那不是我們的伺服器；不會告訴它是哪支影片，只送出一段涵蓋許多影片的雜湊前綴',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass 設定',

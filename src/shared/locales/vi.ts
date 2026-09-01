@@ -69,6 +69,8 @@ export const vi = {
   'toggle.pipButton.hint': 'Thêm một nút ở góc dưới bên phải trình phát — nút đó mở cửa sổ nổi của trình duyệt',
   'toggle.autoCaptions.label': 'Tự chọn phụ đề theo ngôn ngữ của bạn',
   'toggle.autoCaptions.hint': 'Với video tiếng nước ngoài, chọn phụ đề theo ngôn ngữ của trình duyệt hoặc bật dịch tự động. Video vốn đã đúng ngôn ngữ của bạn, và những thay đổi bạn tự làm, đều được để nguyên',
+  'toggle.sponsorSkip.label': 'Bỏ qua đoạn quảng cáo tài trợ',
+  'toggle.sponsorSkip.hint': 'Bỏ qua đoạn quảng cáo trả tiền được đọc ngay trong video, dựa trên chỗ mà những người xem khác đã đánh dấu. Hỏi SponsorBlock, một máy chủ không phải của chúng tôi; không bao giờ gửi đó là video nào, chỉ gửi một mã băm bao trùm nhiều video cùng lúc',
 
   // — options / settings page —
   'opt.title': 'Cài đặt OC Ad Bye-Pass',

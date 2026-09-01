@@ -69,6 +69,8 @@ export const nl = {
   'toggle.pipButton.hint': 'Zet rechtsonder in de speler een knop die het zwevende venster van de browser opent',
   'toggle.autoCaptions.label': 'Automatische ondertiteling in jouw taal',
   'toggle.autoCaptions.hint': 'Bij video\'s in een vreemde taal kiest het ondertiteling in de browsertaal of laat het automatisch vertalen. Video\'s die al in jouw taal zijn, en je eigen wijzigingen, blijven ongemoeid',
+  'toggle.sponsorSkip.label': 'Gesponsorde stukken overslaan',
+  'toggle.sponsorSkip.hint': 'Slaat de betaalde reclame midden in de video over, op basis van wat andere kijkers hebben aangegeven. Vraagt het aan SponsorBlock, een server die niet van ons is; welke video het is wordt nooit verzonden, alleen een hash die er vele omvat',
 
   // — options / settings page —
   'opt.title': 'Instellingen van OC Ad Bye-Pass',

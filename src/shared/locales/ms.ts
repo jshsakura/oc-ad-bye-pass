@@ -69,6 +69,8 @@ export const ms = {
   'toggle.pipButton.hint': 'Menambah butang di bawah kanan pemain — ia membuka tetingkap terapung pelayar',
   'toggle.autoCaptions.label': 'Sari kata automatik dalam bahasa anda',
   'toggle.autoCaptions.hint': 'Pada video bahasa asing, memilih sari kata dalam bahasa pelayar atau menterjemahkannya secara automatik. Video yang sudah dalam bahasa anda, dan perubahan anda sendiri, dibiarkan sahaja',
+  'toggle.sponsorSkip.label': 'Langkau bahagian tajaan',
+  'toggle.sponsorSkip.hint': 'Melangkau iklan berbayar yang dibaca di dalam video, berdasarkan bahagian yang ditanda penonton lain. Bertanya kepada SponsorBlock, pelayan yang bukan milik kami; video mana tidak pernah dihantar, hanya cincangan yang merangkumi banyak video serentak',
 
   // — options / settings page —
   'opt.title': 'Tetapan OC Ad Bye-Pass',

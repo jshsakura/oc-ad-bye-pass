@@ -69,6 +69,8 @@ export const cs = {
   'toggle.pipButton.hint': 'Přidá tlačítko vpravo dole v přehrávači — otevře plovoucí okno prohlížeče',
   'toggle.autoCaptions.label': 'Automatické titulky ve vašem jazyce',
   'toggle.autoCaptions.hint': 'U videí v cizím jazyce vybere titulky v jazyce prohlížeče nebo zapne automatický překlad. Videa, která už jsou ve vašem jazyce, a vaše vlastní změny zůstanou nedotčené',
+  'toggle.sponsorSkip.label': 'Přeskakovat sponzorované úseky',
+  'toggle.sponsorSkip.hint': 'Přeskočí placenou reklamu čtenou uvnitř videa podle míst, která označili jiní diváci. Ptá se SponsorBlocku, serveru, který nám nepatří; video se nikdy nejmenuje, posílá se jen otisk pokrývající mnoho videí naráz',
 
   // — options / settings page —
   'opt.title': 'Nastavení OC Ad Bye-Pass',

@@ -69,6 +69,8 @@ export const pl = {
   'toggle.pipButton.hint': 'Dodaje przycisk w prawym dolnym rogu odtwarzacza — otwiera pływające okno przeglądarki',
   'toggle.autoCaptions.label': 'Automatyczne napisy w twoim języku',
   'toggle.autoCaptions.hint': 'Przy filmach w obcym języku wybiera napisy w języku przeglądarki albo włącza automatyczne tłumaczenie. Filmy już w twoim języku i twoje własne zmiany zostają nietknięte',
+  'toggle.sponsorSkip.label': 'Pomijaj fragmenty sponsorowane',
+  'toggle.sponsorSkip.hint': 'Pomija płatną reklamę czytaną wewnątrz filmu, korzystając z miejsc oznaczonych przez innych widzów. Pyta SponsorBlock, serwer nie nasz; film nigdy nie jest nazywany, wysyłany jest tylko skrót obejmujący wiele naraz',
 
   // — options / settings page —
   'opt.title': 'Ustawienia OC Ad Bye-Pass',

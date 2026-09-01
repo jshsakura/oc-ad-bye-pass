@@ -69,6 +69,8 @@ export const no = {
   'toggle.pipButton.hint': 'Setter en knapp nederst til høyre i spilleren — den åpner nettleserens svevende vindu',
   'toggle.autoCaptions.label': 'Automatisk teksting på ditt språk',
   'toggle.autoCaptions.hint': 'På videoer på fremmede språk velges teksting på nettleserens språk, eller den oversettes automatisk. Videoer som allerede er på ditt språk, og dine egne endringer, blir latt i fred',
+  'toggle.sponsorSkip.label': 'Hopp over sponsordeler',
+  'toggle.sponsorSkip.hint': 'Hopper over den betalte reklamen inne i videoen, basert på stedene andre seere har markert. Spør SponsorBlock, en server vi ikke driver; videoen nevnes aldri, bare en hash som dekker mange samtidig',
 
   // — options / settings page —
   'opt.title': 'Innstillinger for OC Ad Bye-Pass',

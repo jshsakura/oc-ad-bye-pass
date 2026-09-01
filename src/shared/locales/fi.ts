@@ -69,6 +69,8 @@ export const fi = {
   'toggle.pipButton.hint': 'Lisää painikkeen soittimen oikeaan alanurkkaan — se avaa selaimen kelluvan ikkunan',
   'toggle.autoCaptions.label': 'Automaattinen tekstitys omalla kielelläsi',
   'toggle.autoCaptions.hint': 'Vieraskielisissä videoissa valitsee tekstityksen selaimen kielellä tai käännättää sen automaattisesti. Videot, jotka ovat jo kielelläsi, ja omat muutoksesi jätetään rauhaan',
+  'toggle.sponsorSkip.label': 'Ohita sponsoriosuudet',
+  'toggle.sponsorSkip.hint': 'Ohittaa videon sisällä luettavan maksetun mainoksen niiden kohtien perusteella, jotka muut katsojat ovat merkinneet. Kysyy SponsorBlockilta, joka ei ole meidän palvelimemme; videota ei koskaan nimetä, vain tiiviste joka kattaa monta kerralla',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Passin asetukset',

@@ -18,6 +18,7 @@ export const TOGGLE_KEYS = [
   'popups',
   'pipButton',
   'autoCaptions',
+  'sponsorSkip',
 ] as const
 
 export type ToggleKey = (typeof TOGGLE_KEYS)[number]
@@ -72,6 +73,12 @@ export const TOGGLE_META: readonly ToggleMeta[] = [
   // Not a blocking layer either: picks the caption track in the UI language
   // (or auto-translation into it) once per video, then leaves the player alone.
   { key: 'autoCaptions' },
+
+  // Not a blocking layer, and the only thing here that talks to a server that
+  // is not ours: sponsor reads are not ads YouTube served, they are part of the
+  // video, and no amount of looking at the page can find them. Somebody has to
+  // have watched it and said where. Off by default for both reasons.
+  { key: 'sponsorSkip' },
 ]
 
 export interface Settings {
@@ -182,6 +189,9 @@ export const DEFAULT_SETTINGS: Settings = {
     // Off: it changes what plays on screen, and unlike blocking there is no
     // harm in leaving it to opt in.
     autoCaptions: false,
+    // Off until asked for. It reaches a third-party server — a free one run by
+    // one person — and nobody should discover that by reading the source.
+    sponsorSkip: false,
   },
   listEnabled: true,
   lists: DEFAULT_LISTS,

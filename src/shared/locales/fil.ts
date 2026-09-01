@@ -69,6 +69,8 @@ export const fil = {
   'toggle.pipButton.hint': 'Naglalagay ng button sa kanang ibaba ng player — binubuksan nito ang lumulutang na bintana ng browser',
   'toggle.autoCaptions.label': 'Awtomatikong subtitle sa iyong wika',
   'toggle.autoCaptions.hint': 'Sa mga videong banyaga ang wika, pumipili ng subtitle sa wika ng browser o ipinapasalin ito nang awtomatiko. Ang mga videong nasa wika mo na, at ang sarili mong mga pagbabago, ay hindi ginagalaw',
+  'toggle.sponsorSkip.label': 'Laktawan ang bahaging may sponsor',
+  'toggle.sponsorSkip.hint': 'Nilalaktawan ang bayad na patalastas na binabasa sa loob mismo ng video, batay sa mga bahaging minarkahan ng ibang manonood. Nagtatanong sa SponsorBlock, isang server na hindi amin; hindi kailanman ipinapadala kung anong video, isang hash lang na sumasaklaw sa maraming video nang sabay',
 
   // — options / settings page —
   'opt.title': 'Mga setting ng OC Ad Bye-Pass',

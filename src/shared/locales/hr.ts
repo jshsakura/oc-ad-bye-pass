@@ -69,6 +69,8 @@ export const hr = {
   'toggle.pipButton.hint': 'Dodaje gumb dolje desno u playeru — otvara plutajući prozor preglednika',
   'toggle.autoCaptions.label': 'Automatski titlovi na vašem jeziku',
   'toggle.autoCaptions.hint': 'Na videima na stranom jeziku bira titlove na jeziku preglednika ili ih automatski prevodi. Videa koja su već na vašem jeziku i vaše vlastite promjene ostaju netaknuti',
+  'toggle.sponsorSkip.label': 'Preskoči sponzorirane dijelove',
+  'toggle.sponsorSkip.hint': 'Preskače plaćeni oglas koji se čita unutar videa, prema mjestima koja su označili drugi gledatelji. Pita SponsorBlock, poslužitelj koji nije naš; video se nikad ne imenuje, šalje se samo sažetak koji obuhvaća mnoge',
 
   // — options / settings page —
   'opt.title': 'Postavke OC Ad Bye-Pass',

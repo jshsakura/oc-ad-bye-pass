@@ -69,6 +69,8 @@ export const et = {
   'toggle.pipButton.hint': 'Lisab mängija alla paremale nupu — see avab brauseri hõljuva akna',
   'toggle.autoCaptions.label': 'Automaatsed subtiitrid sinu keeles',
   'toggle.autoCaptions.hint': 'Võõrkeelsete videote puhul valib subtiitrid brauseri keeles või laseb need automaatselt tõlkida. Videod, mis on juba sinu keeles, ja sinu enda muudatused jäetakse rahule',
+  'toggle.sponsorSkip.label': 'Jäta sponsorlõigud vahele',
+  'toggle.sponsorSkip.hint': 'Jätab vahele video sees loetava tasulise reklaami, kasutades kohti, mille teised vaatajad on märkinud. Küsib SponsorBlockilt, mis pole meie server; videot ei nimetata kunagi, ainult räsi, mis katab korraga paljusid',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Passi seaded',

@@ -69,6 +69,8 @@ export const de = {
   'toggle.pipButton.hint': 'Fügt unten rechts im Player eine Schaltfläche hinzu, die das schwebende Fenster des Browsers öffnet',
   'toggle.autoCaptions.label': 'Automatische Untertitel in Ihrer Sprache',
   'toggle.autoCaptions.hint': 'Wählt bei fremdsprachigen Videos Untertitel in der Browsersprache oder lässt automatisch übersetzen. Videos, die schon in Ihrer Sprache sind, und Ihre eigenen Änderungen bleiben unangetastet',
+  'toggle.sponsorSkip.label': 'Gesponserte Abschnitte überspringen',
+  'toggle.sponsorSkip.hint': 'Überspringt die bezahlte Werbung, die im Video vorgelesen wird, anhand der Stellen, die andere Zuschauer markiert haben. Fragt SponsorBlock, einen Server, der nicht uns gehört; das Video wird nie genannt, nur ein Hash, der viele zugleich abdeckt',
 
   // — options / settings page —
   'opt.title': 'OC Ad Bye-Pass — Einstellungen',

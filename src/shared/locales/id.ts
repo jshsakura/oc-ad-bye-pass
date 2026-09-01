@@ -69,6 +69,8 @@ export const id = {
   'toggle.pipButton.hint': 'Menambah tombol di kanan bawah pemutar — tombol itu membuka jendela mengambang peramban',
   'toggle.autoCaptions.label': 'Subtitel otomatis dalam bahasa Anda',
   'toggle.autoCaptions.hint': 'Pada video berbahasa asing, memilih subtitel dalam bahasa peramban atau menerjemahkannya otomatis. Video yang sudah berbahasa Anda, dan perubahan yang Anda buat sendiri, dibiarkan apa adanya',
+  'toggle.sponsorSkip.label': 'Lewati bagian sponsor',
+  'toggle.sponsorSkip.hint': 'Melewati iklan berbayar yang dibacakan di dalam video, berdasarkan bagian yang ditandai penonton lain. Bertanya ke SponsorBlock, server yang bukan milik kami; video mana tidak pernah dikirim, hanya hash yang mencakup banyak video sekaligus',
 
   // — options / settings page —
   'opt.title': 'Pengaturan OC Ad Bye-Pass',

@@ -69,6 +69,8 @@ export const it = {
   'toggle.pipButton.hint': 'Aggiunge un pulsante in basso a destra nel lettore: apre la finestra mobile del browser',
   'toggle.autoCaptions.label': 'Sottotitoli automatici nella tua lingua',
   'toggle.autoCaptions.hint': 'Sui video in lingua straniera sceglie i sottotitoli nella lingua del browser o li fa tradurre. I video già nella tua lingua, e le modifiche che fai tu, restano come sono',
+  'toggle.sponsorSkip.label': 'Salta i tratti sponsorizzati',
+  'toggle.sponsorSkip.hint': 'Salta la pubblicità pagata letta dentro il video, usando i tratti segnati da altri spettatori. Interroga SponsorBlock, un server che non è nostro; il video non viene mai nominato, solo un hash che ne copre molti',
 
   // — options / settings page —
   'opt.title': 'Impostazioni di OC Ad Bye-Pass',
