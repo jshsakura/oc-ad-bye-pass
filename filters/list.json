@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260831,
-  "updatedAt": "2026-08-31",
+  "version": 20260901,
+  "updatedAt": "2026-09-01",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -3183,6 +3183,7 @@
         "kyobobook.co.kr": [
           ".fly_menu_banner",
           ".wpromo-banner",
+          "div.z-banner",
           "div[class^=\"search_banner_\"]",
           "div[name=\"popAdv\"]",
           "main div[id*=\"_banner\"][id^=\"welcome_\"][class$=\"_area\"]"
@@ -3356,6 +3357,9 @@
         "m-i.kr": [
           "#user-wrap.mobile ~ div[style^=\"height:\"]",
           "div[class$=\"Ad\"]"
+        ],
+        "m-jp.yna.co.kr": [
+          "div.wrap-source"
         ],
         "m-mediatoday-co-kr.cdn.ampproject.org": [
           "section.amp_ad_box"
