@@ -13,13 +13,20 @@
 // The last one matters most. Everything else is a preference; that one is the
 // difference between a feature and something that takes the video away from you.
 
-import { fetchSponsorSegments, segmentAt, type SponsorSegment } from '../shared/sponsorblock.ts'
+import {
+  DEFAULT_CATEGORIES,
+  fetchSponsorSegments,
+  segmentAt,
+  type SkipCategory,
+  type SponsorSegment,
+} from '../shared/sponsorblock.ts'
 import { log } from '../shared/log.ts'
 
 /** How often to look. Cheap: a property read and a walk over a handful of pairs. */
 const TICK_MS = 500
 
 let enabled = false
+let categories: readonly SkipCategory[] = DEFAULT_CATEGORIES
 let timer: ReturnType<typeof setInterval> | null = null
 
 let loadedFor: string | null = null
@@ -60,7 +67,7 @@ function tick(): void {
     segments = []
     refused = new Set()
     seekedTo = -1
-    void fetchSponsorSegments(id).then((found) => {
+    void fetchSponsorSegments(id, categories).then((found) => {
       // The viewer may have moved on while we waited.
       if (loadedFor !== id) return
       segments = found
@@ -111,8 +118,17 @@ function tick(): void {
   }
 }
 
-/** Config-driven switch. Safe to call repeatedly. */
-export function setSponsorSkip(on: boolean): void {
+/**
+ * Config-driven switch. Safe to call repeatedly.
+ *
+ * A change to the chosen categories drops what was loaded for the current
+ * video: the segments in hand were the answer to a different question, and
+ * keeping them would skip a category the viewer just turned off.
+ */
+export function setSponsorSkip(on: boolean, wanted: readonly SkipCategory[] = DEFAULT_CATEGORIES): void {
+  const changed = wanted.join(',') !== categories.join(',')
+  categories = wanted
+  if (on && changed) forget()
   if (on === enabled) return
   enabled = on
   if (on) {

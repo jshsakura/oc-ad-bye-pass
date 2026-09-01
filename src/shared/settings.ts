@@ -2,6 +2,7 @@
 // The MAIN world cannot use chrome.*, so it never imports this module.
 
 import { BASE_LANG, LANGS, type Lang, detectLang } from './i18n.ts'
+import { DEFAULT_CATEGORIES, type SkipCategory, usableCategories } from './sponsorblock.ts'
 
 export const TOGGLE_KEYS = [
   'videoAds',
@@ -109,6 +110,12 @@ export interface Settings {
    * hatch that makes that defensible. An entry covers its subdomains.
    */
   allowlist: string[]
+  /**
+   * Which SponsorBlock categories to skip. Only consulted when the sponsorSkip
+   * toggle is on; an empty list means the same as the toggle being off, and is
+   * a legitimate thing for someone to end up with by unticking everything.
+   */
+  sponsorCategories: SkipCategory[]
 }
 
 /** One subscribed list. `enabled` is off rather than removed so the URL survives. */
@@ -197,6 +204,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lists: DEFAULT_LISTS,
   customRules: '',
   allowlist: [],
+  sponsorCategories: [...DEFAULT_CATEGORIES],
 }
 
 export interface Stats {
@@ -282,6 +290,11 @@ function mergeSettings(stored: unknown): Settings {
     allowlist: Array.isArray(s.allowlist)
       ? [...new Set(s.allowlist.filter((h): h is string => typeof h === 'string' && !!h))]
       : [...DEFAULT_SETTINGS.allowlist],
+    // An empty array is a real answer — somebody unticked everything — so the
+    // fallback applies only when the field is absent or not a list at all.
+    sponsorCategories: Array.isArray(s.sponsorCategories)
+      ? usableCategories(s.sponsorCategories)
+      : [...DEFAULT_SETTINGS.sponsorCategories],
   }
 }
 

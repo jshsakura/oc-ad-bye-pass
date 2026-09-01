@@ -5,7 +5,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  DEFAULT_CATEGORIES,
   PREFIX_LENGTH,
+  SKIP_CATEGORIES,
+  usableCategories,
   hashPrefix,
   mergeSegments,
   pickSegments,
@@ -41,11 +44,53 @@ test('응답에 섞여 온 다른 영상은 버린다', () => {
 test('스폰서가 아니거나 표를 잃은 구간은 안 쓴다', () => {
   const rows = [
     { category: 'sponsor', segment: [10, 20] },
-    { category: 'intro', segment: [0, 5] }, // the creator's own work
+    { category: 'intro', segment: [0, 5] }, // not chosen by default
     { category: 'sponsor', actionType: 'mute', segment: [30, 40] },
     { category: 'sponsor', votes: -2, segment: [50, 60] }, // crowd says it is wrong
   ]
   assert.deepEqual(pickSegments(video('v', rows), 'v'), [{ start: 10, end: 20 }])
+})
+
+test('고른 카테고리만 쓴다', () => {
+  const rows = [
+    { category: 'sponsor', segment: [10, 20] },
+    { category: 'intro', segment: [0, 5] },
+    { category: 'filler', segment: [40, 50] },
+  ]
+  // The server is asked by name, but what it sends is its decision — the answer
+  // is filtered again here so that what gets skipped stays ours.
+  assert.deepEqual(pickSegments(video('v', rows), 'v', ['intro']), [{ start: 0, end: 5 }])
+  assert.deepEqual(pickSegments(video('v', rows), 'v', ['sponsor', 'filler']), [
+    { start: 10, end: 20 },
+    { start: 40, end: 50 },
+  ])
+  // Nothing ticked is a real answer, and it means nothing is skipped.
+  assert.deepEqual(pickSegments(video('v', rows), 'v', []), [])
+})
+
+test('기본값은 스폰서 하나뿐이고, 목록에 있는 것이다', () => {
+  // The only one of the nine that is a paid advert. Everything else is the
+  // creator's own work and is the viewer's call, not ours.
+  assert.deepEqual(DEFAULT_CATEGORIES, ['sponsor'])
+  for (const c of DEFAULT_CATEGORIES) assert.ok(SKIP_CATEGORIES.includes(c))
+  // Categories upstream marks as labels or jump points, not skips.
+  for (const c of ['exclusive_access', 'poi_highlight', 'chapter']) {
+    assert.ok(!(SKIP_CATEGORIES as readonly string[]).includes(c), c)
+  }
+})
+
+test('저장된 카테고리 목록을 씻어낸다', () => {
+  // A settings file can be hand-edited, imported from an older version, or
+  // arrive from a future one. None of that may reach the request.
+  assert.deepEqual(usableCategories(['intro', 'nonsense', 'sponsor', 'intro']), [
+    'sponsor',
+    'intro',
+  ])
+  assert.deepEqual(usableCategories([1, null, {}, 'chapter']), [])
+  assert.deepEqual(usableCategories([]), [])
+  // Order comes from the declared list, not from how it was stored, so the
+  // request and the settings page always agree.
+  assert.deepEqual(usableCategories(['filler', 'sponsor']), ['sponsor', 'filler'])
 })
 
 test('망가진 구간은 조용히 버린다', () => {

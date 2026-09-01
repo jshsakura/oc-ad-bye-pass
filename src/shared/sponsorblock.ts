@@ -21,14 +21,48 @@
 const API = 'https://sponsor.ajay.app/api/skipSegments'
 
 /**
- * Only `sponsor`, which is a paid promotion read inside the video.
+ * Every category the API can be asked to skip, in the order the settings page
+ * lists them: the paid one first, then the creator's own material, then the
+ * two that only make sense on particular kinds of video.
  *
- * SponsorBlock ships eight categories and auto-skips exactly this one by
- * default; the others (intro, outro, self-promotion, subscribe reminders) are
- * the creator's own work and skipping them uninvited is an opinion about
- * someone's video rather than an ad blocked.
+ * `exclusive_access`, `poi_highlight` and `chapter` are deliberately absent —
+ * upstream marks them `full`, `poi` and `chapter`, which are labels and jump
+ * points rather than segments to skip past.
+ *
+ * Which of these are actually used is the viewer's choice. Only `sponsor` is on
+ * by default, because only `sponsor` is an advert; the rest is the creator's own
+ * work, and deciding for someone that their intro is not worth watching is an
+ * opinion about a video rather than an ad blocked. It is theirs to hold, not
+ * ours to apply by default.
  */
-const CATEGORY = 'sponsor'
+export const SKIP_CATEGORIES = [
+  'sponsor',
+  'selfpromo',
+  'interaction',
+  'intro',
+  'outro',
+  'preview',
+  'hook',
+  'filler',
+  'music_offtopic',
+] as const
+
+export type SkipCategory = (typeof SKIP_CATEGORIES)[number]
+
+/** On by default. The only one of the nine that is a paid advert. */
+export const DEFAULT_CATEGORIES: SkipCategory[] = ['sponsor']
+
+/** Drop anything that is not a category we ship, and dedupe. */
+export function usableCategories(values: readonly unknown[]): SkipCategory[] {
+  const known = new Set<string>(SKIP_CATEGORIES)
+  const out = new Set<SkipCategory>()
+  for (const value of values) {
+    if (typeof value === 'string' && known.has(value)) out.add(value as SkipCategory)
+  }
+  // Kept in the declared order rather than the stored one, so the request and
+  // the settings page agree however the value was written.
+  return SKIP_CATEGORIES.filter((c) => out.has(c))
+}
 
 /** A skip, in seconds from the start of the video. */
 export interface SponsorSegment {
@@ -75,7 +109,9 @@ export async function hashPrefix(videoId: string): Promise<string | null> {
  * Merge segments that touch or overlap.
  *
  * Several people submit the same sponsor with slightly different edges, and the
- * server hands back what it has. Seeking to the end of the first one can land
+ * server hands back what it has — and with more than one category chosen, a
+ * sponsor and a self-promotion often run straight into each other. Seeking to
+ * the end of the first one can land
  * inside the second, which then seeks again — a stutter where the viewer
  * expected one jump. Merging first makes it one.
  *
@@ -101,14 +137,19 @@ export function mergeSegments(segments: SponsorSegment[]): SponsorSegment[] {
  * voted down — `votes < 0` is the signal that a submission is wrong, and acting
  * on one is worse than doing nothing.
  */
-export function pickSegments(payload: unknown, videoId: string): SponsorSegment[] {
+export function pickSegments(
+  payload: unknown,
+  videoId: string,
+  categories: readonly string[] = DEFAULT_CATEGORIES,
+): SponsorSegment[] {
+  const wanted = new Set(categories)
   if (!Array.isArray(payload)) return []
   const video = (payload as ApiVideo[]).find((v) => v?.videoID === videoId)
   const rows = Array.isArray(video?.segments) ? (video.segments as ApiSegment[]) : []
 
   const usable: SponsorSegment[] = []
   for (const row of rows) {
-    if (row?.category !== CATEGORY) continue
+    if (typeof row?.category !== 'string' || !wanted.has(row.category)) continue
     if (row.actionType !== undefined && row.actionType !== 'skip') continue
     if (typeof row.votes === 'number' && row.votes < 0) continue
     const pair = row.segment
@@ -154,15 +195,22 @@ export function segmentAt(
  * a bad guest. A silent empty list is the correct answer to "the segments could
  * not be had": the video simply plays.
  */
-export async function fetchSponsorSegments(videoId: string): Promise<SponsorSegment[]> {
+export async function fetchSponsorSegments(
+  videoId: string,
+  categories: readonly string[] = DEFAULT_CATEGORIES,
+): Promise<SponsorSegment[]> {
   try {
+    if (!categories.length) return []
     const prefix = await hashPrefix(videoId)
     if (!prefix) return []
-    const url = `${API}/${prefix}?categories=${encodeURIComponent(JSON.stringify([CATEGORY]))}`
+    // Asked for by name so the server sends only what will be used. The
+    // response is filtered again here, because what the server sends is its
+    // decision and what gets skipped has to be ours.
+    const url = `${API}/${prefix}?categories=${encodeURIComponent(JSON.stringify(categories))}`
     const response = await fetch(url)
     // 404 is the ordinary answer for "nobody has submitted anything here".
     if (!response.ok) return []
-    return pickSegments(await response.json(), videoId)
+    return pickSegments(await response.json(), videoId, categories)
   } catch {
     return []
   }

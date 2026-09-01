@@ -970,3 +970,40 @@ input[type='text'] {
     width: 100%;
   }
 }
+
+/* ── Sponsor categories ────────────────────────────────────────────────────
+   A checkbox list rather than nine switches: these are one question with nine
+   answers, not nine independent features, and a column of switches reads as
+   nine things that each do something on their own. */
+.sponsor-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 2px 14px;
+}
+
+/* Dimmed, not hidden, while the feature is off: the choice is still there and
+   still remembered, and hiding it would make the card look broken. */
+.sponsor-cats.disabled {
+  opacity: 0.45;
+}
+
+.sponsor-cat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.sponsor-cats.disabled .sponsor-cat {
+  cursor: default;
+}
+
+.sponsor-cat input {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  margin: 0;
+}

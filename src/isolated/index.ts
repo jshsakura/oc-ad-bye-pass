@@ -135,7 +135,7 @@ function recompute(caches: FilterCaches) {
 
     // Crowd-sourced sponsor segments. Its own switch because it is the one
     // feature that asks a server we do not run.
-    setSponsorSkip(settings.toggles.sponsorSkip)
+    setSponsorSkip(settings.toggles.sponsorSkip, settings.sponsorCategories)
 
     // Records how long the main thread was blocked, when it was. Costs one
     // timer, and only here — a freeze on the video site is the one that has

@@ -200,3 +200,48 @@ test('차단 통계가 쌓인다', async ({ context, background }) => {
     )
     .toBeGreaterThan(0)
 })
+
+test('스폰서 카테고리를 빠르게 여러 개 눌러도 하나도 안 잃는다', async ({ context, background, extensionId }) => {
+  // Each checkbox replaces the whole list, and the list it starts from used to
+  // be the one that render closed over. Ticking four faster than the storage
+  // round trip meant the last writer won and two of the four vanished.
+  await background.evaluate(async () => {
+    const got = await chrome.storage.sync.get('settings')
+    const s = (got.settings ?? {}) as Record<string, unknown>
+    await chrome.storage.sync.set({
+      settings: {
+        ...s,
+        toggles: { ...((s.toggles ?? {}) as Record<string, unknown>), sponsorSkip: true },
+        sponsorCategories: ['sponsor'],
+        savedAt: Date.now(),
+      },
+    })
+  })
+
+  const page = await context.newPage()
+  await page.goto(`chrome-extension://${extensionId}/options.html`)
+  await page.locator('.sponsor-cats').waitFor()
+
+  const boxes = page.locator('.sponsor-cat input')
+  await expect(boxes).toHaveCount(9)
+  // No awaiting the round trip between clicks — that is the point.
+  for (const i of [1, 3, 5, 7]) await boxes.nth(i).click({ force: true, noWaitAfter: true })
+
+  const stored = async () =>
+    (await background.evaluate(async () => {
+      const got = await chrome.storage.sync.get('settings')
+      return (got.settings as { sponsorCategories: string[] }).sponsorCategories
+    })) as string[]
+
+  await expect.poll(stored, { timeout: 8000 }).toEqual([
+    'sponsor',
+    'selfpromo',
+    'intro',
+    'preview',
+    'filler',
+  ])
+
+  // Unticking in a row is just as ordinary a thing to do.
+  for (const i of [1, 3]) await boxes.nth(i).click({ force: true, noWaitAfter: true })
+  await expect.poll(stored, { timeout: 8000 }).toEqual(['sponsor', 'preview', 'filler'])
+})
