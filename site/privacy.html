@@ -109,13 +109,14 @@
   <!-- ============================ English ============================ -->
   <div lang="en">
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: August 14, 2026</p>
+    <p class="updated">Last updated: September 3, 2026</p>
 
     <p class="tldr">
       <b>Short version:</b> OC Ad Bye-Pass collects nothing. It has no accounts,
       no analytics, and no telemetry. Nothing about you or your browsing ever
-      leaves your device. The only network requests it makes are to download
-      public filter lists from GitHub.
+      leaves your device. It downloads public filter lists from GitHub, and — only
+      if you turn sponsor skipping on — asks SponsorBlock about four characters of
+      a hash, which never identifies the video you are watching.
     </p>
 
     <h2>What we collect</h2>
@@ -144,6 +145,13 @@
       <li><b>Version check.</b> It reads a small public file on GitHub to see
         whether a newer build exists. Again, a file download; nothing about you
         is sent.</li>
+      <li><b>Sponsor segments</b>, and only while you have that switch on. To know
+        where the sponsor read sits in a video, it asks
+        <code>sponsor.ajay.app</code> (SponsorBlock, a service we do not run).
+        <b>The video is never named.</b> Its id is hashed and only the first four
+        characters of that hash are sent; the answer covers every video sharing
+        those four characters, and the one you are watching is picked out on your
+        own device. With the switch off, no request is made at all.</li>
     </ul>
     <p>
       That is the complete list. The extension talks to no other server, and it
@@ -167,10 +175,14 @@
 
     <h2>Third parties</h2>
     <p>
-      None. GitHub hosts the public filter-list files the extension downloads, so
-      a request to GitHub is subject to GitHub's own privacy practices — but that
-      is a file download, not a sharing of your data. No data is sent to us or to
-      anyone else.
+      Two, and neither receives anything about you. GitHub hosts the public
+      filter-list files the extension downloads, so a request to GitHub is subject
+      to GitHub's own privacy practices — but that is a file download, not a
+      sharing of your data. SponsorBlock answers the sponsor-segment lookup
+      described above, and is subject to its own privacy practices; what reaches
+      it is four characters of a hash that stands for many videos at once, sent
+      only while you have that feature on. No data is sent to us, and none is sold
+      or shared with anyone else.
     </p>
 
     <h2>Children</h2>
@@ -202,13 +214,14 @@
   <!-- ============================ 한국어 ============================ -->
   <div lang="ko">
     <h1>개인정보 처리방침</h1>
-    <p class="updated">최종 업데이트: 2026년 8월 14일</p>
+    <p class="updated">최종 업데이트: 2026년 9월 3일</p>
 
     <p class="tldr">
       <b>요약:</b> OC Ad Bye-Pass 는 아무것도 수집하지 않습니다. 계정도, 분석도,
       원격 수집도 없습니다. 사용자나 사용자의 열람 기록에 관한 어떤 정보도 기기를
-      떠나지 않습니다. 이 확장이 하는 유일한 네트워크 요청은 GitHub 에서 공개 필터
-      리스트를 내려받는 것뿐입니다.
+      떠나지 않습니다. GitHub 에서 공개 필터 리스트를 내려받고, 스폰서 구간 건너뛰기를
+      켠 경우에만 SponsorBlock 에 해시 네 글자를 묻습니다. 그 네 글자로는 어떤 영상을
+      보고 있는지 알 수 없습니다.
     </p>
 
     <h2>수집하는 정보</h2>
@@ -234,8 +247,14 @@
         관한 정보는 담기지 않습니다.</li>
       <li><b>버전 확인.</b> 새 빌드가 있는지 보려고 GitHub 의 작은 공개 파일을
         읽습니다. 역시 파일 다운로드일 뿐, 사용자 정보는 전송되지 않습니다.</li>
+      <li><b>스폰서 구간.</b> 그 스위치를 켜 두었을 때만 나갑니다. 영상 안에서 스폰서
+        구간이 어디인지 알기 위해 <code>sponsor.ajay.app</code>(SponsorBlock, 우리가
+        운영하지 않는 서비스)에 묻습니다. <b>어떤 영상인지는 보내지 않습니다.</b>
+        영상 아이디를 해시로 만들어 앞 네 글자만 보내고, 그 네 글자를 공유하는 모든
+        영상의 답을 한꺼번에 받아 기기 안에서 골라냅니다. 스위치가 꺼져 있으면 요청
+        자체를 하지 않습니다.</li>
     </ul>
-    <p>이게 전부입니다. 다른 서버와 통신하지 않고, 어떤 광고·분석 서비스에도 접속하지 않습니다.</p>
+    <p>이게 전부입니다. 그 밖의 서버와는 통신하지 않고, 어떤 광고·분석 서비스에도 접속하지 않습니다.</p>
 
     <h2>권한과 그 이유</h2>
     <ul>
@@ -253,10 +272,13 @@
 
     <h2>제3자</h2>
     <p>
-      없습니다. 확장이 내려받는 공개 필터 리스트 파일을 GitHub 가 호스팅하므로 GitHub
-      로의 요청은 GitHub 자체 개인정보 방침을 따릅니다 — 다만 이는 파일 다운로드일 뿐
-      사용자 데이터의 공유가 아닙니다. 우리에게도, 다른 누구에게도 데이터를 보내지
-      않습니다.
+      둘이며, 어느 쪽도 사용자에 관한 정보를 받지 않습니다. 확장이 내려받는 공개 필터
+      리스트 파일을 GitHub 가 호스팅하므로 GitHub 로의 요청은 GitHub 자체 개인정보
+      방침을 따릅니다. 다만 이는 파일 다운로드일 뿐 사용자 데이터의 공유가 아닙니다.
+      SponsorBlock 은 위에 적은 스폰서 구간 조회에 답하며 자체 개인정보 방침을 따릅니다.
+      그쪽에 닿는 것은 여러 영상을 한꺼번에 가리키는 해시 네 글자뿐이고, 그마저도 그
+      기능을 켜 둔 동안에만 나갑니다. 우리에게는 아무것도 보내지 않으며, 어디에도
+      판매하거나 공유하지 않습니다.
     </p>
 
     <h2>아동</h2>
