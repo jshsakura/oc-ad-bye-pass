@@ -4,6 +4,9 @@
 // pass-through — it exists as a hook point, and because vite's copy has to be
 // overwritten *after* it happens (see the closeBundle plugin in vite.config.ts).
 //
+// Targets may also `patch` keys in — that is what turns the Chrome service
+// worker into a Gecko event page for the firefox target.
+//
 // For the orion target it strips what WebKit cannot use — the list is in
 // scripts/targets.mjs, with a reason against each entry. The static
 // world:'MAIN' declaration deliberately stays: WebKit ignores the field rather
@@ -31,6 +34,10 @@ export function writeManifest(target) {
       rmSync(join(ROOT, target.outDir, dir), { recursive: true, force: true })
     }
   }
+
+  // Added after the stripping, and shallow — see the note on `patch` in
+  // scripts/targets.mjs for why replacing a whole key is the point.
+  Object.assign(manifest, target.patch ?? {})
 
   const path = join(ROOT, target.outDir, 'manifest.json')
   writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`)

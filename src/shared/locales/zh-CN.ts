@@ -82,10 +82,6 @@ export const zhCN = {
   'opt.lang': '语言',
   'opt.lang.desc': '弹窗和本设置页面的显示语言。',
 
-  'opt.sponsor': '赞助片段',
-  'opt.sponsor.desc': '选择要跳过视频的哪些部分，位置来自其他观众的标记。开关本身在扩展的弹出窗口里。',
-  'opt.sponsor.on': '开关已打开，下面勾选的类型会被跳过。',
-  'opt.sponsor.off': '开关已关闭，不跳过任何内容，也不发出请求。',
   'opt.sponsor.cat.sponsor': '赞助（付费广告）',
   'opt.sponsor.cat.selfpromo': '无偿的自我宣传、周边',
   'opt.sponsor.cat.interaction': '请求订阅或点赞',

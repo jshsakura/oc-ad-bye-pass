@@ -82,10 +82,6 @@ export const sl = {
   'opt.lang': 'Jezik',
   'opt.lang.desc': 'Jezik okna razširitve in te strani z nastavitvami.',
 
-  'opt.sponsor': 'Sponzorirani odseki',
-  'opt.sponsor.desc': 'Kateri deli videa se preskočijo, po mestih, ki so jih označili drugi gledalci. Samo stikalo je v oknu razširitve.',
-  'opt.sponsor.on': 'Stikalo je vklopljeno — spodaj označene vrste se preskočijo.',
-  'opt.sponsor.off': 'Stikalo je izklopljeno — nič se ne preskoči in nič se ne vpraša.',
   'opt.sponsor.cat.sponsor': 'Sponzor (plačano oglaševanje)',
   'opt.sponsor.cat.selfpromo': 'Neplačano lastno oglaševanje, izdelki',
   'opt.sponsor.cat.interaction': 'Poziv k naročnini ali všečku',

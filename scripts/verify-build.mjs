@@ -36,6 +36,9 @@ const manifest = JSON.parse(readFileSync(join(ROOT, 'dist', 'manifest.json'), 'u
 const orion = existsSync(join(ROOT, 'dist-orion', 'manifest.json'))
   ? JSON.parse(readFileSync(join(ROOT, 'dist-orion', 'manifest.json'), 'utf8'))
   : null
+const firefox = existsSync(join(ROOT, 'dist-firefox', 'manifest.json'))
+  ? JSON.parse(readFileSync(join(ROOT, 'dist-firefox', 'manifest.json'), 'utf8'))
+  : null
 
 // The Chrome Web Store caps the manifest description at 132 characters, per
 // locale, and rejects the upload rather than truncating. The description is
@@ -170,6 +173,48 @@ if (orion) {
   )
 } else {
   console.log('  · dist-orion 없음 — Orion 검사 건너뜀 (npm run build:all)')
+}
+
+// The Firefox package. Every one of these leaves an extension that installs and
+// then does nothing, or a submission AMO refuses after the tag is already cut.
+if (firefox) {
+  check(
+    'Firefox 패키지가 이벤트 페이지로 돈다',
+    !!firefox.background?.scripts?.includes('background.js') && !firefox.background?.service_worker,
+    'Gecko 는 확장 서비스워커를 돌리지 않는다 — service_worker 만 있으면 배경이 통째로 죽는다',
+  )
+  check(
+    'Firefox 패키지에 gecko id 와 하한이 있다',
+    !!firefox.browser_specific_settings?.gecko?.id &&
+      !!firefox.browser_specific_settings?.gecko?.strict_min_version,
+    'id 가 없으면 AMO 가 매 업로드마다 새 부가기능으로 취급하고, 하한이 없으면 world:MAIN 이 없는 128 미만에서 1계층이 조용히 죽는다',
+  )
+  check(
+    'Firefox 패키지가 데이터 수집을 선언한다',
+    Array.isArray(firefox.browser_specific_settings?.gecko?.data_collection_permissions?.required),
+    '2025-11-03 이후 AMO 신규 제출 필수 항목이다 — 없으면 업로드 자체가 거부된다',
+  )
+  check(
+    'Firefox 패키지에 크롬 전용 키가 없다',
+    !firefox.minimum_chrome_version,
+    'AMO 린터가 짚는다',
+  )
+  check(
+    'Firefox 패키지도 1계층 경로를 갖췄다',
+    (firefox.content_scripts ?? []).some((cs) => cs.world === 'MAIN') &&
+      (firefox.permissions ?? []).includes('scripting') &&
+      (firefox.web_accessible_resources ?? []).some((r) => r.resources?.includes('main.js')),
+    '유튜브 차단은 이 타깃에서도 그대로여야 한다',
+  )
+  check(
+    'Firefox 패키지가 네트워크 차단을 들고 간다',
+    !!firefox.declarative_net_request &&
+      (firefox.permissions ?? []).includes('declarativeNetRequest') &&
+      existsSync(join(ROOT, 'dist-firefox', 'rules')),
+    'Orion 과 달리 Gecko 는 DNR 을 지원한다 — 여기서 빼면 0계층을 이유 없이 버리는 것이다',
+  )
+} else {
+  console.log('  · dist-firefox 없음 — Firefox 검사 건너뜀 (npm run build:all)')
 }
 
 // Not checked here: the `_metadata/` cache Chromium writes into dist/ when the

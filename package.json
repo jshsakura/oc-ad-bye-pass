@@ -1,14 +1,15 @@
 {
   "name": "oc-ad-bye-pass",
   "private": true,
-  "version": "0.22.0",
+  "version": "0.23.0",
   "type": "module",
   "description": "Ad blocker for Chrome, Edge and Orion (iPhone included). Strips ads out of the response data before the player sees them.",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "vite build && node scripts/build-content.mjs",
     "build:orion": "TARGET=orion npm run build",
-    "build:all": "npm run build && npm run build:orion",
+    "build:firefox": "TARGET=firefox npm run build",
+    "build:all": "npm run build && npm run build:firefox && npm run build:orion",
     "dev": "node scripts/dev.mjs",
     "check": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\"",

@@ -82,10 +82,6 @@ export const ptPT = {
   'opt.lang': 'Língua',
   'opt.lang.desc': 'A língua em que aparecem a janela da extensão e esta página de definições.',
 
-  'opt.sponsor': 'Trechos patrocinados',
-  'opt.sponsor.desc': 'Que partes do vídeo saltar, segundo os trechos que outros espectadores marcaram. O interruptor em si fica na janela da extensão.',
-  'opt.sponsor.on': 'O interruptor está ligado — os tipos assinalados abaixo são saltados.',
-  'opt.sponsor.off': 'O interruptor está desligado — nada é saltado e nada é pedido.',
   'opt.sponsor.cat.sponsor': 'Patrocínio (publicidade paga)',
   'opt.sponsor.cat.selfpromo': 'Autopromoção sem pagamento, produtos',
   'opt.sponsor.cat.interaction': 'Pedido para subscrever ou gostar',

@@ -82,10 +82,6 @@ export const fi = {
   'opt.lang': 'Kieli',
   'opt.lang.desc': 'Laajennuksen ikkunan ja tämän asetussivun näyttökieli.',
 
-  'opt.sponsor': 'Sponsoriosuudet',
-  'opt.sponsor.desc': 'Mitkä videon osat ohitetaan, niiden kohtien perusteella jotka muut katsojat ovat merkinneet. Itse kytkin on laajennuksen ikkunassa.',
-  'opt.sponsor.on': 'Kytkin on päällä — alla rastitetut lajit ohitetaan.',
-  'opt.sponsor.off': 'Kytkin on pois — mitään ei ohiteta eikä mitään kysytä.',
   'opt.sponsor.cat.sponsor': 'Sponsori (maksettu mainos)',
   'opt.sponsor.cat.selfpromo': 'Maksuton oma mainonta, oheistuotteet',
   'opt.sponsor.cat.interaction': 'Kehotus tilata tai tykätä',

@@ -82,10 +82,6 @@ export const cs = {
   'opt.lang': 'Jazyk',
   'opt.lang.desc': 'Jazyk okna rozšíření a této stránky nastavení.',
 
-  'opt.sponsor': 'Sponzorované úseky',
-  'opt.sponsor.desc': 'Které části videa přeskakovat, podle míst označených jinými diváky. Samotný přepínač je v okně rozšíření.',
-  'opt.sponsor.on': 'Přepínač je zapnutý — zaškrtnuté druhy níže se přeskakují.',
-  'opt.sponsor.off': 'Přepínač je vypnutý — nic se nepřeskakuje a na nic se neptáme.',
   'opt.sponsor.cat.sponsor': 'Sponzor (placená reklama)',
   'opt.sponsor.cat.selfpromo': 'Neplacená vlastní propagace, zboží',
   'opt.sponsor.cat.interaction': 'Výzva k odběru nebo lajku',

@@ -82,10 +82,6 @@ export const hu = {
   'opt.lang': 'Nyelv',
   'opt.lang.desc': 'A kiegészítő ablakának és ennek a beállítási oldalnak a nyelve.',
 
-  'opt.sponsor': 'Szponzorált szakaszok',
-  'opt.sponsor.desc': 'Egy videó mely részeit ugorja át, azok alapján, amit más nézők megjelöltek. Maga a kapcsoló a kiegészítő ablakában van.',
-  'opt.sponsor.on': 'A kapcsoló be van kapcsolva — az alább kipipált fajtákat átugorja.',
-  'opt.sponsor.off': 'A kapcsoló ki van kapcsolva — semmit sem ugrik át, és semmit sem kérdez le.',
   'opt.sponsor.cat.sponsor': 'Szponzor (fizetett hirdetés)',
   'opt.sponsor.cat.selfpromo': 'Fizetés nélküli önreklám, termékek',
   'opt.sponsor.cat.interaction': 'Feliratkozásra vagy lájkra buzdítás',

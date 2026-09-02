@@ -82,10 +82,6 @@ export const de = {
   'opt.lang': 'Sprache',
   'opt.lang.desc': 'Die Anzeigesprache für das Fenster der Erweiterung und diese Einstellungsseite.',
 
-  'opt.sponsor': 'Gesponserte Abschnitte',
-  'opt.sponsor.desc': 'Welche Teile eines Videos übersprungen werden, anhand der Stellen, die andere Zuschauer markiert haben. Der Schalter selbst sitzt im Fenster der Erweiterung.',
-  'opt.sponsor.on': 'Der Schalter ist an — die unten angehakten Arten werden übersprungen.',
-  'opt.sponsor.off': 'Der Schalter ist aus — es wird nichts übersprungen und nichts angefragt.',
   'opt.sponsor.cat.sponsor': 'Sponsor (bezahlte Werbung)',
   'opt.sponsor.cat.selfpromo': 'Unbezahlte Eigenwerbung, Merchandise',
   'opt.sponsor.cat.interaction': 'Bitte zu abonnieren oder zu liken',

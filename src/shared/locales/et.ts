@@ -82,10 +82,6 @@ export const et = {
   'opt.lang': 'Keel',
   'opt.lang.desc': 'Laienduse akna ja selle seadete lehe keel.',
 
-  'opt.sponsor': 'Sponsorlõigud',
-  'opt.sponsor.desc': 'Millised video osad vahele jäetakse, nende kohtade järgi mille teised vaatajad on märkinud. Lüliti ise on laienduse aknas.',
-  'opt.sponsor.on': 'Lüliti on sees — allpool linnutatud liigid jäetakse vahele.',
-  'opt.sponsor.off': 'Lüliti on väljas — midagi ei jäeta vahele ega küsita.',
   'opt.sponsor.cat.sponsor': 'Sponsor (tasuline reklaam)',
   'opt.sponsor.cat.selfpromo': 'Tasustamata enesereklaam, kaubad',
   'opt.sponsor.cat.interaction': 'Palve tellida või meeldivaks märkida',

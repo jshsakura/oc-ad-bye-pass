@@ -82,10 +82,6 @@ export const zhTW = {
   'opt.lang': '語言',
   'opt.lang.desc': '彈出視窗和本設定頁面的顯示語言。',
 
-  'opt.sponsor': '贊助片段',
-  'opt.sponsor.desc': '選擇要略過影片的哪些部分，位置來自其他觀眾的標記。開關本身在擴充功能的彈出視窗裡。',
-  'opt.sponsor.on': '開關已開啟，下面勾選的類型會被略過。',
-  'opt.sponsor.off': '開關已關閉，不略過任何內容，也不發出請求。',
   'opt.sponsor.cat.sponsor': '贊助（付費廣告）',
   'opt.sponsor.cat.selfpromo': '無償的自我宣傳、周邊',
   'opt.sponsor.cat.interaction': '請求訂閱或按讚',

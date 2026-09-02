@@ -1,6 +1,6 @@
 // The "only runs on YouTube" promise, and whether settings and the filter list reach the real page.
 
-import type { Page } from '@playwright/test'
+import type { BrowserContext, Page, Worker } from '@playwright/test'
 import { DEFAULT_SETTINGS, type Settings } from '../src/shared/settings.ts'
 import { expect, test } from './fixtures.ts'
 import { layer1Active, layer2Active } from './probes.ts'
@@ -201,38 +201,51 @@ test('차단 통계가 쌓인다', async ({ context, background }) => {
     .toBeGreaterThan(0)
 })
 
+/**
+ * Seed the settings and open the popup with every toggle on screen.
+ *
+ * The sponsor row is YouTube's, and the popup leads with what applies where you
+ * are standing — opened over a blank tab, that is the other list. The foot
+ * button that widens it is the one a person would press.
+ */
+async function popupWithAllToggles(
+  context: BrowserContext,
+  background: Worker,
+  extensionId: string,
+  patch: Record<string, unknown>,
+) {
+  await background.evaluate(async (patch: Record<string, unknown>) => {
+    const got = await chrome.storage.sync.get('settings')
+    const s = (got.settings ?? {}) as Record<string, unknown>
+    await chrome.storage.sync.set({ settings: { ...s, ...patch, savedAt: Date.now() } })
+  }, patch)
+  const page = await context.newPage()
+  await page.goto(`chrome-extension://${extensionId}/popup.html`)
+  await page.locator('.foot button').first().click()
+  await page.locator('.sponsor-cats').waitFor()
+  return page
+}
+
+const storedCategories = (background: Worker) => async () =>
+  (await background.evaluate(async () => {
+    const got = await chrome.storage.sync.get('settings')
+    return (got.settings as { sponsorCategories: string[] }).sponsorCategories
+  })) as string[]
+
 test('스폰서 카테고리를 빠르게 여러 개 눌러도 하나도 안 잃는다', async ({ context, background, extensionId }) => {
   // Each checkbox replaces the whole list, and the list it starts from used to
   // be the one that render closed over. Ticking four faster than the storage
   // round trip meant the last writer won and two of the four vanished.
-  await background.evaluate(async () => {
-    const got = await chrome.storage.sync.get('settings')
-    const s = (got.settings ?? {}) as Record<string, unknown>
-    await chrome.storage.sync.set({
-      settings: {
-        ...s,
-        toggles: { ...((s.toggles ?? {}) as Record<string, unknown>), sponsorSkip: true },
-        sponsorCategories: ['sponsor'],
-        savedAt: Date.now(),
-      },
-    })
+  const page = await popupWithAllToggles(context, background, extensionId, {
+    sponsorCategories: ['sponsor'],
   })
-
-  const page = await context.newPage()
-  await page.goto(`chrome-extension://${extensionId}/options.html`)
-  await page.locator('.sponsor-cats').waitFor()
 
   const boxes = page.locator('.sponsor-cat input')
   await expect(boxes).toHaveCount(9)
   // No awaiting the round trip between clicks — that is the point.
   for (const i of [1, 3, 5, 7]) await boxes.nth(i).click({ force: true, noWaitAfter: true })
 
-  const stored = async () =>
-    (await background.evaluate(async () => {
-      const got = await chrome.storage.sync.get('settings')
-      return (got.settings as { sponsorCategories: string[] }).sponsorCategories
-    })) as string[]
-
+  const stored = storedCategories(background)
   await expect.poll(stored, { timeout: 8000 }).toEqual([
     'sponsor',
     'selfpromo',
@@ -244,4 +257,44 @@ test('스폰서 카테고리를 빠르게 여러 개 눌러도 하나도 안 잃
   // Unticking in a row is just as ordinary a thing to do.
   for (const i of [1, 3]) await boxes.nth(i).click({ force: true, noWaitAfter: true })
   await expect.poll(stored, { timeout: 8000 }).toEqual(['sponsor', 'preview', 'filler'])
+})
+
+test('종류는 스위치 옆에 있고, 스위치가 어느 쪽이든 고를 수 있다', async ({
+  context,
+  background,
+  extensionId,
+}) => {
+  // This used to be a card on the settings view, behind a button, with every box
+  // disabled until the switch — in the list you had just left — was on. Setting
+  // it up therefore meant two screens in a fixed order, and the settings view
+  // read the switch once on open, so it had to be reopened to notice.
+  const page = await popupWithAllToggles(context, background, extensionId, {
+    toggles: { sponsorSkip: false },
+    sponsorCategories: [],
+  })
+
+  // In the popup itself: no press on the settings button on the way here.
+  await expect(page.locator('.sponsor-cats')).toBeVisible()
+
+  // No `force`: a click that has to be forced is a box the user could not have
+  // pressed, which is the whole bug.
+  const first = page.locator('.sponsor-cat input').first()
+  await expect(first).toBeEnabled()
+  await first.click()
+  await expect.poll(storedCategories(background), { timeout: 8000 }).toEqual(['sponsor'])
+
+  // And turning the switch on right there leaves them just as editable — the
+  // gate is gone in both directions, not moved to the other side.
+  await page.getByRole('switch', { name: '스폰서 구간 건너뛰기' }).click()
+  await expect(first).toBeEnabled()
+  await expect
+    .poll(
+      async () =>
+        (await background.evaluate(async () => {
+          const got = await chrome.storage.sync.get('settings')
+          return (got.settings as { toggles: Record<string, boolean> }).toggles.sponsorSkip
+        })) as boolean,
+      { timeout: 8000 },
+    )
+    .toBe(true)
 })

@@ -82,10 +82,6 @@ export const pl = {
   'opt.lang': 'Język',
   'opt.lang.desc': 'Język okna rozszerzenia i tej strony ustawień.',
 
-  'opt.sponsor': 'Fragmenty sponsorowane',
-  'opt.sponsor.desc': 'Które części filmu pomijać, według miejsc oznaczonych przez innych widzów. Sam przełącznik jest w oknie rozszerzenia.',
-  'opt.sponsor.on': 'Przełącznik jest włączony — zaznaczone niżej rodzaje są pomijane.',
-  'opt.sponsor.off': 'Przełącznik jest wyłączony — nic nie jest pomijane i o nic się nie pyta.',
   'opt.sponsor.cat.sponsor': 'Sponsor (płatna reklama)',
   'opt.sponsor.cat.selfpromo': 'Niepłatna autopromocja, gadżety',
   'opt.sponsor.cat.interaction': 'Prośba o subskrypcję lub polubienie',

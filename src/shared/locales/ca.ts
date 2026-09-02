@@ -82,10 +82,6 @@ export const ca = {
   'opt.lang': 'Llengua',
   'opt.lang.desc': 'La llengua en què es mostren la finestra de l\'extensió i aquesta pàgina de configuració.',
 
-  'opt.sponsor': 'Trams patrocinats',
-  'opt.sponsor.desc': 'Quines parts d\'un vídeo saltar, segons els trams que han marcat altres espectadors. L\'interruptor és a la finestra de l\'extensió.',
-  'opt.sponsor.on': 'L\'interruptor està activat: se salten els tipus marcats a sota.',
-  'opt.sponsor.off': 'L\'interruptor està desactivat: no se salta res i no es demana res.',
   'opt.sponsor.cat.sponsor': 'Patrocini (publicitat pagada)',
   'opt.sponsor.cat.selfpromo': 'Autopromoció sense pagament, productes',
   'opt.sponsor.cat.interaction': 'Petició de subscriure\'s o fer m\'agrada',

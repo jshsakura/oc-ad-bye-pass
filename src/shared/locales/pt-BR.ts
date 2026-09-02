@@ -82,10 +82,6 @@ export const ptBR = {
   'opt.lang': 'Idioma',
   'opt.lang.desc': 'O idioma em que aparecem a janela da extensão e esta página de configurações.',
 
-  'opt.sponsor': 'Trechos patrocinados',
-  'opt.sponsor.desc': 'Quais partes do vídeo pular, segundo os trechos que outros espectadores marcaram. A chave em si fica na janela da extensão.',
-  'opt.sponsor.on': 'A chave está ligada — os tipos marcados abaixo são pulados.',
-  'opt.sponsor.off': 'A chave está desligada — nada é pulado e nada é pedido.',
   'opt.sponsor.cat.sponsor': 'Patrocínio (publicidade paga)',
   'opt.sponsor.cat.selfpromo': 'Autopromoção sem pagamento, produtos',
   'opt.sponsor.cat.interaction': 'Pedido para inscrever-se ou curtir',

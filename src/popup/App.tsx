@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DEFAULT_SETTINGS,
   DEFAULT_STATS,
@@ -20,6 +20,7 @@ import {
   removeFromAllowlist,
   siteKindFor,
 } from '../shared/sites.ts'
+import { SKIP_CATEGORIES, type SkipCategory } from '../shared/sponsorblock.ts'
 import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
 import { App as SettingsView } from '../options/App.tsx'
@@ -75,6 +76,42 @@ export function App() {
   const update = (patch: Partial<Settings>) => {
     setSettings((prev) => ({ ...prev, ...patch }))
     void saveSettings(patch).then(setSettings)
+  }
+
+  /*
+   * Tick one category, without losing the one ticked a moment ago.
+   *
+   * A checkbox replaces the whole list, and the list it starts from is the one
+   * this render closed over. Ticking four in a row faster than the storage
+   * round trip meant each new list was built from a snapshot taken before the
+   * previous save landed, and the last writer won: four clicks, two categories.
+   * Measured, not feared.
+   *
+   * So the change is expressed as "add or remove this one" and applied to
+   * whatever is stored at the moment it runs, and the writes are queued behind
+   * each other rather than raced. `queue` is a ref because it must survive the
+   * re-render each save causes — a state variable would be the same bug again.
+   *
+   * `update` above cannot be used for this: it merges a patch into the render's
+   * own copy of the settings, which is exactly the stale snapshot at issue.
+   */
+  const queue = useRef<Promise<unknown>>(Promise.resolve())
+  const toggleCategory = (category: SkipCategory) => {
+    queue.current = queue.current
+      .catch(() => {})
+      .then(async () => {
+        const current = await loadSettings()
+        const has = current.sponsorCategories.includes(category)
+        setSettings(
+          await saveSettings({
+            // Rebuilt in the declared order rather than pushed onto, so the
+            // stored list reads the same however it was arrived at.
+            sponsorCategories: SKIP_CATEGORIES.filter((c) =>
+              c === category ? !has : current.sponsorCategories.includes(c),
+            ) as SkipCategory[],
+          }),
+        )
+      })
   }
 
   const siteOff = useMemo(
@@ -231,7 +268,8 @@ export function App() {
 
       <div className="list">
         {visibleToggles.map((meta) => (
-          <div key={meta.key} className={`row${active ? '' : ' disabled'}`}>
+          <Fragment key={meta.key}>
+          <div className={`row${active ? '' : ' disabled'}`}>
             <span className="text">
               <span className="label">{t(`toggle.${meta.key}.label`)}</span>
               <span className="hint">{t(`toggle.${meta.key}.hint`)}</span>
@@ -256,6 +294,31 @@ export function App() {
               onChange={(v) => update({ toggles: { ...settings.toggles, [meta.key]: v } })}
             />
           </div>
+          {/* The switch above says whether segments are skipped; this says
+              which kinds. It used to be a card on the settings view, one press
+              away, which turned a single decision into two screens — and the
+              boxes were dead until the switch was on, so the two halves had to
+              be done in a fixed order, in that order only.
+
+              Both halves are here now, and the list stays editable whatever the
+              switch is doing. Choosing what you would skip before you skip
+              anything is the ordinary way round, and the switch is close enough
+              to read that nothing has to be said about what it is set to. */}
+          {meta.key === 'sponsorSkip' && (
+            <div className="sponsor-cats">
+              {SKIP_CATEGORIES.map((category) => (
+                <label key={category} className="sponsor-cat">
+                  <input
+                    type="checkbox"
+                    checked={settings.sponsorCategories.includes(category)}
+                    onChange={() => toggleCategory(category)}
+                  />
+                  <span>{t(`opt.sponsor.cat.${category}`)}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          </Fragment>
         ))}
       </div>
 

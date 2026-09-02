@@ -82,10 +82,6 @@ export const vi = {
   'opt.lang': 'Ngôn ngữ',
   'opt.lang.desc': 'Ngôn ngữ hiển thị của cửa sổ tiện ích và trang cài đặt này.',
 
-  'opt.sponsor': 'Đoạn tài trợ',
-  'opt.sponsor.desc': 'Bỏ qua những phần nào của video, dựa trên chỗ mà người xem khác đã đánh dấu. Bản thân công tắc nằm trong cửa sổ tiện ích.',
-  'opt.sponsor.on': 'Công tắc đang bật — những loại được đánh dấu bên dưới sẽ bị bỏ qua.',
-  'opt.sponsor.off': 'Công tắc đang tắt — không bỏ qua gì và cũng không hỏi gì.',
   'opt.sponsor.cat.sponsor': 'Tài trợ (quảng cáo trả tiền)',
   'opt.sponsor.cat.selfpromo': 'Tự quảng bá không công, hàng lưu niệm',
   'opt.sponsor.cat.interaction': 'Lời mời đăng ký hoặc thích',

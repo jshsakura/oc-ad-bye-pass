@@ -82,10 +82,6 @@ export const ro = {
   'opt.lang': 'Limbă',
   'opt.lang.desc': 'Limba în care apar fereastra extensiei și această pagină de setări.',
 
-  'opt.sponsor': 'Secvențe sponsorizate',
-  'opt.sponsor.desc': 'Ce părți dintr-un video să sari, după secvențele marcate de alți spectatori. Comutatorul propriu-zis este în fereastra extensiei.',
-  'opt.sponsor.on': 'Comutatorul este pornit — tipurile bifate mai jos sunt sărite.',
-  'opt.sponsor.off': 'Comutatorul este oprit — nu se sare nimic și nu se cere nimic.',
   'opt.sponsor.cat.sponsor': 'Sponsorizare (reclamă plătită)',
   'opt.sponsor.cat.selfpromo': 'Autopromovare neplătită, produse',
   'opt.sponsor.cat.interaction': 'Îndemn la abonare sau apreciere',

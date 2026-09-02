@@ -82,10 +82,6 @@ export const am = {
   'opt.lang': 'ቋንቋ',
   'opt.lang.desc': 'የቅጥያው መስኮትና የዚህ የቅንብሮች ገጽ ማሳያ ቋንቋ።',
 
-  'opt.sponsor': 'የስፖንሰር ክፍሎች',
-  'opt.sponsor.desc': 'የቪዲዮው የትኞቹ ክፍሎች እንደሚዘለሉ፣ ሌሎች ተመልካቾች ባመለከቷቸው ቦታዎች መሠረት። ማብሪያው ራሱ በቅጥያው መስኮት ውስጥ ነው።',
-  'opt.sponsor.on': 'ማብሪያው በርቷል — ከታች ምልክት የተደረገባቸው ዓይነቶች ይዘለላሉ።',
-  'opt.sponsor.off': 'ማብሪያው ጠፍቷል — ምንም አይዘለልም፣ ምንም አይጠየቅም።',
   'opt.sponsor.cat.sponsor': 'ስፖንሰር (የተከፈለበት ማስታወቂያ)',
   'opt.sponsor.cat.selfpromo': 'ያልተከፈለበት ራስን ማስተዋወቅ፣ ሸቀጦች',
   'opt.sponsor.cat.interaction': 'እንዲመዘገቡ ወይም እንዲወዱ መጠየቅ',

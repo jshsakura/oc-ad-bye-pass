@@ -82,10 +82,6 @@ export const nl = {
   'opt.lang': 'Taal',
   'opt.lang.desc': 'De taal waarin het extensievenster en deze instellingenpagina verschijnen.',
 
-  'opt.sponsor': 'Gesponsorde stukken',
-  'opt.sponsor.desc': 'Welke delen van een video worden overgeslagen, op basis van wat andere kijkers hebben aangegeven. De schakelaar zelf zit in het venster van de extensie.',
-  'opt.sponsor.on': 'De schakelaar staat aan — de hieronder aangevinkte soorten worden overgeslagen.',
-  'opt.sponsor.off': 'De schakelaar staat uit — er wordt niets overgeslagen en niets opgevraagd.',
   'opt.sponsor.cat.sponsor': 'Sponsor (betaalde reclame)',
   'opt.sponsor.cat.selfpromo': 'Onbetaalde eigen reclame, merchandise',
   'opt.sponsor.cat.interaction': 'Verzoek om te abonneren of te liken',

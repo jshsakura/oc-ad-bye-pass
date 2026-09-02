@@ -93,10 +93,6 @@ export const en = {
   'opt.lang': 'Language',
   'opt.lang.desc': 'The display language for the popup and this settings page.',
 
-  'opt.sponsor': 'Sponsor segments',
-  'opt.sponsor.desc': 'Which parts of a video to skip past, using the spots other viewers marked. The switch itself is in the extension\'s popup.',
-  'opt.sponsor.on': 'The switch is on — the ticked kinds below are skipped.',
-  'opt.sponsor.off': 'The switch is off — nothing is skipped and nothing is requested.',
   'opt.sponsor.cat.sponsor': 'Sponsor (paid promotion)',
   'opt.sponsor.cat.selfpromo': 'Unpaid self-promotion, merchandise',
   'opt.sponsor.cat.interaction': 'Reminder to subscribe or like',

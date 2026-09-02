@@ -82,10 +82,6 @@ export const ja = {
   'opt.lang': '言語',
   'opt.lang.desc': 'ポップアップとこの設定ページの表示言語です。',
 
-  'opt.sponsor': 'スポンサー区間',
-  'opt.sponsor.desc': '動画のどの部分を飛ばすかを選びます。位置はほかの視聴者が付けた印です。オンオフの切り替えは拡張機能のポップアップにあります。',
-  'opt.sponsor.on': 'スイッチはオンです。下でチェックした種類を飛ばします。',
-  'opt.sponsor.off': 'スイッチはオフです。何も飛ばさず、問い合わせもしません。',
   'opt.sponsor.cat.sponsor': 'スポンサー（有料広告）',
   'opt.sponsor.cat.selfpromo': '無報酬の自己宣伝、グッズ',
   'opt.sponsor.cat.interaction': 'チャンネル登録・高評価のお願い',

@@ -82,10 +82,6 @@ export const sv = {
   'opt.lang': 'Språk',
   'opt.lang.desc': 'Språket i tilläggets fönster och på den här inställningssidan.',
 
-  'opt.sponsor': 'Sponsrade avsnitt',
-  'opt.sponsor.desc': 'Vilka delar av en video som hoppas över, utifrån ställen som andra tittare markerat. Själva reglaget sitter i tilläggets fönster.',
-  'opt.sponsor.on': 'Reglaget är på — de ikryssade sorterna nedan hoppas över.',
-  'opt.sponsor.off': 'Reglaget är av — ingenting hoppas över och ingenting efterfrågas.',
   'opt.sponsor.cat.sponsor': 'Sponsor (betald reklam)',
   'opt.sponsor.cat.selfpromo': 'Obetald egenreklam, merchandise',
   'opt.sponsor.cat.interaction': 'Uppmaning att prenumerera eller gilla',

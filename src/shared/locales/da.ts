@@ -82,10 +82,6 @@ export const da = {
   'opt.lang': 'Sprog',
   'opt.lang.desc': 'Sproget i udvidelsens vindue og på denne indstillingsside.',
 
-  'opt.sponsor': 'Sponsorafsnit',
-  'opt.sponsor.desc': 'Hvilke dele af en video der springes over, ud fra de steder andre seere har markeret. Selve kontakten sidder i udvidelsens vindue.',
-  'opt.sponsor.on': 'Kontakten er slået til — de afkrydsede typer nedenfor springes over.',
-  'opt.sponsor.off': 'Kontakten er slået fra — der springes intet over, og der spørges ikke om noget.',
   'opt.sponsor.cat.sponsor': 'Sponsor (betalt reklame)',
   'opt.sponsor.cat.selfpromo': 'Ubetalt egenreklame, merchandise',
   'opt.sponsor.cat.interaction': 'Opfordring til at abonnere eller like',

@@ -82,10 +82,6 @@ export const tr = {
   'opt.lang': 'Dil',
   'opt.lang.desc': 'Uzantı penceresinin ve bu ayarlar sayfasının görüntü dili.',
 
-  'opt.sponsor': 'Sponsorlu bölümler',
-  'opt.sponsor.desc': 'Videonun hangi bölümlerinin atlanacağı, başka izleyicilerin işaretlediği yerlere göre. Anahtarın kendisi eklentinin penceresinde.',
-  'opt.sponsor.on': 'Anahtar açık — aşağıda işaretli türler atlanıyor.',
-  'opt.sponsor.off': 'Anahtar kapalı — hiçbir şey atlanmıyor ve hiçbir şey sorulmuyor.',
   'opt.sponsor.cat.sponsor': 'Sponsor (ücretli reklam)',
   'opt.sponsor.cat.selfpromo': 'Ücretsiz kendi tanıtımı, ürünler',
   'opt.sponsor.cat.interaction': 'Abone olma ya da beğenme çağrısı',

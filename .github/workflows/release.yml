@@ -48,10 +48,19 @@ jobs:
       - run: npm test
 
       - run: npm run build
+      - run: npm run build:firefox
 
       # The failure mode this catches: the package still installs and only one
       # layer is dead, with nothing reported.
       - run: npm run verify
+
+      # AMO runs this same linter on upload and refuses the version on an error,
+      # which would land *after* the tag is cut and the release is public. Errors
+      # fail the build; warnings are printed and allowed through (the two
+      # innerHTML sites are constant strings, and setExtensionActionOptions is
+      # already behind a typeof guard for Orion's sake).
+      - name: AMO 린터로 파이어폭스 패키지를 검사한다
+        run: npx --yes addons-linter@latest dist-firefox
 
       # 광고가 실제로 막히지 않는 빌드는 내보내지 않는다
       - run: npx playwright install --with-deps chromium webkit
@@ -66,9 +75,13 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           node -e "
             const fs = require('fs');
-            const manifest = JSON.parse(fs.readFileSync('dist/manifest.json', 'utf8'));
-            manifest.version = '$version';
-            fs.writeFileSync('dist/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+            for (const dir of ['dist', 'dist-firefox']) {
+              const path = dir + '/manifest.json';
+              const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+              manifest.version = '$version';
+              fs.writeFileSync(path, JSON.stringify(manifest, null, 2) + '\n');
+              console.log(path + ' → ' + manifest.version);
+            }
           "
 
       # Chromium writes its compiled ruleset cache into the extension directory
@@ -105,8 +118,13 @@ jobs:
           # 있고, 설치가 막히는 원인을 찾는 동안 변수를 하나라도 줄여둔다.
           v="$(printf '%s' "${GITHUB_REF_NAME:-dev}" | tr '.' '_')"
           (cd dist && zip -qr "../oc-ad-bye-pass-$v.zip" .)
+          # Named apart from the Chrome package on purpose: the two are not
+          # interchangeable, and a phone that has both in its downloads folder
+          # should not have to guess which is which.
+          (cd dist-firefox && zip -qr "../oc-ad-bye-pass-firefox-$v.zip" .)
           ls -lh ./*.zip
           unzip -l "oc-ad-bye-pass-$v.zip"
+          unzip -l "oc-ad-bye-pass-firefox-$v.zip"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -257,6 +275,71 @@ jobs:
       # 실패하면 감사 워크플로가 이슈를 연다. 여기서 릴리스를 실패시키지 않는
       # 이유는 zip 이 이미 나갔기 때문이다 — 되돌릴 수 없는 것을 빨갛게 칠하는
       # 대신, 무엇이 깨졌는지 이슈로 남기는 편이 고치는 데 쓸모 있다.
+      # AMO is a review queue, not a publish button: this uploads the version and
+      # a human looks at it. Two things it deliberately does not try to do —
+      #
+      #   the first listing   A brand-new add-on needs a name, summary,
+      #                       categories and a licence, and those live in the
+      #                       AMO web form, not in the manifest. Create the
+      #                       listing by hand once; every version after it comes
+      #                       through here.
+      #   the source upload   AMO asks for source when the package is bundled or
+      #                       minified, which ours is. There is no API flag for
+      #                       it — attach the source archive in the review UI.
+      - name: 파이어폭스 애드온(AMO)에 올린다
+        if: startsWith(github.ref, 'refs/tags/v') && steps.newest.outputs.newest == 'true'
+        continue-on-error: true
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "AMO 시크릿이 없어 건너뜁니다 — AMO_JWT_ISSUER · AMO_JWT_SECRET"
+            exit 0
+          fi
+          if npx --yes web-ext@8 sign \
+               --source-dir dist-firefox \
+               --channel listed \
+               --api-key "$AMO_JWT_ISSUER" \
+               --api-secret "$AMO_JWT_SECRET" \
+               --no-input; then
+            echo "✅ AMO 심사 제출: \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=AMO 업로드 실패::$GITHUB_REF_NAME 이 AMO 에 올라가지 않았습니다. GitHub 릴리스는 정상이고, firefox zip 은 자산에 붙어 있습니다."
+            {
+              echo "⚠️ **AMO 업로드 실패** — \`$GITHUB_REF_NAME\`"
+              echo ""
+              echo "릴리스 자산의 \`oc-ad-bye-pass-firefox-*.zip\` 을 AMO 에 직접 올리면 됩니다."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Edge takes the Chrome package unchanged — same manifest, same ruleset,
+      # same bundle. There is no edge build target and there should not be one;
+      # what differs is only which store the same zip is handed to.
+      #
+      # The upload and the publish are both asynchronous and both fail *after*
+      # they answer, so scripts/publish-edge.mjs polls each to a terminal state
+      # rather than trusting the 202. Without that a green run means nothing.
+      - name: 엣지 애드온즈에 올리고 게시한다
+        if: startsWith(github.ref, 'refs/tags/v') && steps.newest.outputs.newest == 'true'
+        continue-on-error: true
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+        run: |
+          v="$(printf '%s' "$GITHUB_REF_NAME" | tr '.' '_')"
+          if node scripts/publish-edge.mjs "oc-ad-bye-pass-$v.zip"; then
+            echo "✅ 엣지 애드온즈 게시 제출: \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=엣지 게시 실패::$GITHUB_REF_NAME 이 엣지 애드온즈에 올라가지 않았습니다. GitHub 릴리스와 크롬 웹스토어는 별개로 진행됩니다."
+            {
+              echo "⚠️ **엣지 애드온즈 게시 실패** — \`$GITHUB_REF_NAME\`"
+              echo ""
+              echo "위 스텝 로그에 errorCode 가 찍혀 있습니다. 이전 제출이 심사 중이면 (\`InProgressSubmission\`) 심사가 끝난 뒤 다시 돌리면 됩니다."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: 나간 빌드를 실제 유튜브에 대고 검사한다
         if: startsWith(github.ref, 'refs/tags/v')
         env:

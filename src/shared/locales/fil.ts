@@ -82,10 +82,6 @@ export const fil = {
   'opt.lang': 'Wika',
   'opt.lang.desc': 'Ang wikang ipinapakita sa bintana ng extension at sa pahinang ito ng mga setting.',
 
-  'opt.sponsor': 'Mga bahaging may sponsor',
-  'opt.sponsor.desc': 'Aling mga bahagi ng video ang laktawan, batay sa minarkahan ng ibang manonood. Ang switch mismo ay nasa bintana ng extension.',
-  'opt.sponsor.on': 'Nakabukas ang switch — nilalaktawan ang mga uring nakatsek sa ibaba.',
-  'opt.sponsor.off': 'Nakasara ang switch — walang nilalaktawan at walang hinihinging anuman.',
   'opt.sponsor.cat.sponsor': 'Sponsor (bayad na patalastas)',
   'opt.sponsor.cat.selfpromo': 'Walang bayad na pagbebenta ng sarili, mga paninda',
   'opt.sponsor.cat.interaction': 'Panghihikayat na mag-subscribe o mag-like',

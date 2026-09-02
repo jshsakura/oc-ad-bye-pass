@@ -82,10 +82,6 @@ export const ms = {
   'opt.lang': 'Bahasa',
   'opt.lang.desc': 'Bahasa paparan untuk tetingkap sambungan dan halaman tetapan ini.',
 
-  'opt.sponsor': 'Bahagian tajaan',
-  'opt.sponsor.desc': 'Bahagian mana video hendak dilangkau, berdasarkan bahagian yang ditanda penonton lain. Suisnya sendiri ada dalam tetingkap sambungan.',
-  'opt.sponsor.on': 'Suis dihidupkan — jenis yang ditanda di bawah dilangkau.',
-  'opt.sponsor.off': 'Suis dimatikan — tiada apa dilangkau dan tiada apa diminta.',
   'opt.sponsor.cat.sponsor': 'Tajaan (iklan berbayar)',
   'opt.sponsor.cat.selfpromo': 'Promosi diri tanpa bayaran, barangan',
   'opt.sponsor.cat.interaction': 'Ajakan melanggan atau menyukai',

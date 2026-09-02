@@ -82,10 +82,6 @@ export const lt = {
   'opt.lang': 'Kalba',
   'opt.lang.desc': 'Plėtinio lango ir šio nustatymų puslapio kalba.',
 
-  'opt.sponsor': 'Remiamos atkarpos',
-  'opt.sponsor.desc': 'Kurios vaizdo įrašo dalys praleidžiamos, pagal vietas, kurias pažymėjo kiti žiūrovai. Pats jungiklis yra plėtinio lange.',
-  'opt.sponsor.on': 'Jungiklis įjungtas — žemiau pažymėtos rūšys praleidžiamos.',
-  'opt.sponsor.off': 'Jungiklis išjungtas — niekas nepraleidžiama ir nieko neprašoma.',
   'opt.sponsor.cat.sponsor': 'Rėmėjas (mokama reklama)',
   'opt.sponsor.cat.selfpromo': 'Neapmokama savireklama, prekės',
   'opt.sponsor.cat.interaction': 'Raginimas prenumeruoti ar pamėgti',

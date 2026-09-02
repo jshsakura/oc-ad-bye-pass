@@ -82,10 +82,6 @@ export const no = {
   'opt.lang': 'Språk',
   'opt.lang.desc': 'Språket i utvidelsens vindu og på denne innstillingssiden.',
 
-  'opt.sponsor': 'Sponsordeler',
-  'opt.sponsor.desc': 'Hvilke deler av en video som hoppes over, basert på stedene andre seere har markert. Selve bryteren sitter i utvidelsens vindu.',
-  'opt.sponsor.on': 'Bryteren er på — de avkryssede typene under hoppes over.',
-  'opt.sponsor.off': 'Bryteren er av — ingenting hoppes over, og ingenting spørres om.',
   'opt.sponsor.cat.sponsor': 'Sponsor (betalt reklame)',
   'opt.sponsor.cat.selfpromo': 'Ubetalt egenreklame, effekter',
   'opt.sponsor.cat.interaction': 'Oppfordring om å abonnere eller like',

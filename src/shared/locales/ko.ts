@@ -85,10 +85,6 @@ export const ko = {
   'opt.lang': '언어',
   'opt.lang.desc': '팝업과 이 설정 화면의 표시 언어입니다.',
 
-  'opt.sponsor': '스폰서 구간',
-  'opt.sponsor.desc': '영상에서 어떤 부분을 건너뛸지 고릅니다. 위치는 다른 시청자들이 표시해둔 것입니다. 켜고 끄는 스위치는 확장 팝업에 있습니다.',
-  'opt.sponsor.on': '스위치가 켜져 있습니다. 아래에서 체크한 종류를 건너뜁니다.',
-  'opt.sponsor.off': '스위치가 꺼져 있습니다. 아무것도 건너뛰지 않고 요청도 하지 않습니다.',
   'opt.sponsor.cat.sponsor': '스폰서 (유료 광고)',
   'opt.sponsor.cat.selfpromo': '무보수 자기 홍보, 굿즈',
   'opt.sponsor.cat.interaction': '구독·좋아요 요청',

@@ -82,10 +82,6 @@ export const lv = {
   'opt.lang': 'Valoda',
   'opt.lang.desc': 'Paplašinājuma loga un šīs iestatījumu lapas valoda.',
 
-  'opt.sponsor': 'Sponsorētie posmi',
-  'opt.sponsor.desc': 'Kuras video daļas izlaist, pēc vietām, ko atzīmējuši citi skatītāji. Pats slēdzis ir paplašinājuma logā.',
-  'opt.sponsor.on': 'Slēdzis ir ieslēgts — zemāk atzīmētie veidi tiek izlaisti.',
-  'opt.sponsor.off': 'Slēdzis ir izslēgts — nekas netiek izlaists un nekas netiek prasīts.',
   'opt.sponsor.cat.sponsor': 'Sponsors (apmaksāta reklāma)',
   'opt.sponsor.cat.selfpromo': 'Neapmaksāta pašreklāma, preces',
   'opt.sponsor.cat.interaction': 'Aicinājums abonēt vai novērtēt',

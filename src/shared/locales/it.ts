@@ -82,10 +82,6 @@ export const it = {
   'opt.lang': 'Lingua',
   'opt.lang.desc': 'La lingua in cui appaiono la finestra dell\'estensione e questa pagina di impostazioni.',
 
-  'opt.sponsor': 'Tratti sponsorizzati',
-  'opt.sponsor.desc': 'Quali parti di un video saltare, secondo i tratti segnati da altri spettatori. L\'interruttore vero e proprio è nella finestra dell\'estensione.',
-  'opt.sponsor.on': 'L\'interruttore è acceso: i tipi spuntati qui sotto vengono saltati.',
-  'opt.sponsor.off': 'L\'interruttore è spento: non si salta niente e non si chiede niente.',
   'opt.sponsor.cat.sponsor': 'Sponsor (pubblicità pagata)',
   'opt.sponsor.cat.selfpromo': 'Autopromozione non pagata, prodotti',
   'opt.sponsor.cat.interaction': 'Invito a iscriversi o mettere mi piace',

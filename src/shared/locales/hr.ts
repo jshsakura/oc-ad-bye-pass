@@ -82,10 +82,6 @@ export const hr = {
   'opt.lang': 'Jezik',
   'opt.lang.desc': 'Jezik prozora proširenja i ove stranice postavki.',
 
-  'opt.sponsor': 'Sponzorirani dijelovi',
-  'opt.sponsor.desc': 'Koji se dijelovi videa preskaču, prema mjestima koja su označili drugi gledatelji. Sama sklopka je u prozoru proširenja.',
-  'opt.sponsor.on': 'Sklopka je uključena — označene vrste ispod se preskaču.',
-  'opt.sponsor.off': 'Sklopka je isključena — ništa se ne preskače i ništa se ne traži.',
   'opt.sponsor.cat.sponsor': 'Sponzor (plaćeni oglas)',
   'opt.sponsor.cat.selfpromo': 'Neplaćena vlastita promidžba, roba',
   'opt.sponsor.cat.interaction': 'Poziv na pretplatu ili sviđanje',

@@ -975,16 +975,17 @@ input[type='text'] {
    A checkbox list rather than nine switches: these are one question with nine
    answers, not nine independent features, and a column of switches reads as
    nine things that each do something on their own. */
+/* The detail under the sponsor switch, inside the popup's toggle list.
+   Indented to the row's label so it reads as belonging to the switch above it
+   rather than as nine more switches, and one per line because these are
+   sentences, not words — two columns broke them mid-phrase at popup width. */
 .sponsor-cats {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 2px 14px;
-}
-
-/* Dimmed, not hidden, while the feature is off: the choice is still there and
-   still remembered, and hiding it would make the card look broken. */
-.sponsor-cats.disabled {
-  opacity: 0.45;
+  display: flex;
+  flex-direction: column;
+  padding: 2px 8px 8px 18px;
+  margin-bottom: 2px;
+  border-left: 2px solid var(--line);
+  margin-left: 12px;
 }
 
 .sponsor-cat {
@@ -994,10 +995,6 @@ input[type='text'] {
   padding: 5px 0;
   font-size: 12.5px;
   cursor: pointer;
-}
-
-.sponsor-cats.disabled .sponsor-cat {
-  cursor: default;
 }
 
 .sponsor-cat input {

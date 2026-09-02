@@ -82,10 +82,6 @@ export const es = {
   'opt.lang': 'Idioma',
   'opt.lang.desc': 'El idioma en el que se muestran la ventana emergente y esta página de ajustes.',
 
-  'opt.sponsor': 'Tramos patrocinados',
-  'opt.sponsor.desc': 'Qué partes de un vídeo saltar, según los tramos que han marcado otros espectadores. El interruptor está en la ventana de la extensión.',
-  'opt.sponsor.on': 'El interruptor está activado: se saltan los tipos marcados abajo.',
-  'opt.sponsor.off': 'El interruptor está desactivado: no se salta nada y no se pide nada.',
   'opt.sponsor.cat.sponsor': 'Patrocinio (publicidad pagada)',
   'opt.sponsor.cat.selfpromo': 'Autopromoción sin pago, productos',
   'opt.sponsor.cat.interaction': 'Petición de suscribirse o dar me gusta',

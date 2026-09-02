@@ -82,10 +82,6 @@ export const fr = {
   'opt.lang': 'Langue',
   'opt.lang.desc': 'La langue d\'affichage de la fenêtre de l\'extension et de cette page de réglages.',
 
-  'opt.sponsor': 'Passages sponsorisés',
-  'opt.sponsor.desc': 'Quelles parties d\'une vidéo passer, d\'après les repères posés par d\'autres spectateurs. L\'interrupteur lui-même est dans la fenêtre de l\'extension.',
-  'opt.sponsor.on': 'L\'interrupteur est activé : les types cochés ci-dessous sont passés.',
-  'opt.sponsor.off': 'L\'interrupteur est désactivé : rien n\'est passé et rien n\'est demandé.',
   'opt.sponsor.cat.sponsor': 'Sponsor (publicité payée)',
   'opt.sponsor.cat.selfpromo': 'Autopromotion non rémunérée, produits dérivés',
   'opt.sponsor.cat.interaction': 'Demande de s\'abonner ou d\'aimer',

@@ -19,6 +19,12 @@ on:
         description: '올릴 릴리스 태그 (예: v0.15.0)'
         required: true
         type: string
+      store:
+        description: '어느 스토어에 올릴지'
+        required: true
+        default: all
+        type: choice
+        options: [all, chrome, edge, firefox]
       publish:
         description: '심사 제출까지 한다 (끄면 초안으로만 올린다)'
         required: false
@@ -32,25 +38,45 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      # This workflow used to need no working copy — it only fetched a release
+      # asset and handed it to a CLI. The Edge step runs a script from the repo,
+      # so now it does. Node comes with the runner image; nothing is installed.
+      - uses: actions/checkout@v4
+
       # 릴리스에 붙어 있는 자산을 그대로 받는다. 이름은 release.yml 이 정한
       # 규칙 — 태그의 점을 언더바로 바꾼 것 — 을 따른다.
+      # Chrome and Edge share one package; Firefox has its own. Which of the two
+      # gets downloaded follows from the store picked above.
       - name: 릴리스 zip 받기
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
+          STORE: ${{ inputs.store }}
         run: |
           v="$(printf '%s' "$TAG" | tr '.' '_')"
           asset="oc-ad-bye-pass-$v.zip"
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$asset"
-          ls -lh "$asset"
+          ff_asset="oc-ad-bye-pass-firefox-$v.zip"
+
           # 스토어가 거절하는 것을 여기서 먼저 잡는다. 예약된 `_` 이름이 들어간
           # 패키지는 업로드는 되고 심사에서 죽는다.
-          unzip -l "$asset"
-          ! unzip -l "$asset" | grep -E ' _' | grep -v '_locales' | grep . || {
-            echo "::error::예약된 _ 이름이 zip 에 들어 있다"; exit 1; }
+          fetch() {
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$1"
+            ls -lh "$1"
+            unzip -l "$1"
+            ! unzip -l "$1" | grep -E ' _' | grep -v '_locales' | grep . || {
+              echo "::error::예약된 _ 이름이 $1 에 들어 있다"; exit 1; }
+          }
+
+          case "$STORE" in
+            all)              fetch "$asset"; fetch "$ff_asset" ;;
+            chrome|edge)      fetch "$asset" ;;
+            firefox)          fetch "$ff_asset" ;;
+          esac
           echo "ASSET=$asset" >> "$GITHUB_ENV"
+          echo "FF_ASSET=$ff_asset" >> "$GITHUB_ENV"
 
       - name: 크롬 웹스토어에 올린다
+        if: inputs.store == 'all' || inputs.store == 'chrome'
         env:
           EXTENSION_ID: aoehenpbglodadbbhaiaipmaklnkoeam
           CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
@@ -71,3 +97,43 @@ jobs:
           fi
           npx --yes chrome-webstore-upload-cli@3 "${args[@]}"
           echo "✅ \`${{ inputs.tag }}\` 를 크롬 웹스토어에 올렸습니다 (publish=${{ inputs.publish }})" >> "$GITHUB_STEP_SUMMARY"
+
+      # Unlike release.yml these do not swallow a failure. The only job here is
+      # to get a build into a store, so a green run that uploaded nothing would
+      # be the exact lie this workflow exists to correct.
+      - name: 엣지 애드온즈에 올린다
+        if: inputs.store == 'all' || inputs.store == 'edge'
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+        run: |
+          if [ -z "$EDGE_PRODUCT_ID" ]; then
+            echo "::error::엣지 시크릿이 없습니다 — EDGE_PRODUCT_ID · EDGE_CLIENT_ID · EDGE_API_KEY"
+            exit 1
+          fi
+          # publish=false 로 초안까지만 올리는 길은 여기 없다. 엣지 API 는
+          # 업로드와 게시가 한 쌍이고, 초안만 올려두면 다음 업로드가 그것을
+          # 덮어쓸 뿐 사람이 확인할 화면이 따로 생기지 않는다.
+          node scripts/publish-edge.mjs "$ASSET"
+          echo "✅ \`${{ inputs.tag }}\` 를 엣지 애드온즈에 올렸습니다" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 파이어폭스 애드온(AMO)에 올린다
+        if: inputs.store == 'all' || inputs.store == 'firefox'
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "::error::AMO 시크릿이 없습니다 — AMO_JWT_ISSUER · AMO_JWT_SECRET"
+            exit 1
+          fi
+          # web-ext sign 은 디렉터리를 받으므로 자산을 풀어서 넘긴다.
+          rm -rf ff-pkg && mkdir ff-pkg && unzip -q "$FF_ASSET" -d ff-pkg
+          npx --yes web-ext@8 sign \
+            --source-dir ff-pkg \
+            --channel listed \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET" \
+            --no-input
+          echo "✅ \`${{ inputs.tag }}\` 를 AMO 에 제출했습니다 (심사 대기)" >> "$GITHUB_STEP_SUMMARY"

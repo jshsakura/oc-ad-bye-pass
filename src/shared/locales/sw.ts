@@ -82,10 +82,6 @@ export const sw = {
   'opt.lang': 'Lugha',
   'opt.lang.desc': 'Lugha ya dirisha la kiendelezi na ukurasa huu wa mipangilio.',
 
-  'opt.sponsor': 'Sehemu za udhamini',
-  'opt.sponsor.desc': 'Sehemu zipi za video zirukwe, kwa kutumia sehemu walizoweka alama watazamaji wengine. Swichi yenyewe iko kwenye dirisha la kiendelezi.',
-  'opt.sponsor.on': 'Swichi imewashwa — aina zilizotiwa alama hapa chini hurukwa.',
-  'opt.sponsor.off': 'Swichi imezimwa — hakuna kinachorukwa wala kuombwa.',
   'opt.sponsor.cat.sponsor': 'Udhamini (tangazo la kulipwa)',
   'opt.sponsor.cat.selfpromo': 'Kujitangaza bila malipo, bidhaa',
   'opt.sponsor.cat.interaction': 'Ombi la kujiandikisha au kupenda',

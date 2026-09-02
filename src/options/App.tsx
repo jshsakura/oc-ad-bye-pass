@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { isSafeSelector } from '../shared/filterlist.ts'
 import type { FilterStatus, RuntimeRequest } from '../shared/messages.ts'
 import {
@@ -14,6 +14,7 @@ import {
   parseBackup,
   parseCustomRules,
   saveSettings,
+  watchSettings,
   type Settings,
 } from '../shared/settings.ts'
 import { normalizeHost, removeFromAllowlist } from '../shared/sites.ts'
@@ -29,7 +30,6 @@ import {
 } from '../shared/update.ts'
 import { formatWhen } from '../ui/format.ts'
 import { LANGS, LANG_LABEL, applyLangToDocument, type Lang, makeT } from '../shared/i18n.ts'
-import { SKIP_CATEGORIES, type SkipCategory } from '../shared/sponsorblock.ts'
 
 const GRANTED_BY_DEFAULT = ['https://raw.githubusercontent.com', 'https://gist.githubusercontent.com']
 
@@ -112,6 +112,19 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
     void ask({ type: 'filters:status' }).then(setStatus)
   }, [])
 
+  /*
+   * Follow the store for as long as the page is open.
+   *
+   * The sponsor switch is in the popup, so it can be flipped with this page
+   * already showing, and a card that reports the switch has to be told when it
+   * moves. Read once on mount was why the report went stale and the page had to
+   * be reopened to agree with itself.
+   *
+   * Only `settings` is refreshed. `rulesDraft` is text somebody is in the
+   * middle of typing, and replacing that from a storage event would eat it.
+   */
+  useEffect(() => watchSettings(setSettings), [])
+
   const badRules = useMemo(
     () => parseCustomRules(rulesDraft).filter((line) => !isSafeSelector(line)),
     [rulesDraft],
@@ -122,39 +135,6 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
 
   const persist = async (patch: Partial<Settings>) => {
     setSettings(await saveSettings(patch))
-  }
-
-  /*
-   * Tick one category, without losing the one ticked a moment ago.
-   *
-   * A checkbox replaces the whole list, and the list it starts from is the one
-   * this render closed over. Ticking four in a row faster than the storage
-   * round trip meant each new list was built from a snapshot taken before the
-   * previous save landed, and the last writer won: four clicks, two categories.
-   * Measured, not feared.
-   *
-   * So the change is expressed as "add or remove this one" and applied to
-   * whatever is stored at the moment it runs, and the writes are queued behind
-   * each other rather than raced. `queue` is a ref because it must survive the
-   * re-render each save causes — a state variable would be the same bug again.
-   */
-  const queue = useRef<Promise<unknown>>(Promise.resolve())
-  const toggleCategory = (category: SkipCategory) => {
-    queue.current = queue.current
-      .catch(() => {})
-      .then(async () => {
-        const current = await loadSettings()
-        const has = current.sponsorCategories.includes(category)
-        setSettings(
-          await saveSettings({
-            // Rebuilt in the declared order rather than pushed onto, so the
-            // stored list reads the same however it was arrived at.
-            sponsorCategories: SKIP_CATEGORIES.filter((c) =>
-              c === category ? !has : current.sponsorCategories.includes(c),
-            ) as SkipCategory[],
-          }),
-        )
-      })
   }
 
   /**
@@ -285,36 +265,6 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
         </div>
       )}
       <p className="lede">{t('opt.lede')}</p>
-
-      <section className="card">
-        <h2>
-          <Icon name="settings" />
-          {t('opt.sponsor')}
-        </h2>
-        <p className="desc">{t('opt.sponsor.desc')}</p>
-        {/* The master switch lives in the popup with the other toggles; this
-            card is the detail behind it, and it says so rather than repeating
-            the switch in two places where they could drift apart. */}
-        <p className="desc">
-          {settings.toggles.sponsorSkip ? t('opt.sponsor.on') : t('opt.sponsor.off')}
-        </p>
-        <div className={`sponsor-cats${settings.toggles.sponsorSkip ? '' : ' disabled'}`}>
-          {SKIP_CATEGORIES.map((category) => {
-            const chosen = settings.sponsorCategories.includes(category)
-            return (
-              <label key={category} className="sponsor-cat">
-                <input
-                  type="checkbox"
-                  checked={chosen}
-                  disabled={!settings.toggles.sponsorSkip}
-                  onChange={() => toggleCategory(category)}
-                />
-                <span>{t(`opt.sponsor.cat.${category}`)}</span>
-              </label>
-            )
-          })}
-        </div>
-      </section>
 
       <section className="card">
         <h2>

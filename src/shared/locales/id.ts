@@ -82,10 +82,6 @@ export const id = {
   'opt.lang': 'Bahasa',
   'opt.lang.desc': 'Bahasa tampilan untuk jendela ekstensi dan halaman pengaturan ini.',
 
-  'opt.sponsor': 'Bagian sponsor',
-  'opt.sponsor.desc': 'Bagian mana dari video yang dilewati, berdasarkan bagian yang ditandai penonton lain. Sakelarnya sendiri ada di jendela ekstensi.',
-  'opt.sponsor.on': 'Sakelar menyala — jenis yang dicentang di bawah dilewati.',
-  'opt.sponsor.off': 'Sakelar mati — tidak ada yang dilewati dan tidak ada yang diminta.',
   'opt.sponsor.cat.sponsor': 'Sponsor (iklan berbayar)',
   'opt.sponsor.cat.selfpromo': 'Promosi diri tanpa bayaran, barang dagangan',
   'opt.sponsor.cat.interaction': 'Ajakan berlangganan atau menyukai',
