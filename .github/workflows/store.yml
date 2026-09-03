@@ -41,7 +41,7 @@ jobs:
       # This workflow used to need no working copy — it only fetched a release
       # asset and handed it to a CLI. The Edge step runs a script from the repo,
       # so now it does. Node comes with the runner image; nothing is installed.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # 릴리스에 붙어 있는 자산을 그대로 받는다. 이름은 release.yml 이 정한
       # 규칙 — 태그의 점을 언더바로 바꾼 것 — 을 따른다.

@@ -47,6 +47,10 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # deploy-pages reads the artifact it is handed back from the Actions API, and
+  # has documented this scope as required since v4. It worked without it, which
+  # is exactly the kind of thing that stops working on a bump without saying why.
+  actions: read
 
 # Never let two deploys race. Do not cancel one in flight — a half-published
 # site is worse than a slightly late one.
@@ -61,7 +65,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Assemble the site
         run: |
@@ -104,11 +108,11 @@ jobs:
           ' "$version"
           cat _site/build.json
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
