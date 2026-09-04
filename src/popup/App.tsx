@@ -305,7 +305,26 @@ export function App() {
               anything is the ordinary way round, and the switch is close enough
               to read that nothing has to be said about what it is set to. */}
           {meta.key === 'sponsorSkip' && (
-            <div className="sponsor-cats">
+            /* Folded, because nine rows of it is most of the list and this is
+               set once and left. `details` rather than a state variable and a
+               chevron: the browser already owns the marker, the keyboard
+               behaviour and the aria, and none of that is worth rewriting.
+
+               Shut, it still says what it is doing — the count, then the kinds
+               that are ticked, on one line that ellipsises. That is the thing
+               you would open it to find out, and it costs no new wording in 52
+               languages to say it with the names already there. */
+            <details className="sponsor-cats">
+              <summary>
+                <span className="sponsor-count">
+                  {settings.sponsorCategories.length}/{SKIP_CATEGORIES.length}
+                </span>
+                <span className="sponsor-chosen">
+                  {SKIP_CATEGORIES.filter((c) => settings.sponsorCategories.includes(c))
+                    .map((c) => t(`opt.sponsor.cat.${c}`))
+                    .join(', ')}
+                </span>
+              </summary>
               {SKIP_CATEGORIES.map((category) => (
                 <label key={category} className="sponsor-cat">
                   <input
@@ -316,7 +335,7 @@ export function App() {
                   <span>{t(`opt.sponsor.cat.${category}`)}</span>
                 </label>
               ))}
-            </div>
+            </details>
           )}
           </Fragment>
         ))}

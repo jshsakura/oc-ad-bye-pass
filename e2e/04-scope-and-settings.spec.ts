@@ -223,6 +223,10 @@ async function popupWithAllToggles(
   await page.goto(`chrome-extension://${extensionId}/popup.html`)
   await page.locator('.foot button').first().click()
   await page.locator('.sponsor-cats').waitFor()
+  // The kinds are folded away by default — nine rows of them is most of the
+  // list. A test about the boxes has to open the fold the way a person would.
+  await page.locator('.sponsor-cats summary').click()
+  await expect(page.locator('.sponsor-cat input').first()).toBeVisible()
   return page
 }
 
@@ -297,4 +301,30 @@ test('종류는 스위치 옆에 있고, 스위치가 어느 쪽이든 고를 �
       { timeout: 8000 },
     )
     .toBe(true)
+})
+
+test('접힌 줄이 무엇을 건너뛰는지 말한다', async ({ context, background, extensionId }) => {
+  // Folding it away is only acceptable if shut still answers the question the
+  // fold hides. The count and the ticked names are that answer, and they are
+  // built from the category labels rather than any new wording, so the line
+  // says the same thing in all 52 languages without one of them being written.
+  const page = await popupWithAllToggles(context, background, extensionId, {
+    sponsorCategories: ['sponsor', 'intro'],
+  })
+
+  // popupWithAllToggles leaves it open; shut it again to read the summary.
+  await page.locator('.sponsor-cats summary').click()
+  await expect(page.locator('.sponsor-cat input').first()).toBeHidden()
+
+  await expect(page.locator('.sponsor-count')).toHaveText('2/9')
+  const chosen = page.locator('.sponsor-chosen')
+  await expect(chosen).toContainText('스폰서')
+  await expect(chosen).toContainText('인트로')
+  // Only what is ticked. A summary listing all nine would say nothing.
+  await expect(chosen).not.toContainText('아웃트로')
+
+  // And it follows a change made while it is open.
+  await page.locator('.sponsor-cats summary').click()
+  await page.locator('.sponsor-cat input').nth(4).click()
+  await expect(page.locator('.sponsor-count')).toHaveText('3/9')
 })
