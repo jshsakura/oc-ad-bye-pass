@@ -18,6 +18,37 @@ import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
+/*
+ * Standing down when something else owns the player.
+ *
+ * OC Easy Mode replaces YouTube's screen with its own and moves #movie_player
+ * around with CSS. Our button anchors to the video's box and is parented to
+ * <html> at the top of the stack, so it kept landing in the middle of that UI
+ * and flickering as the box moved — and neither side could win by adjusting,
+ * because the thing being measured is the thing the other extension is moving.
+ *
+ * The button is the wrong control to draw at all there: whoever replaced the
+ * screen owns the controls on it, and Easy Mode offers its own PiP button from
+ * inside a gesture, so nothing is lost by us not drawing one.
+ *
+ * `oc-easy-mode` names its stylesheet node by id and its shadow host by tag, and
+ * both appear when it turns on and go when it turns off. The attribute is here
+ * so the next such extension needs no release from us — set it on <html> and the
+ * button stays off for as long as it is there.
+ */
+const EASY_MODE_STYLE_ID = 'oc-easy-mode'
+const EASY_MODE_HOST = 'oc-easy-mode'
+const YIELD_ATTR = 'data-oc-abp-no-pip'
+
+/** Whether another extension has taken the player's screen over right now. */
+export function playerOwnedByHost(doc: Document): boolean {
+  return (
+    doc.getElementById(EASY_MODE_STYLE_ID) !== null ||
+    doc.querySelector(EASY_MODE_HOST) !== null ||
+    doc.documentElement.hasAttribute(YIELD_ATTR)
+  )
+}
+
 /** The hit area a thumb needs (kept at the 36px floor the placement spec sets).
  *  The visible glyph is aligned to its bottom-right, so it jams into the corner
  *  while this transparent target spills up and left where a thumb has room. */
@@ -504,8 +535,10 @@ function sweep(): void {
 
   // Re-checked on every sweep rather than once at start: the site navigates
   // without reloading, so a button attached on a watch page has to come off
-  // again when the same document becomes a search result list.
-  if (wantButton && isWatchPage(location.href)) {
+  // again when the same document becomes a search result list — and the same
+  // is true of another extension taking the screen over, which happens and
+  // un-happens while the page stays put.
+  if (wantButton && isWatchPage(location.href) && !playerOwnedByHost(document)) {
     ensureButton(video)
     place()
   } else {
@@ -522,12 +555,17 @@ export function enablePictureInPicture(options: { button: boolean }): void {
   // The site replaces the player wholesale on navigation, taking the button with
   // it, so this watches rather than running once — and watches the opt-out
   // attribute, which the site puts back on the same element.
+  //
+  // This already covers another extension arriving or leaving: its nodes are
+  // added and removed under documentElement, and childList+subtree is what sees
+  // that. Only the yield attribute needed adding, because attribute changes are
+  // filtered and an unlisted name is not reported.
   observer = new MutationObserver(scheduleSweep)
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['disablepictureinpicture', 'src'],
+    attributeFilter: ['disablepictureinpicture', 'src', YIELD_ATTR],
   })
 }
 

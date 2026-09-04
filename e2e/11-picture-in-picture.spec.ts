@@ -247,3 +247,52 @@ test('검색 화면에는 붙지 않고, 시청 화면으로 가면 붙는다', 
   await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(0)
 })
 
+// 남의 확장이 화면을 가져간 동안에는 그리지 않는다.
+//
+// OC Easy Mode 는 유튜브 화면을 자기 UI 로 덮고 #movie_player 를 CSS 로 옮겨
+// 다닙니다. 우리 버튼은 <html> 에 붙어 최상단에 뜨고 영상의 상자에서 자리를
+// 계산하므로, 그 UI 위 한가운데에 박히고 상자가 움직일 때마다 깜빡였습니다.
+// 상대가 CSS 로 우리 버튼을 못 박아 봐도 우리가 remove/재삽입을 하는 동안에는
+// 깜빡임이 남습니다. 애초에 그리지 않는 것이 유일한 해결입니다.
+test('이지 모드가 켜져 있는 동안에는 버튼을 붙이지 않는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  await setPip(background, true)
+
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await expect(page.locator(BUTTON)).toBeVisible()
+
+  // 스타일 노드 하나로 이지 모드가 켜진 상태를 흉내낸다.
+  await page.evaluate(() => {
+    const style = document.createElement('style')
+    style.id = 'oc-easy-mode'
+    document.head.appendChild(style)
+  })
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(0)
+
+  // 나가면 원래대로 돌아온다. 이지 모드는 켜고 끄는 것이라 한 방향만으로는 부족하다.
+  await page.evaluate(() => document.getElementById('oc-easy-mode')?.remove())
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(1)
+})
+
+test('섀도우 호스트만 있어도, html 의 양보 속성만 있어도 물러난다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  await setPip(background, true)
+
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await expect(page.locator(BUTTON)).toBeVisible()
+
+  // 이지 모드는 스타일 노드와 섀도우 호스트를 함께 만들지만, 한쪽만 보면
+  // 상대가 구성을 바꿀 때 조용히 되살아난다. 각각 단독으로 확인한다.
+  await page.evaluate(() => document.body.appendChild(document.createElement('oc-easy-mode')))
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(0)
+  await page.evaluate(() => document.querySelector('oc-easy-mode')?.remove())
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(1)
+
+  // 그리고 이름을 모르는 다음 확장을 위한 길.
+  await page.evaluate(() => document.documentElement.setAttribute('data-oc-abp-no-pip', ''))
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(0)
+  await page.evaluate(() => document.documentElement.removeAttribute('data-oc-abp-no-pip'))
+  await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(1)
+})

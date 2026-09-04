@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { placeButton, type Rect } from '../src/isolated/pip.ts'
+import { placeButton, playerOwnedByHost, type Rect } from '../src/isolated/pip.ts'
 
 const SIZE = 36
 const VIEW = { top: 0, bottom: 800, left: 0, right: 400 }
@@ -137,4 +137,37 @@ test('검색·피드·쇼츠에는 붙이지 않는다', () => {
 test('유튜브가 아닌 곳에는 아예 붙지 않는다', () => {
   assert.equal(isWatchPage('https://example.com/watch'), false)
   assert.equal(isWatchPage('not a url'), false)
+})
+
+// ── 남이 화면을 가져갔을 때 ──────────────────────────────────────────────
+//
+// OC Easy Mode 가 유튜브 화면을 자기 UI 로 덮고 #movie_player 를 CSS 로 옮깁니다.
+// 우리 버튼은 영상의 상자에서 자리를 계산하는데 그 상자를 옮기는 것이 상대라,
+// UI 한가운데에 박히고 재생 상태가 바뀔 때마다 깜빡였습니다. 서로 조정해서 풀
+// 수 있는 문제가 아니라 — 재는 대상을 상대가 움직이고 있으니 — 그릴지 말지의
+// 문제입니다.
+
+/** 최소한의 가짜 document. 이 판단에 필요한 세 가지만 답합니다. */
+const fakeDoc = (opts: { styleId?: boolean; host?: boolean; attr?: boolean }): Document =>
+  ({
+    getElementById: (id: string) => (opts.styleId && id === 'oc-easy-mode' ? {} : null),
+    querySelector: (sel: string) => (opts.host && sel === 'oc-easy-mode' ? {} : null),
+    documentElement: { hasAttribute: (a: string) => !!opts.attr && a === 'data-oc-abp-no-pip' },
+  }) as unknown as Document
+
+test('아무도 화면을 가져가지 않았으면 버튼을 그린다', () => {
+  assert.equal(playerOwnedByHost(fakeDoc({})), false)
+})
+
+test('이지 모드의 스타일 노드만 있어도 물러난다', () => {
+  assert.equal(playerOwnedByHost(fakeDoc({ styleId: true })), true)
+})
+
+test('이지 모드의 섀도우 호스트만 있어도 물러난다', () => {
+  // 둘 중 하나면 충분합니다. 한쪽만 보면 상대가 구성을 바꿀 때 조용히 되살아납니다.
+  assert.equal(playerOwnedByHost(fakeDoc({ host: true })), true)
+})
+
+test('html 의 양보 속성으로도 물러난다 — 다음 확장은 우리 릴리스를 기다리지 않는다', () => {
+  assert.equal(playerOwnedByHost(fakeDoc({ attr: true })), true)
 })
