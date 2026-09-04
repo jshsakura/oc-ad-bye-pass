@@ -130,9 +130,12 @@ jobs:
           fi
           # web-ext sign 은 디렉터리를 받으므로 자산을 풀어서 넘긴다.
           rm -rf ff-pkg && mkdir ff-pkg && unzip -q "$FF_ASSET" -d ff-pkg
+          # Upload and return; approval is a human in a queue, not something a
+          # job can wait out. See the note in release.yml.
           npx --yes web-ext@8 sign \
             --source-dir ff-pkg \
             --channel listed \
+            --approval-timeout 0 \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" \
             --no-input

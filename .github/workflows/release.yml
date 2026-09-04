@@ -297,13 +297,20 @@ jobs:
             echo "AMO 시크릿이 없어 건너뜁니다 — AMO_JWT_ISSUER · AMO_JWT_SECRET"
             exit 0
           fi
+          # `--approval-timeout 0` is what makes this step mean what it says.
+          # Without it web-ext uploads and then waits for the add-on to be
+          # *approved*, which for a queue-reviewed listing never happens inside a
+          # CI run: v0.24.0 uploaded fine, sat for the full 15 minutes, and then
+          # reported "did not upload" — a false failure on a version that was
+          # already on AMO, at the cost of a quarter hour every release.
           if npx --yes web-ext@8 sign \
                --source-dir dist-firefox \
                --channel listed \
+               --approval-timeout 0 \
                --api-key "$AMO_JWT_ISSUER" \
                --api-secret "$AMO_JWT_SECRET" \
                --no-input; then
-            echo "✅ AMO 심사 제출: \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ AMO 심사 제출: \`$GITHUB_REF_NAME\` (심사 대기)" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::warning title=AMO 업로드 실패::$GITHUB_REF_NAME 이 AMO 에 올라가지 않았습니다. GitHub 릴리스는 정상이고, firefox zip 은 자산에 붙어 있습니다."
             {
@@ -329,8 +336,13 @@ jobs:
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
         run: |
           v="$(printf '%s' "$GITHUB_REF_NAME" | tr '.' '_')"
-          if node scripts/publish-edge.mjs "oc-ad-bye-pass-$v.zip"; then
+          # Three outcomes, not two. Treating "skipped" as success is how the
+          # summary came to claim a publish to a store holding no credentials.
+          node scripts/publish-edge.mjs "oc-ad-bye-pass-$v.zip" && code=0 || code=$?
+          if [ "$code" = 0 ]; then
             echo "✅ 엣지 애드온즈 게시 제출: \`$GITHUB_REF_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$code" = 75 ]; then
+            echo "· 엣지 시크릿이 없어 건너뜀 — 스토어는 이전 버전 그대로입니다"
           else
             echo "::warning title=엣지 게시 실패::$GITHUB_REF_NAME 이 엣지 애드온즈에 올라가지 않았습니다. GitHub 릴리스와 크롬 웹스토어는 별개로 진행됩니다."
             {

@@ -15,11 +15,16 @@
 // terminal state here and a non-Succeeded status exits non-zero.
 //
 // Credentials come from the environment (EDGE_PRODUCT_ID, EDGE_CLIENT_ID,
-// EDGE_API_KEY) and are never logged.
+// EDGE_API_KEY) and are never logged. Missing credentials exit SKIPPED rather
+// than 0: a caller that reads "not a failure" as "published" writes a green tick
+// against a store that received nothing, which is the same lie as a silent
+// failure and harder to notice.
 
 import { readFileSync } from 'node:fs'
 
 const BASE = 'https://api.addons.microsoftedge.microsoft.com/v1/products'
+/** Nothing was attempted. Distinct from both success and failure. */
+const SKIPPED = 75
 /** The store's own guidance is that an upload settles in a couple of minutes. */
 const POLL_INTERVAL_MS = 10_000
 const POLL_LIMIT = 60
@@ -33,7 +38,7 @@ if (!zipPath) {
 }
 if (!productId || !clientId || !apiKey) {
   console.log('엣지 시크릿이 없어 건너뜁니다 — EDGE_PRODUCT_ID · EDGE_CLIENT_ID · EDGE_API_KEY')
-  process.exit(0)
+  process.exit(SKIPPED)
 }
 
 const auth = { Authorization: `ApiKey ${apiKey}`, 'X-ClientID': clientId }
