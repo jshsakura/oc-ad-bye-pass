@@ -278,7 +278,7 @@ export function App() {
       <div className="list">
         {visibleToggles.map((meta) => (
           <Fragment key={meta.key}>
-          <div className={`row${active ? '' : ' disabled'}`}>
+          <div className={`row${active ? '' : ' disabled'}`} data-key={meta.key}>
             <span className="text">
               <span className="label">{t(`toggle.${meta.key}.label`)}</span>
               <span className="hint">{t(`toggle.${meta.key}.hint`)}</span>
@@ -323,7 +323,11 @@ export function App() {
                that are ticked, on one line that ellipsises. That is the thing
                you would open it to find out, and it costs no new wording in 52
                languages to say it with the names already there. */
-            <details className="sponsor-cats">
+            /* Dimmed and disabled with the rest of the list when the extension
+               or this site is off — that is the list's own on/off, not the
+               sponsor switch's, and the fold is the one control that ignored
+               it. It still does not care about the sponsor switch itself. */
+            <details className={`sponsor-cats${active ? '' : ' disabled'}`}>
               <summary>
                 <span className="sponsor-count">
                   {settings.sponsorCategories.length}/{SKIP_CATEGORIES.length}
@@ -339,6 +343,7 @@ export function App() {
                   <input
                     type="checkbox"
                     checked={settings.sponsorCategories.includes(category)}
+                    disabled={!active}
                     onChange={() => toggleCategory(category)}
                   />
                   <span>{t(`opt.sponsor.cat.${category}`)}</span>

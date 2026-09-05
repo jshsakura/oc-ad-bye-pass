@@ -346,6 +346,10 @@ jobs:
               echo ""
               echo "릴리스 자산의 \`oc-ad-bye-pass-firefox-*.zip\` 을 AMO 에 직접 올리면 됩니다."
             } >> "$GITHUB_STEP_SUMMARY"
+            # Non-zero, so the step shows red in the run graph. continue-on-error
+            # keeps the job green; without this the step was green too, and a
+            # store failure was visible only to someone who read the summary.
+            exit 1
           fi
 
       # Edge takes the Chrome package unchanged — same manifest, same ruleset,
@@ -378,6 +382,7 @@ jobs:
               echo ""
               echo "위 스텝 로그에 errorCode 가 찍혀 있습니다. 이전 제출이 심사 중이면 (\`InProgressSubmission\`) 심사가 끝난 뒤 다시 돌리면 됩니다."
             } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
 
       - name: 나간 빌드를 실제 유튜브에 대고 검사한다

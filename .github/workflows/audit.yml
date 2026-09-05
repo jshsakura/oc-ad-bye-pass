@@ -173,7 +173,7 @@ jobs:
 
       # 리포트가 없거나 스크립트 자체가 터진 경우도 조용히 넘기지 않는다
       - name: 결과 반영
-        if: steps.audit.outcome == 'failure' || steps.features.outcome == 'failure'
+        if: steps.audit.outcome == 'failure' || steps.features.outcome == 'failure' || steps.firefox.outcome == 'failure'
         run: |
           echo "감사에서 문제가 나왔습니다. 위 이슈를 확인하세요." >&2
           exit 1

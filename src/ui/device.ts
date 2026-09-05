@@ -65,18 +65,25 @@ export function applyScreenKind(): ScreenKind {
  * ours is a second way to do a thing the browser already offers, sitting on
  * top of the player at the top of the stack. It reads as clutter because it is.
  *
- * So: WebKit, or a phone — where the gesture is the only reliable path whatever
- * the engine. Elsewhere the button is not drawn and its switch is not shown.
+ * So: WebKit, or a phone that is not Gecko. Firefox for Android — which the
+ * package declares support for — floats the video itself when the app goes to
+ * the background, so on Gecko the answer is no at every screen size. The phone
+ * clause is for a Blink phone browser that runs extensions (Kiwi, Edge
+ * Android), where the gesture is still the only reliable path.
  */
 export interface PipButtonFacts {
   /** The engine exposes WebKit's presentation-mode API. */
   webkit: boolean
+  /** The engine is Gecko — desktop or Android, it has PiP of its own. */
+  gecko: boolean
   /** The screen is phone-sized (see screenKind). */
   phone: boolean
 }
 
-export function needsPipButton({ webkit, phone }: PipButtonFacts): boolean {
-  return webkit || phone
+export function needsPipButton({ webkit, gecko, phone }: PipButtonFacts): boolean {
+  if (webkit) return true
+  if (gecko) return false
+  return phone
 }
 
 /**
@@ -86,6 +93,9 @@ export function needsPipButton({ webkit, phone }: PipButtonFacts): boolean {
 export function pipButtonFacts(win: Window & typeof globalThis = window): PipButtonFacts {
   return {
     webkit: 'webkitSetPresentationMode' in win.HTMLVideoElement.prototype,
+    // An engine property, not the user agent: Gecko forks keep the engine and
+    // some change the UA, and Orion has already shown what UA sniffing costs.
+    gecko: 'mozInnerScreenX' in win,
     phone: screenKind(win.screen.width, win.screen.height) === 'phone',
   }
 }

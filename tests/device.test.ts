@@ -53,14 +53,20 @@ test('경계는 500 이고, 그 위는 데스크톱이다', () => {
 // 자체 토글이 있습니다. 거기서 우리 버튼은 플레이어 위에 뜬 중복입니다.
 
 test('WebKit 이면 그린다 — Orion 아이폰도, Orion 맥도', () => {
-  assert.equal(needsPipButton({ webkit: true, phone: true }), true)
-  assert.equal(needsPipButton({ webkit: true, phone: false }), true)
+  assert.equal(needsPipButton({ webkit: true, gecko: false, phone: true }), true)
+  assert.equal(needsPipButton({ webkit: true, gecko: false, phone: false }), true)
 })
 
-test('폰이면 엔진과 무관하게 그린다 — 제스처가 유일한 길인 건 폰의 사정이다', () => {
-  assert.equal(needsPipButton({ webkit: false, phone: true }), true)
+test('Gecko 는 폰이어도 그리지 않는다 — Firefox Android 가 알아서 띄운다', () => {
+  // 패키지가 gecko_android 를 선언하므로 이 행은 실제로 설치되는 조합이다.
+  assert.equal(needsPipButton({ webkit: false, gecko: true, phone: true }), false)
+  assert.equal(needsPipButton({ webkit: false, gecko: true, phone: false }), false)
 })
 
-test('데스크톱 Blink·Gecko 에는 그리지 않는다 — 브라우저가 자기 PiP 를 갖고 있다', () => {
-  assert.equal(needsPipButton({ webkit: false, phone: false }), false)
+test('Blink 폰이면 그린다 — 제스처가 유일한 길인 건 그 폰의 사정이다', () => {
+  assert.equal(needsPipButton({ webkit: false, gecko: false, phone: true }), true)
+})
+
+test('데스크톱 Blink 에는 그리지 않는다 — 브라우저가 자기 PiP 를 갖고 있다', () => {
+  assert.equal(needsPipButton({ webkit: false, gecko: false, phone: false }), false)
 })

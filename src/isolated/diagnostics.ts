@@ -186,6 +186,37 @@ function watchForLayer1(): void {
   })
 }
 
+let reportedWithVideo = false
+
+/**
+ * Re-report once a real video is on the page.
+ *
+ * The load-time report is written before the player exists, so it says 비디오
+ * 0개; this rewrites it the first time a <video> has metadata. It used to be a
+ * side effect of the PiP sweep, which meant it stopped happening the day the
+ * sweep stopped running on desktop — and the panel froze at 0개 beside the
+ * very line telling people to read the panel first. Its own watcher now.
+ */
+export function watchForVideo(): void {
+  if (window.top !== window || reportedWithVideo) return
+  const observer = new MutationObserver(tryReport)
+  function tryReport(): void {
+    if (reportedWithVideo) return
+    const video = document.querySelector('video')
+    if (!video) return
+    if (video.readyState >= 1) {
+      reportedWithVideo = true
+      observer.disconnect()
+      reportDiagnostics()
+      return
+    }
+    // Metadata arrives without a DOM mutation; hear it from the element itself.
+    video.addEventListener('loadedmetadata', tryReport, { once: true })
+  }
+  observer.observe(document.documentElement, { childList: true, subtree: true })
+  tryReport()
+}
+
 let watchingCaptions = false
 
 /**

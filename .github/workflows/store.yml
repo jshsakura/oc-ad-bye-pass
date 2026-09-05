@@ -67,13 +67,24 @@ jobs:
               echo "::error::예약된 _ 이름이 $1 에 들어 있다"; exit 1; }
           }
 
+          # Tags before v0.23.0 have no Firefox asset. Under `all` that is a
+          # skip with a notice — the Chrome and Edge halves still run — and
+          # under `firefox` it is the error it looks like.
+          ff_present=false
           case "$STORE" in
-            all)              fetch "$asset"; fetch "$ff_asset" ;;
+            all)
+              fetch "$asset"
+              if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -qx "$ff_asset"; then
+                fetch "$ff_asset"; ff_present=true
+              else
+                echo "::notice::$TAG 에는 파이어폭스 자산이 없습니다 (0.23.0 이전) — AMO 는 건너뜁니다"
+              fi ;;
             chrome|edge)      fetch "$asset" ;;
-            firefox)          fetch "$ff_asset" ;;
+            firefox)          fetch "$ff_asset"; ff_present=true ;;
           esac
           echo "ASSET=$asset" >> "$GITHUB_ENV"
           echo "FF_ASSET=$ff_asset" >> "$GITHUB_ENV"
+          echo "FF_PRESENT=$ff_present" >> "$GITHUB_ENV"
 
       - name: 크롬 웹스토어에 올린다
         if: inputs.store == 'all' || inputs.store == 'chrome'
@@ -119,7 +130,7 @@ jobs:
           echo "✅ \`${{ inputs.tag }}\` 를 엣지 애드온즈에 올렸습니다" >> "$GITHUB_STEP_SUMMARY"
 
       - name: 파이어폭스 애드온(AMO)에 올린다
-        if: inputs.store == 'all' || inputs.store == 'firefox'
+        if: (inputs.store == 'all' || inputs.store == 'firefox') && env.FF_PRESENT == 'true'
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}

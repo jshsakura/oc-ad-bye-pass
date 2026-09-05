@@ -23,7 +23,7 @@ import {
 } from '../shared/settings.ts'
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
-import { reportDiagnostics, watchCaptionOutcome } from './diagnostics.ts'
+import { reportDiagnostics, watchCaptionOutcome, watchForVideo } from './diagnostics.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { needsPipButton, pipButtonFacts } from '../ui/device.ts'
 import { handleAdState } from './player.ts'
@@ -156,6 +156,8 @@ function recompute(caches: FilterCaches) {
   // Written after the layers are in place, so what it reports is the state the
   // user is actually in. Cheap enough to redo on every recompute.
   reportDiagnostics()
+  // And again when the player actually appears — see watchForVideo.
+  watchForVideo()
   if (IS_YOUTUBE) watchCaptionOutcome()
 }
 

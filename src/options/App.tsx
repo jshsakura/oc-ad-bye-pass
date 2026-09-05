@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { isSafeSelector } from '../shared/filterlist.ts'
 import type { FilterStatus, RuntimeRequest } from '../shared/messages.ts'
 import {
@@ -120,10 +120,26 @@ export function App({ onClose }: { onClose?: () => void } = {}) {
    * moves. Read once on mount was why the report went stale and the page had to
    * be reopened to agree with itself.
    *
-   * Only `settings` is refreshed. `rulesDraft` is text somebody is in the
-   * middle of typing, and replacing that from a storage event would eat it.
+   * `rulesDraft` is refreshed only while it is clean — text somebody is in the
+   * middle of typing is theirs, and replacing it from a storage event would eat
+   * it. See the handler for the case the clean check exists for.
    */
-  useEffect(() => watchSettings(setSettings), [])
+  const settingsRef = useRef(settings)
+  settingsRef.current = settings
+  useEffect(
+    () =>
+      watchSettings((next) => {
+        const prev = settingsRef.current
+        setSettings(next)
+        // The draft follows the store only while it still equals what the store
+        // held — i.e. nobody has typed. A draft someone is editing stays theirs.
+        // Without the clean case, rules saved from a second window sat behind a
+        // draft that still showed the old text, and pressing 저장 there put the
+        // old text back over the new rules.
+        setRulesDraft((draft) => (draft === prev.customRules ? next.customRules : draft))
+      }),
+    [],
+  )
 
   const badRules = useMemo(
     () => parseCustomRules(rulesDraft).filter((line) => !isSafeSelector(line)),

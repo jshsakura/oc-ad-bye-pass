@@ -141,9 +141,15 @@ try {
   // page. Settings existing at all means onInstalled ran — i.e. background.js
   // executed as an event page, service_worker key or not.
   await go(`${origin}/popup.html`)
-  const settings = await runAsync(
-    'const done = arguments[0]; browser.storage.local.get("settings").then((r) => done(r.settings ?? null)).catch((e) => done({ error: String(e) }))',
-  )
+  // onInstalled seeds the settings asynchronously and a slow runner can reach
+  // this line first. Read until they are there, the way the e2e fixture does.
+  let settings = null
+  for (let i = 0; i < 40 && !settings?.toggles; i++) {
+    settings = await runAsync(
+      'const done = arguments[0]; browser.storage.local.get("settings").then((r) => done(r.settings ?? null)).catch((e) => done({ error: String(e) }))',
+    )
+    if (!settings?.toggles) await sleep(200)
+  }
   check('이벤트 페이지가 돌아 기본 설정을 심었다', !!settings && !settings.error && settings.toggles, JSON.stringify(settings)?.slice(0, 120))
   check('저장된 설정에 sponsorCategories 가 있다', Array.isArray(settings?.sponsorCategories))
 
@@ -172,8 +178,14 @@ try {
   check('팝업이 그려진다 (토글 행 있음)', rows > 0, `행 ${rows}개`)
   await run('document.querySelector(".foot button")?.click()')
   await sleep(300)
-  const labels = await run('return [...document.querySelectorAll(".list .row .label")].map((e) => e.textContent)')
-  check('데스크톱 Gecko 라 PiP 스위치가 없다', Array.isArray(labels) && !labels.some((l) => /PiP/i.test(l)), labels?.join(' | '))
+  // By key, not by label: this Firefox is en-US and the English label is
+  // "Picture-in-picture button", which /PiP/i never matched — the old check
+  // passed whether the row was there or not.
+  const keys = await run('return [...document.querySelectorAll(".list .row")].map((e) => e.dataset.key)')
+  check('토글 행에 키가 붙어 있다', Array.isArray(keys) && keys.includes('videoAds'), keys?.join(' '))
+  check('데스크톱 Gecko 라 PiP 스위치가 없다', Array.isArray(keys) && !keys.includes('pipButton'), keys?.join(' '))
+  // The probe needsPipButton uses to recognise Gecko, asserted on Gecko.
+  check('Gecko 판별 신호(mozInnerScreenX)가 있다', (await run('return "mozInnerScreenX" in window')) === true)
   check('스폰서 접힘 줄이 있다', await run('return !!document.querySelector(".sponsor-cats summary .sponsor-count")'))
   const dir = await run('return document.documentElement.dir + "|" + document.documentElement.lang')
   check('문서 lang 이 붙는다', /^(ltr|rtl)?\|.+/.test(dir), dir)

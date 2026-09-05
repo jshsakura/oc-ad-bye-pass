@@ -989,6 +989,16 @@ input[type='text'] {
   padding-bottom: 8px;
 }
 
+/* The list's master off / site off, same dimming as .row.disabled. */
+.sponsor-cats.disabled {
+  opacity: 0.45;
+}
+
+.sponsor-cats.disabled summary,
+.sponsor-cats.disabled .sponsor-cat {
+  cursor: default;
+}
+
 /* Shut, this line is the whole feature's state, so it gets to be quiet and
    still legible: the count never wraps, the names take what is left and
    ellipsise. `min-width: 0` is what lets them — a flex child refuses to shrink

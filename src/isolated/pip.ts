@@ -14,7 +14,6 @@
 // own. That is the whole of what an extension can do on this platform.
 
 import { log } from '../shared/log.ts'
-import { reportDiagnostics } from './diagnostics.ts'
 
 const BUTTON_ID = 'oc-abp-pip'
 
@@ -69,8 +68,6 @@ interface WebkitVideo extends HTMLVideoElement {
 let observer: MutationObserver | null = null
 let wantButton = false
 
-/** Whether the panel has been told about a page that actually has a player. */
-let reportedWithVideo = false
 
 /**
  * The video actually being watched.
@@ -522,27 +519,27 @@ function scheduleSweep(): void {
 
 function sweep(): void {
   const video = playerVideo()
-  if (!video) return
-  allowPip(video)
-
-  // Report once when a real video with metadata appears — the first report is
-  // written before the player exists, so without this the panel says 비디오 0개
-  // for the life of the page.
-  if (!reportedWithVideo && video.readyState >= 1) {
-    reportedWithVideo = true
-    reportDiagnostics()
-  }
 
   // Re-checked on every sweep rather than once at start: the site navigates
   // without reloading, so a button attached on a watch page has to come off
   // again when the same document becomes a search result list — and the same
   // is true of another extension taking the screen over, which happens and
   // un-happens while the page stays put.
-  if (wantButton && isWatchPage(location.href) && !playerOwnedByHost(document)) {
+  //
+  // Decided before the video check, and removal happens whenever the answer is
+  // no *or there is nothing to anchor to*. The early return used to sit above
+  // this, so a page that lost its <video> in the same instant it lost the right
+  // to a button — Easy Mode rebuilding the player as it took the screen — kept
+  // a stale button fixed at its last position until some later mutation.
+  const wanted = wantButton && isWatchPage(location.href) && !playerOwnedByHost(document)
+  if (!wanted || !video) {
+    document.getElementById(BUTTON_ID)?.remove()
+    if (!video) return
+  }
+  allowPip(video)
+  if (wanted) {
     ensureButton(video)
     place()
-  } else {
-    document.getElementById(BUTTON_ID)?.remove()
   }
 }
 
