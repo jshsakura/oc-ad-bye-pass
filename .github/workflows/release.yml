@@ -60,23 +60,35 @@ jobs:
       # innerHTML sites are constant strings, and setExtensionActionOptions is
       # already behind a typeof guard for Orion's sake).
       - name: AMO 린터로 파이어폭스 패키지를 검사한다
-        run: npx --yes addons-linter@latest dist-firefox
+        # Pinned to a major: the linter's own releases must not decide when this
+        # build breaks. Bump on purpose, with the AMO change that motivates it.
+        run: npx --yes addons-linter@10 dist-firefox
 
       # The linter proves the manifest parses. This proves the extension runs:
       # a real Firefox installs the package, the event page seeds settings, the
-      # MAIN-world script reaches youtube.com, the DNR ruleset is enabled. Three
-      # versions went to AMO on inference alone before this existed; nothing
-      # Firefox-shaped leaves this job again without having run in Firefox.
+      # DNR ruleset is enabled, the popup draws. Three versions went to AMO on
+      # inference alone before this existed; nothing Firefox-shaped leaves this
+      # job again without having run in Firefox.
+      #
+      # Offline only, deliberately. A gate has to be deterministic or it gets
+      # bypassed the first time youtube.com hiccups during a release; the live
+      # half runs in audit.yml, which this job dispatches at the end, next to
+      # the Chromium live check that already lives there for the same reason.
       - name: 파이어폭스 패키지를 진짜 파이어폭스에서 돌린다
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           D=~/.cache/oc-firefox; mkdir -p "$D"; cd "$D"
           curl -sSL -o ff.tar.xz 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
           tar xf ff.tar.xz
-          url=$(curl -sSL https://api.github.com/repos/mozilla/geckodriver/releases/latest \
-                | grep -oE 'https://[^"]+linux64\.tar\.gz' | head -1)
-          curl -sSL "$url" | tar xz
+          # Through gh with the job token, not the anonymous releases API: that
+          # API allows 60 calls an hour per address, and hosted runners share
+          # addresses. The 403 it returns would fail a release for no reason of
+          # ours, on a schedule of other people's builds.
+          gh release download --repo mozilla/geckodriver --pattern '*linux64.tar.gz' -O geckodriver.tar.gz
+          tar xzf geckodriver.tar.gz
           cd "$GITHUB_WORKSPACE"
-          node scripts/smoke-firefox.mjs
+          node scripts/smoke-firefox.mjs --no-live
 
       # 광고가 실제로 막히지 않는 빌드는 내보내지 않는다
       - run: npx playwright install --with-deps chromium webkit

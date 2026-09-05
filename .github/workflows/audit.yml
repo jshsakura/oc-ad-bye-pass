@@ -33,6 +33,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+      - run: npm run build:firefox
       - run: npx playwright install --with-deps chromium
 
       - name: 광고 누출 실측
@@ -54,6 +55,26 @@ jobs:
         continue-on-error: true
         run: node scripts/audit-features.mjs --json feature-report.json
 
+      # The Firefox package, in a Firefox, against the live site. The offline
+      # half of this same script gates every push and every release; this is the
+      # half that needs youtube.com, and it lives here with the other live checks
+      # for the same reason they do — a network hiccup should page someone, not
+      # block a release.
+      - name: 파이어폭스 실측
+        id: firefox
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          D=~/.cache/oc-firefox; mkdir -p "$D"; cd "$D"
+          curl -sSL -o ff.tar.xz 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
+          tar xf ff.tar.xz
+          gh release download --repo mozilla/geckodriver --pattern '*linux64.tar.gz' -O geckodriver.tar.gz
+          tar xzf geckodriver.tar.gz
+          cd "$GITHUB_WORKSPACE"
+          node scripts/smoke-firefox.mjs 2>&1 | tee firefox-report.txt
+          exit "${PIPESTATUS[0]}"
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -61,6 +82,7 @@ jobs:
           path: |
             audit-report.json
             feature-report.json
+            firefox-report.txt
           retention-days: 30
 
       # 누출이 있으면 이슈로 알린다. 이미 열려 있으면 댓글만 단다 —
@@ -123,6 +145,28 @@ jobs:
             # The fallback matters: `gh issue create` fails outright on an
             # assignee it cannot resolve, and losing the whole alert because of
             # the name on it would be worse than an unassigned one.
+            gh issue create --title "$title" --body "$body" --assignee "$OWNER" \
+              || gh issue create --title "$title" --body "$body"
+          fi
+
+      # 파이어폭스는 따로 알린다. 저 둘은 유튜브가 바뀐 것이고, 이쪽은 Gecko 가
+      # 바뀌었거나 우리 파이어폭스 패키지가 깨진 것이라 보는 파일이 다르다.
+      - name: 파이어폭스 깨짐을 이슈로 알린다
+        if: steps.firefox.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          title="파이어폭스에서 깨짐 — Gecko 실측 실패"
+          body="$(printf '최신 Firefox 에서 파이어폭스 패키지가 실측을 통과하지 못했습니다. Firefox 가 바뀌었거나 dist-firefox 가 깨진 것입니다. 로컬 재현: `npm run smoke:firefox` (scripts/smoke-firefox.mjs 머리의 안내로 Firefox·geckodriver 를 받아둔 뒤).\n\n실행: %s\n\n```\n%s\n```\n' \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "$(tail -40 firefox-report.txt 2>/dev/null || echo '리포트 없음 — 스크립트가 시작도 못 했다')")"
+
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            # Assigned, with the same fallback as the two above and for the same reason.
             gh issue create --title "$title" --body "$body" --assignee "$OWNER" \
               || gh issue create --title "$title" --body "$body"
           fi
