@@ -62,6 +62,22 @@ jobs:
       - name: AMO 린터로 파이어폭스 패키지를 검사한다
         run: npx --yes addons-linter@latest dist-firefox
 
+      # The linter proves the manifest parses. This proves the extension runs:
+      # a real Firefox installs the package, the event page seeds settings, the
+      # MAIN-world script reaches youtube.com, the DNR ruleset is enabled. Three
+      # versions went to AMO on inference alone before this existed; nothing
+      # Firefox-shaped leaves this job again without having run in Firefox.
+      - name: 파이어폭스 패키지를 진짜 파이어폭스에서 돌린다
+        run: |
+          D=~/.cache/oc-firefox; mkdir -p "$D"; cd "$D"
+          curl -sSL -o ff.tar.xz 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
+          tar xf ff.tar.xz
+          url=$(curl -sSL https://api.github.com/repos/mozilla/geckodriver/releases/latest \
+                | grep -oE 'https://[^"]+linux64\.tar\.gz' | head -1)
+          curl -sSL "$url" | tar xz
+          cd "$GITHUB_WORKSPACE"
+          node scripts/smoke-firefox.mjs
+
       # 광고가 실제로 막히지 않는 빌드는 내보내지 않는다
       - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test

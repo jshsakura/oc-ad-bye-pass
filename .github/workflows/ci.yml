@@ -21,11 +21,26 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: npm run build:firefox
 
       # 조용히 무너지는 것들을 막는다 — 정적 world:MAIN 선언, 런타임 등록 경로,
       # 주입 폴백, 네트워크 계층. 어느 하나가 빠져도 확장은 멀쩡해 보인다.
       # E2E 앞에 둔다: E2E 가 dist/ 에 브라우저 캐시를 남긴다.
       - run: npm run verify
+
+      # Offline half of the Firefox smoke on every push: install, event page,
+      # popup, DNR. The live half (youtube.com) runs on release, where the
+      # network is already a dependency. See scripts/smoke-firefox.mjs.
+      - name: 파이어폭스 패키지를 진짜 파이어폭스에서 돌린다
+        run: |
+          D=~/.cache/oc-firefox; mkdir -p "$D"; cd "$D"
+          curl -sSL -o ff.tar.xz 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
+          tar xf ff.tar.xz
+          url=$(curl -sSL https://api.github.com/repos/mozilla/geckodriver/releases/latest \
+                | grep -oE 'https://[^"]+linux64\.tar\.gz' | head -1)
+          curl -sSL "$url" | tar xz
+          cd "$GITHUB_WORKSPACE"
+          node scripts/smoke-firefox.mjs --no-live
 
       # Orion(WebKit)은 WebExtensions API 를 약 70%만 구현했다. 안 되는 API 를 쓰면
       # 오류 없이 조용히 기능만 죽는다 — Chrome 에서는 멀쩡하니 눈치채기 어렵다.
