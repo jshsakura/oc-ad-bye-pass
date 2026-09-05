@@ -77,6 +77,22 @@ WebKit 의 사용자 활성화(transient activation)는 탭 이후 **몇 초** �
 | 비디오 요소 복제/디코이 | 유튜브는 MSE `blob:` 로 재생한다. `cloneNode` 는 `ERR_FILE_NOT_FOUND` 로 죽는다 ([jumpcutter#2](https://github.com/WofWca/jumpcutter/issues/2)) |
 | `navigator.audioSession` · 무음 오디오 루프 · PWA standalone | 백그라운드 실행과 무관하다. PWA 는 오히려 프로세스가 통째로 정지된다 |
 
+## 어디에 버튼을 그리나 (0.25.0)
+
+**WebKit 이거나 폰일 때만.** 위의 모든 것이 아이폰에서 잰 사실이고, 그 사실은
+다른 곳으로 옮겨가지 않는다 — 데스크톱 크롬은 우클릭 두 번과 주소창 미디어 컨트롤,
+파이어폭스는 영상 위 자체 토글로 PiP 가 이미 열린다. 거기서 우리 버튼은 플레이어
+위에 뜬 중복이었고 "거슬린다" 는 신고가 그것이었다.
+
+판정은 `src/ui/device.ts` 의 `needsPipButton` 하나다. 콘텐츠 스크립트는 그 값이
+거짓이면 버튼을 안 그리고, 팝업은 스위치를 아예 보이지 않으며, 진단 패널은
+`PiP 버튼: 그리지 않음 — 브라우저 자체 PiP 사용` 이라고 적는다. "버튼이 사라졌다" 는
+신고가 오면 그 줄부터 읽는다.
+
+e2e 는 `test.use({ screen: PHONE_SCREEN })` 으로 데스크톱 Chromium 을 폰으로
+만들어 돌린다. 화면 크기를 안 주면 데스크톱이고, 데스크톱에서는 버튼이 없는 것이
+맞는 결과다.
+
 ## 진단하는 법
 
 폰에는 콘솔이 없다. 팝업 → **진단** 이 전부다.

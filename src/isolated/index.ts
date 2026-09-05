@@ -25,6 +25,7 @@ import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
 import { reportDiagnostics, watchCaptionOutcome } from './diagnostics.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
+import { needsPipButton, pipButtonFacts } from '../ui/device.ts'
 import { handleAdState } from './player.ts'
 import {
   bumpStats,
@@ -130,8 +131,15 @@ function recompute(caches: FilterCaches) {
     // Just the button — a shortcut to the browser's own picture-in-picture.
     // Everything that tried to make leaving automatic is gone; it never worked
     // on this platform and cost more than it saved.
-    if (settings.toggles.pipButton) enablePictureInPicture({ button: true })
-    else disablePictureInPicture()
+    //
+    // And only where the browser has no way in of its own. On desktop Chrome
+    // and Firefox the button duplicated a control the browser already has, from
+    // on top of the player; needsPipButton says where that is not the case.
+    if (settings.toggles.pipButton && needsPipButton(pipButtonFacts())) {
+      enablePictureInPicture({ button: true })
+    } else {
+      disablePictureInPicture()
+    }
 
     // Crowd-sourced sponsor segments. Its own switch because it is the one
     // feature that asks a server we do not run.

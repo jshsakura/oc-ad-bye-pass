@@ -50,3 +50,42 @@ export function applyScreenKind(): ScreenKind {
   document.documentElement.classList.add(`on-${kind}`)
   return kind
 }
+
+/*
+ * Whether this browser needs a picture-in-picture button drawn for it.
+ *
+ * The button exists because of one fact measured on an iPhone: WebKit opens a
+ * floating window only inside a live user gesture, and YouTube replaces the
+ * native controls where WebKit's own PiP control lives. A tap on something of
+ * ours is therefore the only way in — see docs/pip-on-iphone.md.
+ *
+ * That fact does not travel. Desktop Chrome has picture-in-picture two
+ * right-clicks away and again in the address bar's media control; Firefox
+ * draws its own PiP toggle over every video on hover. On those a button of
+ * ours is a second way to do a thing the browser already offers, sitting on
+ * top of the player at the top of the stack. It reads as clutter because it is.
+ *
+ * So: WebKit, or a phone — where the gesture is the only reliable path whatever
+ * the engine. Elsewhere the button is not drawn and its switch is not shown.
+ */
+export interface PipButtonFacts {
+  /** The engine exposes WebKit's presentation-mode API. */
+  webkit: boolean
+  /** The screen is phone-sized (see screenKind). */
+  phone: boolean
+}
+
+export function needsPipButton({ webkit, phone }: PipButtonFacts): boolean {
+  return webkit || phone
+}
+
+/**
+ * Read the facts from a window. Works in the popup and in a content script
+ * alike: the prototype reflects the engine, and `screen` describes the device.
+ */
+export function pipButtonFacts(win: Window & typeof globalThis = window): PipButtonFacts {
+  return {
+    webkit: 'webkitSetPresentationMode' in win.HTMLVideoElement.prototype,
+    phone: screenKind(win.screen.width, win.screen.height) === 'phone',
+  }
+}

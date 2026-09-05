@@ -33,6 +33,8 @@ export interface PageFacts {
   layer1: boolean
   videos: number
   pip: 'webkit' | 'standard' | 'none'
+  /** Absent in reports written before 0.25.0. */
+  pipButtonNeeded?: boolean
   pipSupported: boolean | null
   fullscreenFallback: boolean
   visibilityState: string
@@ -208,6 +210,16 @@ export function format(report: Report): string {
       `1계층 주입: ${injectLine(page)}`,
       `비디오: ${page.videos}개`,
       `PiP: ${page.pip === 'none' ? '없음' : page.pip}`,
+      // The first thing to read when "the button is gone": on desktop Chrome and
+      // Firefox it is gone on purpose, and this line says so before anyone
+      // goes looking for a bug.
+      `PiP 버튼: ${
+        page.pipButtonNeeded === undefined
+          ? '알 수 없음'
+          : page.pipButtonNeeded
+            ? '이 브라우저에 그림'
+            : '그리지 않음 — 브라우저 자체 PiP 사용'
+      }`,
       // The API existing and this video being allowed to use it are different
       // things, and only the second one decides whether a tap can work.
       `PiP 지원(이 영상): ${page.pipSupported === null ? '알 수 없음' : page.pipSupported ? '예' : '아니오'}`,

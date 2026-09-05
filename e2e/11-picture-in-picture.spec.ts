@@ -10,10 +10,17 @@
 // reachable here. It is stubbed rather than really opened — headless has no
 // window to put it in — and the stub is what proves the click arrived.
 
-import { expect, test } from './fixtures.ts'
+import { PHONE_SCREEN, expect, test } from './fixtures.ts'
 import { YOUTUBE_URL, installYouTubeFixture } from './youtube-fixture.ts'
 
 const BUTTON = '#oc-abp-pip'
+
+// This whole file is the phone. The button exists for it — WebKit opens a
+// floating window only inside a live gesture, and YouTube hides WebKit's own
+// control — and on a desktop Chromium the same button would be a second copy of
+// something the browser already has, so it is not drawn there at all. The
+// desktop case is tested at the bottom, as the desktop.
+test.use({ screen: PHONE_SCREEN })
 
 /**
  * The behaviour and the button are separate settings — wanting to leave with the
@@ -295,4 +302,40 @@ test('섀도우 호스트만 있어도, html 의 양보 속성만 있어도 물�
   await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(0)
   await page.evaluate(() => document.documentElement.removeAttribute('data-oc-abp-no-pip'))
   await expect.poll(() => page.locator(BUTTON).count(), { timeout: 8000 }).toBe(1)
+})
+
+// 데스크톱에서는 그리지 않는다.
+//
+// 데스크톱 크롬에는 우클릭 두 번과 주소창 미디어 컨트롤이, 파이어폭스에는 영상
+// 위 자체 토글이 있다. 거기에 우리 버튼을 더 얹으면 플레이어 위에 뜬 중복이고,
+// 그게 "버튼이 거슬린다" 의 정체였다. 스위치도 같이 없어야 한다 — 눌러도 아무
+// 일이 없는 스위치는 고장으로 신고된다.
+test.describe('데스크톱', () => {
+  test.use({ screen: undefined })
+
+  test('버튼을 그리지 않는다 — 켜 두었어도', async ({ context, background }) => {
+    await installYouTubeFixture(context)
+    await setPip(background, true)
+    const page = await context.newPage()
+    await page.goto(YOUTUBE_URL)
+    // 영상이 붙을 시간을 준 뒤에도 없어야 한다. "아직 안 붙은 것" 과 구분하기 위해
+    // 다른 스펙이 버튼을 보는 데 쓰는 시간보다 길게 기다린다.
+    await page.waitForTimeout(1500)
+    expect(await page.locator(BUTTON).count()).toBe(0)
+  })
+
+  test('팝업에도 그 스위치가 없다 — 모든 항목을 펼쳐도', async ({ context, extensionId }) => {
+    const page = await context.newPage()
+    await page.goto(`chrome-extension://${extensionId}/popup.html`)
+    await page.locator('.foot button').first().click()
+    await expect(page.getByRole('switch', { name: '동영상 광고 차단' })).toBeVisible()
+    await expect(page.getByRole('switch', { name: '작은 화면(PiP) 버튼' })).toHaveCount(0)
+  })
+})
+
+test('폰에서는 팝업에 스위치가 있다', async ({ context, extensionId }) => {
+  const page = await context.newPage()
+  await page.goto(`chrome-extension://${extensionId}/popup.html`)
+  await page.locator('.foot button').first().click()
+  await expect(page.getByRole('switch', { name: '작은 화면(PiP) 버튼' })).toBeVisible()
 })

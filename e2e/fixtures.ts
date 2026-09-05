@@ -24,8 +24,25 @@ export interface ExtensionFixtures {
   extensionId: string
 }
 
-export const test = base.extend<ExtensionFixtures>({
-  context: async ({}, use) => {
+export interface ExtensionOptions {
+  /**
+   * The screen the browser reports, via `test.use({ screen })`.
+   *
+   * Undefined is the runner's own — a desktop. A spec about the phone sets a
+   * phone here: the extension reads `window.screen` to decide device-bound
+   * things (the PiP button, the popup layout), so a desktop Chromium is only a
+   * phone for those tests if it is told to be one.
+   */
+  screen?: { width: number; height: number }
+}
+
+/** An iPhone 16 — a real device, so the number the code compares against is real. */
+export const PHONE_SCREEN = { width: 393, height: 852 }
+
+export const test = base.extend<ExtensionFixtures & ExtensionOptions>({
+  screen: [undefined, { option: true }],
+
+  context: async ({ screen }, use) => {
     if (!existsSync(path.join(EXTENSION_PATH, 'manifest.json'))) {
       throw new Error(`build first: npm run build (${EXTENSION_PATH} is missing)`)
     }
@@ -36,6 +53,9 @@ export const test = base.extend<ExtensionFixtures>({
       // their Korean labels ('진단', …). Without this the suite would render in
       // whatever locale the host machine runs, and those selectors would miss.
       locale: 'ko-KR',
+      // Playwright applies `screen` only alongside a viewport, so the two travel
+      // together; the viewport is the screen, as it is on a phone.
+      ...(screen ? { screen, viewport: screen } : {}),
       args: [
         `--disable-extensions-except=${EXTENSION_PATH}`,
         `--load-extension=${EXTENSION_PATH}`,

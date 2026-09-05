@@ -25,6 +25,7 @@ import { Icon } from '../ui/Icon.tsx'
 import { Switch } from '../ui/Switch.tsx'
 import { App as SettingsView } from '../options/App.tsx'
 import { collect, format, type Report } from './diagnose.ts'
+import { needsPipButton, pipButtonFacts } from '../ui/device.ts'
 import { formatCount } from '../ui/format.ts'
 
 
@@ -129,7 +130,15 @@ export function App() {
     })
   }
 
+  // The popup runs in the same browser as the page, so what it reads here is
+  // what the content script will read there.
+  const pipApplies = useMemo(() => needsPipButton(pipButtonFacts()), [])
+
   const visibleToggles = TOGGLE_META.filter((meta) => {
+    // Not hidden behind "show all" — absent. A switch for a button this browser
+    // never draws would be a switch that does nothing, and that is worse than
+    // no switch: someone turns it on, sees nothing, and files it as broken.
+    if (meta.key === 'pipButton' && !pipApplies) return false
     if (showAll) return true
     // Lead with what applies here; the rest is one click away.
     return onYouTube ? !meta.everywhere : !!meta.everywhere

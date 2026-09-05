@@ -12,6 +12,7 @@
 // desktop the timestamp and URL say which one this was.
 
 import { CAPTIONS_ATTR, CAPTIONS_DETAIL_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
+import { needsPipButton, pipButtonFacts } from '../ui/device.ts'
 import { readLog } from '../shared/log.ts'
 
 const KEY = 'diagnostics'
@@ -51,6 +52,8 @@ export interface PageDiagnostics {
   layer1: boolean
   videos: number
   pip: 'webkit' | 'standard' | 'none'
+  /** Whether a PiP button is drawn here at all — see needsPipButton. */
+  pipButtonNeeded: boolean
   /**
    * What WebKit says about this very video, which is a different question from
    * whether the API exists. `false` means no call will ever open a window here —
@@ -102,6 +105,7 @@ export function reportDiagnostics(): void {
         : typeof video?.requestPictureInPicture === 'function'
           ? 'standard'
           : 'none',
+    pipButtonNeeded: needsPipButton(pipButtonFacts()),
     pipSupported:
       typeof video?.webkitSupportsPresentationMode === 'function'
         ? video.webkitSupportsPresentationMode('picture-in-picture')
