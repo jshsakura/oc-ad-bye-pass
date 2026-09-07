@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260906,
-  "updatedAt": "2026-09-06",
+  "version": 20260907,
+  "updatedAt": "2026-09-07",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -3259,6 +3259,9 @@
         "antalyahomes.com": [
           "#cookies"
         ],
+        "antalyakorfez.com": [
+          ".cookie-consent"
+        ],
         "antalyaz.com": [
           ".policy"
         ],
@@ -3531,6 +3534,9 @@
         ],
         "apollointeractive.com": [
           ".privacy-rights"
+        ],
+        "apolut.net": [
+          "#gdpr-cookie-law"
         ],
         "apoly.de": [
           ".MuiSnackbar-root"
@@ -9873,12 +9879,6 @@
         ],
         "bretislavka.cz": [
           ".modal-cacsp-position"
-        ],
-        "brf.be": [
-          "#cookieDashboard"
-        ],
-        "brgroup.cz": [
-          ".cc_div"
         ]
       }
     },
