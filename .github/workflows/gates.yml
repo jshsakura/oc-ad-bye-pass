@@ -44,16 +44,27 @@ jobs:
           gh release download --repo mozilla/geckodriver --pattern '*linux64.tar.gz' -O geckodriver.tar.gz
           tar xzf geckodriver.tar.gz
 
+      # The report goes to the runner's temp, not the checkout. Written here it
+      # is an untracked file in the repo, and this script refuses to start on a
+      # dirty tree — the first run of this workflow died on its own report and
+      # audited nothing.
+      #
+      # `PIPESTATUS[0]` is the rest of that lesson: through a pipe the step's
+      # status is tee's, so that same run reported success for an audit that
+      # never ran. A green light for a check that did not happen is the exact
+      # failure this workflow exists to catch, reproduced in its own wiring.
       - name: 게이트가 빨간불을 켜는지 확인한다
         id: gates
         continue-on-error: true
-        run: node scripts/audit-gates.mjs 2>&1 | tee gates-report.txt
+        run: |
+          node scripts/audit-gates.mjs 2>&1 | tee "$RUNNER_TEMP/gates-report.txt"
+          exit "${PIPESTATUS[0]}"
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: gates-report
-          path: gates-report.txt
+          path: ${{ runner.temp }}/gates-report.txt
           retention-days: 30
 
       # 통과해버린 게이트는 지키는 척만 하는 검사다. 조용히 넘기지 않는다.
@@ -66,7 +77,7 @@ jobs:
           title="지키지 않는 게이트가 있다"
           body="$(printf '심어둔 결함을 잡지 못한 게이트가 있습니다. 통과하는 테스트는 그 테스트가 실패할 줄 안다는 뜻이 아닙니다.\n\n로컬 재현: `npm run audit:gates`\n\n실행: %s\n\n```\n%s\n```\n' \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
-            "$(tail -40 gates-report.txt 2>/dev/null || echo '리포트 없음')")"
+            "$(tail -40 "$RUNNER_TEMP/gates-report.txt" 2>/dev/null || echo '리포트 없음')")"
 
           existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
           if [ -n "$existing" ]; then
