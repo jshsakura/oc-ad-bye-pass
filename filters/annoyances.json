@@ -1723,6 +1723,9 @@
         "aitopics.org": [
           "#fixed-footer"
         ],
+        "aitryon.art": [
+          ".fixed.bottom-5"
+        ],
         "aitum.tv": [
           "#cc-main"
         ],
@@ -9876,9 +9879,6 @@
         ],
         "bretagne-reisen.de": [
           ".cookies-global"
-        ],
-        "bretislavka.cz": [
-          ".modal-cacsp-position"
         ]
       }
     },
