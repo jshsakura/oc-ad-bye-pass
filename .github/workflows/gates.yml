@@ -1,0 +1,82 @@
+# Do the guards still guard?
+#
+# The rest of CI asks whether the extension works. This asks whether CI would
+# notice if it stopped: each guard is handed the defect it exists for and has
+# to go red. v0.25.0 shipped a check that passed whether the thing it tested
+# was there or not, and a human review caught it rather than the suite.
+#
+# Weekly rather than per-push. The guards change rarely, the run takes minutes,
+# and a check about the tests is not worth slowing every push for. Dispatch it
+# by hand after adding or rewriting one.
+name: gates
+
+on:
+  schedule:
+    # 월요일 03:20 UTC — audit.yml(03:00)과 겹치지 않게 비켜 둔다.
+    - cron: '20 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      # scripts/audit-gates.mjs edits tracked files and restores them; a runner
+      # checkout is throwaway, which is the right place for that.
+      - run: npx playwright install --with-deps chromium
+      - name: 파이어폭스를 받아둔다
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          D=~/.cache/oc-firefox; mkdir -p "$D"; cd "$D"
+          curl -sSL -o ff.tar.xz 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US'
+          tar xf ff.tar.xz
+          gh release download --repo mozilla/geckodriver --pattern '*linux64.tar.gz' -O geckodriver.tar.gz
+          tar xzf geckodriver.tar.gz
+
+      - name: 게이트가 빨간불을 켜는지 확인한다
+        id: gates
+        continue-on-error: true
+        run: node scripts/audit-gates.mjs 2>&1 | tee gates-report.txt
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gates-report
+          path: gates-report.txt
+          retention-days: 30
+
+      # 통과해버린 게이트는 지키는 척만 하는 검사다. 조용히 넘기지 않는다.
+      - name: 안 잡는 게이트를 이슈로 알린다
+        if: steps.gates.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          title="지키지 않는 게이트가 있다"
+          body="$(printf '심어둔 결함을 잡지 못한 게이트가 있습니다. 통과하는 테스트는 그 테스트가 실패할 줄 안다는 뜻이 아닙니다.\n\n로컬 재현: `npm run audit:gates`\n\n실행: %s\n\n```\n%s\n```\n' \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "$(tail -40 gates-report.txt 2>/dev/null || echo '리포트 없음')")"
+
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            # Assigned, with the same fallback as audit.yml and for the same reason.
+            gh issue create --title "$title" --body "$body" --assignee "$OWNER" \
+              || gh issue create --title "$title" --body "$body"
+          fi
+
+      - name: 결과 반영
+        if: steps.gates.outcome == 'failure'
+        run: echo "게이트 감사에서 문제가 나왔습니다. 위 이슈를 확인하세요." >&2; exit 1
