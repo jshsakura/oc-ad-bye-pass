@@ -1,0 +1,48 @@
+# Says something when a scheduled workflow fails.
+#
+# rules.yml failed on four consecutive Mondays and nobody found out until the
+# owner happened to look at the Actions tab — by then the blocklist was 20,005
+# domains behind. A red run on a schedule nobody watches is the same as no run.
+#
+# audit.yml and gates.yml file their own issues with the report attached, and
+# do it better than this could. This covers the two that had nothing, and it
+# covers them from outside, so it still fires when a job dies before reaching
+# whatever notifier it carries — `npm ci` failing, the runner disappearing, a
+# workflow file that no longer parses.
+name: watchdog
+
+on:
+  workflow_run:
+    workflows: [rules, filters]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  tell:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 실패를 이슈로 알린다
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ github.event.workflow_run.name }}
+          URL: ${{ github.event.workflow_run.html_url }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          title="예약 워크플로 실패: $NAME"
+          body="$(printf '`%s` 워크플로가 실패했습니다. 예약 실행이라 아무도 보고 있지 않을 수 있어 남깁니다.\n\n실행: %s\n커밋: `%s`\n\n같은 워크플로가 계속 실패하면 이 이슈에 댓글이 쌓입니다. 며칠치가 쌓여 있다면 그만큼 그 일이 안 되고 있었다는 뜻입니다.\n' \
+            "$NAME" "$URL" "$SHA")"
+
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            # Assigned, with the same fallback as audit.yml and for the same reason:
+            # an unassigned bot issue reaches the owner only through watching.
+            gh issue create --title "$title" --body "$body" --assignee "$OWNER" \
+              || gh issue create --title "$title" --body "$body"
+          fi
