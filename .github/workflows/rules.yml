@@ -21,7 +21,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   refresh:
@@ -70,22 +69,34 @@ jobs:
 
       - run: npm run check && npm test
 
-      - name: Open a pull request if anything changed
-        uses: peter-evans/create-pull-request@v8
-        with:
-          branch: automated/refresh-rules
-          title: 'Refresh the network blocklist'
-          commit-message: 'Refresh the network blocklist from upstream lists'
-          body: |
-            Rebuilt by `.github/workflows/rules.yml` from the upstream public lists.
-
-            Worth a look before merging:
-            - a large drop in domain count usually means an upstream list broke
-            - anything recognisable appearing in the list is a false positive
-              waiting to become a bug report
-
-            The generated file is data only — no code changes.
-          add-paths: |
-            public/rules/ads.json
-            public/rules/ads.meta.json
-          delete-branch: true
+      # Pushed, not proposed.
+      #
+      # This opened a pull request until 2026-09-07, and every run since at
+      # least 2026-08-17 failed on "GitHub Actions is not permitted to create or
+      # approve pull requests" — a repository setting, not anything in the
+      # branch. Four consecutive Mondays produced a pushed branch, a red run,
+      # and no review, while main sat 20,005 domains short of the upstream
+      # lists. A review that cannot happen is not a review.
+      #
+      # What made the pull request feel necessary is above this line and still
+      # runs: the sanity check refuses a collapse in coverage, refuses a list
+      # missing the networks it would be pointless without, and refuses one that
+      # would block youtube.com or google.com — then the suite runs. And unlike
+      # filters/, this file is bundled rather than fetched, so nothing here
+      # reaches anyone until a release is cut by hand.
+      #
+      # If the setting is turned on later and review is wanted back, the git
+      # history has the create-pull-request step.
+      - name: 바뀌었으면 커밋한다
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add public/rules/ads.json public/rules/ads.meta.json
+          if git diff --cached --quiet; then
+            echo '바뀐 것 없음'
+            exit 0
+          fi
+          git commit -m "$(printf 'Refresh the network blocklist from upstream lists\n\nRebuilt by scripts/build-rules.mjs. Data only, and bundled rather than\nfetched, so it reaches people with the next release rather than on its\nown.')"
+          # 같은 시각에 도는 다른 자동 커밋과 부딪히면 그 위로 얹는다.
+          git pull --rebase --autostash origin main
+          git push

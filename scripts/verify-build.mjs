@@ -169,7 +169,7 @@ if (orion) {
     'WebKit 이 모르는 키다',
   )
   check(
-    'Orion 패키지에 3.6MB 룰셋이 따라오지 않았다',
+    'Orion 패키지에 룰셋이 따라오지 않았다',
     !existsSync(join(ROOT, 'dist-orion', 'rules')),
     '키가 없으면 아무도 안 읽는다 — 순수한 무게일 뿐이다',
   )
