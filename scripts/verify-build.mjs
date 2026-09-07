@@ -32,7 +32,16 @@ function check(label, ok, detail) {
   }
 }
 
-const manifest = JSON.parse(readFileSync(join(ROOT, 'dist', 'manifest.json'), 'utf8'))
+// Read explicitly rather than letting the JSON read throw: run without a build
+// this used to die on an ENOENT stack, which reads like a broken script rather
+// than a missing prerequisite. The gate audit hit exactly that on a clean
+// runner and credited the resulting red light to the wrong check.
+const MANIFEST = join(ROOT, 'dist', 'manifest.json')
+if (!existsSync(MANIFEST)) {
+  console.error(`dist/manifest.json 이 없다 — 검증할 빌드가 없다. \`npm run build\` (3종 전부는 \`npm run build:all\`) 를 먼저 돌린다.`)
+  process.exit(2)
+}
+const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'))
 const orion = existsSync(join(ROOT, 'dist-orion', 'manifest.json'))
   ? JSON.parse(readFileSync(join(ROOT, 'dist-orion', 'manifest.json'), 'utf8'))
   : null

@@ -86,7 +86,10 @@ const CASES = [
   },
   {
     name: 'verify — Firefox 패키지가 서비스워커로 돌아가면',
-    gate: 'npm run build:firefox && npm run verify',
+    // build:all, not build:firefox: verify reads dist/manifest.json before it
+    // reaches the Firefox checks, so on a clean tree the narrower build made
+    // these two cases go red on a missing file instead of on the defect.
+    gate: 'npm run build:all && npm run verify',
     files: ['scripts/targets.mjs'],
     expect: '이벤트 페이지로 돈다',
     mutate: () =>
@@ -98,7 +101,10 @@ const CASES = [
   },
   {
     name: 'verify — 데이터 수집 선언이 빠지면',
-    gate: 'npm run build:firefox && npm run verify',
+    // build:all, not build:firefox: verify reads dist/manifest.json before it
+    // reaches the Firefox checks, so on a clean tree the narrower build made
+    // these two cases go red on a missing file instead of on the defect.
+    gate: 'npm run build:all && npm run verify',
     files: ['scripts/targets.mjs'],
     expect: '데이터 수집을 선언한다',
     mutate: () =>
