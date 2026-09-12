@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260911,
-  "updatedAt": "2026-09-11",
+  "version": 20260912,
+  "updatedAt": "2026-09-12",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,9 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "agar.io": [
-          "#btn-privacy-settings"
-        ],
         "agazetafm.com": [
           ".popup_footer"
         ],
@@ -3460,6 +3457,9 @@
         "apetilo.com": [
           "#cc_div"
         ],
+        "apetta.ru": [
+          ".apetta-consent-banner"
+        ],
         "apexbrasil.com.br": [
           ".lgpdoptin"
         ],
@@ -4392,6 +4392,9 @@
         ],
         "as.com": [
           "#acceptationCMPWall"
+        ],
+        "asa.ru": [
+          "#js-cnotice-window"
         ],
         "asae.gov.pt": [
           ".cookiesModal"
@@ -5421,6 +5424,9 @@
         ],
         "autopolis.lu": [
           ".dialog"
+        ],
+        "autoprawo.pl": [
+          "#wpmagus-consent-manager-dialog-wrapper"
         ],
         "autoreisen.com": [
           ".cookie"
@@ -8500,6 +8506,9 @@
         "blog.oup.com": [
           "#cookie-notice"
         ],
+        "blog.progressiverobot.com": [
+          "#cc-wrapper"
+        ],
         "blog.remarkable.com": [
           ".butterBar--CCPA"
         ],
@@ -9718,6 +9727,9 @@
         "boyfriend.tv": [
           "#limitedExperienceNotice"
         ],
+        "boyfriendtv.com": [
+          "#limitedExperienceNotice"
+        ],
         "boykotdedektifi.com": [
           ".cookie-card"
         ],
@@ -9864,18 +9876,6 @@
         ],
         "bravofly.com": [
           ".cookie_notice"
-        ],
-        "brdmap.de": [
-          "#cc-main"
-        ],
-        "breadandbutter.ru": [
-          ".cookie-notice"
-        ],
-        "breakingdefense.com": [
-          "#clym-widget-privacy-frame"
-        ],
-        "breakingthenews.net": [
-          ".CookieConsent"
         ]
       }
     },

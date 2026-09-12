@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260911,
-  "updatedAt": "2026-09-11",
+  "version": 20260912,
+  "updatedAt": "2026-09-12",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -96,9 +96,8 @@
         ".revenue_unit_item.adfit",
         ".revenue_unit_item.dable",
         ".revenue_unit_item.tenping",
-        ".textwidget",
         "[alt$='광고']",
-        "[class*='ad'][id^='AD']:not([class*='add']):not([id*='ADD'])",
+        "[class*='ad'][id^='AD']:not([class*='add']):not([id^='ADD'])",
         "[class^='basic-banner'][id]",
         "[class^='happy-header']",
         "[id^=\"div-gpt-ad\"]",
@@ -1291,6 +1290,9 @@
         ],
         "chmodi.tistory.com": [
           ".floatdiv"
+        ],
+        "chosundaily.com": [
+          "a.banner"
         ],
         "chron.com": [
           "div.adBanner",
@@ -2999,8 +3001,7 @@
         ],
         "kidd.co.kr": [
           ".act-banner-box-wrapper",
-          ".bottomAdBox",
-          ".product-recommendations",
+          ".product-recommendations, .product-recommendations +hr",
           "daara-div.daara-animated-banner",
           "div.bottomAD_area",
           "div.kiddBanner"
@@ -4498,7 +4499,6 @@
         "mmzone.co.kr": [
           "#main_premium_spon_block",
           "#scm_premium_spon_block",
-          ".m-center-adt-container",
           "div[id$=\"_ad\"]",
           "div[id^=\"scm_ban\"][style*=\"url(/media/banner/\"]"
         ],
@@ -4635,7 +4635,6 @@
           "div.miso-post-gallery"
         ],
         "mt.co.kr": [
-          "[class$='ads']",
           "div.ad-tag",
           "div.cms_banner",
           "div.dynamic-ad",
@@ -4659,7 +4658,7 @@
           ".muko-ad-impression"
         ],
         "musinsa.com": [
-          "a.gtm-click-content[href$=\"/main/musinsa/brand_ad\"]"
+          "[href$=\"/main/musinsa/brand_ad\"]"
         ],
         "mvod.jtbc.co.kr": [
           "div[class^=\"iframe_\"][class$=\"_ad\"]"
@@ -5538,7 +5537,7 @@
         ],
         "sbs.co.kr": [
           "[class$=\"-ad\"]",
-          "[class$=\"_bnr_ad\"]",
+          "[class$='_ad']",
           "div.da_banner_w",
           "div.main_da_housebanner_w"
         ],
