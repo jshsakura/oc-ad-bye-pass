@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260913,
-  "updatedAt": "2026-09-13",
+  "version": 20260914,
+  "updatedAt": "2026-09-14",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -2399,6 +2399,9 @@
         ],
         "heye.kr": [
           ".first.banner-wrap"
+        ],
+        "heykorean.com": [
+          "div.ad-bx"
         ],
         "hinfomax.co.kr": [
           ".banner"
@@ -5977,6 +5980,9 @@
         "tenforums.com": [
           "div.adunit"
         ],
+        "terms.naver.com": [
+          "div.ad-banner-area"
+        ],
         "tfnews.co.kr": [
           "div.banner_wrap",
           "div.com_ban",
@@ -6622,15 +6628,6 @@
         ],
         "vitaminhealth.kr": [
           "iframe[data-ezsrc*=\"//coupa.ng/\"]"
-        ],
-        "viva100.com": [
-          "div.R_paper01",
-          "div.ads_bottom",
-          "div.most_top",
-          "ins[data-ad-slot=\"1779084261\"]",
-          "ins[data-ad-slot=\"3067260206\"]",
-          "ins[data-ad-slot=\"5989681236\"]",
-          "ins[data-ad-slot=\"7173023849\"]"
         ],
         "vod.sooplive.com": [
           ".adballoon_icon"

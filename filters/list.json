@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260913,
-  "updatedAt": "2026-09-13",
+  "version": 20260914,
+  "updatedAt": "2026-09-14",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -2474,6 +2474,9 @@
         ],
         "heye.kr": [
           ".first.banner-wrap"
+        ],
+        "heykorean.com": [
+          "div.ad-bx"
         ],
         "hinfomax.co.kr": [
           ".banner"
@@ -6052,6 +6055,9 @@
         "tenforums.com": [
           "div.adunit"
         ],
+        "terms.naver.com": [
+          "div.ad-banner-area"
+        ],
         "tfnews.co.kr": [
           "div.banner_wrap",
           "div.com_ban",
@@ -6697,15 +6703,6 @@
         ],
         "vitaminhealth.kr": [
           "iframe[data-ezsrc*=\"//coupa.ng/\"]"
-        ],
-        "viva100.com": [
-          "div.R_paper01",
-          "div.ads_bottom",
-          "div.most_top",
-          "ins[data-ad-slot=\"1779084261\"]",
-          "ins[data-ad-slot=\"3067260206\"]",
-          "ins[data-ad-slot=\"5989681236\"]",
-          "ins[data-ad-slot=\"7173023849\"]"
         ],
         "vod.sooplive.com": [
           ".adballoon_icon"
