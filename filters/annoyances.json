@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260916,
-  "updatedAt": "2026-09-16",
+  "version": 20260917,
+  "updatedAt": "2026-09-17",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,9 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "agazetafm.com": [
-          ".popup_footer"
-        ],
         "age.yoti.com": [
           "div[data-qa=\"cookie-banner\"]"
         ],
@@ -4351,6 +4348,9 @@
         "artox-media.ru": [
           ".c-cookie--disclaimer"
         ],
+        "artplex.ru": [
+          "body .t972__banner"
+        ],
         "artscouncil-tokyo.jp": [
           "#gdpr"
         ],
@@ -5523,6 +5523,9 @@
         ],
         "avanga.org": [
           ".cookies"
+        ],
+        "avangard-kino.ru": [
+          "div[data-storage-item^=\"t657cookiename_\"]"
         ],
         "avanihotels.com": [
           "#consent-dialog"
@@ -9870,12 +9873,6 @@
         ],
         "braunhousehold.com": [
           "#consent_blackbar"
-        ],
-        "brave.com": [
-          "#notice"
-        ],
-        "bravenet.com": [
-          ".bn-cookie-banner"
         ]
       }
     },

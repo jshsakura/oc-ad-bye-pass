@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260916,
-  "updatedAt": "2026-09-16",
+  "version": 20260917,
+  "updatedAt": "2026-09-17",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -204,6 +204,7 @@
         "iframe[src*=\"//ad.ad4989.co.kr/\"]",
         "iframe[src*=\"//ad.adinc.kr/\"]",
         "iframe[src*=\"//ad.adkova.com/media/\"]",
+        "iframe[src*=\"//ad.adnmore.co.kr\"]",
         "iframe[src*=\"//ad.ajitad.co.kr/\"]",
         "iframe[src*=\"//ad.doyouad.com/html/iframe.html\"]",
         "iframe[src*=\"//ad.feedbag.co.kr/ads.html\"]",
@@ -1474,6 +1475,7 @@
           "div[class^=\"ad-\"]"
         ],
         "dailycar.co.kr": [
+          ".ad",
           "div.ad",
           "div.google-auto-placed",
           "iframe[src^=\"/content/etc/dailycar_banner.html\"]",
@@ -1770,19 +1772,12 @@
           "div.adlink",
           "div.xbanner"
         ],
-        "economist.co.kr": [
-          ".banner",
-          "div.banner",
-          "div.bottom-banner",
-          "div[class$=\"-banner\"]",
-          "div[class$=\"Banner\"]",
-          "div[class*=\"_ad\"]"
-        ],
         "economist.com": [
           "div[class^=\"adComponent_advert__\"]"
         ],
         "econovill.com": [
           "div#adshow",
+          "div.banner_box",
           "ul#floating_banner_left",
           "ul#floating_banner_right"
         ],
@@ -5249,6 +5244,7 @@
           "div[id^=\"ad_\"]"
         ],
         "platum.kr": [
+          ".ad-container",
           "div.ad-five",
           "div.platum_ad",
           "div.ppb_ads",
@@ -6205,6 +6201,9 @@
           ".entry-header .unique-container",
           ".et_bloom_popup"
         ],
+        "thinkpool.com": [
+          ".banner_box"
+        ],
         "this.kiji.is": [
           "div#js-ur",
           "div.main__subModule--videoAd"
@@ -6811,6 +6810,9 @@
         "weekly.chosun.com": [
           "div[class^=\"ad-\"]"
         ],
+        "weekly.donga.com": [
+          "div.right_wingad"
+        ],
         "welfarehello.com": [
           "[style^=\"--ad-frame-width-\"]"
         ],
@@ -6915,6 +6917,9 @@
         "wooriclass.co.kr": [
           "div#crpifpop",
           "div#ps_eventpop"
+        ],
+        "wooriilbo.com": [
+          "div[style$=\"width:360px;height:320px;\"]"
         ],
         "wordpress.com": [
           "div.compound-ad-unit",
