@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260918,
-  "updatedAt": "2026-09-18",
+  "version": 20260919,
+  "updatedAt": "2026-09-19",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "agazetafm.com": [
+          ".popup_footer"
+        ],
         "age.yoti.com": [
           "div[data-qa=\"cookie-banner\"]"
         ],
@@ -2598,6 +2601,9 @@
         ],
         "aluguefoco.com.br": [
           "#warning"
+        ],
+        "alumgadstore.co.il": [
+          "#scb-banner"
         ],
         "aluminiosbrinas.com": [
           ".modal-backdrop"
@@ -4696,6 +4702,9 @@
         "astra-mag.com": [
           ".cookies"
         ],
+        "astralhotels.co.il": [
+          "div[class*=\"CookieBanner\"]"
+        ],
         "astralinux.ru": [
           ".show-cookie"
         ],
@@ -5880,6 +5889,9 @@
         ],
         "b-kontur.ru": [
           ".policy-notification"
+        ],
+        "b144.co.il": [
+          ".top-0.fixed"
         ],
         "b2c.vds.pl": [
           "div[class*=\"cookie-banner\"]"
@@ -8236,6 +8248,9 @@
         "bizhint.net": [
           ".subscribe-popup"
         ],
+        "bizly.co.il": [
+          ".cookie-container"
+        ],
         "biznes.plus.pl": [
           "#CAPPDialog"
         ],
@@ -8364,6 +8379,9 @@
         ],
         "bleachpraylove.com": [
           "#cookie"
+        ],
+        "bleeckerbakery.co.il": [
+          ".sgcc-main-wrapper"
         ],
         "blenderartists.org": [
           ".cc-window"
@@ -9855,24 +9873,6 @@
         ],
         "brasil61.com": [
           ".cookie-banner-lgpd"
-        ],
-        "brasilparalelo.com.br": [
-          ".ub-emb-bar-frame"
-        ],
-        "brasiltec.ind.br": [
-          ".policies-accept"
-        ],
-        "brasscom.org.br": [
-          ".cookie-banner"
-        ],
-        "brasty.de": [
-          "#cookie"
-        ],
-        "bratsk.ru": [
-          "#cookie-notification"
-        ],
-        "brauer-bund.de": [
-          "#nagscreen"
         ]
       }
     },
