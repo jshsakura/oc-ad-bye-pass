@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260921,
-  "updatedAt": "2026-09-21",
+  "version": 20260922,
+  "updatedAt": "2026-09-22",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1840,8 +1840,14 @@
         "akket.com": [
           "#anycomment-root .MuiSnackbarContent-root"
         ],
+        "akkuline.de": [
+          ".cookie-permission-container"
+        ],
         "akkushop-turkiye.com.tr": [
           ".cerezPopupUyari"
+        ],
+        "akkuteile.de": [
+          ".widget-cookie-bar"
         ],
         "aklamio.com": [
           ".alert.cookie"
@@ -2046,9 +2052,6 @@
         ],
         "aldrimer.no": [
           "#cookie-law-info-bar"
-        ],
-        "ale.pl": [
-          "#acb-banner"
         ],
         "alecu.org": [
           ".ToastGdpr__wrapper__7lpbP"
@@ -2307,9 +2310,6 @@
         ],
         "allradio.nl": [
           ".consent-overlay"
-        ],
-        "allright.com": [
-          ".cp-eea"
         ],
         "allrivers.info": [
           ".cookies-block"
@@ -2920,6 +2920,9 @@
         "anasigorta.com.tr": [
           ".cookie-consent-overlay"
         ],
+        "anatolyfit.com": [
+          "[aria-label=\"Cookie consent\"]"
+        ],
         "anc.ua": [
           ".cookies--container"
         ],
@@ -3063,6 +3066,9 @@
         ],
         "angela.pl": [
           "#kqs-box:not(#style_important)"
+        ],
+        "anghami.com": [
+          ".cookie-consent-banner_wrapper__KyTA3"
         ],
         "anglianwater.co.uk": [
           ".cookie"
@@ -3634,6 +3640,9 @@
         "app.fanfix.io": [
           ".cky-consent-container"
         ],
+        "app.finom.co": [
+          ".uc-cookie-consent"
+        ],
         "app.firstbase.io": [
           "body .cookie"
         ],
@@ -3819,9 +3828,6 @@
         ],
         "apteekkari.fi": [
           ".ltcn"
-        ],
-        "apteekkini.fi": [
-          ".ui-widget-overlay"
         ],
         "apteekkisydan.fi": [
           "#notice-cookie-block"
@@ -5533,9 +5539,6 @@
         "avadas.de": [
           "#cookieManger"
         ],
-        "avaloniaui.net": [
-          ".--framer-cookie-banner-container"
-        ],
         "avalonpark.hu": [
           ".c-widget"
         ],
@@ -6271,6 +6274,9 @@
         "bank-hlynov.ru": [
           "#awn-toast-container.awn-bottom-right"
         ],
+        "bank.fany.lol": [
+          ".cookie-consent"
+        ],
         "bankadunyasi.com": [
           "#cookie-box"
         ],
@@ -6363,6 +6369,9 @@
         ],
         "bargainmax.co.uk": [
           "div[class^=\"CookiesConsent\"]"
+        ],
+        "bariinprogress.it": [
+          ".bip-on"
         ],
         "bario-neal.com": [
           ".consent-banner"
@@ -6630,6 +6639,9 @@
         ],
         "bazaar.ru": [
           ".disclame_block"
+        ],
+        "bazaazbestowa.gov.pl": [
+          "#cookieBannner"
         ],
         "bazar.club": [
           "#cookies"
@@ -8506,6 +8518,9 @@
         "blog.corkmac.app": [
           "div[class*=\"cookieBanner\"]"
         ],
+        "blog.dynasage.com": [
+          ".ckWrap"
+        ],
         "blog.engineshed.scot": [
           ".privacy-banner"
         ],
@@ -9141,6 +9156,9 @@
         ],
         "bmz.de": [
           ".m-cookie-banner"
+        ],
+        "bn.org.pl": [
+          "#cookies"
         ],
         "bnd.com": [
           "div[class=\"modal-banner\"][style^=\"color:#333;font-family:McClatchy Sans;font-size:14px;position:relative;width:100%;\"]"
@@ -9855,24 +9873,6 @@
         ],
         "brandnooz.de": [
           "#cookie-message"
-        ],
-        "brandonford.com": [
-          "#ca-consent-root"
-        ],
-        "brands4africa.co.za": [
-          ".cookie"
-        ],
-        "brandsecurity.gmo": [
-          "cookie-banner-ja"
-        ],
-        "brandsonsale.co.il": [
-          "div[class^=\"cookiesPopup\"]"
-        ],
-        "brandvital.eu": [
-          "#lmk_cookiebaner_container"
-        ],
-        "brandwatch.com": [
-          "#bw-cookie-sys-active"
         ]
       }
     },
