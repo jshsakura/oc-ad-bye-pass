@@ -45,6 +45,8 @@ export const mr = {
   'toggle.videoAds.hint': 'प्लेअरच्या उत्तरातूनच जाहिराती काढून टाकते',
   'toggle.generalAds.label': 'फीड व बॅनर जाहिराती लपवा',
   'toggle.generalAds.hint': 'मुख्यपान, शोध व सुचवण्यांतील जाहिरात कार्ड',
+  'toggle.hideShorts.label': 'Shorts लपवा',
+  'toggle.hideShorts.hint': 'Shorts विभाग, व्हिडिओ कार्ड आणि मेनू लपवा',
   'toggle.shortsAds.label': 'Shorts मधील जाहिराती लपवा',
   'toggle.shortsAds.hint': 'Shorts फीडमध्ये मिसळलेल्या जाहिराती',
   'toggle.merchandise.label': 'वस्तू लपवा',

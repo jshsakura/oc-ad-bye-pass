@@ -45,6 +45,8 @@ export const es = {
   'toggle.videoAds.hint': 'Quita los anuncios de la respuesta del reproductor',
   'toggle.generalAds.label': 'Ocultar anuncios del feed y banners',
   'toggle.generalAds.hint': 'Tarjetas de anuncios en inicio, búsqueda y sugerencias',
+  'toggle.hideShorts.label': 'Ocultar Shorts',
+  'toggle.hideShorts.hint': 'Ocultar secciones, tarjetas de vídeo y menús de Shorts',
   'toggle.shortsAds.label': 'Ocultar anuncios de Shorts',
   'toggle.shortsAds.hint': 'Anuncios mezclados en el feed de Shorts',
   'toggle.merchandise.label': 'Ocultar productos',

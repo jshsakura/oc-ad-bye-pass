@@ -45,6 +45,8 @@ export const bg = {
   'toggle.videoAds.hint': 'Изважда рекламите от отговора на плейъра',
   'toggle.generalAds.label': 'Скриване на реклами в потока и банери',
   'toggle.generalAds.hint': 'Рекламни карти в началото, в търсенето и в предложенията',
+  'toggle.hideShorts.label': 'Скриване на Shorts',
+  'toggle.hideShorts.hint': 'Скриване на секции, видеокарти и менюта Shorts',
   'toggle.shortsAds.label': 'Скриване на реклами в Shorts',
   'toggle.shortsAds.hint': 'Реклами, размесени в потока на Shorts',
   'toggle.merchandise.label': 'Скриване на стоки',

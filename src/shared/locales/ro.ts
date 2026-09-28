@@ -45,6 +45,8 @@ export const ro = {
   'toggle.videoAds.hint': 'Scoate reclamele din răspunsul playerului',
   'toggle.generalAds.label': 'Ascunde reclamele din flux și bannerele',
   'toggle.generalAds.hint': 'Carduri de reclame pe pagina principală, în căutare și în sugestii',
+  'toggle.hideShorts.label': 'Ascunde Shorts',
+  'toggle.hideShorts.hint': 'Ascunde secțiunile, cardurile video și meniurile Shorts',
   'toggle.shortsAds.label': 'Ascunde reclamele din Shorts',
   'toggle.shortsAds.hint': 'Reclame amestecate în fluxul Shorts',
   'toggle.merchandise.label': 'Ascunde produsele',

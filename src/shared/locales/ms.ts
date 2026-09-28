@@ -45,6 +45,8 @@ export const ms = {
   'toggle.videoAds.hint': 'Mencabut iklan daripada jawapan pemain',
   'toggle.generalAds.label': 'Sembunyikan iklan suapan dan sepanduk',
   'toggle.generalAds.hint': 'Kad iklan di laman utama, carian dan cadangan',
+  'toggle.hideShorts.label': 'Sembunyikan Shorts',
+  'toggle.hideShorts.hint': 'Sembunyikan bahagian, kad video dan menu Shorts',
   'toggle.shortsAds.label': 'Sembunyikan iklan Shorts',
   'toggle.shortsAds.hint': 'Iklan yang disisipkan ke dalam suapan Shorts',
   'toggle.merchandise.label': 'Sembunyikan barangan',

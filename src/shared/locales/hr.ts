@@ -45,6 +45,8 @@ export const hr = {
   'toggle.videoAds.hint': 'Vadi oglase iz odgovora playera',
   'toggle.generalAds.label': 'Sakrij oglase u nizu i bannere',
   'toggle.generalAds.hint': 'Oglasne kartice na naslovnici, u pretrazi i prijedlozima',
+  'toggle.hideShorts.label': 'Sakrij Shorts',
+  'toggle.hideShorts.hint': 'Sakrij odjeljke, videokartice i izbornike Shorts',
   'toggle.shortsAds.label': 'Sakrij oglase u Shortsima',
   'toggle.shortsAds.hint': 'Oglasi umiješani u niz Shortsa',
   'toggle.merchandise.label': 'Sakrij robu',

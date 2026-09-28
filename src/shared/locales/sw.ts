@@ -45,6 +45,8 @@ export const sw = {
   'toggle.videoAds.hint': 'Huondoa matangazo kwenye jibu la kicheza',
   'toggle.generalAds.label': 'Ficha matangazo ya mkondo na mabango',
   'toggle.generalAds.hint': 'Kadi za matangazo ukurasani, kwenye utafutaji na mapendekezo',
+  'toggle.hideShorts.label': 'Ficha Shorts',
+  'toggle.hideShorts.hint': 'Ficha sehemu, kadi za video na menyu za Shorts',
   'toggle.shortsAds.label': 'Ficha matangazo ya Shorts',
   'toggle.shortsAds.hint': 'Matangazo yaliyochanganywa kwenye mkondo wa Shorts',
   'toggle.merchandise.label': 'Ficha bidhaa',

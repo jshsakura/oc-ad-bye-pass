@@ -45,6 +45,8 @@ export const gu = {
   'toggle.videoAds.hint': 'પ્લેયરના જવાબમાંથી જ જાહેરાતો કાઢી નાખે છે',
   'toggle.generalAds.label': 'ફીડ અને બેનર જાહેરાતો છુપાવો',
   'toggle.generalAds.hint': 'હોમ, શોધ અને સૂચનોમાંનાં જાહેરાત કાર્ડ',
+  'toggle.hideShorts.label': 'Shorts છુપાવો',
+  'toggle.hideShorts.hint': 'Shorts વિભાગો, વિડિઓ કાર્ડ અને મેનૂ છુપાવો',
   'toggle.shortsAds.label': 'Shorts ની જાહેરાતો છુપાવો',
   'toggle.shortsAds.hint': 'Shorts ફીડમાં ભેળવેલી જાહેરાતો',
   'toggle.merchandise.label': 'ચીજવસ્તુઓ છુપાવો',

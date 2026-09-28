@@ -45,6 +45,8 @@ export const et = {
   'toggle.videoAds.hint': 'Kisub reklaamid mängija vastusest välja',
   'toggle.generalAds.label': 'Peida voo reklaamid ja bännerid',
   'toggle.generalAds.hint': 'Reklaamikaardid avalehel, otsingus ja soovitustes',
+  'toggle.hideShorts.label': 'Peida Shorts',
+  'toggle.hideShorts.hint': 'Peida Shortsi jaotised, videokaardid ja menüüd',
   'toggle.shortsAds.label': 'Peida Shortsi reklaamid',
   'toggle.shortsAds.hint': 'Shortsi voogu segatud reklaamid',
   'toggle.merchandise.label': 'Peida kaubad',

@@ -45,6 +45,8 @@ export const lt = {
   'toggle.videoAds.hint': 'Išima reklamas iš grotuvo atsakymo',
   'toggle.generalAds.label': 'Slėpti reklamas sraute ir reklamjuostes',
   'toggle.generalAds.hint': 'Reklamos kortelės pradžioje, paieškoje ir pasiūlymuose',
+  'toggle.hideShorts.label': 'Slėpti Shorts',
+  'toggle.hideShorts.hint': 'Slėpti Shorts skiltis, vaizdo įrašų korteles ir meniu',
   'toggle.shortsAds.label': 'Slėpti „Shorts“ reklamas',
   'toggle.shortsAds.hint': 'Reklamos, įmaišytos į „Shorts“ srautą',
   'toggle.merchandise.label': 'Slėpti prekes',

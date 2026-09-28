@@ -45,6 +45,8 @@ export const hu = {
   'toggle.videoAds.hint': 'Kiszedi a hirdetéseket a lejátszó válaszából',
   'toggle.generalAds.label': 'Hírfolyam- és bannerhirdetések elrejtése',
   'toggle.generalAds.hint': 'Hirdetéskártyák a főoldalon, a keresésben és az ajánlatokban',
+  'toggle.hideShorts.label': 'Shorts elrejtése',
+  'toggle.hideShorts.hint': 'A Shorts szakaszok, videókártyák és menük elrejtése',
   'toggle.shortsAds.label': 'Shorts-hirdetések elrejtése',
   'toggle.shortsAds.hint': 'A Shorts-folyamba kevert hirdetések',
   'toggle.merchandise.label': 'Termékek elrejtése',

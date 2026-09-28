@@ -45,6 +45,8 @@ export const fi = {
   'toggle.videoAds.hint': 'Riipii mainokset soittimen vastauksesta',
   'toggle.generalAds.label': 'Piilota syötteen mainokset ja bannerit',
   'toggle.generalAds.hint': 'Mainoskortit etusivulla, haussa ja ehdotuksissa',
+  'toggle.hideShorts.label': 'Piilota Shorts',
+  'toggle.hideShorts.hint': 'Piilota Shorts-osiot, videokortit ja valikot',
   'toggle.shortsAds.label': 'Piilota Shorts-mainokset',
   'toggle.shortsAds.hint': 'Shorts-syötteeseen sekoitetut mainokset',
   'toggle.merchandise.label': 'Piilota oheistuotteet',

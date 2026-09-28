@@ -45,6 +45,8 @@ export const it = {
   'toggle.videoAds.hint': 'Toglie la pubblicità dalla risposta del lettore',
   'toggle.generalAds.label': 'Nascondi pubblicità nel feed e banner',
   'toggle.generalAds.hint': 'Schede pubblicitarie in home, ricerca e suggerimenti',
+  'toggle.hideShorts.label': 'Nascondi Shorts',
+  'toggle.hideShorts.hint': 'Nascondi sezioni, schede video e menu Shorts',
   'toggle.shortsAds.label': 'Nascondi la pubblicità negli Shorts',
   'toggle.shortsAds.hint': 'Pubblicità infilata nel feed degli Shorts',
   'toggle.merchandise.label': 'Nascondi il merchandising',

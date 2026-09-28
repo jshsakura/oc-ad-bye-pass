@@ -45,6 +45,8 @@ export const ar = {
   'toggle.videoAds.hint': 'ينزع الإعلانات من استجابة المشغّل',
   'toggle.generalAds.label': 'إخفاء إعلانات الخلاصة واللافتات',
   'toggle.generalAds.hint': 'بطاقات الإعلانات في الرئيسية والبحث والاقتراحات',
+  'toggle.hideShorts.label': 'إخفاء Shorts',
+  'toggle.hideShorts.hint': 'إخفاء أقسام Shorts وبطاقات الفيديو والقوائم',
   'toggle.shortsAds.label': 'إخفاء إعلانات Shorts',
   'toggle.shortsAds.hint': 'إعلانات مدسوسة في خلاصة Shorts',
   'toggle.merchandise.label': 'إخفاء البضائع',

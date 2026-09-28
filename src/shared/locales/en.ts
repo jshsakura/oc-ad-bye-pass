@@ -56,6 +56,8 @@ export const en = {
   'toggle.videoAds.hint': 'Strips ads out of the player response',
   'toggle.generalAds.label': 'Hide feed & banner ads',
   'toggle.generalAds.hint': 'Ad cards in home / search / suggestions',
+  'toggle.hideShorts.label': 'Hide Shorts',
+  'toggle.hideShorts.hint': 'Hide Shorts shelves, video cards and menus',
   'toggle.shortsAds.label': 'Hide Shorts ads',
   'toggle.shortsAds.hint': 'Ads mixed into the Shorts feed',
   'toggle.merchandise.label': 'Hide merchandise',

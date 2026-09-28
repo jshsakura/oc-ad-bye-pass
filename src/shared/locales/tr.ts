@@ -45,6 +45,8 @@ export const tr = {
   'toggle.videoAds.hint': 'Reklamları oynatıcının yanıtından söker',
   'toggle.generalAds.label': 'Akış ve afiş reklamlarını gizle',
   'toggle.generalAds.hint': 'Ana sayfa, arama ve önerilerdeki reklam kartları',
+  'toggle.hideShorts.label': 'Shorts’u gizle',
+  'toggle.hideShorts.hint': 'Shorts bölümlerini, video kartlarını ve menülerini gizle',
   'toggle.shortsAds.label': 'Shorts reklamlarını gizle',
   'toggle.shortsAds.hint': 'Shorts akışına karıştırılan reklamlar',
   'toggle.merchandise.label': 'Ürün tanıtımlarını gizle',

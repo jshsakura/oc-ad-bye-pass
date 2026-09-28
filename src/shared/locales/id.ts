@@ -45,6 +45,8 @@ export const id = {
   'toggle.videoAds.hint': 'Mencabut iklan dari respons pemutar',
   'toggle.generalAds.label': 'Sembunyikan iklan feed dan spanduk',
   'toggle.generalAds.hint': 'Kartu iklan di beranda, pencarian, dan saran',
+  'toggle.hideShorts.label': 'Sembunyikan Shorts',
+  'toggle.hideShorts.hint': 'Sembunyikan bagian, kartu video, dan menu Shorts',
   'toggle.shortsAds.label': 'Sembunyikan iklan Shorts',
   'toggle.shortsAds.hint': 'Iklan yang disisipkan ke feed Shorts',
   'toggle.merchandise.label': 'Sembunyikan barang dagangan',

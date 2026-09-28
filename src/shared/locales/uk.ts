@@ -45,6 +45,8 @@ export const uk = {
   'toggle.videoAds.hint': 'Прибирає рекламу з відповіді програвача',
   'toggle.generalAds.label': 'Приховувати рекламу в стрічці та банери',
   'toggle.generalAds.hint': 'Рекламні картки на головній, у пошуку та рекомендаціях',
+  'toggle.hideShorts.label': 'Приховати Shorts',
+  'toggle.hideShorts.hint': 'Приховувати розділи, картки відео та меню Shorts',
   'toggle.shortsAds.label': 'Приховувати рекламу в Shorts',
   'toggle.shortsAds.hint': 'Реклама, вкраплена у стрічку Shorts',
   'toggle.merchandise.label': 'Приховувати товари',

@@ -45,6 +45,8 @@ export const no = {
   'toggle.videoAds.hint': 'Plukker annonsene ut av spillerens svar',
   'toggle.generalAds.label': 'Skjul annonser i strømmen og bannere',
   'toggle.generalAds.hint': 'Annonsekort på forsiden, i søket og i forslagene',
+  'toggle.hideShorts.label': 'Skjul Shorts',
+  'toggle.hideShorts.hint': 'Skjul Shorts-seksjoner, videokort og menyer',
   'toggle.shortsAds.label': 'Skjul Shorts-annonser',
   'toggle.shortsAds.hint': 'Annonser blandet inn i Shorts-strømmen',
   'toggle.merchandise.label': 'Skjul varer',

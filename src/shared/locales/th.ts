@@ -45,6 +45,8 @@ export const th = {
   'toggle.videoAds.hint': 'ดึงโฆษณาออกจากคำตอบของตัวเล่น',
   'toggle.generalAds.label': 'ซ่อนโฆษณาในฟีดและแบนเนอร์',
   'toggle.generalAds.hint': 'การ์ดโฆษณาในหน้าแรก การค้นหา และรายการแนะนำ',
+  'toggle.hideShorts.label': 'ซ่อน Shorts',
+  'toggle.hideShorts.hint': 'ซ่อนส่วน Shorts การ์ดวิดีโอและเมนู',
   'toggle.shortsAds.label': 'ซ่อนโฆษณาใน Shorts',
   'toggle.shortsAds.hint': 'โฆษณาที่แทรกอยู่ในฟีด Shorts',
   'toggle.merchandise.label': 'ซ่อนสินค้า',

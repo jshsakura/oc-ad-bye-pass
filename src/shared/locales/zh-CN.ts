@@ -45,6 +45,8 @@ export const zhCN = {
   'toggle.videoAds.hint': '从播放器响应中剔除广告',
   'toggle.generalAds.label': '隐藏信息流与横幅广告',
   'toggle.generalAds.hint': '首页、搜索、推荐中的广告卡片',
+  'toggle.hideShorts.label': '隐藏 Shorts',
+  'toggle.hideShorts.hint': '隐藏 Shorts 栏目、视频卡片和菜单',
   'toggle.shortsAds.label': '隐藏 Shorts 广告',
   'toggle.shortsAds.hint': '混在 Shorts 信息流里的广告',
   'toggle.merchandise.label': '隐藏商品推广',

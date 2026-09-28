@@ -45,6 +45,8 @@ export const ca = {
   'toggle.videoAds.hint': 'Treu els anuncis de la resposta del reproductor',
   'toggle.generalAds.label': 'Amaga els anuncis del flux i els bàners',
   'toggle.generalAds.hint': 'Targetes d\'anunci a l\'inici, a la cerca i als suggeriments',
+  'toggle.hideShorts.label': 'Amaga els Shorts',
+  'toggle.hideShorts.hint': 'Amaga les seccions, les targetes de vídeo i els menús de Shorts',
   'toggle.shortsAds.label': 'Amaga els anuncis dels Shorts',
   'toggle.shortsAds.hint': 'Anuncis barrejats al flux dels Shorts',
   'toggle.merchandise.label': 'Amaga els productes',

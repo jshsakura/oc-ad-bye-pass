@@ -45,6 +45,8 @@ export const bn = {
   'toggle.videoAds.hint': 'প্লেয়ারের উত্তর থেকেই বিজ্ঞাপন সরিয়ে দেয়',
   'toggle.generalAds.label': 'ফিড ও ব্যানারের বিজ্ঞাপন লুকান',
   'toggle.generalAds.hint': 'হোম, অনুসন্ধান ও প্রস্তাবনায় বিজ্ঞাপনের কার্ড',
+  'toggle.hideShorts.label': 'Shorts লুকান',
+  'toggle.hideShorts.hint': 'Shorts বিভাগ, ভিডিও কার্ড ও মেনু লুকান',
   'toggle.shortsAds.label': 'Shorts-এর বিজ্ঞাপন লুকান',
   'toggle.shortsAds.hint': 'Shorts ফিডে মিশিয়ে দেওয়া বিজ্ঞাপন',
   'toggle.merchandise.label': 'পণ্য লুকান',

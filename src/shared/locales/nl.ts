@@ -45,6 +45,8 @@ export const nl = {
   'toggle.videoAds.hint': 'Haalt advertenties uit het antwoord van de speler',
   'toggle.generalAds.label': 'Advertenties in de feed en banners verbergen',
   'toggle.generalAds.hint': 'Advertentiekaarten op de startpagina, in zoeken en suggesties',
+  'toggle.hideShorts.label': 'Shorts verbergen',
+  'toggle.hideShorts.hint': 'Shorts-secties, videokaarten en menu’s verbergen',
   'toggle.shortsAds.label': 'Shorts-advertenties verbergen',
   'toggle.shortsAds.hint': 'Advertenties die tussen de Shorts-feed zitten',
   'toggle.merchandise.label': 'Merchandise verbergen',

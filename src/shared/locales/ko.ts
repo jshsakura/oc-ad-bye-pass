@@ -48,6 +48,8 @@ export const ko = {
   'toggle.videoAds.hint': '플레이어 응답에서 광고를 제거합니다',
   'toggle.generalAds.label': '피드·배너 광고 숨김',
   'toggle.generalAds.hint': '홈/검색/추천의 광고 카드',
+  'toggle.hideShorts.label': '쇼츠 숨기기',
+  'toggle.hideShorts.hint': '홈·검색·채널의 쇼츠 목록과 메뉴 숨김',
   'toggle.shortsAds.label': 'Shorts 광고 숨김',
   'toggle.shortsAds.hint': 'Shorts 피드에 섞인 광고',
   'toggle.merchandise.label': '상품·머천다이즈 숨김',

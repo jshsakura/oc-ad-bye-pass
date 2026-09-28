@@ -45,6 +45,8 @@ export const ta = {
   'toggle.videoAds.hint': 'இயக்கியின் பதிலிலிருந்தே விளம்பரங்களை அகற்றுகிறது',
   'toggle.generalAds.label': 'ஊட்ட மற்றும் பேனர் விளம்பரங்களை மறை',
   'toggle.generalAds.hint': 'முகப்பு, தேடல், பரிந்துரைகளில் உள்ள விளம்பர அட்டைகள்',
+  'toggle.hideShorts.label': 'Shorts மறை',
+  'toggle.hideShorts.hint': 'Shorts பிரிவுகள், வீடியோ அட்டைகள் மற்றும் மெனுக்களை மறை',
   'toggle.shortsAds.label': 'Shorts விளம்பரங்களை மறை',
   'toggle.shortsAds.hint': 'Shorts ஊட்டத்தில் கலந்துள்ள விளம்பரங்கள்',
   'toggle.merchandise.label': 'பொருள் விற்பனையை மறை',

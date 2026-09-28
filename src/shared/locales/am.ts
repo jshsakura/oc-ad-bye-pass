@@ -45,6 +45,8 @@ export const am = {
   'toggle.videoAds.hint': 'ማስታወቂያዎቹን ከአጫዋቹ ምላሽ ውስጥ ያወጣል',
   'toggle.generalAds.label': 'የዥረትና የባነር ማስታወቂያዎችን ደብቅ',
   'toggle.generalAds.hint': 'በመነሻ፣ በፍለጋና በጥቆማዎች ውስጥ ያሉ የማስታወቂያ ካርዶች',
+  'toggle.hideShorts.label': 'Shorts ደብቅ',
+  'toggle.hideShorts.hint': 'የShorts ክፍሎችን፣ የቪዲዮ ካርዶችን እና ምናሌዎችን ደብቅ',
   'toggle.shortsAds.label': 'የShorts ማስታወቂያዎችን ደብቅ',
   'toggle.shortsAds.hint': 'በShorts ዥረት ውስጥ የተቀላቀሉ ማስታወቂያዎች',
   'toggle.merchandise.label': 'ሸቀጦችን ደብቅ',

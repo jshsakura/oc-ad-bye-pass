@@ -45,6 +45,8 @@ export const cs = {
   'toggle.videoAds.hint': 'Vyjme reklamy z odpovědi přehrávače',
   'toggle.generalAds.label': 'Skrýt reklamy v proudu a bannery',
   'toggle.generalAds.hint': 'Reklamní karty na hlavní stránce, ve vyhledávání a v návrzích',
+  'toggle.hideShorts.label': 'Skrýt Shorts',
+  'toggle.hideShorts.hint': 'Skrýt sekce, karty videí a nabídky Shorts',
   'toggle.shortsAds.label': 'Skrýt reklamy v Shorts',
   'toggle.shortsAds.hint': 'Reklamy vmíchané do proudu Shorts',
   'toggle.merchandise.label': 'Skrýt zboží',

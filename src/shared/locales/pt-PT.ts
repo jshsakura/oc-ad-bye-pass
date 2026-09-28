@@ -45,6 +45,8 @@ export const ptPT = {
   'toggle.videoAds.hint': 'Retira a publicidade da resposta do leitor',
   'toggle.generalAds.label': 'Ocultar publicidade do fluxo e faixas',
   'toggle.generalAds.hint': 'Cartões de publicidade no início, na pesquisa e nas sugestões',
+  'toggle.hideShorts.label': 'Ocultar Shorts',
+  'toggle.hideShorts.hint': 'Ocultar secções, cartões de vídeo e menus de Shorts',
   'toggle.shortsAds.label': 'Ocultar publicidade dos Shorts',
   'toggle.shortsAds.hint': 'Publicidade misturada no fluxo dos Shorts',
   'toggle.merchandise.label': 'Ocultar produtos',

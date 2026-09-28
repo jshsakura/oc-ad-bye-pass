@@ -45,6 +45,8 @@ export const sk = {
   'toggle.videoAds.hint': 'Vyberie reklamy z odpovede prehrávača',
   'toggle.generalAds.label': 'Skryť reklamy v prúde a bannery',
   'toggle.generalAds.hint': 'Reklamné karty na domovskej stránke, vo vyhľadávaní a v návrhoch',
+  'toggle.hideShorts.label': 'Skryť Shorts',
+  'toggle.hideShorts.hint': 'Skryť sekcie, karty videí a ponuky Shorts',
   'toggle.shortsAds.label': 'Skryť reklamy v Shorts',
   'toggle.shortsAds.hint': 'Reklamy vmiešané do prúdu Shorts',
   'toggle.merchandise.label': 'Skryť tovar',

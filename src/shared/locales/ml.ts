@@ -45,6 +45,8 @@ export const ml = {
   'toggle.videoAds.hint': 'പ്ലേയറിന്റെ മറുപടിയിൽനിന്നുതന്നെ പരസ്യങ്ങൾ നീക്കുന്നു',
   'toggle.generalAds.label': 'ഫീഡ്, ബാനർ പരസ്യങ്ങൾ മറയ്ക്കുക',
   'toggle.generalAds.hint': 'ഹോം, തിരയൽ, നിർദ്ദേശങ്ങൾ എന്നിവയിലെ പരസ്യ കാർഡുകൾ',
+  'toggle.hideShorts.label': 'Shorts മറയ്ക്കുക',
+  'toggle.hideShorts.hint': 'Shorts വിഭാഗങ്ങളും വീഡിയോ കാർഡുകളും മെനുകളും മറയ്ക്കുക',
   'toggle.shortsAds.label': 'Shorts പരസ്യങ്ങൾ മറയ്ക്കുക',
   'toggle.shortsAds.hint': 'Shorts ഫീഡിൽ കലർത്തിയ പരസ്യങ്ങൾ',
   'toggle.merchandise.label': 'ചരക്കുകൾ മറയ്ക്കുക',

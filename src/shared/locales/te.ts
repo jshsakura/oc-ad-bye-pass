@@ -45,6 +45,8 @@ export const te = {
   'toggle.videoAds.hint': 'ప్లేయర్ ప్రతిస్పందన నుంచే ప్రకటనలను తీసేస్తుంది',
   'toggle.generalAds.label': 'ఫీడ్, బ్యానర్ ప్రకటనలను దాచు',
   'toggle.generalAds.hint': 'హోమ్, శోధన, సూచనల్లోని ప్రకటన కార్డులు',
+  'toggle.hideShorts.label': 'Shorts దాచు',
+  'toggle.hideShorts.hint': 'Shorts విభాగాలు, వీడియో కార్డులు మరియు మెనూలను దాచు',
   'toggle.shortsAds.label': 'Shorts ప్రకటనలను దాచు',
   'toggle.shortsAds.hint': 'Shorts ఫీడ్‌లో కలిపిన ప్రకటనలు',
   'toggle.merchandise.label': 'వస్తువులను దాచు',

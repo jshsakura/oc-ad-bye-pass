@@ -45,6 +45,8 @@ export const vi = {
   'toggle.videoAds.hint': 'Gỡ quảng cáo khỏi phản hồi của trình phát',
   'toggle.generalAds.label': 'Ẩn quảng cáo trong nguồn cấp và biểu ngữ',
   'toggle.generalAds.hint': 'Thẻ quảng cáo ở trang chủ, tìm kiếm và đề xuất',
+  'toggle.hideShorts.label': 'Ẩn Shorts',
+  'toggle.hideShorts.hint': 'Ẩn các mục, thẻ video và menu Shorts',
   'toggle.shortsAds.label': 'Ẩn quảng cáo Shorts',
   'toggle.shortsAds.hint': 'Quảng cáo trộn vào nguồn cấp Shorts',
   'toggle.merchandise.label': 'Ẩn hàng bán kèm',

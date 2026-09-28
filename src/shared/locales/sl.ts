@@ -45,6 +45,8 @@ export const sl = {
   'toggle.videoAds.hint': 'Izvleče oglase iz odgovora predvajalnika',
   'toggle.generalAds.label': 'Skrij oglase v viru in pasice',
   'toggle.generalAds.hint': 'Oglasne kartice na domači strani, v iskanju in predlogih',
+  'toggle.hideShorts.label': 'Skrij Shorts',
+  'toggle.hideShorts.hint': 'Skrij razdelke, videokartice in menije Shorts',
   'toggle.shortsAds.label': 'Skrij oglase v Shorts',
   'toggle.shortsAds.hint': 'Oglasi, vmešani v vir Shorts',
   'toggle.merchandise.label': 'Skrij izdelke',

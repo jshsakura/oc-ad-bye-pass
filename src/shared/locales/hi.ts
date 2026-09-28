@@ -45,6 +45,8 @@ export const hi = {
   'toggle.videoAds.hint': 'प्लेयर के उत्तर से ही विज्ञापन निकाल देता है',
   'toggle.generalAds.label': 'फ़ीड और बैनर विज्ञापन छिपाएँ',
   'toggle.generalAds.hint': 'होम, खोज और सुझावों के विज्ञापन कार्ड',
+  'toggle.hideShorts.label': 'Shorts छिपाएँ',
+  'toggle.hideShorts.hint': 'Shorts सेक्शन, वीडियो कार्ड और मेन्यू छिपाएँ',
   'toggle.shortsAds.label': 'Shorts के विज्ञापन छिपाएँ',
   'toggle.shortsAds.hint': 'Shorts की फ़ीड में घुले विज्ञापन',
   'toggle.merchandise.label': 'सामान की बिक्री छिपाएँ',

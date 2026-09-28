@@ -45,6 +45,8 @@ export const he = {
   'toggle.videoAds.hint': 'מוציא את הפרסומות מתשובת הנגן',
   'toggle.generalAds.label': 'להסתיר פרסומות בפיד ובאנרים',
   'toggle.generalAds.hint': 'כרטיסי פרסום בדף הבית, בחיפוש ובהצעות',
+  'toggle.hideShorts.label': 'הסתרת Shorts',
+  'toggle.hideShorts.hint': 'הסתרת מדורים, כרטיסי וידאו ותפריטים של Shorts',
   'toggle.shortsAds.label': 'להסתיר פרסומות ב־Shorts',
   'toggle.shortsAds.hint': 'פרסומות משולבות בפיד של Shorts',
   'toggle.merchandise.label': 'להסתיר מוצרים למכירה',

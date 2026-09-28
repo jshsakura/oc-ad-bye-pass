@@ -45,6 +45,8 @@ export const ja = {
   'toggle.videoAds.hint': 'プレーヤーの応答から広告を取り除きます',
   'toggle.generalAds.label': 'フィード・バナー広告を非表示',
   'toggle.generalAds.hint': 'ホーム・検索・関連動画の広告カード',
+  'toggle.hideShorts.label': 'ショートを非表示',
+  'toggle.hideShorts.hint': 'ショートの一覧・動画カード・メニューを非表示',
   'toggle.shortsAds.label': 'ショート広告を非表示',
   'toggle.shortsAds.hint': 'ショートのフィードに混ざる広告',
   'toggle.merchandise.label': 'グッズを非表示',

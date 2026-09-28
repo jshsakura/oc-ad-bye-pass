@@ -45,6 +45,8 @@ export const fil = {
   'toggle.videoAds.hint': 'Inaalis ang mga ad sa sagot ng player',
   'toggle.generalAds.label': 'Itago ang mga ad sa feed at banner',
   'toggle.generalAds.hint': 'Mga ad card sa home, sa paghahanap at sa mga mungkahi',
+  'toggle.hideShorts.label': 'Itago ang Shorts',
+  'toggle.hideShorts.hint': 'Itago ang mga seksyon, video card at menu ng Shorts',
   'toggle.shortsAds.label': 'Itago ang mga ad sa Shorts',
   'toggle.shortsAds.hint': 'Mga ad na hinalo sa feed ng Shorts',
   'toggle.merchandise.label': 'Itago ang mga paninda',

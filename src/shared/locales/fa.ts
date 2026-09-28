@@ -45,6 +45,8 @@ export const fa = {
   'toggle.videoAds.hint': 'تبلیغ‌ها را از پاسخ پخش‌کننده بیرون می‌کشد',
   'toggle.generalAds.label': 'پنهان‌کردن تبلیغ‌های خوراک و بنر',
   'toggle.generalAds.hint': 'کارت‌های تبلیغ در خانه، جست‌وجو و پیشنهادها',
+  'toggle.hideShorts.label': 'پنهان کردن Shorts',
+  'toggle.hideShorts.hint': 'پنهان کردن بخش‌ها، کارت‌های ویدیو و منوهای Shorts',
   'toggle.shortsAds.label': 'پنهان‌کردن تبلیغ‌های Shorts',
   'toggle.shortsAds.hint': 'تبلیغ‌های قاطی‌شده در خوراک Shorts',
   'toggle.merchandise.label': 'پنهان‌کردن کالاها',

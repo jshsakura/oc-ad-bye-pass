@@ -45,6 +45,8 @@ export const sv = {
   'toggle.videoAds.hint': 'Skalar bort annonserna ur spelarens svar',
   'toggle.generalAds.label': 'Dölj annonser i flödet och banners',
   'toggle.generalAds.hint': 'Annonskort på startsidan, i sökningen och bland förslagen',
+  'toggle.hideShorts.label': 'Dölj Shorts',
+  'toggle.hideShorts.hint': 'Dölj Shorts-sektioner, videokort och menyer',
   'toggle.shortsAds.label': 'Dölj Shorts-annonser',
   'toggle.shortsAds.hint': 'Annonser inblandade i Shorts-flödet',
   'toggle.merchandise.label': 'Dölj varor',

@@ -45,6 +45,8 @@ export const da = {
   'toggle.videoAds.hint': 'Piller reklamerne ud af afspillerens svar',
   'toggle.generalAds.label': 'Skjul reklamer i feedet og bannere',
   'toggle.generalAds.hint': 'Reklamekort på forsiden, i søgningen og i forslagene',
+  'toggle.hideShorts.label': 'Skjul Shorts',
+  'toggle.hideShorts.hint': 'Skjul Shorts-sektioner, videokort og menuer',
   'toggle.shortsAds.label': 'Skjul Shorts-reklamer',
   'toggle.shortsAds.hint': 'Reklamer blandet ind i Shorts-feedet',
   'toggle.merchandise.label': 'Skjul varer',

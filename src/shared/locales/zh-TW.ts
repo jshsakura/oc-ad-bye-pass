@@ -45,6 +45,8 @@ export const zhTW = {
   'toggle.videoAds.hint': '從播放器回應中剔除廣告',
   'toggle.generalAds.label': '隱藏資訊流與橫幅廣告',
   'toggle.generalAds.hint': '首頁、搜尋、推薦中的廣告卡片',
+  'toggle.hideShorts.label': '隱藏 Shorts',
+  'toggle.hideShorts.hint': '隱藏 Shorts 專區、影片卡片和選單',
   'toggle.shortsAds.label': '隱藏 Shorts 廣告',
   'toggle.shortsAds.hint': '混在 Shorts 資訊流裡的廣告',
   'toggle.merchandise.label': '隱藏商品推廣',

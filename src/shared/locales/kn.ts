@@ -45,6 +45,8 @@ export const kn = {
   'toggle.videoAds.hint': 'ಪ್ಲೇಯರ್‌ನ ಉತ್ತರದಿಂದಲೇ ಜಾಹೀರಾತುಗಳನ್ನು ಕಿತ್ತುಹಾಕುತ್ತದೆ',
   'toggle.generalAds.label': 'ಫೀಡ್ ಮತ್ತು ಬ್ಯಾನರ್ ಜಾಹೀರಾತುಗಳನ್ನು ಮರೆಮಾಚು',
   'toggle.generalAds.hint': 'ಮುಖಪುಟ, ಹುಡುಕಾಟ, ಸಲಹೆಗಳಲ್ಲಿನ ಜಾಹೀರಾತು ಕಾರ್ಡ್‌ಗಳು',
+  'toggle.hideShorts.label': 'Shorts ಮರೆಮಾಡಿ',
+  'toggle.hideShorts.hint': 'Shorts ವಿಭಾಗಗಳು, ವೀಡಿಯೊ ಕಾರ್ಡ್‌ಗಳು ಮತ್ತು ಮೆನುಗಳನ್ನು ಮರೆಮಾಡಿ',
   'toggle.shortsAds.label': 'Shorts ಜಾಹೀರಾತುಗಳನ್ನು ಮರೆಮಾಚು',
   'toggle.shortsAds.hint': 'Shorts ಫೀಡ್‌ನಲ್ಲಿ ಬೆರೆಸಿದ ಜಾಹೀರಾತುಗಳು',
   'toggle.merchandise.label': 'ಸರಕುಗಳನ್ನು ಮರೆಮಾಚು',

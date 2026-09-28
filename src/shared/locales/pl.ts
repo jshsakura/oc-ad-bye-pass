@@ -45,6 +45,8 @@ export const pl = {
   'toggle.videoAds.hint': 'Wycina reklamy z odpowiedzi odtwarzacza',
   'toggle.generalAds.label': 'Ukryj reklamy w strumieniu i banery',
   'toggle.generalAds.hint': 'Karty reklam na stronie głównej, w wyszukiwaniu i propozycjach',
+  'toggle.hideShorts.label': 'Ukryj Shorts',
+  'toggle.hideShorts.hint': 'Ukryj sekcje, karty filmów i menu Shorts',
   'toggle.shortsAds.label': 'Ukryj reklamy w Shorts',
   'toggle.shortsAds.hint': 'Reklamy wmieszane w strumień Shorts',
   'toggle.merchandise.label': 'Ukryj gadżety',

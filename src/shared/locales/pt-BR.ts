@@ -45,6 +45,8 @@ export const ptBR = {
   'toggle.videoAds.hint': 'Retira os anúncios da resposta do player',
   'toggle.generalAds.label': 'Ocultar anúncios do feed e banners',
   'toggle.generalAds.hint': 'Cartões de anúncio no início, na busca e nas sugestões',
+  'toggle.hideShorts.label': 'Ocultar Shorts',
+  'toggle.hideShorts.hint': 'Ocultar seções, cartões de vídeo e menus de Shorts',
   'toggle.shortsAds.label': 'Ocultar anúncios do Shorts',
   'toggle.shortsAds.hint': 'Anúncios misturados no feed do Shorts',
   'toggle.merchandise.label': 'Ocultar produtos',

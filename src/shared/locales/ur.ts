@@ -45,6 +45,8 @@ export const ur = {
   'toggle.videoAds.hint': 'پلیئر کے جواب ہی سے اشتہار نکال دیتا ہے',
   'toggle.generalAds.label': 'فیڈ اور بینر اشتہار چھپائیں',
   'toggle.generalAds.hint': 'ہوم، تلاش اور تجاویز میں اشتہاری کارڈ',
+  'toggle.hideShorts.label': 'Shorts چھپائیں',
+  'toggle.hideShorts.hint': 'Shorts کے حصے، ویڈیو کارڈ اور مینو چھپائیں',
   'toggle.shortsAds.label': 'Shorts کے اشتہار چھپائیں',
   'toggle.shortsAds.hint': 'Shorts کی فیڈ میں ملے ہوئے اشتہار',
   'toggle.merchandise.label': 'اشیا چھپائیں',

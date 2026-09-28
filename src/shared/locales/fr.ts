@@ -45,6 +45,8 @@ export const fr = {
   'toggle.videoAds.hint': 'Retire les publicités de la réponse du lecteur',
   'toggle.generalAds.label': 'Masquer les publicités du fil et les bannières',
   'toggle.generalAds.hint': 'Cartes publicitaires à l\'accueil, dans la recherche et les suggestions',
+  'toggle.hideShorts.label': 'Masquer les Shorts',
+  'toggle.hideShorts.hint': 'Masquer les sections, vidéos et menus Shorts',
   'toggle.shortsAds.label': 'Masquer les publicités des Shorts',
   'toggle.shortsAds.hint': 'Publicités glissées dans le fil des Shorts',
   'toggle.merchandise.label': 'Masquer les produits',

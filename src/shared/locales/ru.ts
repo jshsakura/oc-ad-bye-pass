@@ -45,6 +45,8 @@ export const ru = {
   'toggle.videoAds.hint': 'Убирает рекламу из ответа проигрывателя',
   'toggle.generalAds.label': 'Скрывать рекламу в ленте и баннеры',
   'toggle.generalAds.hint': 'Рекламные карточки на главной, в поиске и рекомендациях',
+  'toggle.hideShorts.label': 'Скрыть Shorts',
+  'toggle.hideShorts.hint': 'Скрывать разделы, карточки видео и меню Shorts',
   'toggle.shortsAds.label': 'Скрывать рекламу в Shorts',
   'toggle.shortsAds.hint': 'Реклама, подмешанная в ленту Shorts',
   'toggle.merchandise.label': 'Скрывать товары',

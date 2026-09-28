@@ -52,6 +52,33 @@ export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
     '#shorts-inner-container ytd-ad-slot-renderer',
     'ytd-reel-shelf-renderer:has(ytd-ad-slot-renderer)',
   ],
+  // Content discovery only. Direct Shorts URLs keep working; no player is
+  // hidden while its audio can continue playing. CSS also covers SPA inserts
+  // and restores everything immediately when the switch is turned off.
+  hideShorts: [
+    'ytd-reel-shelf-renderer',
+    'ytm-reel-shelf-renderer',
+    'ytd-rich-shelf-renderer[is-shorts]',
+    'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
+    'ytd-rich-section-renderer:has(ytd-reel-shelf-renderer)',
+    'ytm-rich-section-renderer:has(ytm-reel-shelf-renderer)',
+    'ytd-reel-item-renderer',
+    'ytm-shorts-lockup-view-model',
+    'yt-shorts-lockup-view-model',
+    'ytd-rich-item-renderer:has(a[href^="/shorts/"])',
+    'ytm-rich-item-renderer:has(a[href^="/shorts/"])',
+    'ytd-video-renderer:has(a#thumbnail[href^="/shorts/"])',
+    'ytd-grid-video-renderer:has(a#thumbnail[href^="/shorts/"])',
+    'ytd-compact-video-renderer:has(a#thumbnail[href^="/shorts/"])',
+    'ytm-video-with-context-renderer:has(a.media-item-thumbnail-container[href^="/shorts/"])',
+    'ytd-guide-entry-renderer:has(a[href="/shorts"])',
+    'ytd-mini-guide-entry-renderer:has(a[href="/shorts"])',
+    'ytm-pivot-bar-item-renderer:has(a[href="/shorts"])',
+    'ytm-pivot-bar-item-renderer:has(.pivot-shorts)',
+    // Channel tabs use a channel-specific URL, independent of UI language.
+    'yt-tab-shape:has(a[href$="/shorts"])',
+    'ytm-tab-renderer:has(a[href$="/shorts"])',
+  ],
   merchandise: [
     'ytd-merch-shelf-renderer',
     'ytd-product-details-renderer',

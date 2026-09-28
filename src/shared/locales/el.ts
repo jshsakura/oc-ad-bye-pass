@@ -45,6 +45,8 @@ export const el = {
   'toggle.videoAds.hint': 'Αφαιρεί τις διαφημίσεις από την απάντηση του αναπαραγωγέα',
   'toggle.generalAds.label': 'Απόκρυψη διαφημίσεων στη ροή και banner',
   'toggle.generalAds.hint': 'Κάρτες διαφημίσεων στην αρχική, στην αναζήτηση και στις προτάσεις',
+  'toggle.hideShorts.label': 'Απόκρυψη Shorts',
+  'toggle.hideShorts.hint': 'Απόκρυψη ενοτήτων, καρτών βίντεο και μενού Shorts',
   'toggle.shortsAds.label': 'Απόκρυψη διαφημίσεων στα Shorts',
   'toggle.shortsAds.hint': 'Διαφημίσεις χωμένες μέσα στη ροή των Shorts',
   'toggle.merchandise.label': 'Απόκρυψη εμπορευμάτων',

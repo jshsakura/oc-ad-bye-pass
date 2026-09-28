@@ -45,6 +45,8 @@ export const sr = {
   'toggle.videoAds.hint': 'Вади рекламе из одговора плејера',
   'toggle.generalAds.label': 'Сакриј рекламе у низу и банере',
   'toggle.generalAds.hint': 'Огласне картице на почетној, у претрази и у предлозима',
+  'toggle.hideShorts.label': 'Сакриј Shorts',
+  'toggle.hideShorts.hint': 'Сакриј одељке, видео-картице и меније Shorts',
   'toggle.shortsAds.label': 'Сакриј рекламе у Shorts',
   'toggle.shortsAds.hint': 'Рекламе умешане у низ Shorts',
   'toggle.merchandise.label': 'Сакриј робу',

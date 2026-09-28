@@ -45,6 +45,8 @@ export const lv = {
   'toggle.videoAds.hint': 'Izņem reklāmas no atskaņotāja atbildes',
   'toggle.generalAds.label': 'Slēpt reklāmas plūsmā un reklāmkarogus',
   'toggle.generalAds.hint': 'Reklāmu kartītes sākumlapā, meklēšanā un ieteikumos',
+  'toggle.hideShorts.label': 'Paslēpt Shorts',
+  'toggle.hideShorts.hint': 'Paslēpt Shorts sadaļas, video kartītes un izvēlnes',
   'toggle.shortsAds.label': 'Slēpt Shorts reklāmas',
   'toggle.shortsAds.hint': 'Reklāmas, iejauktas Shorts plūsmā',
   'toggle.merchandise.label': 'Slēpt preces',

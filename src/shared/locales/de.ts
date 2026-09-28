@@ -45,6 +45,8 @@ export const de = {
   'toggle.videoAds.hint': 'Entfernt Werbung aus der Antwort des Players',
   'toggle.generalAds.label': 'Feed- und Bannerwerbung ausblenden',
   'toggle.generalAds.hint': 'Werbekarten auf Startseite, Suche und Vorschlägen',
+  'toggle.hideShorts.label': 'Shorts ausblenden',
+  'toggle.hideShorts.hint': 'Shorts-Bereiche, Videokarten und Menüs ausblenden',
   'toggle.shortsAds.label': 'Shorts-Werbung ausblenden',
   'toggle.shortsAds.hint': 'Werbung, die in den Shorts-Feed gemischt wird',
   'toggle.merchandise.label': 'Merchandise ausblenden',
