@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260927,
-  "updatedAt": "2026-09-27",
+  "version": 20260928,
+  "updatedAt": "2026-09-28",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,12 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "agar.io": [
-          "#btn-privacy-settings"
-        ],
-        "agazetafm.com": [
-          ".popup_footer"
-        ],
         "age.yoti.com": [
           "div[data-qa=\"cookie-banner\"]"
         ],
@@ -3700,6 +3694,9 @@
         "app.revolut.com": [
           "[class^=\"Overlay__OverlayBase-sc-\"]"
         ],
+        "app.short.io": [
+          "div[data-testid=\"consent-banner-card\"]"
+        ],
         "app.socios.com": [
           "#cc-main"
         ],
@@ -4083,6 +4080,9 @@
         ],
         "archive.org": [
           "app-footer"
+        ],
+        "archivlyx.com": [
+          "div[class^=\"CookieConsent_\"]"
         ],
         "archiwa.gov.pl": [
           "#message_box"
@@ -4541,7 +4541,7 @@
           "#notification-msg-container"
         ],
         "asiaticesports.com": [
-          "div[class^=\"cookieConsent_\"]"
+          "div[class^=\"CookieConsent_\"]"
         ],
         "asicomp.cz": [
           ".reakt-susenka"
@@ -7038,9 +7038,6 @@
         ],
         "belcantofund.com": [
           ".cookie_agree"
-        ],
-        "belement.net": [
-          "#poscookielaw"
         ],
         "belenus.com.br": [
           ".cookies"
