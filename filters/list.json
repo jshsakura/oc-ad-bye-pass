@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20260928,
-  "updatedAt": "2026-09-28",
+  "version": 20260929,
+  "updatedAt": "2026-09-29",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -2987,6 +2987,15 @@
         "khgames.co.kr": [
           "#layer-popups"
         ],
+        "kick-off.co.kr": [
+          "div.ad_box",
+          "div.board_view_ad",
+          "div.board_view_comment_ad",
+          "div.board_view_top_ad",
+          "div.contents_right_ad",
+          "div.main_ad",
+          "div[class$=\"_ad\"]"
+        ],
         "kidd.co.kr": [
           ".act-banner-box-wrapper",
           ".product-recommendations, .product-recommendations +hr",
@@ -4697,15 +4706,6 @@
         ],
         "narkive.com": [
           "div#sidebar_banner_right"
-        ],
-        "nate.com": [
-          "div#adContainer",
-          "div#shopLoading",
-          "div.adBox",
-          "div.area_shopping_today",
-          "div[class^=\"area_ad\"]",
-          "div[id^=\"ad_layer\"]",
-          "iframe#ifrShopping"
         ],
         "nationalinterest.org": [
           "div.ad",

@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260928,
-  "updatedAt": "2026-09-28",
+  "version": 20260929,
+  "updatedAt": "2026-09-29",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -2590,6 +2590,9 @@
         "altreconomia.it": [
           ".c-cookie-banner"
         ],
+        "altromercato.it": [
+          "#messaggio-cookie"
+        ],
         "altungold.com": [
           "#hw_cookie_law"
         ],
@@ -2835,6 +2838,9 @@
         ],
         "amplify.com": [
           ".augusta-campaign"
+        ],
+        "ampravda.ru": [
+          "div[aria-label=\"Cookie consent\"]"
         ],
         "amrusi.co.il": [
           "#cookie-consent-banner"
@@ -4434,6 +4440,9 @@
         ],
         "asauto.ro": [
           "#cookies"
+        ],
+        "asbc.pl": [
+          "#cc--main"
         ],
         "asbis.com": [
           "#cc--main"
@@ -9861,15 +9870,6 @@
         ],
         "brandalley.co.uk": [
           ".notification"
-        ],
-        "brandfolder.com": [
-          "#lanyard_root"
-        ],
-        "brandirectory.com": [
-          ".app-cookie-banner--banner"
-        ],
-        "brandkizz.com": [
-          ".cookie-modal"
         ]
       }
     },
