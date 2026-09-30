@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20260929,
-  "updatedAt": "2026-09-29",
+  "version": 20260930,
+  "updatedAt": "2026-09-30",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1215,6 +1215,9 @@
         ],
         "agegeek.com": [
           "#GDPR"
+        ],
+        "agekey.org": [
+          ".right-0.z-50.p-4.sm\\:p-6.animate-slide-up"
         ],
         "agences.paritel.fr": [
           ".rgpd--container"
@@ -4891,9 +4894,6 @@
         "atlassian.com": [
           "div[data-testid=\"site-banners-container\"]"
         ],
-        "atlassian.net": [
-          "[jsm-cookie-consent-banner-wrapper]"
-        ],
         "atlasstoked.com": [
           ".gdprModal"
         ],
@@ -7146,6 +7146,9 @@
         ],
         "bemzen.com.br": [
           "#privacy-pop-up"
+        ],
+        "benatural.pl": [
+          ".jconfirm"
         ],
         "benchmark.unigine.com": [
           ".bottom-notice"
@@ -9529,6 +9532,9 @@
         "boosty.to": [
           "div[class^=\"GdprOffer\"]"
         ],
+        "boot.dev": [
+          ".fixed.bottom-5"
+        ],
         "bootcampdrivers.freeforums.net": [
           ".gdpr-banner-content-wrapper"
         ],
@@ -9864,12 +9870,6 @@
         ],
         "branah.com": [
           "#gdpr"
-        ],
-        "brand-fresh.it": [
-          "#cookieManager"
-        ],
-        "brandalley.co.uk": [
-          ".notification"
         ]
       }
     },
