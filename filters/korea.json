@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20260930,
-  "updatedAt": "2026-09-30",
+  "version": 20261001,
+  "updatedAt": "2026-10-01",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -1727,6 +1727,9 @@
         "edu.donga.com": [
           "div[id$=\"_ad\"]"
         ],
+        "eduyonhap.com": [
+          "div.banner_con"
+        ],
         "eegosa.com": [
           "section[id*=\"_ads_\"]",
           "section[id^=\"block-\"].widget_block"
@@ -1895,7 +1898,8 @@
           "div.post__article-top-ad-wrapper"
         ],
         "fc-info.com": [
-          "div[class^='Venatus_']"
+          ".android-app-download-banner",
+          "div[class^='Venatus']"
         ],
         "feedly.com": [
           "div.bsa-native-ad"
