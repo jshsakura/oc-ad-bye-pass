@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261001,
-  "updatedAt": "2026-10-01",
+  "version": 20261002,
+  "updatedAt": "2026-10-02",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "agazetafm.com": [
+          ".popup_footer"
+        ],
         "age.yoti.com": [
           "div[data-qa=\"cookie-banner\"]"
         ],
@@ -1899,6 +1902,9 @@
         ],
         "aksafirat.com": [
           ".cerezDiv"
+        ],
+        "aksel.com.pl": [
+          "div[aria-labelledby=\"cookie-banner-description\"]"
         ],
         "aksesuarix.com": [
           ".cerez-mesaji"
@@ -3754,9 +3760,6 @@
         "appgallery.huawei.com": [
           "div[class^=\"CookieBannerOf\"]"
         ],
-        "appgallery.huawei.ru": [
-          ".CookieBannerOfPc"
-        ],
         "appledaily.com": [
           "#div-GDPR-message"
         ],
@@ -4878,6 +4881,9 @@
         ],
         "atlas.nomic.ai": [
           ".react-cookienotice-root"
+        ],
+        "atlasblockintel.com": [
+          ".support-consent"
         ],
         "atlasformen.ch": [
           ".modal-backdrop"
@@ -9864,12 +9870,6 @@
         ],
         "brain.fm": [
           "div[class^=\"CookiePopup__transparentWrapper\"]"
-        ],
-        "braintreepayments.com": [
-          "#gdprComponent"
-        ],
-        "brake-eng.com": [
-          ".gl-cm"
         ]
       }
     },
