@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20261004,
-  "updatedAt": "2026-10-04",
+  "version": 20261005,
+  "updatedAt": "2026-10-05",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -1244,7 +1244,6 @@
         ],
         "chzzk.naver.com": [
           "div#live_end_banner",
-          "div[class*='is_scrolled'][data-nlog-area='home_top_skin']",
           "div[class^=\"live_end_banner_container__\"]",
           "div[class^=\"popup_cheat_key_container__\"]"
         ],
@@ -1899,7 +1898,7 @@
           "div.post__article-top-ad-wrapper"
         ],
         "fc-info.com": [
-          ".android-app-download-banner",
+          "[class$='app-download-banner']",
           "div[class^='Venatus']"
         ],
         "feedly.com": [
@@ -2891,9 +2890,6 @@
         ],
         "jwmx.tistory.com": [
           "div[class^=\"ad\"]"
-        ],
-        "k-hentai.org": [
-          ".my-3.container"
         ],
         "kado.net": [
           "div.banner_event_box",
@@ -4684,6 +4680,9 @@
         "newgrounds.com": [
           "div#afrc_skin",
           "div[class^=\"ng-ad-container-\"]"
+        ],
+        "newneek.co": [
+          "div[aria-label=\"뉴닉 뉴스레터 구독하기\"]"
         ],
         "news.amomama.com": [
           "div.Ad-Container"

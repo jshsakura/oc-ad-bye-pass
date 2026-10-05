@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261004,
-  "updatedAt": "2026-10-04",
+  "version": 20261005,
+  "updatedAt": "2026-10-05",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -1319,7 +1319,6 @@
         ],
         "chzzk.naver.com": [
           "div#live_end_banner",
-          "div[class*='is_scrolled'][data-nlog-area='home_top_skin']",
           "div[class^=\"live_end_banner_container__\"]",
           "div[class^=\"popup_cheat_key_container__\"]"
         ],
@@ -1974,7 +1973,7 @@
           "div.post__article-top-ad-wrapper"
         ],
         "fc-info.com": [
-          ".android-app-download-banner",
+          "[class$='app-download-banner']",
           "div[class^='Venatus']"
         ],
         "feedly.com": [
@@ -2966,9 +2965,6 @@
         ],
         "jwmx.tistory.com": [
           "div[class^=\"ad\"]"
-        ],
-        "k-hentai.org": [
-          ".my-3.container"
         ],
         "kado.net": [
           "div.banner_event_box",
@@ -4759,6 +4755,9 @@
         "newgrounds.com": [
           "div#afrc_skin",
           "div[class^=\"ng-ad-container-\"]"
+        ],
+        "newneek.co": [
+          "div[aria-label=\"뉴닉 뉴스레터 구독하기\"]"
         ],
         "news.amomama.com": [
           "div.Ad-Container"
