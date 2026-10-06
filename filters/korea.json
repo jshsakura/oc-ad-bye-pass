@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20261005,
-  "updatedAt": "2026-10-05",
+  "version": 20261006,
+  "updatedAt": "2026-10-06",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -2689,6 +2689,9 @@
           "div#text-22",
           "ins[data-ad-slot=\"2702402824\"]"
         ],
+        "insurance.pay.naver.com": [
+          "div[class^=\"InsuranceHomeAdBanner-module-scss-module\"]"
+        ],
         "interfootball.co.kr": [
           "div[class^=\"ad-\"]"
         ],
@@ -2913,15 +2916,6 @@
         "khgames.co.kr": [
           "#layer-popups"
         ],
-        "kick-off.co.kr": [
-          "div.ad_box",
-          "div.board_view_ad",
-          "div.board_view_comment_ad",
-          "div.board_view_top_ad",
-          "div.contents_right_ad",
-          "div.main_ad",
-          "div[class$=\"_ad\"]"
-        ],
         "kidd.co.kr": [
           ".act-banner-box-wrapper",
           ".product-recommendations, .product-recommendations +hr",
@@ -3021,15 +3015,6 @@
         ],
         "koreaboo.com": [
           "div.kb-ads-dynamic"
-        ],
-        "koreaherald.com": [
-          "div.ad_2big",
-          "div.adcodes_2big",
-          "div.bannerDiv01",
-          "ins[data-ad-slot=\"1115695166\"]",
-          "ins[data-ad-slot=\"1990317404\"]",
-          "ins[data-ad-slot=\"7060858021\"]",
-          "ins[data-ad-slot=\"9022139528\"]"
         ],
         "koreanbots.dev": [
           ".container div[style^=\"height:\"].mx-auto"
@@ -3259,6 +3244,12 @@
         "lotteon.com": [
           ".productDetailInfo ~ div[style*=\" \"].emptyComponent"
         ],
+        "lover938.net": [
+          ".div-over"
+        ],
+        "lover939.net": [
+          ".div-over"
+        ],
         "lovetips.co": [
           "div.sm_dfp_ads"
         ],
@@ -3431,15 +3422,6 @@
           "div.search_list_ad",
           "div.shop_naver",
           "div[id^=\"naverAd\"]"
-        ],
-        "m.comm.news.nate.com": [
-          ".adtive",
-          "div.adtive",
-          "div.replyList_banner",
-          "iframe[name=\"ad_big\"]",
-          "iframe[name=\"adtive\"]",
-          "iframe[src*=\"//m.news.nate.com/etc/AdTop\"]",
-          "iframe[src^=\"http://networkad.nate.com/nate/mobile_news.html\"]"
         ],
         "m.compuzone.co.kr": [
           ".right_btn",
@@ -5167,9 +5149,6 @@
         "place.naver.com": [
           "div[id*=\"_ad_\"]"
         ],
-        "planet-times.com": [
-          "div[id^=\"ad_\"]"
-        ],
         "platum.kr": [
           ".ad-container",
           "div.ad-five",
@@ -5215,9 +5194,6 @@
         ],
         "pomponik.pl": [
           "div[id^=\"crt-\"]"
-        ],
-        "ponh.info": [
-          "div[data-mesh-id=\"comp-lbw06ze4inlineContent-gridContainer\"] div[class*=\"wixui-\"]"
         ],
         "pop.heraldcorp.com": [
           "div#first_img_over_banner",
@@ -5319,9 +5295,6 @@
         "pushoong.com": [
           "div[id$=\"_banner\"]",
           "div[id*=\"_banner_\"]"
-        ],
-        "qooqootv.fun": [
-          "div[class^=\"banner_\"]"
         ],
         "qq.com": [
           "div.adLeft",
@@ -5470,6 +5443,12 @@
           "div.da_banner_w",
           "div.main_da_housebanner_w"
         ],
+        "sbxh10.com": [
+          "[data-brs][data-br]"
+        ],
+        "sbxh11.com": [
+          "[data-brs][data-br]"
+        ],
         "sciencealert.com": [
           "div.ad-slot",
           "div.ad-slot--container"
@@ -5536,9 +5515,6 @@
         ],
         "segyebiz.com": [
           "div[id^=\"wps_layout\"][data-desc*=\"광고\"][data-box-file*=\"/box/\"]"
-        ],
-        "sejonghub.com": [
-          "div[id^=\"carousel_\"].carousel.carousel-fade"
         ],
         "sellclub.co.kr": [
           "#floating_bottom"
@@ -6256,6 +6232,46 @@
         "torrentqq283.com": [
           "div.at-banner",
           "td.at-banner"
+        ],
+        "torrentqq401.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq402.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq403.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq404.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq405.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq406.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq407.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq408.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq409.com": [
+          ".at-banner",
+          ".row-banner"
+        ],
+        "torrentqq410.com": [
+          ".at-banner",
+          ".row-banner"
         ],
         "torrentreel51.site": [
           "div.ad-cont-box"
