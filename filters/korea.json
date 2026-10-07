@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20261006,
-  "updatedAt": "2026-10-06",
+  "version": 20261007,
+  "updatedAt": "2026-10-07",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -2893,6 +2893,9 @@
         ],
         "jwmx.tistory.com": [
           "div[class^=\"ad\"]"
+        ],
+        "k-hentai.org": [
+          "#khReaderAdTag"
         ],
         "kado.net": [
           "div.banner_event_box",

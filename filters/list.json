@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261006,
-  "updatedAt": "2026-10-06",
+  "version": 20261007,
+  "updatedAt": "2026-10-07",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -2968,6 +2968,9 @@
         ],
         "jwmx.tistory.com": [
           "div[class^=\"ad\"]"
+        ],
+        "k-hentai.org": [
+          "#khReaderAdTag"
         ],
         "kado.net": [
           "div.banner_event_box",
