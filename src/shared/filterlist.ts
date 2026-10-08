@@ -15,7 +15,7 @@
 import { TOGGLE_KEYS, type ToggleKey } from './settings.ts'
 import type { Lang } from './i18n.ts'
 import type { SiteKind } from './sites.ts'
-import { BUNDLED_CLICK, BUNDLED_HIDE, BUNDLED_PRUNE } from './selectors.ts'
+import { BUNDLED_CLICK, BUNDLED_DOMAINS, BUNDLED_HIDE, BUNDLED_PRUNE } from './selectors.ts'
 
 export const MAX_LIST_BYTES = 256 * 1024
 export const MAX_SELECTOR_LENGTH = 512
@@ -435,6 +435,12 @@ export function resolveRules(remotes: FilterList[], customRules: string[]): Reso
   }
 
   const domains: DomainRule[] = []
+  for (const group of TOGGLE_KEYS) {
+    for (const [host, selectors] of Object.entries(BUNDLED_DOMAINS[group] ?? {})) {
+      const kept = keep(selectors)
+      if (kept.length) domains.push({ host, group, lang: null, selectors: kept })
+    }
+  }
   for (const list of remotes) {
     for (const [key, value] of Object.entries(list.rules.domains ?? {})) {
       // Both shapes reach here, and not only from old files. `validateFilterList`

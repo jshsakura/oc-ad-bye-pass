@@ -25,6 +25,7 @@ export interface ExtensionFixtures {
 }
 
 export interface ExtensionOptions {
+  autoplayPolicy?: 'no-user-gesture-required' | 'user-gesture-required'
   /**
    * The screen the browser reports, via `test.use({ screen })`.
    *
@@ -41,8 +42,9 @@ export const PHONE_SCREEN = { width: 393, height: 852 }
 
 export const test = base.extend<ExtensionFixtures & ExtensionOptions>({
   screen: [undefined, { option: true }],
+  autoplayPolicy: ['no-user-gesture-required', { option: true }],
 
-  context: async ({ screen }, use) => {
+  context: async ({ screen, autoplayPolicy }, use) => {
     if (!existsSync(path.join(EXTENSION_PATH, 'manifest.json'))) {
       throw new Error(`build first: npm run build (${EXTENSION_PATH} is missing)`)
     }
@@ -59,7 +61,8 @@ export const test = base.extend<ExtensionFixtures & ExtensionOptions>({
       args: [
         `--disable-extensions-except=${EXTENSION_PATH}`,
         `--load-extension=${EXTENSION_PATH}`,
-        ...LAUNCH_ARGS,
+        ...LAUNCH_ARGS.filter((arg) => !arg.startsWith('--autoplay-policy=')),
+        `--autoplay-policy=${autoplayPolicy}`,
       ],
     })
     // **No test may reach the network.**

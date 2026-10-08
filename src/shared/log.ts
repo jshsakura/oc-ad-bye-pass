@@ -16,10 +16,16 @@ const ATTR = 'data-oc-abp-log'
 const MAX_CHARS = 1800
 
 function stamp(): string {
-  const now = new Date()
-  return `${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(
-    now.getMilliseconds(),
-  ).padStart(3, '0')}`
+  return new Date().toISOString()
+}
+
+/** Legacy minute-only stamps cannot be ordered across an hour boundary. */
+export function mergeLogLines(stored: string, tail: string, limit = 8000): string {
+  const lines = [...new Set([...stored.split('\n'), ...tail.split('\n')])]
+    .filter((line) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z /.test(line))
+    .sort((a, b) => a.slice(0, 24).localeCompare(b.slice(0, 24)))
+  while (lines.join('\n').length > limit) lines.shift()
+  return lines.join('\n')
 }
 
 /**
@@ -31,7 +37,8 @@ function stamp(): string {
 function append(root: Element, text: string): void {
   const previous = root.getAttribute(ATTR) ?? ''
   const next = previous ? `${previous}\n${stamp()} ${text}` : `${stamp()} ${text}`
-  root.setAttribute(ATTR, next.length > MAX_CHARS ? next.slice(next.length - MAX_CHARS) : next)
+  const start = next.length > MAX_CHARS ? next.indexOf('\n', next.length - MAX_CHARS) + 1 : 0
+  root.setAttribute(ATTR, next.slice(start))
 }
 
 /** The last line this world wrote, and how many times it has repeated since. */

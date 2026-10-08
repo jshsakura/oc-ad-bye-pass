@@ -16,6 +16,8 @@
 // of unknown standing on Orion. Diagnostics should not fail for the same reason
 // they are being consulted.
 
+import { playbackEvidence, type PlaybackFacts } from '../shared/playback.ts'
+
 export interface ExtensionFacts {
   version: string
   /** Absent on WebKit targets; its absence is the whole reason two builds exist. */
@@ -32,6 +34,7 @@ export interface PageFacts {
   /** Layer 1 sets this on documentElement once its hooks are in. */
   layer1: boolean
   videos: number
+  playback?: PlaybackFacts | null
   pip: 'webkit' | 'standard' | 'none'
   /** Absent in reports written before 0.25.0. */
   pipButtonNeeded?: boolean
@@ -209,6 +212,7 @@ export function format(report: Report): string {
       `1계층 설치됨: ${page.layer1 ? '예' : '아니오'}`,
       `1계층 주입: ${injectLine(page)}`,
       `비디오: ${page.videos}개`,
+      `재생 상태: ${page.playback ? playbackEvidence(page.playback) : '기록 없음'}`,
       `PiP: ${page.pip === 'none' ? '없음' : page.pip}`,
       // The first thing to read when "the button is gone": on desktop Chrome and
       // Firefox it is gone on purpose, and this line says so before anyone

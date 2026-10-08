@@ -13,7 +13,8 @@
 
 import { CAPTIONS_ATTR, CAPTIONS_DETAIL_ATTR, INSTALLED_ATTR } from '../shared/messages.ts'
 import { needsPipButton, pipButtonFacts } from '../ui/device.ts'
-import { readLog } from '../shared/log.ts'
+import { log, readLog, mergeLogLines } from '../shared/log.ts'
+import { findPlaybackVideo, playbackFacts, playbackEvidence, type PlaybackFacts } from '../shared/playback.ts'
 
 const KEY = 'diagnostics'
 
@@ -51,6 +52,7 @@ export interface PageDiagnostics {
   url: string
   layer1: boolean
   videos: number
+  playback: PlaybackFacts | null
   pip: 'webkit' | 'standard' | 'none'
   /** Whether a PiP button is drawn here at all — see needsPipButton. */
   pipButtonNeeded: boolean
@@ -93,12 +95,13 @@ export function reportDiagnostics(): void {
   // state live in the top document, so that is the only frame worth reporting.
   if (window.top !== window) return
 
-  const video = document.querySelector<WebkitVideo>('video')
+  const video = findPlaybackVideo() as WebkitVideo | null
   const facts: PageDiagnostics = {
     at: Date.now(),
     url: location.href,
     layer1: document.documentElement.hasAttribute(INSTALLED_ATTR),
     videos: document.querySelectorAll('video').length,
+    playback: video ? playbackFacts(video) : null,
     pip:
       typeof video?.webkitSetPresentationMode === 'function'
         ? 'webkit'
@@ -120,12 +123,43 @@ export function reportDiagnostics(): void {
     userAgent: navigator.userAgent,
   }
   void chrome.storage.local.set({ [KEY]: facts })
-  void mergeLog(facts.log)
   if (location.hostname.endsWith('youtube.com')) {
+    void mergeLog(facts.log)
     void chrome.storage.local.set({ [YOUTUBE_KEY]: facts })
   }
 
   if (!facts.layer1) watchForLayer1()
+}
+
+let watchingPlayback = false
+
+/** Capture also hears non-bubbling media events, including on replacement videos. */
+export function watchPlayback(): void {
+  if (watchingPlayback || window.top !== window) return
+  watchingPlayback = true
+  let pending: ReturnType<typeof setTimeout> | null = null
+  for (const type of ['loadstart', 'loadedmetadata', 'canplay', 'playing', 'pause', 'waiting', 'stalled', 'ended', 'emptied', 'error']) {
+    document.addEventListener(type, (event) => {
+      const video = event.target
+      if (!(video instanceof HTMLVideoElement)) return
+      if (video !== findPlaybackVideo()) return
+      log(`재생: ${type} · ${playbackEvidence(playbackFacts(video))}`)
+      // Loading sends a burst of events; persist the final snapshot once.
+      if (pending !== null) return
+      pending = setTimeout(() => {
+        pending = null
+        reportDiagnostics()
+      }, 200)
+    }, true)
+  }
+  window.addEventListener('pageshow', (event) => {
+    log(`페이지 복원: ${event.persisted ? '캐시' : '새 문서'}`)
+    reportDiagnostics()
+  })
+  window.addEventListener('popstate', () => {
+    log('페이지: 뒤로/앞으로 이동')
+    reportDiagnostics()
+  })
 }
 
 
@@ -142,16 +176,10 @@ async function mergeLog(tail: string | null): Promise<void> {
   try {
     const got = await chrome.storage.local.get(LOG_KEY)
     const stored = typeof got[LOG_KEY] === 'string' ? (got[LOG_KEY] as string) : ''
-    const known = new Set(stored.split('\n'))
-    const fresh = tail.split('\n').filter((line) => line && !known.has(line))
-    if (fresh.length === 0) return
-    const merged = [...stored.split('\n').filter(Boolean), ...fresh]
-      .map((line, index) => ({ line, index }))
-      .sort((a, b) => a.line.slice(0, 9).localeCompare(b.line.slice(0, 9)) || a.index - b.index)
-      .map((entry) => entry.line)
-      .join('\n')
+    const merged = mergeLogLines(stored, tail, LOG_KEEP)
+    if (merged === stored) return
     await chrome.storage.local.set({
-      [LOG_KEY]: merged.length > LOG_KEEP ? merged.slice(merged.length - LOG_KEEP) : merged,
+      [LOG_KEY]: merged,
     })
   } catch {
     // The panel still has this document's own tail; a longer history is a bonus.
@@ -202,7 +230,7 @@ export function watchForVideo(): void {
   const observer = new MutationObserver(tryReport)
   function tryReport(): void {
     if (reportedWithVideo) return
-    const video = document.querySelector('video')
+    const video = findPlaybackVideo()
     if (!video) return
     if (video.readyState >= 1) {
       reportedWithVideo = true

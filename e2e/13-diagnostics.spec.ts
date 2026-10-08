@@ -91,3 +91,40 @@ test('1계층이 늦게 붙어도 아니오로 굳지 않는다', async ({ conte
   await popup.getByRole('button', { name: '진단' }).click()
   await expect(popup.locator('.diag pre')).toContainText('1계층 설치됨: 예')
 })
+
+test('자동재생과 사용자의 일시정지를 기록하고 교체된 영상도 감시한다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const youtube = await context.newPage()
+  await youtube.goto(YOUTUBE_URL)
+  await youtube.waitForFunction(() => document.querySelector('video')!.readyState >= 2)
+  await youtube.evaluate(() => {
+    const player = document.getElementById('movie_player')!
+    player.classList.remove('ad-showing')
+    // A new content video uses native autoplay, with no play() call from the test.
+    const old = player.querySelector('video')!
+    const video = document.createElement('video')
+    video.className = 'html5-main-video'
+    video.autoplay = true
+    video.loop = true
+    video.muted = true
+    video.src = old.src
+    old.replaceWith(video)
+    // Desktop watch pages can contain a preview before the main player.
+    const preview = document.createElement('video')
+    preview.src = video.src
+    preview.preload = 'auto'
+    document.body.prepend(preview)
+  })
+  const snapshot = () => background.evaluate(async () => {
+    const got = await chrome.storage.local.get('diagnosticsYoutube')
+    return got.diagnosticsYoutube as { videos: number; playback: { paused: boolean; readyState: number }; log: string }
+  })
+  await expect.poll(async () => (await snapshot())?.playback?.paused).toBe(false)
+  await expect.poll(async () => (await snapshot())?.log).toContain('재생: playing')
+  expect((await snapshot()).videos).toBe(2)
+  await youtube.evaluate(() => document.querySelector<HTMLVideoElement>('#movie_player video')!.pause())
+  await expect.poll(async () => (await snapshot()).playback.paused).toBe(true)
+  await expect.poll(async () => (await snapshot()).log).toContain('재생: pause')
+  await youtube.waitForTimeout(3500)
+  expect(await youtube.evaluate(() => document.querySelector<HTMLVideoElement>('#movie_player video')!.paused)).toBe(true)
+})

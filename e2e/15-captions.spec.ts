@@ -24,9 +24,12 @@ async function stubCaptionApi(page: Page, tracks: unknown[], translatable: unkno
     ([trackList, translationList]) => {
       const calls: unknown[] = []
       ;(window as unknown as { __captionCalls: unknown[] }).__captionCalls = calls
+      ;(window as unknown as { __captionLoads: number }).__captionLoads = 0
       Object.assign(document.getElementById('movie_player') as object, {
         getVideoData: () => ({ video_id: 'fixture-video' }),
-        loadModule: () => {},
+        loadModule: () => {
+          ;(window as unknown as { __captionLoads: number }).__captionLoads += 1
+        },
         // Like the real player: `tracklist` leaves the auto-generated track out
         // unless it is asked for. Reproducing that here is the point — with a
         // stub that always hands back everything, the caller can forget to ask
@@ -196,6 +199,26 @@ test('내 언어로 말하는 영상에는 자막을 켜지 않는다', async ({
     .poll(() => page.getAttribute('html', 'data-oc-ad-bye-pass-captions'), { timeout: 8000 })
     .toBe('native-language')
   expect(await captionCalls(page)).toHaveLength(0)
+  expect(await page.evaluate(() => (window as unknown as { __captionLoads: number }).__captionLoads)).toBe(0)
+})
+
+test('플레이어 목록이 없어도 내 언어 응답이면 자막 모듈을 로드하지 않는다', async ({ context, background }) => {
+  await installYouTubeFixture(context)
+  const page = await context.newPage()
+  await page.goto(YOUTUBE_URL)
+  await stubCaptionApi(page, [], [])
+  await page.evaluate(() => {
+    JSON.parse(JSON.stringify({
+      videoDetails: { videoId: 'fixture-video' },
+      captions: { playerCaptionsTracklistRenderer: {
+        captionTracks: [{ languageCode: 'ko', kind: 'asr' }],
+      } },
+    }))
+  })
+  await writeSettings(background, settingsWith(true))
+  await expect.poll(() => page.getAttribute('html', 'data-oc-ad-bye-pass-captions')).toBe('native-language')
+  expect(await captionCalls(page)).toHaveLength(0)
+  expect(await page.evaluate(() => (window as unknown as { __captionLoads: number }).__captionLoads)).toBe(0)
 })
 
 test('플레이어 목록이 비면 응답 데이터의 트랙으로 적용한다 (모바일 경로)', async ({

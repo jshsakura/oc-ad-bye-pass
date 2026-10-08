@@ -23,7 +23,7 @@ import {
 } from '../shared/settings.ts'
 import { isAllowlisted, siteKindFor, type SiteKind } from '../shared/sites.ts'
 import { applyStylesheet, clickCloseButtons, dismissAdblockNag } from './cosmetic.ts'
-import { reportDiagnostics, watchCaptionOutcome, watchForVideo } from './diagnostics.ts'
+import { reportDiagnostics, watchCaptionOutcome, watchForVideo, watchPlayback } from './diagnostics.ts'
 import { disablePictureInPicture, enablePictureInPicture } from './pip.ts'
 import { needsPipButton, pipButtonFacts } from '../ui/device.ts'
 import { handleAdState } from './player.ts'
@@ -226,6 +226,7 @@ function start() {
   // reported (see reportDiagnostics) and would only be dead writes here.
   if (window.top === window) log(`시작: ${SITE}`)
   if (IS_YOUTUBE) {
+    watchPlayback()
     // Runs whenever layer 1 has not marked itself installed — which covers the
     // registration failing outright, and the case that actually bit: a browser
     // ignoring world:"MAIN" and running main.js in this world instead, where

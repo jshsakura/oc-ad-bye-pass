@@ -7,6 +7,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { captionEvidence } from '../src/popup/diagnose.ts'
+import { playbackEvidence, type PlaybackFacts } from '../src/shared/playback.ts'
 
 test('근거를 사람이 읽는 말로 옮긴다', () => {
   assert.equal(
@@ -24,4 +25,12 @@ test('빈 값과 등호 없는 조각에도 죽지 않는다', () => {
   assert.equal(captionEvidence(''), '')
   assert.equal(captionEvidence('lonely'), 'lonely')
   assert.equal(captionEvidence('want=  tracks=0'), '내 언어  · 플레이어 트랙 0')
+})
+
+test('재생 진단은 정지, 데이터 대기, 오류를 구분한다', () => {
+  const facts: PlaybackFacts = { paused: true, ended: false, readyState: 4, networkState: 1, currentTime: 0, muted: false, error: null }
+  assert.match(playbackEvidence(facts), /^일시정지/)
+  assert.match(playbackEvidence({ ...facts, paused: false, readyState: 2 }), /^데이터 대기/)
+  assert.match(playbackEvidence({ ...facts, paused: false }), /^재생 중/)
+  assert.match(playbackEvidence({ ...facts, error: 4 }), /^미디어 오류.*오류 4$/)
 })

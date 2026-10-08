@@ -350,6 +350,23 @@ function tick(): void {
     return
   }
 
+  // Loading the caption module changes player state. First check data already
+  // available: a native-language video needs no module or selection at all.
+  let available: unknown
+  try {
+    available = player.getOption('captions', 'tracklist', { includeAsr: true })
+  } catch {
+    // Some builds expose the list only after loading the module below.
+  }
+  const nativeTracks = Array.isArray(available) && available.length > 0
+    ? available as CaptionTrack[]
+    : fromResponse?.videoId === id ? fromResponse.tracks : []
+  const spoken = videoLanguage(nativeTracks)
+  if (spoken && browserLangs().includes(spoken)) {
+    decideAndApply(player, id, nativeTracks, [], Array.isArray(available) && available.length > 0 ? '' : ':data')
+    return
+  }
+
   // Turning captions on is loadModule's job; setOption alone picks a track the
   // display may never show when CC is off. It also makes the track list appear
   // on videos where the module has not loaded yet. Idempotent, once per video.

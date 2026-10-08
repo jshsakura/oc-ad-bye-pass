@@ -16,6 +16,18 @@
 
 import type { ToggleKey } from './settings.ts'
 
+// Structural ad markers used by EasyList's twitter.com,x.com cosmetic rules.
+// Hide the timeline cell too, so a removed promotion does not leave a blank row.
+// A placementTracking wrapper alone is not enough to identify an advertisement.
+const X_FEED_ADS = [
+  '[data-testid="cellInnerDiv"]:has(> div > div[class] > div[class][data-testid="placementTracking"])',
+  '[data-testid="cellInnerDiv"]:has([data-testid="placementTracking"] div[data-testid$="-impression-pixel"])',
+]
+
+export const BUNDLED_DOMAINS: Partial<Record<ToggleKey, Record<string, string[]>>> = {
+  genericAds: { 'x.com': X_FEED_ADS, 'twitter.com': X_FEED_ADS },
+}
+
 export const BUNDLED_HIDE: Partial<Record<ToggleKey, string[]>> = {
   generalAds: [
     '#masthead-ad',
