@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261007,
-  "updatedAt": "2026-10-07",
+  "version": 20261008,
+  "updatedAt": "2026-10-08",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,12 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "ag.mos.ru": [
-          ".cookie-informer"
-        ],
-        "agados.cz": [
-          ".cookie-consent-banner"
-        ],
         "agar.io": [
           "#btn-privacy-settings"
         ],
@@ -1758,6 +1752,9 @@
         ],
         "aj-chambers.com": [
           ".ns-type-notice"
+        ],
+        "ajansspor.com": [
+          "div[aria-label=\"Çerez tercihleri\"]"
         ],
         "ajax.nl": [
           ".dy-modal-container"
@@ -5152,6 +5149,9 @@
         "audo.ai": [
           "#bannerWrapper[style^=\"background-color:\"]"
         ],
+        "audytorium17.pl": [
+          "div[aria-labelledby=\"consent-title\"]"
+        ],
         "aue-verlag.de": [
           "#cookieclass"
         ],
@@ -5940,6 +5940,9 @@
         ],
         "b2eu-consulting.eu": [
           "#page-disable"
+        ],
+        "b2match.com": [
+          "div[class^=\"FloatingConsent__Container\"]"
         ],
         "b810group.it": [
           "body #iubenda-cs-banner"
@@ -8143,6 +8146,9 @@
         "bip.szczecin.wsa.gov.pl": [
           ".bip-cookie-modal"
         ],
+        "bip.um.opole.pl": [
+          "div[data-name=\"cookiePolicy\"]"
+        ],
         "bird-sounds.net": [
           "#CookiePopup"
         ],
@@ -9858,18 +9864,6 @@
         ],
         "bpsa.co.uk": [
           "#terms_container"
-        ],
-        "bq.ru": [
-          ".footer-cookies-alert"
-        ],
-        "br-klassik.de": [
-          "#brCookieBanner"
-        ],
-        "brack.ch": [
-          "#b2c-consent"
-        ],
-        "bracket2026.com": [
-          ".inset-0.fixed"
         ]
       }
     },
