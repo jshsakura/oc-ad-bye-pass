@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261010,
-  "updatedAt": "2026-10-10",
+  "version": 20261012,
+  "updatedAt": "2026-10-12",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "agados.cz": [
+          ".cookie-consent-banner"
+        ],
         "agar.io": [
           "#btn-privacy-settings"
         ],
@@ -3916,6 +3919,9 @@
         "aptekazawiszy.pl": [
           "#notice_bar"
         ],
+        "aptekiplus.ru": [
+          ".cookie-banner"
+        ],
         "aptekirls.ru": [
           ".attention-modal"
         ],
@@ -4302,6 +4308,9 @@
         ],
         "arp.pl": [
           "#tarteaucitronRoot"
+        ],
+        "arra-group.com": [
+          "#cookiesPolicy"
         ],
         "arris.com": [
           "#optanon"
@@ -6313,6 +6322,9 @@
         "bangkokbank.com": [
           ".alert-cookie-consent"
         ],
+        "bangkokclimateactionweek.org": [
+          ".fixed.bottom-0"
+        ],
         "banjaran.com.sg": [
           ".overlay-mobile-styles-enabled"
         ],
@@ -6687,6 +6699,9 @@
         ],
         "bazaazbestowa.gov.pl": [
           "#cookieBannner"
+        ],
+        "bazalt.pl": [
+          "#cc-main"
         ],
         "bazar.club": [
           "#cookies"
@@ -8014,6 +8029,9 @@
         "bimyou.es": [
           "#cookies"
         ],
+        "binance.com": [
+          "#cm-banner-sdk"
+        ],
         "binary.transparency.dev": [
           ".cookie-notice"
         ],
@@ -8601,6 +8619,9 @@
         ],
         "blog.n8n.io": [
           "#n8n-consent-modal"
+        ],
+        "blog.netcraze.ru": [
+          ".cookie-banner"
         ],
         "blog.nubank.com.br": [
           ".cookies"
@@ -9843,27 +9864,6 @@
         ],
         "boykotdedektifi.com": [
           ".cookie-card"
-        ],
-        "boykotdedektifi.org": [
-          ".cookie-card"
-        ],
-        "boyteks.com": [
-          ".cookiepopup-container"
-        ],
-        "bper.it": [
-          "body #iubenda-cs-banner"
-        ],
-        "bpi-aia.com.ph": [
-          ".cmp-notification-action-panel"
-        ],
-        "bpmarco.pl": [
-          ".floating-strip"
-        ],
-        "bportugal.pt": [
-          ".sliding-popup-bottom"
-        ],
-        "bpostbank.be": [
-          ".lp-notifications"
         ]
       }
     },
