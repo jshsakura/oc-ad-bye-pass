@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20261013,
-  "updatedAt": "2026-10-13",
+  "version": 20261014,
+  "updatedAt": "2026-10-14",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -552,6 +552,7 @@
           "div[class$=\"_ad\"]"
         ],
         "algumon.com": [
+          "[data-virtual-row-id*='-ad']",
           "div[class^=\"ad-\"]"
         ],
         "all-mice.co.kr": [
@@ -1403,6 +1404,9 @@
         ],
         "daboja19.com": [
           "div.basic-banner"
+        ],
+        "dacgle.com": [
+          "div.promotion_bn"
         ],
         "daejonilbo.com": [
           "div[class^=\"ad-\"]"

@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261013,
-  "updatedAt": "2026-10-13",
+  "version": 20261014,
+  "updatedAt": "2026-10-14",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -627,6 +627,7 @@
           "div[class$=\"_ad\"]"
         ],
         "algumon.com": [
+          "[data-virtual-row-id*='-ad']",
           "div[class^=\"ad-\"]"
         ],
         "all-mice.co.kr": [
@@ -1478,6 +1479,9 @@
         ],
         "daboja19.com": [
           "div.basic-banner"
+        ],
+        "dacgle.com": [
+          "div.promotion_bn"
         ],
         "daejonilbo.com": [
           "div[class^=\"ad-\"]"
