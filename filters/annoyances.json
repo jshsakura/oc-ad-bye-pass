@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261016,
-  "updatedAt": "2026-10-16",
+  "version": 20261017,
+  "updatedAt": "2026-10-17",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,12 @@
     },
     "domains": {
       "cookieBanners": {
+        "afyonpostasi.com.tr": [
+          ".cookie-consent-body"
+        ],
+        "afzuigkap.nl": [
+          "#cookie_popup_body"
+        ],
         "ag.mos.ru": [
           ".cookie-informer"
         ],
@@ -3082,6 +3088,9 @@
         "anews.com.tr": [
           ".veriAltBar"
         ],
+        "anexia.com": [
+          "[aria-describedby=\"privacy-settings-description\"]"
+        ],
         "anextour.de": [
           "cookie-policy.show"
         ],
@@ -3285,6 +3294,9 @@
         ],
         "ansell.com.cn": [
           ".cookie-bar"
+        ],
+        "anses.fr": [
+          "#tarteaucitronAlertBig"
         ],
         "anstar.edu.pl": [
           ".tarnow-cookies-wrapper"
@@ -4662,6 +4674,9 @@
         ],
         "asobostudio.com": [
           ".sliding-popup-bottom"
+        ],
+        "asofta.co.il": [
+          "#il-privacy-banner"
         ],
         "asos.com": [
           "div[data-testid=\"cookie-disclaimer\"]"
@@ -8182,9 +8197,6 @@
         "bip.szczecin.wsa.gov.pl": [
           ".bip-cookie-modal"
         ],
-        "bip.um.opole.pl": [
-          "div[data-name=\"cookiePolicy\"]"
-        ],
         "bip.zory.pl": [
           ".bottom-0.left-0.right-0.z-50"
         ],
@@ -9855,15 +9867,6 @@
         ],
         "box.gr": [
           "box-cookies"
-        ],
-        "boxenterprise.net": [
-          "#page--area__bottom"
-        ],
-        "boxerdergisi.com.tr": [
-          "#CookieAlertContainer"
-        ],
-        "boxofficeturkiye.com": [
-          ".notification__wrapper"
         ]
       }
     },
