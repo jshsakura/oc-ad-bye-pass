@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261018,
-  "updatedAt": "2026-10-18",
+  "version": 20261019,
+  "updatedAt": "2026-10-19",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,9 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "afyonpostasi.com.tr": [
-          ".cookie-consent-body"
-        ],
         "afzuigkap.nl": [
           "#cookie_popup_body"
         ],
@@ -3022,6 +3019,9 @@
         "andreaminini.com": [
           ".privacy"
         ],
+        "andreea-rada.ro": [
+          "#cookie-policy"
+        ],
         "andrewmarc.com": [
           ".popup-container"
         ],
@@ -3474,6 +3474,9 @@
         ],
         "ap-goal.pl": [
           ".spu-bg"
+        ],
+        "ap.lc": [
+          "#cc--main"
         ],
         "apacer.com": [
           ".gdpr:not(#style_important)"
@@ -9844,6 +9847,9 @@
         "boulderholisticvet.com": [
           ".elementor-popup-modal"
         ],
+        "bouncecheck.email": [
+          ".bottom-0.fixed"
+        ],
         "bourgogne-wines.com": [
           "#tarteaucitronRoot"
         ],
@@ -9858,15 +9864,6 @@
         ],
         "boutiquecentral.co.il": [
           ".fotpopup"
-        ],
-        "box.co.uk": [
-          ".cookie-policy"
-        ],
-        "box.com": [
-          "#gdpr-consent"
-        ],
-        "box.gr": [
-          "box-cookies"
         ]
       }
     },
