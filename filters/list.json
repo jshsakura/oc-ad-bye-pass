@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261019,
-  "updatedAt": "2026-10-19",
+  "version": 20261020,
+  "updatedAt": "2026-10-20",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -463,7 +463,6 @@
         "iframe[src*=\"/RealMedia/ads/\"]",
         "iframe[src*=\"/ad.bidrich.com/\"]",
         "iframe[src*=\"/cgi-bin/PelicanC.dll\"]",
-        "iframe[src*=\"://ad.ad4989.co.kr/\"]",
         "iframe[src*=\"clickon.kr\"]",
         "iframe[src*=\"https://media.adpnut.com/\"]",
         "iframe[src*=\"veta.naver.com/fxshow?\"]",
@@ -793,6 +792,9 @@
           "div[class^=\"qnaBanner_\"]",
           "div[class^=\"realclickInner_\"]",
           "div[id^=\"ads\"][style]"
+        ],
+        "atlantachosun.com": [
+          "#popup-root"
         ],
         "atlantak.com": [
           ".advertisement_area div[class^=\"ad\"]",
@@ -1272,6 +1274,9 @@
           ".venatus-container",
           "div[ad-size]"
         ],
+        "chchclub.com": [
+          ".partners-wrap #partners"
+        ],
         "chefkoch.de": [
           "div.gujAd",
           "div.responsive-ad",
@@ -1415,6 +1420,10 @@
         ],
         "consumernews.co.kr": [
           "span.brn"
+        ],
+        "coolfun.zal.kr": [
+          ".inner-body.hided .inside-content-background-gradient",
+          ".inner-body.hided .partners-inside"
         ],
         "cooln.kr": [
           "div#logo_top3",
@@ -1691,6 +1700,10 @@
         "doctorjob.co.kr": [
           ".grand_banner",
           ".grand_banner + .sectionc"
+        ],
+        "dodot.cafe24.com": [
+          "#adNotice",
+          "div[class^=\"article-adCover-div-\"]"
         ],
         "dogdrip.net": [
           "div.clayerbox-left-ad",
@@ -2276,6 +2289,10 @@
           "div.right_banner_div",
           "div[class^=\"ad_\"]:not(.ad_lst)",
           "div[data-docsrl] ~ div[style^=\"height:\"][style*=\"text-align:\"]"
+        ],
+        "ggulzam.zal.kr": [
+          ".inside-content-background-gradient",
+          ".partners-inside"
         ],
         "gidonline.club": [
           "div#tbn",
@@ -2882,6 +2899,10 @@
           "div.adtext",
           "div.mban_common_btm"
         ],
+        "jiavr.xyz": [
+          "#adNotice",
+          "div[class^=\"article-adCover-div-\"]"
+        ],
         "jiji.com": [
           "div.ArticleAdSide",
           "div.RectangleAd"
@@ -2957,6 +2978,10 @@
           "div[class*=\"_bn_\"]",
           "div[class^=\"R_cnt_bn_\"]",
           "iframe[src*=\"//adserver.joseilbo.com/openads/adframe.php\"]"
+        ],
+        "jovelys.ulog.kr": [
+          ".inner-body.hided .inside-content-background-gradient",
+          ".inner-body.hided .partners-inside"
         ],
         "jr.naver.com": [
           "div.bigBanner",
@@ -3164,6 +3189,9 @@
         "ksg.co.kr": [
           "div[class$=\"Ad\"]"
         ],
+        "ktestone.com": [
+          "div[class^=\"article-adCover-div-\"]"
+        ],
         "kukudas.com": [
           "a[href^=\"http://www.bananamall.co.kr/Alinker/\"]",
           "a[href^=\"http://www.netfile.co.kr/banner/ad_banner.jsp\"]",
@@ -3298,6 +3326,10 @@
         "lkp.news": [
           "div.banner_left",
           "div.banner_right"
+        ],
+        "loapost.cafe24.com": [
+          "#adNotice",
+          "div[class^=\"article-adCover-div-\"]"
         ],
         "loawa.com": [
           "#popup",
@@ -3700,9 +3732,6 @@
         "m.hyundaenews.com": [
           "div#treer3"
         ],
-        "m.ibric.org": [
-          "#TopAddFrame"
-        ],
         "m.idomin.com": [
           "div.float_banner"
         ],
@@ -3742,15 +3771,6 @@
           "div[ad-slot]",
           "div[id$=\"AD\"]"
         ],
-        "m.insight.co.kr": [
-          "div.ad-google-0",
-          "div.adHeader",
-          "div.daum-ad",
-          "div.fixed-bottom-ad",
-          "div.fixed__banner",
-          "div[data-widget_id=\"xlzgWGXZ\"]",
-          "li.page-more-ad"
-        ],
         "m.invest.zum.com": [
           "div.wrap-ad"
         ],
@@ -3761,26 +3781,8 @@
           "div.ad_wrap",
           "div.banner"
         ],
-        "m.jjang0u.com": [
-          "div#view_middle_ad",
-          "div.ad_area1",
-          "div.ad_area2",
-          "div[style=\"padding:10px 0; width:100%; height:100px; clear:both; background-color:#ffffff; border-bottom:1px solid #eeeeee;\"]",
-          "div[style=\"padding:5px 0; width:100%; height:100px; clear:both; background-color:#e5e5e5;\"]",
-          "div[style=\"padding:5px 0; width:100%; height:50px; clear:both; background-color:#e5e5e5;\"]",
-          "iframe[src^=\"/banner_wrap\"]"
-        ],
         "m.joseilbo.com": [
           "div.mb_banner"
-        ],
-        "m.joynews24.com": [
-          "div#celuvuAD",
-          "div#coupangAD",
-          "div#coupangCmm",
-          "div.ad_myadcom",
-          "div[ad-slot]",
-          "div[id$=\"AD\"]",
-          "hr[style].blank"
         ],
         "m.kbench.com": [
           "div#flotting_layer",
@@ -3860,6 +3862,8 @@
           "section.advertisment"
         ],
         "m.megabox.co.kr": [
+          ".ad-popup2",
+          ".layer-dimmed",
           ".login-easy",
           "div[class$=\"-banner\"]",
           "div[id$=\"Banner\"]"
@@ -3886,8 +3890,7 @@
         ],
         "m.munhwa.com": [
           "div[class*=\"_ad\"]",
-          "section.component_ad_01",
-          "section[class$=\"_ad\"]"
+          "section.component_ad_01"
         ],
         "m.news.naver.com": [
           "div.ad_area",
@@ -4077,10 +4080,8 @@
           "div.rowAd"
         ],
         "m.tenbizt.com": [
-          ".ad",
           "div.floating-150-ad",
           "div.footer-floating-ad",
-          "div[class$=\"-ad\"]",
           "div[class^=\"tenbizt-adsense-\"]"
         ],
         "m.thebigdata.co.kr": [
@@ -4214,15 +4215,6 @@
         "macnn.com": [
           "div.ad-slot"
         ],
-        "macrumors.com": [
-          "div#adUnder_mobile",
-          "div#contentAd",
-          "div#sideAd",
-          "div.ad",
-          "div.sidebarblock",
-          "div.sidebarblock2",
-          "div.tertiary"
-        ],
         "macstories.net": [
           "div.ad-container"
         ],
@@ -4314,6 +4306,10 @@
         "marumaru522.com": [
           "div.banner_m",
           "div.w_banner"
+        ],
+        "marupost.mycafe24.com": [
+          "#welcome-ad",
+          ".content-preview"
         ],
         "mashable.com": [
           "div#sticky-slot",
@@ -4792,7 +4788,6 @@
           "#_popIn_recommend",
           "div.horizon-ad",
           "div.horizon-hbanner",
-          "div[class^=\"ad\"]",
           "div[id*=\"_ad_\"]"
         ],
         "news.ikbc.co.kr": [
@@ -4839,6 +4834,7 @@
           "ul.adline"
         ],
         "news.oasisfeed.com": [
+          ".hideBtn",
           "[id$=\"Banner\"]"
         ],
         "news.tf.co.kr": [
@@ -4850,9 +4846,6 @@
         ],
         "news.unn.net": [
           "#sticky_variable_area"
-        ],
-        "news.v.daum.net": [
-          "div[class^=\"ad_\"]:not(.ad_lst)"
         ],
         "news.vice.com": [
           "div.ad-container",
@@ -4880,9 +4873,6 @@
           "div.adicon",
           "div[data-widget_id=\"57w1eQX8\"]",
           "div[data-widget_id=\"GokBYvXv\"]"
-        ],
-        "newsfeed.dispatch.co.kr": [
-          "div[id$=\"-ad\"]"
         ],
         "newshankuk.com": [
           "div.bannerBottomR",
@@ -5034,6 +5024,10 @@
           "div#exon",
           "div.insty"
         ],
+        "ohohz.cafe24.com": [
+          "#adNotice",
+          "div[class^=\"article-adCover-div-\"]"
+        ],
         "okky.kr": [
           "main div[class*=\"space-\"].hidden.flex-none"
         ],
@@ -5146,7 +5140,8 @@
           "[class^=\"dv-com-m\"]",
           "div[class$=\"-banner\"]",
           "div[class$=\"Ad\"]",
-          "div[class*=\"ad_\"]"
+          "div[class*=\"ad_\"]",
+          "html[class*=\"pc-size\"] .av-area-fot"
         ],
         "pay.naver.com": [
           "div[class^='BottomAds_article']"
@@ -5375,6 +5370,7 @@
           "div.pb-video-banner-ad-wrap"
         ],
         "pushoong.com": [
+          "#fullscreen-overlay",
           "div[id$=\"_banner\"]",
           "div[id*=\"_banner_\"]"
         ],
@@ -5639,6 +5635,10 @@
         ],
         "signin.gmarket.co.kr": [
           "div[class$=\"-banner\"]"
+        ],
+        "simcong.com": [
+          ".quiz_list:not([style]) ~  .result_wrap .restart",
+          ".waiting_coupang_wrap"
         ],
         "singingdalong.blogspot.com": [
           ".adsense-alt"
@@ -6035,6 +6035,7 @@
           "div.textAD"
         ],
         "tenbizt.com": [
+          "#fv-ol-wrap",
           "div[class*=\"-adsense-\"]"
         ],
         "tenforums.com": [
@@ -7097,6 +7098,9 @@
         ],
         "yako.red": [
           "#banner"
+        ],
+        "ydailynewsis.blogspot.com": [
+          "a[href*=\"//link.coupang.com/\"][type]"
         ],
         "yeongnam.com": [
           "div[class$=\"-ad\"]",
