@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261020,
-  "updatedAt": "2026-10-20",
+  "version": 20261021,
+  "updatedAt": "2026-10-21",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -610,6 +610,9 @@
           "button.promotion_area_right",
           "div.promotion_area"
         ],
+        "aiaplus.aia.co.kr": [
+          "#mwAppDownload"
+        ],
         "ajl.co.kr": [
           ".banner"
         ],
@@ -685,6 +688,9 @@
           "div[data-widget_id=\"KoEYP8oB\"]",
           "div[id^=\"mobonDivBanner_\"]"
         ],
+        "ani.ohli24.com": [
+          ".banner-area-main"
+        ],
         "ani119.com": [
           "div.each_adv_center",
           "iframe[src^=\"http://www.ani119.com/public/adv/\"]"
@@ -704,6 +710,7 @@
           "div#hd_pop"
         ],
         "aniweek.com": [
+          ".banner-area-main",
           "div#exoall",
           "div#exon",
           "div.insty"
@@ -901,8 +908,9 @@
         "bam295co.com": [
           "section.fixed-banner"
         ],
-        "banhub.xyz": [
-          "div.hidden[class*=\"xl:block\"]"
+        "bananamall.co.kr": [
+          "#banner_spot_txt",
+          "#vue-pc-popup-app"
         ],
         "basketkorea.com": [
           "div.adlink",
@@ -922,6 +930,9 @@
         ],
         "bbc.com": [
           "div.article__side-mpu"
+        ],
+        "bboom.naver.com": [
+          "div[id^=\"m_sub_bboom_\"]"
         ],
         "beautynury.com": [
           "div[class*=\"_banner_\"]",
@@ -1063,6 +1074,7 @@
           "div[class^=\"ad-\"]"
         ],
         "bntnews.co.kr": [
+          ".googleBanner",
           "div[class^=\"banner\"]"
         ],
         "bntnews.hankyung.com": [
@@ -1093,9 +1105,6 @@
         "bokuennews.com": [
           "[class*='_banner']"
         ],
-        "bonik.me": [
-          "#banner"
-        ],
         "books.chosun.com": [
           "div.ad_list_bottom",
           "div.art_ad_top",
@@ -1120,7 +1129,7 @@
           "div[class*=\"_banner\"]"
         ],
         "bosik.kr": [
-          "div.ad-template"
+          ".ad-template"
         ],
         "boutique.chosun.com": [
           "#bo_main_modalWrap"
@@ -1318,12 +1327,14 @@
           "div.belowMastheadWrapper"
         ],
         "chuchu.gg": [
-          ".ad-container"
+          ".ad-container",
+          "div[class^=\"ad-\"]"
         ],
         "chungnamilbo.co.kr": [
           "div[class^=\"ad-\"]"
         ],
         "chzzk.naver.com": [
+          ".webplayer-internal-core-dimmed",
           "div#live_end_banner",
           "div[class^=\"live_end_banner_container__\"]",
           "div[class^=\"popup_cheat_key_container__\"]"
@@ -1417,6 +1428,12 @@
           "div#superbanner_btfcontainer",
           "div#superbannercontainer",
           "div.adsensebox"
+        ],
+        "compuzone.co.kr": [
+          "#searchArea #side_ad",
+          ".pdtl_cm_detail .md_software",
+          "div[class^=\"ad_\"]:not(.ad_lst)",
+          "ul[id*=\"_ad_\"]"
         ],
         "consumernews.co.kr": [
           "span.brn"
@@ -1610,6 +1627,9 @@
           "div[class^=\"ad-\"]",
           "div[class^=\"ad-article-\"]"
         ],
+        "decover.co.kr": [
+          ".bottom-\\[calc\\(3\\.75rem\\+env\\(safe-area-inset-bottom\\)\\)\\]"
+        ],
         "deezer.com": [
           "div#ads_banner_left",
           "div.ads",
@@ -1774,7 +1794,7 @@
           "div[id$=\"_banner\"]"
         ],
         "e-himart.co.kr": [
-          "div[id*=\"Banner\"]:not(:is(#mainNewBanner, .hm-main__slide-new))",
+          "div[id*=\"Banner\"]:not(#mainNewBanner):not(.hm-main__slide-new)",
           "input ~ .searchRolling"
         ],
         "eanews.kr": [
@@ -2197,8 +2217,7 @@
         "g-enews.com": [
           "a[href^=\"/extcont/adclick.php\"]",
           "div.mad",
-          "div.vbotcombCls",
-          "div[class$=\"ad\"][style]"
+          "div.vbotcombCls"
         ],
         "gadgethacks.com": [
           "aside.top-ad-anchor",
@@ -2327,6 +2346,13 @@
           "div[id^=\"adPlaceholder-\"]",
           "li[data-type=\"AdComponent\"]"
         ],
+        "gobang.kr": [
+          ".app-install-pop",
+          ".wrap-open-app-banner"
+        ],
+        "godnatt.kr": [
+          "#mCafe24DirectToApp"
+        ],
         "gogoanimes.co": [
           "div#load_ads_2",
           "div.banner_center"
@@ -2397,7 +2423,9 @@
           "div[data-openweb-ad]"
         ],
         "graynews.co.kr": [
-          "[data-component=\"AdBanner\"]"
+          ".gn-ad",
+          "[data-component=\"AdBanner\"]",
+          "a[href^=\"/api/v2/ads/click?slot=\"]"
         ],
         "groovypost.com": [
           "div.groov-after-content-desktop",
@@ -2424,6 +2452,10 @@
         ],
         "h5.dcinside.com": [
           ".side .login-box ~ .img-wrap"
+        ],
+        "hackers.co.kr": [
+          ".closing_banner_container",
+          ".floor_layer_pop"
         ],
         "hackintosh.zone": [
           "ins#aswift_3_expand"
@@ -2578,7 +2610,6 @@
         ],
         "hotword.site": [
           ".at-container .at-col div[style^=\"height:\"]:not([class])",
-          "div[class$=\"ad\"][style]",
           "div[class^=\"col-md-\"] div:is([style^=\"width:\"], [style^=\"min-width:\"])"
         ],
         "how2shout.com": [
@@ -2660,6 +2691,9 @@
           "a[href^=\"/ad_link.php\"]",
           "a[href^=\"/ad_link.php?\"]",
           "div#treer2"
+        ],
+        "hyundailivart.co.kr": [
+          "#layer-app-popup"
         ],
         "ibabynews.com": [
           "#article-view-content-div div[class$=\"-banner\"]",
@@ -2830,7 +2864,7 @@
         "issuefeed.dcinside.com": [
           "div.body-ad",
           "div[class*=\" page_content-sticky-bottom__\"]",
-          "div[class*=\"ad\"]",
+          "div[class*=\"page_top-ad-box\"], div[class*=\"page_content-ad-box\"], div.content-ad-box, div.body-ad, div.ad-sense-box",
           "div[class^=\"page_content-ad-box__\"]"
         ],
         "issuetory.co.kr": [
@@ -2873,6 +2907,9 @@
         "jalopnik.com": [
           "div.ad-container",
           "div.js_sticky-top-ad"
+        ],
+        "japan.hani.co.kr": [
+          "div[google-add-preferred-source-btn]"
         ],
         "japanese.engadget.com": [
           "div#module-engadget-deeplink-top-ad"
@@ -2959,6 +2996,8 @@
           "div[class$=\"ad_link_area\"]"
         ],
         "joongang.co.kr": [
+          ".house_banner:not(.goto-app-btn)",
+          ".login_proposal",
           "div.ad_wrap",
           "div[class^=\"ad_\"]:not(.ad_lst)"
         ],
@@ -3005,6 +3044,9 @@
           "div.banner_event_box",
           "div.float_banner",
           "div.rotate_half_banner"
+        ],
+        "kasina.co.kr": [
+          "#layerModalBUSE_MOBILE"
         ],
         "kat.cr": [
           "div.spareBlock"
@@ -3178,6 +3220,9 @@
           "div.happy-header",
           "div.header-advertising"
         ],
+        "kream.co.kr": [
+          ".top-app-download-banner"
+        ],
         "krebsonsecurity.com": [
           "div#sidebar-box",
           "div#top-banner-image"
@@ -3226,6 +3271,7 @@
           "div[class^=\"ad\"]"
         ],
         "land.naver.com": [
+          "#presale_news_list",
           "div#_home_smart_banner"
         ],
         "laptopmag.com": [
@@ -3259,6 +3305,9 @@
         "lazyportfolioetf.com": [
           "div#custom_html-2",
           "div#custom_html-3"
+        ],
+        "lcdv.kr": [
+          "#mCafe24DirectToApp"
         ],
         "lecturernews.com": [
           "div[style].text-center"
@@ -3351,6 +3400,9 @@
           "div.banner-gnb",
           "div[class^=\"banner-\"]"
         ],
+        "lomad.co.kr": [
+          "#goAppGuide"
+        ],
         "looah.com": [
           "div.sideAd",
           "ins[data-ad-slot=\"7841147424\"]"
@@ -3421,7 +3473,7 @@
         "m.11st.co.kr": [
           "#plusPrdArea",
           "#powerPrdSection",
-          "div[class$=\"-ad\"]",
+          ".c-footer__app-download",
           "div[data-log-actionid-area=\"brand_floating\"]"
         ],
         "m.ajunews.com": [
@@ -3501,6 +3553,9 @@
         "m.bustago.or.kr": [
           "#safeconnectAddBox"
         ],
+        "m.bzpp.co.kr": [
+          "#moblieAppNudge"
+        ],
         "m.cafe.daum.net": [
           ".nativead-placeholder",
           "[class*='_banner']",
@@ -3538,10 +3593,11 @@
           "div[id^=\"naverAd\"]"
         ],
         "m.compuzone.co.kr": [
-          ".right_btn",
           "div[class*=\"_main_ban\"]"
         ],
         "m.coupang.com": [
+          "#BottomAppBanner",
+          "#app-dl-nudge-widget",
           ".plp-default__item.search-product__cmg-badge",
           "div[data-page-type=\"brandSDP\"][id$=\"carousel-products\"]",
           "div[id$=\"_banner\"]",
@@ -3672,6 +3728,9 @@
         "m.fpn119.co.kr": [
           "div[id^=\"mobitree\"]"
         ],
+        "m.fredit.co.kr": [
+          ".app-down-layer"
+        ],
         "m.game.naver.com": [
           "div[class^=\"detail_banner__\"]"
         ],
@@ -3682,6 +3741,7 @@
           "section.advertisment"
         ],
         "m.gmarket.co.kr": [
+          ".box__app-lead",
           ".js-impressionable"
         ],
         "m.go.seoul.co.kr": [
@@ -3808,6 +3868,9 @@
           "div.main_banner2",
           "div.vs_ad"
         ],
+        "m.kshop.co.kr": [
+          "div[class^=\"Header_bandBanner\"]"
+        ],
         "m.kukinews.com": [
           "div.articlein_ad_middle_content",
           "div.articlein_ad_top_content",
@@ -3863,6 +3926,7 @@
         ],
         "m.megabox.co.kr": [
           ".ad-popup2",
+          ".induceBanner",
           ".layer-dimmed",
           ".login-easy",
           "div[class$=\"-banner\"]",
@@ -3897,6 +3961,7 @@
           "div.ad_box"
         ],
         "m.news.zum.com": [
+          "#banner_app_view",
           "div.ad_slot",
           "div.article_top_banner",
           "div.bn_wrap",
@@ -3977,6 +4042,10 @@
           "a[class^=\"AdBannerWithApi__\"]",
           "div[class^=\"AdBannerWithApi__\"]",
           "div[class^=\"UISet_RichgoMap_IntroAd__\"]"
+        ],
+        "m.saramin.co.kr": [
+          "#app_banner_dimmed",
+          "#wrap_app_banner"
         ],
         "m.search.daum.net": [
           "div[class^=\"ad_\"]:not(.ad_lst)"
@@ -4083,6 +4152,9 @@
           "div.floating-150-ad",
           "div.footer-floating-ad",
           "div[class^=\"tenbizt-adsense-\"]"
+        ],
+        "m.thebell.co.kr": [
+          "article[class$=\"_banner\"]"
         ],
         "m.thebigdata.co.kr": [
           ".fdimmed ~ div[style^=\"max-width:\"]"
@@ -4366,15 +4438,6 @@
           "iframe#ads",
           "iframe[src^=\"/templates/linkto/ads.php\"]"
         ],
-        "mediapen.com": [
-          "div#adshow",
-          "div.mask_div",
-          "div[data-ad][class][style]",
-          "div[id^=\"mundan_banner\"]",
-          "iframe[src^=\"/banners/\"]",
-          "iframe[src^=\"/banners/load/\"]",
-          "img[src*=\"//img.mediapen.com/banners/\"]"
-        ],
         "mediaus.co.kr": [
           "div[class^=\"ad-\"]",
           "iframe[src^=\"/banner/\"]",
@@ -4391,11 +4454,11 @@
         ],
         "meeco.kr": [
           "#cCon + aside.sidebar2",
-          ".adsbygoogle",
           "div.xe_content.xe-widget-wrapper[style*=\"height: auto !important\"]",
           "html[class*=\"mobile\"] .list_document li:not([class])"
         ],
         "megabox.co.kr": [
+          ".main-notice-layer",
           "div[class*=\"-ad\"]:not(.container):not([style])"
         ],
         "memberssl.auction.co.kr": [
@@ -4424,6 +4487,9 @@
           "div.wing_banner_area_right",
           "div[class^=\"banner_\"]",
           "div[id^=\"layerPopup_\"]"
+        ],
+        "mfront.homeplus.co.kr": [
+          ".appInstallBanner"
         ],
         "mground.kr": [
           "[data-postid].ultp-shortcode"
@@ -4485,7 +4551,7 @@
         ],
         "mmzone.co.kr": [
           "#main_premium_spon_block",
-          "#scm_premium_spon_block",
+          ".desktop-index-sponsors, .spon-banner-viewport",
           "div[id$=\"_ad\"]",
           "div[id^=\"scm_ban\"][style*=\"url(/media/banner/\"]"
         ],
@@ -4494,15 +4560,6 @@
         ],
         "mnews.imaeil.com": [
           "div[class$=\"_ad\"][style] + .h20"
-        ],
-        "mnews.sbs.co.kr": [
-          "div#ggadsense1",
-          "div#ggadsense2",
-          "div#sbsMobileAdArea",
-          "div.efoot_bnr_ad",
-          "div.smrbanner",
-          "div.w_end_ad",
-          "div[id$=\"_ad\"]"
         ],
         "mobiinside.co.kr": [
           "div[class*=\"-banner-\"]"
@@ -4515,15 +4572,6 @@
           ".div_banner",
           "div.div_banner",
           "iframe[src*=\"//ad1.missyusa.com:448/\"]"
-        ],
-        "mobile.newsis.com": [
-          "div.adPos.listStyle04",
-          "div.bannerGroup",
-          "div.bxcn",
-          "div.con_area_ad1",
-          "div[class$=\"adPos\"][class^=\"listStyle\"][style]",
-          "div[id^=\"ad_\"]",
-          "iframe[src^=\"/ad_list/\"]"
         ],
         "mobile.nytimes.com": [
           "div[class^=\"ResponsiveAd-\"]"
@@ -4629,20 +4677,18 @@
           "div[class$=\"banner\"]",
           "p.ad-tag"
         ],
-        "mtn.co.kr": [
-          "div#adPlus",
-          "div.adBanner210",
-          "div.adBanner280",
-          "div.adBanner430",
-          "div.adBanner_list",
-          "div.adbanner_sponsor",
-          "div.mtnLiveAdbanner"
-        ],
         "muko.kr": [
           "#popupAdOverlay",
           "#xt_join_site_addons",
           ".lp-install-chip",
           ".muko-ad-impression"
+        ],
+        "mule.co.kr": [
+          ".modal-login-wrapper .right-box",
+          "[class*='-ad-']",
+          "[class*='Ad']",
+          "div.section-leftmiddle-bottommiddle.cf",
+          "div[class^=\"section-\"]:is([class$=\"-ad\"], [class$=\"-bigad\"], [class$=\"-topad\"], [class$=\"-smallad\"], [class$=\"ad-pc\"])"
         ],
         "musinsa.com": [
           "[href$=\"/main/musinsa/brand_ad\"]"
@@ -4654,6 +4700,7 @@
           ":is(.wcms_banner, .clean_banner) + [class^=\"h\"]",
           "div.wcms_banner",
           "div[class$=\"_banner\"]",
+          "div[id*=\"_ad\"]",
           "div[id^=\"ad\"]"
         ],
         "mymodernmet.com": [
@@ -4664,15 +4711,6 @@
           "section.desktop-ad",
           "section.header-ad"
         ],
-        "mywatchseries.to": [
-          "a[href^=\"http://adsrvmedia.adk2x.com/imp\"]",
-          "div.ad_300_250",
-          "div.ad_300_300",
-          "div.block-left-home-inside[style=\"height:252px; text-align:center; \"]",
-          "div.block-left-home-inside[style=\"height:252px; text-align:center;\"]",
-          "div.header-ad",
-          "div.sp-leader"
-        ],
         "n.news.naver.com": [
           "div#aside_ad",
           "div.ad_box"
@@ -4680,15 +4718,6 @@
         "namu.live": [
           "div.ad",
           "iframe[src^=\"/api/ads\"]"
-        ],
-        "namu.wiki": [
-          "div#search-ad",
-          "div.ad",
-          "div.namuwiki-toc-ad",
-          "div.test-ad-card",
-          "iframe[src^=\"//arca.live/static/ad/\"]",
-          "iframe[src^=\"//minor.town/static/ad/\"]",
-          "iframe[src^=\"//namu.live/static/ad/\"]"
         ],
         "narkive.com": [
           "div#sidebar_banner_right"
@@ -4727,15 +4756,6 @@
         ],
         "new.land.naver.com": [
           "div#land_panel_da"
-        ],
-        "newduck.net": [
-          "aside.custom-banner",
-          "aside.custom-banner+p[style=\"text-align: center;\"]",
-          "div#ad-container",
-          "div#plusad_widget_wrap",
-          "div#powerLink1",
-          "div.banner",
-          "div.pc_top_ad"
         ],
         "newgrounds.com": [
           "div#afrc_skin",
@@ -4802,15 +4822,6 @@
         "news.kmib.co.kr": [
           "div#left_top_ad",
           "div#right_top_ad"
-        ],
-        "news.kukinews.com": [
-          "div#lft_top_adplus",
-          "div#right_top_ad",
-          "div.ad_top_980",
-          "div.bnr_370_60",
-          "div.vw_ad_700",
-          "div[class^=\"banner_1024_1024_\"]",
-          "iframe#subIframe"
         ],
         "news.maxmovie.com": [
           "ul.news_right_ad"
@@ -4952,15 +4963,6 @@
           "div.ad",
           "div.full-bleed-ad"
         ],
-        "nicovideo.jp": [
-          "div.Ads",
-          "div.BottomContainer-adContainer",
-          "div.CommentPanelBannerAd",
-          "div.HeaderContainer_Re-ad",
-          "div[class$=\"AdContainer\"]",
-          "iframe[src^=\"https://ads.nicovideo.jp/bannertext\"]",
-          "section[class$=\"AdSection\"]"
-        ],
         "nikkan-spa.jp": [
           "div#sp_ad_index",
           "div#sp_ad_single",
@@ -4978,15 +4980,6 @@
         "noblesse.com": [
           "div#top_banner",
           "div.bannerwrap"
-        ],
-        "nongmin.com": [
-          "div.banner_render",
-          "div.hd_bnr",
-          "div.main_hd_bnr",
-          "div.main_right_slide",
-          "div.right_top_bnr",
-          "div[class*=\"_bnr\"]",
-          "div[class^=\"banner-\"]"
         ],
         "now.rememberapp.co.kr": [
           ".now_content_ads__wrapper"
@@ -5006,15 +4999,6 @@
         ],
         "nypost.com": [
           "div.billboard-ad"
-        ],
-        "nytimes.com": [
-          "div#acm-wrapper",
-          "div#bottom-wrapper",
-          "div#top-wrapper",
-          "div.ad",
-          "div.e12j3pa50",
-          "div.g-ad",
-          "div[id^=\"story-ad-\"][id$=\"-wrapper\"]"
         ],
         "odysee.com": [
           "div.ads__claim-item"
@@ -5091,7 +5075,9 @@
           "div[class$=\"_banner\"]"
         ],
         "osen.co.kr": [
-          "div[class^=\"ad-\"]"
+          "div[class$=\"_banner\"]",
+          "div[class^=\"ad-\"]",
+          "div[id^=\"banner-\"]"
         ],
         "oshiete.goo.ne.jp": [
           "div#gheader",
@@ -5120,15 +5106,6 @@
           "div.ad_left",
           "div.section_adarea",
           "div.top_ban"
-        ],
-        "pann.nate.com": [
-          "div#pann_brandAdWrap",
-          "div#psypannAd",
-          "div.sidebar.ad",
-          "div.sidebar_banner",
-          "div.view_banner",
-          "div[class*=\"_ad_\"]",
-          "div[id^=\"ad_\"]"
         ],
         "pastebin.com": [
           "div.banner_728",
@@ -5325,6 +5302,9 @@
           "section#custom_html-2",
           "section#custom_html-7"
         ],
+        "premium.sbs.co.kr": [
+          ".popupBanner_w"
+        ],
         "pressian.com": [
           ".banner",
           "div.ad",
@@ -5405,6 +5385,11 @@
         "r25.jp": [
           "div.Article__articleListWrapper__featureBannerWrapper"
         ],
+        "radioonline.kr": [
+          ".add-box-side",
+          ".add-box-top",
+          ".cookie-consent"
+        ],
         "radiotimes.com": [
           "div.ad-banner-container",
           "div.dfp-ad",
@@ -5449,6 +5434,9 @@
         "redstate.com": [
           "div.ad-300x250",
           "div.banner-ad"
+        ],
+        "reformparty.kr": [
+          ".app-dl-ov"
         ],
         "reurl.kr": [
           "a[onclick^=\"go_banner\"]"
@@ -5624,6 +5612,7 @@
           ".AdvertisingList"
         ],
         "shopping.naver.com": [
+          "div[class^=\"_appStarterBanner_app_starter_banner_\"]",
           "div[id$=\"Ad\"]",
           "div[id*=\"ADVERTISE\"][class*=\"contentModuleWrapper_news_ad__\"]"
         ],
@@ -5671,6 +5660,9 @@
         "sjbnews.com": [
           "ins[data-ad-slot=\"I_새전북신문_신규컨텐츠하단1_300_250\"]",
           "ins[data-ad-slot=\"I_새전북신문_신규컨텐츠하단2_400_250\"]"
+        ],
+        "skecherskorea.co.kr": [
+          ".header-app-open-content"
         ],
         "skidkaonline.ru": [
           "div.ads",
@@ -5825,6 +5817,7 @@
         "sportschosun.com": [
           "div#caulyad",
           "div.news_text div.mobile-ad",
+          "div[class*=\"ad-\"]",
           "div[data-nosnippet]"
         ],
         "sportsw.kr": [
@@ -5966,9 +5959,6 @@
         ],
         "targetveb.com": [
           "aside.widget_text"
-        ],
-        "tcafe2a.com": [
-          ".side-event-img"
         ],
         "tcorea.com": [
           "a[href^=\"../../page/ad.php\"]",
@@ -6268,6 +6258,7 @@
           "div.lazy-dfp"
         ],
         "tokenpost.kr": [
+          ".app_download_banner_wrap",
           ".cmsBanner",
           "div.cmsBanner",
           "div.news_flash_top_banner",
@@ -6317,44 +6308,37 @@
           "td.at-banner"
         ],
         "torrentqq401.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq402.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq403.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq404.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq405.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq406.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq407.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq408.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq409.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
         ],
         "torrentqq410.com": [
-          ".at-banner",
-          ".row-banner"
+          ".row-banner, .at-banner"
+        ],
+        "torrentqq418.com": [
+          ".row-banner, .at-banner"
         ],
         "torrentreel51.site": [
           "div.ad-cont-box"
@@ -6379,6 +6363,9 @@
           "div.art_mobile_mid_ad",
           "iframe[src^=\"http://travel.chosun.com/common/r_banner/index.html\"]",
           "li.wrap_ad_in_list"
+        ],
+        "treemingbird.com": [
+          "#mCafe24DirectToApp"
         ],
         "trees.gamemeca.com": [
           "div.gm_head_ads",
@@ -6580,6 +6567,9 @@
         "umrb.co.kr": [
           "ul.main_slider_area"
         ],
+        "underarmour.co.kr": [
+          ".l-consent_banner"
+        ],
         "uniforumtz.com": [
           "div.ad-wrap",
           "div.inline-single-ad",
@@ -6727,6 +6717,9 @@
         "viralised.com": [
           "div.vlog_adsense_widget"
         ],
+        "visitkorea.or.kr": [
+          "#footer-cookie"
+        ],
         "vitaminhealth.kr": [
           "iframe[data-ezsrc*=\"//coupa.ng/\"]"
         ],
@@ -6767,6 +6760,9 @@
         ],
         "wago.io": [
           "div.wago-ad-container"
+        ],
+        "wanted.co.kr": [
+          "div[data-cy=\"appDownloadPopup\"]"
         ],
         "warcraftlogs.com": [
           "div#anyclip-container-box",
@@ -6877,7 +6873,9 @@
           "div.wikia-ad"
         ],
         "wikidocs.net": [
-          "div.blog-adsense-block"
+          "div.blog-adsense-block",
+          "div[class*=\"-ad-\"]",
+          "div[class^=\"ad-\"]"
         ],
         "wikihow.com": [
           "div.wh_ad_inner",
@@ -6950,6 +6948,9 @@
         "wordrow.kr": [
           "div#ad-header"
         ],
+        "world.kbs.co.kr": [
+          ".chrome_pick"
+        ],
         "wow-professions.com": [
           "section#block-wp-theme-block-22",
           "section#block-wp-theme-block-23",
@@ -7013,6 +7014,9 @@
         "www.coupang.com": [
           "#srp-bottom-carousel-dco-contaner"
         ],
+        "www.danawa.com": [
+          ".main-finance"
+        ],
         "www.daum.net": [
           "div[aria-hidden=\"true\"].imgdeco_below",
           "div[class$=\"_banner\"]",
@@ -7042,7 +7046,6 @@
           ".section__main-power"
         ],
         "www.instiz.net": [
-          "div[class$=\"ad\"][id$=\"ad\"]",
           "div[class$=\"ad_area\"]"
         ],
         "www.inven.co.kr": [
