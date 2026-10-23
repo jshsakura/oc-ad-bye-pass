@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261022,
-  "updatedAt": "2026-10-22",
+  "version": 20261023,
+  "updatedAt": "2026-10-23",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -9454,6 +9454,9 @@
         "bomba15.com": [
           ".cerez"
         ],
+        "bomba32.com": [
+          ".js-cookie-consent"
+        ],
         "bombbar.ru": [
           ".wrap_info_cookie"
         ],
@@ -9861,9 +9864,6 @@
         ],
         "bouncecheck.email": [
           ".bottom-0.fixed"
-        ],
-        "bourgogne-wines.com": [
-          "#tarteaucitronRoot"
         ]
       }
     },
