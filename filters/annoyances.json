@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261024,
-  "updatedAt": "2026-10-24",
+  "version": 20261025,
+  "updatedAt": "2026-10-25",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,15 @@
     },
     "domains": {
       "cookieBanners": {
+        "afto.al": [
+          ".cookie-hint"
+        ],
+        "afyonhaberturk.com": [
+          ".cerez"
+        ],
+        "afyonpostasi.com.tr": [
+          ".cookie-consent-body"
+        ],
         "afzuigkap.nl": [
           "#cookie_popup_body"
         ],
@@ -5728,6 +5737,9 @@
         "avica.link": [
           "div[class^=\"atoms__AcceptCookieWrapper\"]"
         ],
+        "avioadsb.org": [
+          ".avio-cc-box"
+        ],
         "avis.co.il": [
           ".p13-banner"
         ],
@@ -5943,6 +5955,9 @@
         ],
         "azpc.info": [
           "#ntf"
+        ],
+        "azrad.co.il": [
+          "#cookie-consent-popup"
         ],
         "azrieligroup.com": [
           "#cookie-notice"
@@ -9301,6 +9316,9 @@
         "bnf.fr": [
           ".block-bnf-cookies"
         ],
+        "bniyah.co.il": [
+          "#scn-banner-root"
+        ],
         "bnl.it": [
           "#cookielaw-popup-wrapper"
         ],
@@ -9849,21 +9867,6 @@
         ],
         "botify.com": [
           ".pin-b.pin-l.fixed"
-        ],
-        "botmother.com": [
-          "div[data-storage-item*=\"cookiename\"]"
-        ],
-        "bottari.pl": [
-          "#cc--main"
-        ],
-        "bottrop.de": [
-          ".SP-CookieUsageNotification"
-        ],
-        "boudoirsecrets.at": [
-          ".consent-banner-root"
-        ],
-        "boulderhaus.net": [
-          "._2mmyb"
         ]
       }
     },
