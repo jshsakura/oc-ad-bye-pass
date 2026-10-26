@@ -5,10 +5,10 @@
       "license": "GPL-3.0",
       "url": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt",
       "counts": {
-        "block": 185497,
+        "block": 179602,
         "allow": 11,
         "cosmetic": 0,
-        "unsupported": 722,
+        "unsupported": 723,
         "skipped": 181
       }
     },
@@ -17,9 +17,9 @@
       "license": "GPL-3.0 / CC BY-SA 3.0",
       "url": "https://easylist.to/easylist/easylist.txt",
       "counts": {
-        "block": 52041,
+        "block": 42791,
         "allow": 1,
-        "cosmetic": 11061,
+        "cosmetic": 11076,
         "unsupported": 6813,
         "skipped": 263
       }
@@ -29,10 +29,10 @@
       "license": "GPL-3.0 / CC BY-SA 3.0",
       "url": "https://easylist.to/easylist/easyprivacy.txt",
       "counts": {
-        "block": 47019,
+        "block": 47061,
         "allow": 4,
         "cosmetic": 35,
-        "unsupported": 9245,
+        "unsupported": 9251,
         "skipped": 55
       }
     },
@@ -41,20 +41,20 @@
       "license": "GPL-3.0",
       "url": "https://cdn.jsdelivr.net/npm/@list-kr/filterslists@latest/dist/filterslist-AdGuard.txt",
       "counts": {
-        "block": 369,
+        "block": 381,
         "allow": 1,
-        "cosmetic": 2015,
-        "unsupported": 1565,
-        "skipped": 4
+        "cosmetic": 2043,
+        "unsupported": 1633,
+        "skipped": 3
       }
     }
   ],
-  "totalDomains": 197620,
-  "blockedDomains": 197620,
-  "ruleCount": 199,
+  "totalDomains": 191801,
+  "blockedDomains": 191801,
+  "ruleCount": 193,
   "batchSize": 1000,
   "droppedForLimit": 0,
-  "subsumedBySubdomainRule": 3796,
+  "subsumedBySubdomainRule": 3804,
   "maxRules": 30000,
   "pinned": 40,
   "neverBlock": [
