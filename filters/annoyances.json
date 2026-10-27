@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261026,
-  "updatedAt": "2026-10-26",
+  "version": 20261027,
+  "updatedAt": "2026-10-27",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -4480,6 +4480,9 @@
         "arvelle.de": [
           "#cookie_note_div"
         ],
+        "arvion.ai": [
+          "div[aria-labelledby=\"cookie-consent-title\"]"
+        ],
         "arvojournals.org": [
           ".widget-GdprCookieBanner"
         ],
@@ -6772,6 +6775,9 @@
         "bazaraki.com": [
           ".privacy-cookies"
         ],
+        "bazel.build": [
+          "div[data-testid=\"consent-banner-root\"]"
+        ],
         "bazg.admin.ch": [
           ".notification-banner"
         ],
@@ -8794,6 +8800,9 @@
         "bloodmallet.com": [
           "#cookie_information_overlay"
         ],
+        "bloomberght.com": [
+          "div[data-name=\"ConsentBanner\"]"
+        ],
         "bloomreach.com": [
           "#gdpr"
         ],
@@ -9442,6 +9451,9 @@
         "bokono.pl": [
           "#cookie"
         ],
+        "bokserkoland.pl": [
+          "#bk-cmp-banner"
+        ],
         "bolagsverket.se": [
           ".cookies"
         ],
@@ -9852,21 +9864,6 @@
         ],
         "bosporshop.ru": [
           ".cookie"
-        ],
-        "boss-nekretnine.hr": [
-          "#notice"
-        ],
-        "bossautoukraine.com.ua": [
-          "[class^=\"style_container__\"]"
-        ],
-        "bostools.nl": [
-          "#privacy-policy"
-        ],
-        "botabota.ca": [
-          ".cookie"
-        ],
-        "botafarmcalifornia.com": [
-          ".consent-banner-root-container"
         ]
       }
     },
