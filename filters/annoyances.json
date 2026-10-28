@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261027,
-  "updatedAt": "2026-10-27",
+  "version": 20261028,
+  "updatedAt": "2026-10-28",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -4129,6 +4129,9 @@
         "archestra.ai": [
           ".bottom-0.fixed"
         ],
+        "archeton.pl": [
+          ".modal-backdrop"
+        ],
         "archiconnect.pl": [
           "body .rodo"
         ],
@@ -7225,6 +7228,9 @@
         "bellevue-hamburg.de": [
           ".bottom-0.fixed"
         ],
+        "bellevue-wengen.ch": [
+          ".extended_cookie_overlay"
+        ],
         "bellpolska.com.pl": [
           ".spu-bg"
         ],
@@ -8809,9 +8815,6 @@
         "blowtex.com.br": [
           ".modal-cookies"
         ],
-        "bloxd.io": [
-          ".PopupNotification"
-        ],
         "blsslovakiavisa.com": [
           ".cookies"
         ],
@@ -9861,9 +9864,6 @@
         ],
         "boselatam.com": [
           ".bose-infoBar2016--cookie"
-        ],
-        "bosporshop.ru": [
-          ".cookie"
         ]
       }
     },
