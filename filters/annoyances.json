@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261030,
-  "updatedAt": "2026-10-30",
+  "version": 20261031,
+  "updatedAt": "2026-10-31",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "afteracademy.com": [
+          ".MuiSnackbar-anchorOriginBottomCenter"
+        ],
         "aftermarket.pl": [
           "#part-cookies"
         ],
@@ -3436,6 +3439,9 @@
         "antyweb.pl": [
           "#privacy"
         ],
+        "anvelope.md": [
+          "#cookie-consent"
+        ],
         "anvelopelider.ro": [
           "div[data-rgpd-version-value]"
         ],
@@ -4845,6 +4851,9 @@
         ],
         "astrum-entertainment.ru": [
           ".cookie-banner"
+        ],
+        "astrum-play.ru": [
+          "._root_1fhto_1"
         ],
         "asuntoslegales.com.co": [
           ".cookies:not(html, body)"
@@ -7783,6 +7792,9 @@
         "biblioteka.shop": [
           ".banner-cookie"
         ],
+        "biblioteki.org": [
+          "#cookies"
+        ],
         "bic-zwickau.de": [
           "#cookiehinweis"
         ],
@@ -9851,18 +9863,6 @@
           ".bose-infoBar2016--cookie"
         ],
         "bose.se": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.sg": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.tw": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.vn": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bosebelgium.be": [
           ".bose-infoBar2016--cookie"
         ]
       }
