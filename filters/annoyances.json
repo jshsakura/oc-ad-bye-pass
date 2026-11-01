@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261031,
-  "updatedAt": "2026-10-31",
+  "version": 20261101,
+  "updatedAt": "2026-11-01",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,30 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "afteracademy.com": [
-          ".MuiSnackbar-anchorOriginBottomCenter"
-        ],
-        "aftermarket.pl": [
-          "#part-cookies"
-        ],
-        "afternic.com": [
-          "#gtm_privacy"
-        ],
-        "afto.al": [
-          ".cookie-hint"
-        ],
-        "afyonhaberturk.com": [
-          ".cerez"
-        ],
-        "afyonpostasi.com.tr": [
-          ".cookie-consent-body"
-        ],
-        "afzuigkap.nl": [
-          "#cookie_popup_body"
-        ],
-        "ag.mos.ru": [
-          ".cookie-informer"
-        ],
         "agados.cz": [
           ".cookie-consent-banner"
         ],
@@ -2325,6 +2301,9 @@
         ],
         "allmyfaves.com": [
           ".cookie-consent-banner"
+        ],
+        "allmylinks.com": [
+          "#cc-main"
         ],
         "allnations.com.br": [
           "#eu-cookie-bar-notification"
@@ -8797,11 +8776,80 @@
         "blokhaber.com": [
           ".cerez"
         ],
-        "bloknot-rostov.ru": [
-          "div[style^=\"position: fixed;\"][style*=\"z-index: 1000;\"][style*=\"rgb(240, 238, 233)\"]"
+        "bloknot-astrakhan.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
         ],
-        "bloknot.ru": [
-          "div[style^=\"position: fixed; bottom: 0px;\"]"
+        "bloknot-donetsk.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-gelendzhik.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-herson.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-kamyshin.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-krasnodar.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-krymska.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-lugansk.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-moldova.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-morozovsk.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-novorossiysk.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-odessa.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-shakhty.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-stavropol.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-taganrog.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-volgodonsk.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-volgograd.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-volzhsky.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-voronezh.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknot-zaporozhie.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknotanapa.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknotanna.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknotborisoglebsk.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknotsaratov.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
+        ],
+        "bloknottambov.ru": [
+          "div[style^=\"position: fixed; bottom:\"]"
         ],
         "blomedry.com": [
           ".cookies"
@@ -9791,78 +9839,6 @@
           ".bose-infoBar2016--cookie"
         ],
         "bose.ca": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.ch": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.cl": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.cn": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.co": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.co.jp": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.co.nz": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.co.uk": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.com": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.com.au": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.de": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.dk": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.es": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.fi": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.fr": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.hk": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.hu": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.ie": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.lu": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.mx": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.nl": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.no": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.pe": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.pl": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.se": [
           ".bose-infoBar2016--cookie"
         ]
       }
