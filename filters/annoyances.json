@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261101,
-  "updatedAt": "2026-11-01",
+  "version": 20261102,
+  "updatedAt": "2026-11-02",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -5068,6 +5068,9 @@
         "atvavrupa.tv": [
           ".veriAltBar"
         ],
+        "atvxperience.com": [
+          ".notification"
+        ],
         "au.ru": [
           "div[id^=\"cookie-question_\"]"
         ],
@@ -6508,6 +6511,9 @@
         "barker.com.tr": [
           ".alert"
         ],
+        "barlinek.pl": [
+          "div[data-name=\"cookiePolicy\"]"
+        ],
         "barmer.de": [
           ".cookiehint"
         ],
@@ -7468,6 +7474,9 @@
         "bestnetleiloes.com": [
           ".cookie-popup"
         ],
+        "bestokazje.pl": [
+          ".zgoda-modal"
+        ],
         "bestporn.gg": [
           ".cookiesBanner"
         ],
@@ -8415,6 +8424,9 @@
         ],
         "biznes.plus.pl": [
           "#CAPPDialog"
+        ],
+        "biznes.pwr.edu.pl": [
+          "#cc_div"
         ],
         "biznes2biznes.com": [
           ".stickynote2"
@@ -9828,18 +9840,6 @@
         ],
         "boschrexroth.africa": [
           ".ar-cp"
-        ],
-        "bosco.ru": [
-          ".policy-cookie"
-        ],
-        "bose.ae": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.at": [
-          ".bose-infoBar2016--cookie"
-        ],
-        "bose.ca": [
-          ".bose-infoBar2016--cookie"
         ]
       }
     },
