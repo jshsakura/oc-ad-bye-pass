@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261102,
-  "updatedAt": "2026-11-02",
+  "version": 20261103,
+  "updatedAt": "2026-11-03",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -4342,6 +4342,9 @@
         "aronimink.org": [
           ".cookie-consent-wrapper"
         ],
+        "arora.com.tr": [
+          ".cookies"
+        ],
         "arp.pl": [
           "#tarteaucitronRoot"
         ],
@@ -5704,6 +5707,9 @@
         "avertisment.ro": [
           "#consentModal"
         ],
+        "averydennison.com": [
+          ".TSCookieAndPrivacy"
+        ],
         "avg.pl": [
           "#cc--main"
         ],
@@ -6336,6 +6342,9 @@
         ],
         "banamex.com": [
           ".citi-navbar-message"
+        ],
+        "bananaball.com": [
+          "#wpconsent-root"
         ],
         "bananacar.lt": [
           ".notification-wrapper"
@@ -7275,6 +7284,9 @@
         ],
         "benatural.pl": [
           ".jconfirm"
+        ],
+        "benchlm.ai": [
+          "section[aria-labelledby=\"cookie-choice-title\"]"
         ],
         "benchmark.unigine.com": [
           ".bottom-notice"
@@ -8884,9 +8896,6 @@
         "bloodmallet.com": [
           "#cookie_information_overlay"
         ],
-        "bloomberght.com": [
-          "div[data-name=\"ConsentBanner\"]"
-        ],
         "bloomreach.com": [
           "#gdpr"
         ],
@@ -9831,15 +9840,6 @@
         ],
         "bosch-professional.com": [
           "dock-privacy-settings"
-        ],
-        "bosch.de": [
-          "o-cookie-law"
-        ],
-        "boschettileo.com": [
-          ".page-wrap--cookie-permission"
-        ],
-        "boschrexroth.africa": [
-          ".ar-cp"
         ]
       }
     },
