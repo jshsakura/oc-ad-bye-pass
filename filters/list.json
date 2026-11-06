@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261105,
-  "updatedAt": "2026-11-05",
+  "version": 20261106,
+  "updatedAt": "2026-11-06",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -2818,7 +2818,7 @@
           "ins[data-ad-slot=\"2702402824\"]"
         ],
         "insurance.pay.naver.com": [
-          "div[class^=\"InsuranceHomeAdBanner-module-scss-module\"]"
+          "div[class^=\"InsuranceHomeAdBanner\"]"
         ],
         "interfootball.co.kr": [
           "div[class^=\"ad-\"]"
