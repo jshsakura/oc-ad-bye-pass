@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20261107,
-  "updatedAt": "2026-11-07",
+  "version": 20261108,
+  "updatedAt": "2026-11-08",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -3285,6 +3285,9 @@
         "lithium.daum.net": [
           "div#bnr_trend"
         ],
+        "litomi.cc": [
+          "[data-juicy-ads-slot]"
+        ],
         "live.joinsmsn.com": [
           "div.shopping_v2"
         ],
@@ -5198,15 +5201,6 @@
           "div.ap_side2",
           "div.ap_top",
           "div.ap_top_mobile"
-        ],
-        "postshare.co.kr": [
-          "#hd_pop",
-          ".addot-wrapper",
-          "div#crpifpopff",
-          "div#hd_pop",
-          "div.addot-wrapper",
-          "div[id^=\"adMall_popup_\"]",
-          "div[id^=\"foin_\"]"
         ],
         "postype.com": [
           "div[data-sentry-component=\"FeedGoogleAd\"]"

@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261107,
-  "updatedAt": "2026-11-07",
+  "version": 20261108,
+  "updatedAt": "2026-11-08",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -3360,6 +3360,9 @@
         "lithium.daum.net": [
           "div#bnr_trend"
         ],
+        "litomi.cc": [
+          "[data-juicy-ads-slot]"
+        ],
         "live.joinsmsn.com": [
           "div.shopping_v2"
         ],
@@ -5273,15 +5276,6 @@
           "div.ap_side2",
           "div.ap_top",
           "div.ap_top_mobile"
-        ],
-        "postshare.co.kr": [
-          "#hd_pop",
-          ".addot-wrapper",
-          "div#crpifpopff",
-          "div#hd_pop",
-          "div.addot-wrapper",
-          "div[id^=\"adMall_popup_\"]",
-          "div[id^=\"foin_\"]"
         ],
         "postype.com": [
           "div[data-sentry-component=\"FeedGoogleAd\"]"
