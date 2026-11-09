@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261108,
-  "updatedAt": "2026-11-08",
+  "version": 20261109,
+  "updatedAt": "2026-11-09",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1930,6 +1930,9 @@
         "aktieninvestor.net": [
           ".animate__none"
         ],
+        "aktienmagazin.de": [
+          ".tfcookie-modal"
+        ],
         "aktiivikristinusko.fi": [
           ".bottom-0"
         ],
@@ -2913,6 +2916,9 @@
         ],
         "amway.ua": [
           ".disclaimer-container"
+        ],
+        "amzotech.com": [
+          "[aria-label=\"Analytics preferences\"]"
         ],
         "an-cooling.com": [
           "#sb_privacy_policy_notice"
@@ -4490,7 +4496,7 @@
           "#cookie_note_div"
         ],
         "arvion.ai": [
-          "div[aria-labelledby=\"cookie-consent-title\"]"
+          "[aria-labelledby=\"cookie-consent-title\"]"
         ],
         "arvojournals.org": [
           ".widget-GdprCookieBanner"
@@ -6000,6 +6006,9 @@
         ],
         "azubiheft.de": [
           "#CookieModal"
+        ],
+        "azul.com": [
+          ".ketch-fixed"
         ],
         "azur-appartementen.be": [
           ".custom-consent"
@@ -8425,6 +8434,9 @@
         "bitstamp.net": [
           ".cookie-consent"
         ],
+        "bitstru.com": [
+          ".cookie-consent"
+        ],
         "bittel.bg": [
           ".c-website-notification"
         ],
@@ -9828,18 +9840,6 @@
         ],
         "borelioza.vegie.pl": [
           "#menubar"
-        ],
-        "boringowl.io": [
-          "div[class^=\"CookieBannerstyled__Container-\"]"
-        ],
-        "borisfx.com": [
-          ".bfx-cookie-banner"
-        ],
-        "borm-software.com": [
-          ".ch2"
-        ],
-        "born2be.pl": [
-          "#b-c-popup"
         ]
       }
     },
