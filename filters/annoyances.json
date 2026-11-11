@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261110,
-  "updatedAt": "2026-11-10",
+  "version": 20261111,
+  "updatedAt": "2026-11-11",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "afyonhaberturk.com": [
+          ".cerez"
+        ],
         "afyonpostasi.com.tr": [
           ".cookie-consent-body"
         ],
@@ -3334,9 +3337,6 @@
         "antalya-airport.aero": [
           "#CookieWarningPanel"
         ],
-        "antalyahakkinda.com": [
-          ".policy"
-        ],
         "antalyahomes.com": [
           "#cookies"
         ],
@@ -5437,6 +5437,9 @@
         "autobusweb.com": [
           "#cookie-law-info-bar"
         ],
+        "autoc-one.jp": [
+          "#cookie_notice_bmw"
+        ],
         "autocandy.ru": [
           ".m-wrapper-bg--glass"
         ],
@@ -6276,6 +6279,9 @@
         ],
         "bakeshop.pl": [
           ".consents"
+        ],
+        "bakiciburada.com": [
+          ".cookie-consent"
         ],
         "bakirkoyfinal.com": [
           "#cookie-law-message"
@@ -9834,12 +9840,6 @@
         ],
         "boraszportal.hu": [
           "#layout_advertising_bottom"
-        ],
-        "bordersdown.net": [
-          ".guestwarn"
-        ],
-        "bordoklavyeli.net": [
-          "#text-5"
         ]
       }
     },
