@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261111,
-  "updatedAt": "2026-11-11",
+  "version": 20261112,
+  "updatedAt": "2026-11-12",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,6 +1210,9 @@
     },
     "domains": {
       "cookieBanners": {
+        "afto.al": [
+          ".cookie-hint"
+        ],
         "afyonhaberturk.com": [
           ".cerez"
         ],
@@ -1743,6 +1746,9 @@
         ],
         "aislamientostrapaga.com": [
           ".cookies"
+        ],
+        "aitoolranked.com": [
+          ".fixed.bottom-0"
         ],
         "aitoolsdirectory.com": [
           ".sv-cookies-popup"
@@ -9834,12 +9840,6 @@
         ],
         "boovell.ru": [
           ".consent-banner"
-        ],
-        "boozt.com": [
-          ".vwo-overlay"
-        ],
-        "boraszportal.hu": [
-          "#layout_advertising_bottom"
         ]
       }
     },
