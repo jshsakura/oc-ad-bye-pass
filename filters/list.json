@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261117,
-  "updatedAt": "2026-11-17",
+  "version": 20261118,
+  "updatedAt": "2026-11-18",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -1497,6 +1497,9 @@
           "section.ad-region",
           "section.header-ad-region"
         ],
+        "cultureland.co.kr": [
+          ".ad-login"
+        ],
         "cuonet.com": [
           "div[style~=\"background-image:\"][style*=\".cuonet.com/data/apms/background/\"].item"
         ],
@@ -1658,6 +1661,9 @@
         "dictionary.com": [
           "div.ad",
           "li.widget_ad"
+        ],
+        "digimonmasters.com": [
+          "div.login_ads_btn"
         ],
         "digitalasset.works": [
           "#layer-popups"
@@ -2922,6 +2928,9 @@
           "div#ad_thread_first_post_content",
           "div#ad_thread_last_post_content",
           "div#ads"
+        ],
+        "jejuair.net": [
+          "div.button-wrap.advertise"
         ],
         "jeongcheogi.edugamja.com": [
           "a[rel=\"noopener noreferrer sponsored\"]"
@@ -5295,15 +5304,6 @@
         ],
         "premium.sbs.co.kr": [
           ".popupBanner_w"
-        ],
-        "pressian.com": [
-          ".banner",
-          "div.ad",
-          "div.leftBanner1",
-          "div.leftBanner2",
-          "div.po_warp",
-          "div.rightBanner1",
-          "div.rightBanner2"
         ],
         "pri.org": [
           "aside.promo-box--promo"

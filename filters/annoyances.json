@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261117,
-  "updatedAt": "2026-11-17",
+  "version": 20261118,
+  "updatedAt": "2026-11-18",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1450,6 +1450,9 @@
         "aip-pflege.de": [
           ".mod_cms_accept_tags"
         ],
+        "aiplusstore.com": [
+          ".Avada-CookiesBar__OuterWrapper"
+        ],
         "air-austral.com": [
           "#legalconcerns"
         ],
@@ -1800,6 +1803,9 @@
         ],
         "akamaicareers.inflightcloud.com": [
           "ui-cookie-advisory-banner"
+        ],
+        "akari46.com": [
+          ".cookies-show"
         ],
         "akasaair.com": [
           "div[role=\"presentation\"].MuiModal-root"
@@ -4111,6 +4117,9 @@
         "arbiscan.io": [
           "#divcookie"
         ],
+        "arbital.ru": [
+          ".t972"
+        ],
         "arbiton.com": [
           ".cookies"
         ],
@@ -4515,6 +4524,9 @@
         ],
         "arx.com.ua": [
           "body .cookie"
+        ],
+        "aryplus.tv": [
+          "body div.fc-consent-root"
         ],
         "arztkonsultation.de": [
           "#ak-cookie-consent"
@@ -9825,18 +9837,6 @@
         ],
         "boosty.to": [
           "div[class^=\"GdprOffer\"]"
-        ],
-        "boot.dev": [
-          ".fixed.bottom-5"
-        ],
-        "bootcampdrivers.freeforums.net": [
-          ".gdpr-banner-content-wrapper"
-        ],
-        "bootcomp.ru": [
-          ".cookieagry"
-        ],
-        "booth.pm": [
-          ".agreement-banner"
         ]
       }
     },
