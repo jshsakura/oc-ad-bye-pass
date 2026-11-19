@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261118,
-  "updatedAt": "2026-11-18",
+  "version": 20261119,
+  "updatedAt": "2026-11-19",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -1086,7 +1086,9 @@
           "div.topBanner"
         ],
         "boardlife.co.kr": [
-          ".promote-box"
+          ".promote-box",
+          "a.detail-promo[rel*=\"sponsored\"]",
+          "div.sponsor-banner-wrap"
         ],
         "boards.net": [
           "div#ad1",
@@ -1995,6 +1997,9 @@
         ],
         "eye.seoul.co.kr": [
           "div#withpang_p"
+        ],
+        "eyejokerdb.com": [
+          "div[aria-label$=\"광고\"][data-banner-height]"
         ],
         "ez2pattern.kr": [
           ".sticky"
@@ -3066,6 +3071,9 @@
           "iframe[name=\"ifmadver\"]",
           "iframe[src^=\"//www.kbench.com/article_right_box.php\"]",
           "iframe[src^=\"https://shop.kbench.com/09shop/article_right_box.php\"]"
+        ],
+        "kcilbo.com": [
+          "div.banner-slot"
         ],
         "keybr.com": [
           "div#fs-sticky-footer"
@@ -5533,15 +5541,6 @@
           "section[class$=\"_ad\"]",
           "section[class*=\"-ad-\"]"
         ],
-        "search.daum.net": [
-          "#splinkColl",
-          ".adLinkColl",
-          ".content_sponsor",
-          "div.ad_sch",
-          "div.content_sponsor",
-          "div[id^=\"ad\"]",
-          "iframe[src*=\"//ad.search.nate.com/\"]"
-        ],
         "search.dcinside.com": [
           ".right_content"
         ],
@@ -6610,6 +6609,7 @@
         "url.kr": [
           ".alert-danger ~ .container",
           "article#bo_v+center",
+          "div.hv2-ads",
           "div.jbMenu",
           "div[class^=\"ad-\"]"
         ],

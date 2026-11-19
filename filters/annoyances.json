@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261118,
-  "updatedAt": "2026-11-18",
+  "version": 20261119,
+  "updatedAt": "2026-11-19",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -4705,9 +4705,6 @@
         "asklion.co.uk": [
           ".alert"
         ],
-        "askona.ru": [
-          ".cookie-data-warning"
-        ],
         "askspot.io": [
           "#silktide-wrapper"
         ],
@@ -7777,6 +7774,9 @@
         "bhansa.gov.ba": [
           ".main-modal"
         ],
+        "bhl.co.il": [
+          "#privacyPop"
+        ],
         "bhp-inka.pl": [
           ".js-modal-cookies"
         ],
@@ -9045,6 +9045,9 @@
         ],
         "blueskybuilding.com": [
           ".ccd_cookie_bar"
+        ],
+        "bluesleep.ru": [
+          ".c-ep-ca"
         ],
         "bluesnews.de": [
           ".ce_rsce_oneo_fixed_note"
