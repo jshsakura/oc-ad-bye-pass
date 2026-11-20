@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261119,
-  "updatedAt": "2026-11-19",
+  "version": 20261120,
+  "updatedAt": "2026-11-20",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,9 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "afto.al": [
-          ".cookie-hint"
-        ],
         "afyonhaberturk.com": [
           ".cerez"
         ],
@@ -3583,6 +3580,9 @@
         "api.de": [
           ".dp--cookie-consent::before"
         ],
+        "api.sorsa.io": [
+          ".sf-ck"
+        ],
         "apigo.com.tr": [
           ".ant-notification"
         ],
@@ -3705,6 +3705,9 @@
         ],
         "app.autoenhance.ai": [
           "div[class^=\"GdprBanner_\"]"
+        ],
+        "app.chitchat.gg": [
+          "section[aria-labelledby=\"cookie-banner-title\"]"
         ],
         "app.crowdsec.net": [
           ".axeptio_mount"
@@ -9834,12 +9837,6 @@
         ],
         "boostbike.uk": [
           ".consent"
-        ],
-        "boostroyal.cn": [
-          ".bg-black.fixed"
-        ],
-        "boosty.to": [
-          "div[class^=\"GdprOffer\"]"
         ]
       }
     },
