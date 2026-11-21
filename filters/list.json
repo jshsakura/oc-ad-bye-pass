@@ -1,7 +1,7 @@
 {
   "name": "oc-ad-bye-pass / youtube + 한국 사이트 광고 차단",
-  "version": 20261120,
-  "updatedAt": "2026-11-20",
+  "version": 20261121,
+  "updatedAt": "2026-11-21",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. filters/ 안의 모든 리스트를 scripts/build-filters.mjs 가 합친 것이고, 확장이 받아가는 것은 이 파일입니다.",
   "rules": {
@@ -1480,6 +1480,9 @@
           "div.C_bn",
           "div.bsa_fixed-leaderboard",
           "div[id^=\"bsa-zone_\"]"
+        ],
+        "cpsp.kr": [
+          "div[aria-label=\"광고\"]"
         ],
         "cpubenchmark.net": [
           "div.mobileadunit"
