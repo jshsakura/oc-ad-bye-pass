@@ -1,7 +1,7 @@
 {
   "name": "한국 사이트 광고 차단",
-  "version": 20261121,
-  "updatedAt": "2026-11-21",
+  "version": 20261122,
+  "updatedAt": "2026-11-22",
   "lang": "ko",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: List-KR (GPL-3.0) — https://github.com/List-KR/List-KR · YousList (CC BY 4.0) — https://github.com/yous/YousList · 애드가드 갤러리 필터 (Apache-2.0) — https://github.com/hooray804/adguard-gallery-filter",
   "rules": {
@@ -3138,6 +3138,7 @@
         ],
         "kpanews.co.kr": [
           "div[class*=\"_ad\"]",
+          "iframe[title=\"광고\"][src^=\"https://svc.kpanews.co.kr/banner/embed\"]",
           "section[class*=\"_ad\"]"
         ],
         "kpenews.com": [
@@ -5096,6 +5097,9 @@
         "petapixel.com": [
           "div.banners"
         ],
+        "peterpanz.com": [
+          "#simplePhoneLogin[href^=\"https://sepay.org\"]"
+        ],
         "phdkim.net": [
           ".app-smart-banner",
           "div[class*=\"-banner-\"]",
@@ -5595,15 +5599,6 @@
         ],
         "skyscanner.co.kr": [
           "div.mpu-advert"
-        ],
-        "slant.co": [
-          "div.Ad-InArticle",
-          "div.AdContainer",
-          "div.AdContainer-Sidebar",
-          "div._SummaryPageHeaderAdView",
-          "div._SummaryPageOptionAdView",
-          "div._SummaryPageSidebarAdView",
-          "div._SummaryPageSidebarStickyAdView"
         ],
         "slashdot.org": [
           "div.adwrap",
@@ -6271,6 +6266,9 @@
         "touch.pixiv.net": [
           "div.ad-container",
           "div.ad-topmost-header"
+        ],
+        "tplusmobile.com": [
+          "div.login-wrap button[onclick*=\"https://sepay.org\"]"
         ],
         "tr.investing.com": [
           "div.midHeader"
