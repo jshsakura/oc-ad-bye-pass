@@ -1,7 +1,7 @@
 {
   "name": "쿠키 동의창·성가신 배너",
-  "version": 20261123,
-  "updatedAt": "2026-11-23",
+  "version": 20261124,
+  "updatedAt": "2026-11-24",
   "_readme": "자동 생성 파일입니다. 직접 고치지 마세요 — scripts/build-filters.mjs 가 하루에 한 번 다시 만듭니다. 출처: Easylist Cookie List (GPL-3.0 / CC BY-SA 3.0) — https://easylist.to/ · AdGuard Cookie Notices (GPL-3.0) — https://github.com/AdguardTeam/AdguardFilters",
   "rules": {
     "hide": {
@@ -1210,105 +1210,6 @@
     },
     "domains": {
       "cookieBanners": {
-        "afyonhaberturk.com": [
-          ".cerez"
-        ],
-        "afyonpostasi.com.tr": [
-          ".cookie-consent-body"
-        ],
-        "afzuigkap.nl": [
-          "#cookie_popup_body"
-        ],
-        "ag.mos.ru": [
-          ".cookie-informer"
-        ],
-        "agados.cz": [
-          ".cookie-consent-banner"
-        ],
-        "agar.io": [
-          "#btn-privacy-settings"
-        ],
-        "agazetafm.com": [
-          ".popup_footer"
-        ],
-        "age.yoti.com": [
-          "div[data-qa=\"cookie-banner\"]"
-        ],
-        "agegeek.com": [
-          "#GDPR"
-        ],
-        "agekey.org": [
-          ".right-0.z-50.p-4.sm\\:p-6.animate-slide-up"
-        ],
-        "agences.paritel.fr": [
-          ".rgpd--container"
-        ],
-        "agendadeteatro.es": [
-          "#abdm-cookies-overlay"
-        ],
-        "agendatrad.org": [
-          "#consent"
-        ],
-        "agendavivasp.com.br": [
-          ".transition-transform.duration-300"
-        ],
-        "agende.it": [
-          "#iqitcookielaw"
-        ],
-        "agendeam.com.br": [
-          ".overlay"
-        ],
-        "agenttravel.es": [
-          "#cookies"
-        ],
-        "agentur-filmgesichter.de": [
-          "#cookietoast"
-        ],
-        "agenturfilmgesichter.de": [
-          "#cookietoast"
-        ],
-        "agenziademanio.it": [
-          "#bannerInfo"
-        ],
-        "agenziavista.it": [
-          "#cookie-notice"
-        ],
-        "agerip.com.br": [
-          ".cookies"
-        ],
-        "ages.at": [
-          "body .cookie"
-        ],
-        "agizbakimuzmani.com": [
-          ".divOneTrustMainContainer"
-        ],
-        "agnesb.co.jp": [
-          ".p-cookie"
-        ],
-        "agora.pl": [
-          ".cm-overlay"
-        ],
-        "agoraantalyaavm.com": [
-          ".alert-warning"
-        ],
-        "agoranovale.com.br": [
-          "#cookieconsent"
-        ],
-        "agrar-fachversand.com": [
-          ".cookie-permission-container"
-        ],
-        "agrarlex.pl": [
-          ".terms-cookies"
-        ],
-        "agrarshop-online.com": [
-          "#darkBack"
-        ],
-        "agrica.co.il": [
-          "#upnext-cookie-notice"
-        ],
-        "agriline24.de": [
-          "body .pp-accept-cookies-block"
-        ],
         "agripalvelu.fi": [
           ".modal-cookie-consent"
         ],
@@ -3348,6 +3249,9 @@
         ],
         "antalyahomes.com": [
           "#cookies"
+        ],
+        "antalyalinakliyat.com.tr": [
+          "div[aria-label=\"Çerez tercihleri\"]"
         ],
         "antalyaz.com": [
           ".policy"
@@ -5403,6 +5307,9 @@
         ],
         "auth.sparxmaths.uk": [
           "#footer-cookie-banner"
+        ],
+        "authaction.com": [
+          "div[aria-label=\"Cookie consent\"]"
         ],
         "authenticfeet.com.br": [
           "body .fixed-cookie.show"
@@ -9837,6 +9744,99 @@
         ],
         "boomverzorgingmichiel.be": [
           ".cookies"
+        ],
+        "boords.com": [
+          ".bottom-0.fixed"
+        ],
+        "boost.com.mt": [
+          "#cookie-law-info-bar"
+        ],
+        "boostbike.uk": [
+          ".consent"
+        ],
+        "boostroyal.cn": [
+          ".bg-black.fixed"
+        ],
+        "boosty.to": [
+          "div[class^=\"GdprOffer\"]"
+        ],
+        "boot.dev": [
+          ".fixed.bottom-5"
+        ],
+        "bootcampdrivers.freeforums.net": [
+          ".gdpr-banner-content-wrapper"
+        ],
+        "bootcomp.ru": [
+          ".cookieagry"
+        ],
+        "booth.pm": [
+          ".agreement-banner"
+        ],
+        "bootscore.me": [
+          "#bs-cookie-settings"
+        ],
+        "bootstrap.academy": [
+          ".z-50"
+        ],
+        "bootstrapmade.com": [
+          ".cookie-bar"
+        ],
+        "boovell.ru": [
+          ".consent-banner"
+        ],
+        "boozt.com": [
+          ".vwo-overlay"
+        ],
+        "boraszportal.hu": [
+          "#layout_advertising_bottom"
+        ],
+        "bordersdown.net": [
+          ".guestwarn"
+        ],
+        "bordoklavyeli.net": [
+          "#text-5"
+        ],
+        "boredteachers.com": [
+          ".cookie__banner"
+        ],
+        "borek.de": [
+          "#cmpbox"
+        ],
+        "borelioza.vegie.pl": [
+          "#menubar"
+        ],
+        "boringowl.io": [
+          "div[class^=\"CookieBannerstyled__Container-\"]"
+        ],
+        "borisfx.com": [
+          ".bfx-cookie-banner"
+        ],
+        "borm-software.com": [
+          ".ch2"
+        ],
+        "born2be.pl": [
+          "#b-c-popup"
+        ],
+        "boromir.ro": [
+          ".gdpr-body"
+        ],
+        "borsa.bitci.com": [
+          ".v-snack--bottom"
+        ],
+        "borsamatik.com.tr": [
+          ".privacy-banner"
+        ],
+        "borusannext.com": [
+          ".ch2-dialog"
+        ],
+        "borusanoto.com": [
+          "#coiConsentBanner"
+        ],
+        "bosch-professional.com": [
+          "dock-privacy-settings"
+        ],
+        "bosch.de": [
+          "o-cookie-law"
         ]
       }
     },
