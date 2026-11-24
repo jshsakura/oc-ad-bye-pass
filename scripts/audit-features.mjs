@@ -86,12 +86,21 @@ const CONTRACTS = `() => {
    * fields — and every content check then looks broken while nothing is.
    * The first CI run raised exactly that false alarm.
    *
-   * videoDetails is the tell: it is on every genuine watch response and on no
-   * degraded one. Without it, the content checks below report unobservable,
-   * which is the truth. **Being bot-flagged is not a contract we lost.**
+   * videoDetails alone is not the tell. On 2026-11-24 a response carrying
+   * videoDetails but neither streamingData nor captions passed it, and was
+   * reported as a broken contract; the rerun an hour later was clean. The
+   * playability status is the part YouTube sets when it declines to play, so
+   * a response only counts as served when that says OK too. Without both, the
+   * content checks below report unobservable, which is the truth.
+   * **Being bot-flagged is not a contract we lost.**
    */
   const response = window.ytInitialPlayerResponse
-  const served = !!(response && typeof response === 'object' && response.videoDetails)
+  const playability = response && response.playabilityStatus
+  const status = (playability && playability.status) || 'none'
+  const served = !!(
+    response && typeof response === 'object' && response.videoDetails && status === 'OK'
+  )
+  const keys = response && typeof response === 'object' ? Object.keys(response).join(',') : ''
 
   /**
    * Every check, each answering ['ok' | 'broken' | 'unknown', detail].
@@ -117,13 +126,17 @@ const CONTRACTS = `() => {
       const fields = Object.keys(response).length
       return served
         ? ['ok', fields + '개 필드']
-        : ['unknown', '축약된 응답 (' + fields + '개 필드) — 봇 판정으로 보입니다']
+        : ['unknown', '축약된 응답 (' + fields + '개 필드, status=' + status + ') — 봇 판정으로 보입니다 [' + keys + ']']
     }],
 
     ['responseShape', '응답 구조 (streamingData/videoDetails/captions)', () => {
       if (!served) return ['unknown', '재생 응답을 못 받아 판정 불가']
       const shape = ['streamingData', 'videoDetails', 'captions'].filter((k) => k in response)
-      return [shape.length >= 2 ? 'ok' : 'broken', shape.join(',') || '하나도 없음']
+      // keys and status are here so an issue can say why without a rerun.
+      return [
+        shape.length >= 2 ? 'ok' : 'broken',
+        (shape.join(',') || '하나도 없음') + ' · status=' + status + ' · [' + keys + ']',
+      ]
     }],
 
     ['captionApi', '자막 API (getOption/setOption/loadModule)', () => {
